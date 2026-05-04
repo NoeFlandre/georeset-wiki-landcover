@@ -1,0 +1,1 @@
+https://geoportal.georhena.eu/geoserver/basemaps/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=basemaps:occupation_sol_2018&outputFormat=SHAPE-ZIP
