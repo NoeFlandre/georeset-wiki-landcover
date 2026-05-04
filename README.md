@@ -6,8 +6,9 @@ This codebase focuses on the text pipeline and is meant as a place of experiment
 
 For now our goal is to implement the following pipeline:
 
-- Choose a map (CORINE? EUNIS? LUCAS?)
-- Choose a region (Alsace?)
+- Choose a map (CORINE? EUNIS? LUCAS?) ==> CORINE
+- Choose a region (Alsace?) ==> Alsace
+- Choose the class to keep ==> Stick to a few number of classes (Level 1 or Level 2)
 - Scrap polygones and their classes from the map
 - Scrap relevant web pages with respect to these polygons
 - Ask an LLM to summarize / rephrase these web pages
