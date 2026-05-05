@@ -45,9 +45,49 @@ class MapVisualizer:
                 popup=article.get("title", "Article")
             ).add_to(m)
 
+        legend_html = f"""
+        <div style="position: fixed; bottom: 50px; left: 50px; z-index: 1000; 
+                    background-color: white; padding: 10px; border: 2px solid gray;
+                    font-size: 14px; border-radius: 5px;">
+            <b>Legend</b><br>
+            <i style="background-color: blue; width: 20px; height: 10px; display: inline-block;"></i> Polygons: {len(self.gdf)}<br>
+            <i style="background-color: red; width: 10px; height: 10px; display: inline-block; border-radius: 50%;"></i> Articles: {len(articles)}
+        </div>
+        """
+        m.get_root().html.add_child(folium.Element(legend_html))
+
         return m
 
-    def save_map(self, output_path: str) -> None:
+    def save_map(self, output_path: str, articles: list = None) -> None:
         """Save the map as an HTML file."""
-        m = self.plot_polygons()
+        if articles:
+            m = self.plot_polygons_with_articles(articles)
+        else:
+            m = self.plot_polygons()
         m.save(output_path)
+
+
+if __name__ == "__main__":
+    import json
+    import os
+    from src.data_fetcher import DataFetcher
+
+    print("Loading Wikipedia articles...")
+    articles_path = "data/wiki_articles.json"
+    if os.path.exists(articles_path):
+        with open(articles_path, "r") as f:
+            articles = json.load(f)
+        print(f"Loaded {len(articles)} articles.")
+    else:
+        articles = []
+        print("No articles found.")
+
+    print("Loading Alsace polygons...")
+    fetcher = DataFetcher()
+    gdf = fetcher.load_data()
+    print(f"Loaded {len(gdf)} polygons.")
+
+    print("Generating map...")
+    viz = MapVisualizer(gdf)
+    viz.save_map("data/map.html", articles=articles)
+    print("Map saved to data/map.html")

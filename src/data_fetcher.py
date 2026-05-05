@@ -75,7 +75,7 @@ if __name__=="__main__":
     fetcher = DataFetcher()
     try:
         sample = fetcher.get_sample_polygons(n=3)
-        print(f"Succesfully sampled polygons:")
+        print("Succesfully sampled polygons:")
         print(sample[['class_label', 'centroid', 'code_18']])
         fetcher.save_bounds()        
     except Exception as e:

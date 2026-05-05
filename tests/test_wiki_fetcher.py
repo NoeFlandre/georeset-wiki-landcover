@@ -1,7 +1,6 @@
 """Tests for WikiFetcher."""
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from src.wiki_fetcher import WikiFetcher
 
 
@@ -12,6 +11,7 @@ class TestWikiFetcher:
     def test_get_articles_in_bbox_returns_list(self):
         """Should return a list of articles within bounding box."""
         with patch("requests.get") as mock_get:
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
             mock_get.return_value.json.return_value = {
                 "query": {
                     "geosearch": [
@@ -25,8 +25,41 @@ class TestWikiFetcher:
             assert len(articles) == 2
 
     @patch("requests.get")
+    def test_get_articles_in_bbox_handles_large_results_with_continuation(self, mock_get):
+        """Should handle tiles with more than 500 articles via continuation."""
+        # First call returns 500 articles + continuation
+        # Second call returns remaining articles
+        mock_get.return_value.headers = {"Content-Type": "application/json"}
+        mock_get.return_value.json.side_effect = [
+            {
+                "query": {
+                    "geosearch": [
+                        {"pageid": i, "title": f"Article{i}", "lat": 48.5, "lon": 7.5}
+                        for i in range(500)
+                    ]
+                },
+                "continue": {"gscontinue": "next_page_token"}
+            },
+            {
+                "query": {
+                    "geosearch": [
+                        {"pageid": 500 + i, "title": f"Article{500 + i}", "lat": 48.5, "lon": 7.5}
+                        for i in range(100)
+                    ]
+                }
+            }
+        ]
+
+        articles = self.fetcher.get_articles_in_bbox(north=49.0, west=7.0, south=48.0, east=8.0)
+
+        # Should have made 2 calls (initial + continuation)
+        assert mock_get.call_count == 2, f"Expected 2 calls for continuation, got {mock_get.call_count}"
+        assert len(articles) == 600
+
+    @patch("requests.get")
     def test_get_articles_in_bbox_filters_outside_bounds(self, mock_get):
         """get_articles_in_bbox should only return articles within the bbox (API already filters)."""
+        mock_get.return_value.headers = {"Content-Type": "application/json"}
         mock_get.return_value.json.return_value = {
             "query": {
                 "geosearch": [
@@ -42,6 +75,7 @@ class TestWikiFetcher:
     @patch("requests.get")
     def test_get_articles_in_bbox_uses_correct_params(self, mock_get):
         """Should call API with correct gsbbox parameter."""
+        mock_get.return_value.headers = {"Content-Type": "application/json"}
         mock_get.return_value.json.return_value = {"query": {"geosearch": []}}
 
         self.fetcher.get_articles_in_bbox(north=49.0, west=7.0, south=48.0, east=8.0)
@@ -54,6 +88,7 @@ class TestWikiFetcher:
     @patch("requests.get")
     def test_get_articles_in_bbox_handles_empty_results(self, mock_get):
         """Should return empty list when no articles found."""
+        mock_get.return_value.headers = {"Content-Type": "application/json"}
         mock_get.return_value.json.return_value = {"query": {"geosearch": []}}
         articles = self.fetcher.get_articles_in_bbox(north=49.0, west=7.0, south=48.0, east=8.0)
         assert isinstance(articles, list)
@@ -62,6 +97,7 @@ class TestWikiFetcher:
     @patch("requests.get")
     def test_get_articles_in_bounds_uses_bbox_method(self, mock_get):
         """get_articles_in_bounds should use gsbbox internally via tiling."""
+        mock_get.return_value.headers = {"Content-Type": "application/json"}
         mock_get.return_value.json.return_value = {
             "query": {
                 "geosearch": [
@@ -85,8 +121,6 @@ class TestWikiFetcher:
 
     def test_tiling_covers_full_bounds(self):
         """Verify the actual code's tiling covers the full bounds area."""
-        import math
-
         min_lon, min_lat = 7.0, 48.0
         max_lon, max_lat = 8.0, 49.0
 
@@ -127,6 +161,7 @@ class TestWikiFetcher:
     def test_get_nearby_articles_handles_no_results(self):
         """Should return empty list when no articles found."""
         with patch("requests.get") as mock_get:
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
             mock_get.return_value.json.return_value = {"query": {"geosearch": []}}
             articles = self.fetcher.get_nearby_articles(0.0, 0.0)
             assert isinstance(articles, list)

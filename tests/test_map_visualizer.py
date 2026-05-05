@@ -1,6 +1,5 @@
 """Tests for MapVisualizer."""
 
-import pytest
 import geopandas as gpd
 from shapely.geometry import Polygon
 from src.map_visualizer import MapVisualizer
@@ -58,3 +57,13 @@ class TestMapVisualizer:
         m = visualizer.plot_polygons_with_articles(self.articles)
         # Check that there are more children than polygons alone
         assert len(m._children) > len(self.gdf)
+
+    def test_plot_polygons_with_articles_has_legend(self):
+        """Should include legend showing polygon and article counts."""
+        visualizer = MapVisualizer(self.gdf)
+        m = visualizer.plot_polygons_with_articles(self.articles)
+        html = m._repr_html_()
+        assert "Polygons" in html
+        assert "Articles" in html
+        assert str(len(self.gdf)) in html
+        assert str(len(self.articles)) in html
