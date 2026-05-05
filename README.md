@@ -17,3 +17,5 @@ For now our goal is to implement the following pipeline:
 - We evaluate the classification produced by the LLM using standard metrics like precision, recall and so on.
 
 The goal here is to assess whether based solely on the text description an LLM is able to deduce the correct class of the polygon.
+
+The data used was downloaded here: https://www.datagrandest.fr/geonetwork/srv/api/records/c0ccbf45-2620-4bde-93f8-869558e51d7e?language=fre
