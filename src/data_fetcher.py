@@ -1,5 +1,6 @@
 import geopandas as gpd 
 import os
+import json
 
 class DataFetcher:
     """
@@ -41,12 +42,42 @@ class DataFetcher:
 
         return sample[['class_label', 'geometry', 'centroid', 'code_18']]
 
+    def get_bounds(self):
+        """
+        Return the bounding box containing all the polygons
+        """
+
+        if self.gdf is None:
+            self.load_data()
+
+        bounds = self.gdf.total_bounds
+        return tuple(bounds)
+
+    def save_bounds(self, output_path: str = "data/bounds.json"):
+        """
+        Save the dataset bounding box to a json file
+        """
+        bounds=self.get_bounds()
+        data = {
+            "min_lon": bounds[0],
+            "min_lat": bounds[1],
+            "max_lon": bounds[2],
+            "max_lat": bounds[3],
+        }
+        
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+        with open(output_path, "w") as f:
+            json.dump(data, f, indent=4)
+        print(f"Bounds saved to {output_path}")
+
 if __name__=="__main__":
     fetcher = DataFetcher()
     try:
         sample = fetcher.get_sample_polygons(n=3)
         print(f"Succesfully sampled polygons:")
         print(sample[['class_label', 'centroid', 'code_18']])
+        fetcher.save_bounds()        
     except Exception as e:
         print(f"Error: {e}")
 
