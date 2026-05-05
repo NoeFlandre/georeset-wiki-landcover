@@ -14,6 +14,10 @@ class TestMapVisualizer:
             "code_18": ["311", "312"],
             "geometry": [self.basic_polygon, self.basic_polygon]
         }, crs="EPSG:4326")
+        self.articles = [
+            {"title": "Strasbourg", "lat": 48.5, "lon": 7.5},
+            {"title": "Mulhouse", "lat": 48.1, "lon": 7.3},
+        ]
 
     def test_map_visualizer_initialization(self):
         """Should initialize with a GeoDataFrame."""
@@ -40,3 +44,17 @@ class TestMapVisualizer:
         m = visualizer.plot_polygons()
         # Check that there are child objects (polygon layers)
         assert len(m._children) > 0
+
+    def test_plot_polygons_with_articles_returns_map(self):
+        """Should return a folium Map with article markers."""
+        import folium
+        visualizer = MapVisualizer(self.gdf)
+        m = visualizer.plot_polygons_with_articles(self.articles)
+        assert isinstance(m, folium.Map)
+
+    def test_plot_polygons_with_articles_adds_markers(self):
+        """Should add CircleMarker layers for articles."""
+        visualizer = MapVisualizer(self.gdf)
+        m = visualizer.plot_polygons_with_articles(self.articles)
+        # Check that there are more children than polygons alone
+        assert len(m._children) > len(self.gdf)
