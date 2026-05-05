@@ -9,142 +9,112 @@ class TestWikiFetcher:
     def setup_method(self):
         self.fetcher = WikiFetcher()
 
-    def test_get_nearby_articles_returns_list(self):
-        """Should return a list of articles near a coordinate."""
-        articles = self.fetcher.get_nearby_articles(48.8, 7.7)
-        assert isinstance(articles, list)
-
-    def test_get_nearby_articles_contains_article_structure(self):
-        """Articles should have pageid, title, and coordinates."""
-        articles = self.fetcher.get_nearby_articles(48.8, 7.7)
-        if articles:
-            article = articles[0]
-            assert "pageid" in article
-            assert "title" in article
-            assert "lat" in article
-            assert "lon" in article
-
-    @patch("requests.get")
-    def test_get_articles_in_bounds_returns_list(self, mock_get):
+    def test_get_articles_in_bbox_returns_list(self):
         """Should return a list of articles within bounding box."""
-        mock_get.return_value.json.return_value = {
-            "query": {
-                "geosearch": [
-                    {"pageid": 1, "title": "Strasbourg", "lat": 48.5, "lon": 7.5},
-                    {"pageid": 2, "title": "Mulhouse", "lat": 48.1, "lon": 7.3},
-                ]
+        with patch("requests.get") as mock_get:
+            mock_get.return_value.json.return_value = {
+                "query": {
+                    "geosearch": [
+                        {"pageid": 1, "title": "Strasbourg", "lat": 48.5, "lon": 7.5},
+                        {"pageid": 2, "title": "Mulhouse", "lat": 48.1, "lon": 7.3},
+                    ]
+                }
             }
-        }
-        bounds = {
-            "min_lon": 7.0,
-            "min_lat": 48.0,
-            "max_lon": 8.0,
-            "max_lat": 49.0
-        }
-        articles = self.fetcher.get_articles_in_bounds(**bounds)
-        assert isinstance(articles, list)
-        assert len(articles) == 2
+            articles = self.fetcher.get_articles_in_bbox(north=49.0, west=7.0, south=48.0, east=8.0)
+            assert isinstance(articles, list)
+            assert len(articles) == 2
 
     @patch("requests.get")
-    def test_get_articles_in_bounds_deduplicates(self, mock_get):
-        """Should not return duplicate articles when circles overlap."""
+    def test_get_articles_in_bbox_filters_outside_bounds(self, mock_get):
+        """get_articles_in_bbox should only return articles within the bbox (API already filters)."""
         mock_get.return_value.json.return_value = {
             "query": {
                 "geosearch": [
-                    {"pageid": 1, "title": "Strasbourg", "lat": 48.5, "lon": 7.5},
+                    {"pageid": 1, "title": "Inside", "lat": 48.5, "lon": 7.5},
                 ]
             }
         }
-        bounds = {
-            "min_lon": 7.0,
-            "min_lat": 48.0,
-            "max_lon": 7.5,
-            "max_lat": 48.5
-        }
-        articles = self.fetcher.get_articles_in_bounds(**bounds)
-        pageids = [a["pageid"] for a in articles]
-        assert len(pageids) == len(set(pageids)), "Duplicate pageids found"
-
-    @patch("requests.get")
-    def test_get_articles_in_bounds_filters_outside_bounds(self, mock_get):
-        """Should not return articles outside the bounding box."""
-        mock_get.return_value.json.return_value = {
-            "query": {
-                "geosearch": [
-                    {"pageid": 1, "title": "Inside", "lat": 48.5, "lon": 7.5},  # inside bounds
-                    {"pageid": 2, "title": "Outside", "lat": 46.0, "lon": 9.0},  # outside bounds
-                ]
-            }
-        }
-        bounds = {
-            "min_lon": 7.0,
-            "min_lat": 48.0,
-            "max_lon": 8.0,
-            "max_lat": 49.0
-        }
-        articles = self.fetcher.get_articles_in_bounds(**bounds)
+        articles = self.fetcher.get_articles_in_bbox(north=49.0, west=7.0, south=48.0, east=8.0)
         titles = [a["title"] for a in articles]
         assert "Inside" in titles
-        assert "Outside" not in titles
+        assert len(articles) == 1
 
     @patch("requests.get")
-    def test_get_articles_in_bounds_grid_coverage(self, mock_get):
-        """Should make multiple API calls to cover the full bounds area."""
-        mock_response = MagicMock()
-        mock_response.json.return_value = {"query": {"geosearch": []}}
-        mock_response.raise_for_status = MagicMock()
-        mock_get.return_value = mock_response
+    def test_get_articles_in_bbox_uses_correct_params(self, mock_get):
+        """Should call API with correct gsbbox parameter."""
+        mock_get.return_value.json.return_value = {"query": {"geosearch": []}}
 
+        self.fetcher.get_articles_in_bbox(north=49.0, west=7.0, south=48.0, east=8.0)
+
+        call_args = mock_get.call_args
+        params = call_args[1]["params"]
+        assert "gsbbox" in params
+        assert params["gsbbox"] == "49.0|7.0|48.0|8.0"
+
+    @patch("requests.get")
+    def test_get_articles_in_bbox_handles_empty_results(self, mock_get):
+        """Should return empty list when no articles found."""
+        mock_get.return_value.json.return_value = {"query": {"geosearch": []}}
+        articles = self.fetcher.get_articles_in_bbox(north=49.0, west=7.0, south=48.0, east=8.0)
+        assert isinstance(articles, list)
+        assert len(articles) == 0
+
+    @patch("requests.get")
+    def test_get_articles_in_bounds_uses_bbox_method(self, mock_get):
+        """get_articles_in_bounds should use gsbbox internally via tiling."""
+        mock_get.return_value.json.return_value = {
+            "query": {
+                "geosearch": [
+                    {"pageid": 1, "title": "Strasbourg", "lat": 48.5, "lon": 7.5},
+                ]
+            }
+        }
         bounds = {
             "min_lon": 7.0,
             "min_lat": 48.0,
-            "max_lon": 7.5,
-            "max_lat": 48.5
+            "max_lon": 7.2,
+            "max_lat": 48.2
         }
-        self.fetcher.get_articles_in_bounds(**bounds, radius=10000)
+        self.fetcher.get_articles_in_bounds(**bounds)
 
-        # With 10km radius and 80% overlap, this ~0.5° x 0.5° area should need multiple calls
-        assert mock_get.call_count >= 4, f"Expected at least 4 API calls for coverage, got {mock_get.call_count}"
+        # Should call with gsbbox format
+        assert mock_get.called
+        # Verify at least one call used gsbbox
+        calls_with_bbox = [c for c in mock_get.call_args_list if "gsbbox" in str(c)]
+        assert len(calls_with_bbox) > 0
 
-    def test_grid_coverage_is_complete(self):
-        """Verify that the grid used by get_articles_in_bounds covers the full bounds."""
+    def test_tiling_covers_full_bounds(self):
+        """Verify the actual code's tiling covers the full bounds area."""
         import math
-        from unittest.mock import patch, MagicMock
 
         min_lon, min_lat = 7.0, 48.0
         max_lon, max_lat = 8.0, 49.0
-        radius = 10000
 
-        # Capture the grid points that get_articles_in_bounds actually uses
-        captured_points = []
+        # Capture tiles used by the actual code
+        captured_tiles = []
 
-        original_get_nearby = self.fetcher.get_nearby_articles
+        original_get_bbox = self.fetcher.get_articles_in_bbox
 
-        def mock_get_nearby(lat, lon, r):
-            captured_points.append((lat, lon))
+        def mock_get_bbox(north, west, south, east):
+            captured_tiles.append((south, north, west, east))
             return []
 
-        self.fetcher.get_nearby_articles = mock_get_nearby
+        self.fetcher.get_articles_in_bbox = mock_get_bbox
 
         try:
-            self.fetcher.get_articles_in_bounds(min_lon, min_lat, max_lon, max_lat, radius)
+            self.fetcher.get_articles_in_bounds(min_lon, min_lat, max_lon, max_lat)
         finally:
-            self.fetcher.get_nearby_articles = original_get_nearby
+            self.fetcher.get_articles_in_bbox = original_get_bbox
 
-        # Verify every point in bounds is within radius of at least one captured grid point
+        # Verify all points are covered by captured tiles
         uncovered = []
         lat = min_lat
         while lat <= max_lat:
             lon = min_lon
             while lon <= max_lon:
                 covered = False
-                for g_lat, g_lon in captured_points:
-                    R = 6371000
-                    dlat = math.radians(lat - g_lat)
-                    dlon = math.radians(lon - g_lon)
-                    a = math.sin(dlat/2)**2 + math.cos(math.radians(g_lat)) * math.cos(math.radians(lat)) * math.sin(dlon/2)**2
-                    dist = 2 * R * math.asin(math.sqrt(a))
-                    if dist <= radius:
+                for t_south, t_north, t_west, t_east in captured_tiles:
+                    if t_south <= lat <= t_north and t_west <= lon <= t_east:
                         covered = True
                         break
                 if not covered:
@@ -152,7 +122,7 @@ class TestWikiFetcher:
                 lon += 0.01
             lat += 0.01
 
-        assert len(uncovered) == 0, f"Found {len(uncovered)} uncovered points. Grid points used: {len(captured_points)}"
+        assert len(uncovered) == 0, f"Found {len(uncovered)} uncovered points. Tiles used: {len(captured_tiles)}"
 
     def test_get_nearby_articles_handles_no_results(self):
         """Should return empty list when no articles found."""

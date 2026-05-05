@@ -33,54 +33,64 @@ class WikiFetcher:
                 continue
         return []
 
-    def get_articles_in_bounds(self, min_lon: float, min_lat: float, max_lon: float, max_lat: float, radius: int = 10000) -> List[Dict]:
+    def get_articles_in_bbox(self, north: float, west: float, south: float, east: float, retries: int = 3) -> List[Dict]:
         """
-        Fetch Wikipedia articles within a bounding box by sampling a grid of points
-        and filtering to only those inside the bounds.
+        Find Wikipedia articles within a rectangular bounding box.
+        Coordinates order: Top(North), Left(West), Bottom(South), Right(East).
+        """
+        params = {
+            "action": "query",
+            "list": "geosearch",
+            "gsbbox": f"{north}|{west}|{south}|{east}",
+            "gslimit": 500,
+            "format": "json"
+        }
+        for attempt in range(retries):
+            try:
+                response = requests.get(self.api_url, params=params, headers=self.headers, timeout=10)
+                response.raise_for_status()
+                time.sleep(0.1)
+                return response.json().get("query", {}).get("geosearch", [])
+            except (requests.RequestException, ValueError):
+                if attempt < retries - 1:
+                    time.sleep(1)
+                continue
+        return []
 
-        Uses a grid of circles spaced by diameter to cover the entire bounds area.
+    def get_articles_in_bounds(self, min_lon: float, min_lat: float, max_lon: float, max_lat: float) -> List[Dict]:
+        """
+        Fetch Wikipedia articles within a bounding box by tiling small bboxes.
+        API has limits on bbox size, so we split into tiles and merge results.
         """
         articles = []
         seen_ids = set()
 
-        # Grid spacing based on circle diameter (circles just touch at edges)
-        # At latitude 48°, 1° ≈ 74km (lon) and 111km (lat)
-        # Coverage verified by test_grid_coverage_is_complete
-        km_per_deg_lon = 74
-        km_per_deg_lat = 111
-        step_lon = (radius / 1000) / km_per_deg_lon
-        step_lat = (radius / 1000) / km_per_deg_lat
+        # Tile the area - API works with ~0.2 degree tiles
+        lat_step = 0.18  # degrees
+        lon_step = 0.26  # degrees (at latitude 48°, this is ~20km)
 
-        # Count total calls needed
-        lon = min_lon
-        total_lons = 0
-        while lon <= max_lon:
-            total_lons += 1
-            lon += step_lon
+        tile_count = 0
         lat = min_lat
-        total_lats = 0
-        while lat <= max_lat:
-            total_lats += 1
-            lat += step_lat
-        total_calls = total_lons * total_lats
-        print(f"Grid: {total_lons} x {total_lats} = {total_calls} API calls")
+        while lat < max_lat:
+            lon = min_lon
+            north = min(lat + lat_step, max_lat)
+            while lon < max_lon:
+                west = lon
+                east = min(lon + lon_step, max_lon)
+                tile_count += 1
 
-        lon = min_lon
-        call_num = 0
-        while lon <= max_lon:
-            lat = min_lat
-            while lat <= max_lat:
-                call_num += 1
-                if call_num % 10 == 0:
-                    print(f"  Call {call_num}/{total_calls}...")
-                for article in self.get_nearby_articles(lat, lon, radius):
-                    if article["pageid"] not in seen_ids and self._in_bounds(article, min_lon, min_lat, max_lon, max_lat):
+                for article in self.get_articles_in_bbox(north=north, west=west, south=lat, east=east):
+                    if article["pageid"] not in seen_ids:
                         seen_ids.add(article["pageid"])
                         articles.append(article)
-                lat += step_lat
-            lon += step_lon
 
-        return articles
+                lon += lon_step
+            lat += lat_step
+
+        print(f"Made {tile_count} API calls, found {len(articles)} unique articles")
+
+        # Filter to only articles within our precise bounds
+        return [a for a in articles if self._in_bounds(a, min_lon, min_lat, max_lon, max_lat)]
 
     def _in_bounds(self, article: Dict, min_lon: float, min_lat: float, max_lon: float, max_lat: float) -> bool:
         """Check if article coordinates fall within bounds."""
