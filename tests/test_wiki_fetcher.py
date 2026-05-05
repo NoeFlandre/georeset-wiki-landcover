@@ -1,12 +1,18 @@
 """Tests for WikiFetcher."""
 
+import pytest
 from unittest.mock import patch
-from src.wiki_fetcher import WikiFetcher
+from src.wiki_fetcher import WikiFetcher, WikiFetchError
 
 
 class TestWikiFetcher:
     def setup_method(self):
         self.fetcher = WikiFetcher()
+        self.sleep_patcher = patch("src.wiki_fetcher.time.sleep")
+        self.sleep_patcher.start()
+
+    def teardown_method(self):
+        self.sleep_patcher.stop()
 
     def test_get_articles_in_bbox_returns_list(self):
         """Should return a list of articles within bounding box."""
@@ -55,6 +61,80 @@ class TestWikiFetcher:
         # Should have made 2 calls (initial + continuation)
         assert mock_get.call_count == 2, f"Expected 2 calls for continuation, got {mock_get.call_count}"
         assert len(articles) == 600
+
+    @patch("requests.get")
+    def test_get_articles_in_bbox_raises_when_all_retries_fail(self, mock_get):
+        """Should not silently return partial data when Wikipedia keeps failing."""
+        mock_get.side_effect = RuntimeError("network down")
+
+        with pytest.raises(WikiFetchError):
+            self.fetcher.get_articles_in_bbox(north=49.0, west=7.0, south=48.0, east=8.0, retries=2)
+
+        assert mock_get.call_count == 2
+
+    @patch("requests.get")
+    def test_get_articles_in_bbox_raises_when_continuation_page_fails(self, mock_get):
+        """Should fail the bbox rather than returning only the first page."""
+        first_page = {
+            "headers": {"Content-Type": "application/json"},
+            "json": lambda: {
+                "query": {
+                    "geosearch": [
+                        {"pageid": 1, "title": "First", "lat": 48.5, "lon": 7.5},
+                    ]
+                },
+                "continue": {"gscontinue": "next_page_token"},
+            },
+        }
+
+        class Response:
+            def __init__(self, status_code=200, headers=None, json_func=None):
+                self.status_code = status_code
+                self.headers = headers or {}
+                self._json_func = json_func or (lambda: {})
+                self.text = ""
+
+            def raise_for_status(self):
+                if self.status_code >= 400:
+                    raise RuntimeError("http error")
+
+            def json(self):
+                return self._json_func()
+
+        mock_get.side_effect = [
+            Response(headers=first_page["headers"], json_func=first_page["json"]),
+            RuntimeError("network down"),
+            RuntimeError("still down"),
+        ]
+
+        with pytest.raises(WikiFetchError):
+            self.fetcher.get_articles_in_bbox(north=49.0, west=7.0, south=48.0, east=8.0, retries=2)
+
+    @patch("requests.get")
+    def test_get_articles_in_bounds_filters_bounds_polygon_and_bad_coordinates(self, mock_get):
+        """Should only keep unique articles with valid coordinates inside bounds and polygon."""
+        mock_get.return_value.headers = {"Content-Type": "application/json"}
+        mock_get.return_value.json.return_value = {
+            "query": {
+                "geosearch": [
+                    {"pageid": 1, "title": "Inside", "lat": 48.1, "lon": 7.1},
+                    {"pageid": 1, "title": "Duplicate", "lat": 48.1, "lon": 7.1},
+                    {"pageid": 2, "title": "Outside bounds", "lat": 48.1, "lon": 9.0},
+                    {"pageid": 3, "title": "Outside polygon", "lat": 48.15, "lon": 7.15},
+                    {"pageid": 4, "title": "Missing longitude", "lat": 48.1},
+                ]
+            }
+        }
+
+        articles = self.fetcher.get_articles_in_bounds(
+            min_lon=7.0,
+            min_lat=48.0,
+            max_lon=7.2,
+            max_lat=48.2,
+            polygon_filter=lambda lon, lat: lon < 7.12,
+        )
+
+        assert articles == [{"pageid": 1, "title": "Inside", "lat": 48.1, "lon": 7.1}]
 
     @patch("requests.get")
     def test_get_articles_in_bbox_filters_outside_bounds(self, mock_get):

@@ -1,7 +1,11 @@
 
 import requests
-from typing import List, Dict
+from typing import List, Dict, Optional
 import time
+
+
+class WikiFetchError(RuntimeError):
+    """Raised when a Wikipedia API request cannot be completed."""
 
 
 class WikiFetcher:
@@ -40,6 +44,7 @@ class WikiFetcher:
         Find Wikipedia articles within a rectangular bounding box.
         Coordinates order: Top(North), Left(West), Bottom(South), Right(East).
         Handles pagination automatically when results exceed 500.
+        Raises WikiFetchError if any page cannot be fetched after retries.
         """
         all_articles = []
         continuation = None
@@ -55,53 +60,7 @@ class WikiFetcher:
             if continuation:
                 params["gscontinue"] = continuation
 
-            data = None
-            for attempt in range(retries):
-                try:
-                    response = requests.get(self.api_url, params=params, headers=self.headers, timeout=15)
-                    
-                    if response.status_code == 429:
-                        wait_time = (2 ** attempt) * 5
-                        print(f"  Rate limited (429). Waiting {wait_time}s...")
-                        time.sleep(wait_time)
-                        continue
-                        
-                    response.raise_for_status()
-                    
-                    # Check if it's actually JSON
-                    if "application/json" not in response.headers.get("Content-Type", ""):
-                        if "too many requests" in response.text.lower():
-                            wait_time = (2 ** attempt) * 10
-                            print(f"  Rate limited (HTML response). Waiting {wait_time}s...")
-                            time.sleep(wait_time)
-                            continue
-                        raise ValueError("Non-JSON response received")
-
-                    data = response.json()
-                    
-                    # Wikipedia sometimes returns 200 OK but with errors in the JSON
-                    if "error" in data:
-                        error_code = data["error"].get("code")
-                        if error_code in ["ratelimited", "request-too-large"]:
-                            wait_time = (2 ** attempt) * 5
-                            print(f"  API Error ({error_code}). Waiting {wait_time}s...")
-                            time.sleep(wait_time)
-                            continue
-                    
-                    time.sleep(0.5)  # Polite sleep
-                    break
-                except (requests.RequestException, ValueError) as e:
-                    if attempt < retries - 1:
-                        wait_time = (2 ** attempt) * 2
-                        print(f"  Request failed ({type(e).__name__}). Retrying in {wait_time}s...")
-                        time.sleep(wait_time)
-                    continue
-            else:
-                print(f"  Failed to fetch bbox {north}|{west}|{south}|{east} after {retries} retries.")
-                break  # Failed all retries
-
-            if not data:
-                break
+            data = self._request_json(params, retries, timeout=15)
 
             geosearch = data.get("query", {}).get("geosearch", [])
             all_articles.extend(geosearch)
@@ -141,13 +100,14 @@ class WikiFetcher:
                 tile_articles = self.get_articles_in_bbox(north=north, west=west, south=lat, east=east)
                 print(f"Tile {tile_count}: ({lat:.4f}, {lon:.4f}) to ({north:.4f}, {east:.4f}) -> {len(tile_articles)} articles")
                 for article in tile_articles:
-                    if article["pageid"] not in seen_ids:
+                    pageid = article.get("pageid")
+                    if pageid is not None and pageid not in seen_ids:
                         # Filter to only articles within our precise bounds
                         if self._in_bounds(article, min_lon, min_lat, max_lon, max_lat):
                             # If polygon_filter provided, check if article is within any polygon
                             if polygon_filter and not polygon_filter(article["lon"], article["lat"]):
                                 continue
-                            seen_ids.add(article["pageid"])
+                            seen_ids.add(pageid)
                             articles.append(article)
 
                 lon += lon_step
@@ -159,7 +119,52 @@ class WikiFetcher:
 
     def _in_bounds(self, article: Dict, min_lon: float, min_lat: float, max_lon: float, max_lat: float) -> bool:
         """Check if article coordinates fall within bounds."""
-        return min_lon <= article["lon"] <= max_lon and min_lat <= article["lat"] <= max_lat
+        lon = article.get("lon")
+        lat = article.get("lat")
+        if not isinstance(lon, (int, float)) or not isinstance(lat, (int, float)):
+            return False
+        return min_lon <= lon <= max_lon and min_lat <= lat <= max_lat
+
+    def _request_json(self, params: Dict, retries: int, timeout: int) -> Dict:
+        """Fetch one Wikipedia API page, retrying transient failures."""
+        last_error: Optional[Exception] = None
+
+        for attempt in range(retries):
+            try:
+                response = requests.get(self.api_url, params=params, headers=self.headers, timeout=timeout)
+
+                if response.status_code == 429:
+                    self._sleep_before_retry("Rate limited (429)", attempt, scale=5)
+                    continue
+
+                response.raise_for_status()
+
+                if "application/json" not in response.headers.get("Content-Type", ""):
+                    if "too many requests" in response.text.lower():
+                        self._sleep_before_retry("Rate limited (HTML response)", attempt, scale=10)
+                        continue
+                    raise ValueError("Non-JSON response received")
+
+                data = response.json()
+
+                error_code = data.get("error", {}).get("code")
+                if error_code in {"ratelimited", "request-too-large"}:
+                    self._sleep_before_retry(f"API Error ({error_code})", attempt, scale=5)
+                    continue
+
+                time.sleep(0.5)
+                return data
+            except Exception as exc:
+                last_error = exc
+                if attempt < retries - 1:
+                    self._sleep_before_retry(f"Request failed ({type(exc).__name__})", attempt, scale=2)
+
+        raise WikiFetchError(f"Failed to fetch Wikipedia API page after {retries} retries") from last_error
+
+    def _sleep_before_retry(self, message: str, attempt: int, scale: int) -> None:
+        wait_time = (2 ** attempt) * scale
+        print(f"  {message}. Retrying in {wait_time}s...")
+        time.sleep(wait_time)
 
 
 if __name__ == "__main__":

@@ -7420,16 +7420,6 @@
     "url": "https://fr.wikipedia.org/wiki/Mus%C3%A9e%20des%20antiquit%C3%A9s%20de%20B%C3%A2le%20et%20Collection%20Ludwig"
   },
   {
-    "pageid": 4134285,
-    "ns": 0,
-    "title": "Tournoi de tennis de B\u00e2le (ATP 2009)",
-    "lat": 47.567,
-    "lon": 7.583,
-    "dist": 8390.3,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202009%29"
-  },
-  {
     "pageid": 10692426,
     "ns": 0,
     "title": "Tournoi de tennis de B\u00e2le (ATP 2004)",
@@ -7450,6 +7440,16 @@
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202022%29"
   },
   {
+    "pageid": 4134285,
+    "ns": 0,
+    "title": "Tournoi de tennis de B\u00e2le (ATP 2009)",
+    "lat": 47.567,
+    "lon": 7.583,
+    "dist": 8390.3,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202009%29"
+  },
+  {
     "pageid": 10700397,
     "ns": 0,
     "title": "Tournoi de tennis de B\u00e2le (ATP 2001)",
@@ -7458,6 +7458,16 @@
     "dist": 8390.3,
     "primary": "",
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202001%29"
+  },
+  {
+    "pageid": 10694575,
+    "ns": 0,
+    "title": "Tournoi de tennis de B\u00e2le (ATP 2002)",
+    "lat": 47.567,
+    "lon": 7.583,
+    "dist": 8390.3,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202002%29"
   },
   {
     "pageid": 3386724,
@@ -7478,16 +7488,6 @@
     "dist": 8390.3,
     "primary": "",
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202017%29"
-  },
-  {
-    "pageid": 10694575,
-    "ns": 0,
-    "title": "Tournoi de tennis de B\u00e2le (ATP 2002)",
-    "lat": 47.567,
-    "lon": 7.583,
-    "dist": 8390.3,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202002%29"
   },
   {
     "pageid": 10689691,
@@ -7530,26 +7530,6 @@
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202008%29"
   },
   {
-    "pageid": 16530049,
-    "ns": 0,
-    "title": "Tournoi de tennis de B\u00e2le (ATP 2024)",
-    "lat": 47.567,
-    "lon": 7.583,
-    "dist": 8390.3,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202024%29"
-  },
-  {
-    "pageid": 12826962,
-    "ns": 0,
-    "title": "Tournoi de tennis de B\u00e2le (ATP 2019)",
-    "lat": 47.567,
-    "lon": 7.583,
-    "dist": 8390.3,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202019%29"
-  },
-  {
     "pageid": 12119068,
     "ns": 0,
     "title": "Tournoi de tennis de B\u00e2le (ATP 2018)",
@@ -7570,14 +7550,34 @@
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202010%29"
   },
   {
-    "pageid": 2123512,
+    "pageid": 12826962,
     "ns": 0,
-    "title": "Tournoi de tennis de B\u00e2le (ATP 2007)",
+    "title": "Tournoi de tennis de B\u00e2le (ATP 2019)",
     "lat": 47.567,
     "lon": 7.583,
     "dist": 8390.3,
     "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202007%29"
+    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202019%29"
+  },
+  {
+    "pageid": 16530049,
+    "ns": 0,
+    "title": "Tournoi de tennis de B\u00e2le (ATP 2024)",
+    "lat": 47.567,
+    "lon": 7.583,
+    "dist": 8390.3,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202024%29"
+  },
+  {
+    "pageid": 15999962,
+    "ns": 0,
+    "title": "Tournoi de tennis de B\u00e2le (ATP 1999)",
+    "lat": 47.567,
+    "lon": 7.583,
+    "dist": 8390.3,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%201999%29"
   },
   {
     "pageid": 6659562,
@@ -7590,6 +7590,16 @@
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202012%29"
   },
   {
+    "pageid": 2123512,
+    "ns": 0,
+    "title": "Tournoi de tennis de B\u00e2le (ATP 2007)",
+    "lat": 47.567,
+    "lon": 7.583,
+    "dist": 8390.3,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202007%29"
+  },
+  {
     "pageid": 10693139,
     "ns": 0,
     "title": "Tournoi de tennis de B\u00e2le (ATP 2003)",
@@ -7598,16 +7608,6 @@
     "dist": 8390.3,
     "primary": "",
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202003%29"
-  },
-  {
-    "pageid": 15999962,
-    "ns": 0,
-    "title": "Tournoi de tennis de B\u00e2le (ATP 1999)",
-    "lat": 47.567,
-    "lon": 7.583,
-    "dist": 8390.3,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%201999%29"
   },
   {
     "pageid": 5822565,
@@ -7630,24 +7630,14 @@
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202016%29"
   },
   {
-    "pageid": 15935208,
+    "pageid": 9465165,
     "ns": 0,
-    "title": "Tournoi de tennis de B\u00e2le (ATP 2023)",
+    "title": "Tournoi de tennis de B\u00e2le (ATP 2015)",
     "lat": 47.567,
     "lon": 7.583,
     "dist": 8390.3,
     "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202023%29"
-  },
-  {
-    "pageid": 17052618,
-    "ns": 0,
-    "title": "Tournoi de tennis de B\u00e2le (ATP 2025)",
-    "lat": 47.567,
-    "lon": 7.583,
-    "dist": 8390.3,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202025%29"
+    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202015%29"
   },
   {
     "pageid": 8300606,
@@ -7660,14 +7650,24 @@
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202014%29"
   },
   {
-    "pageid": 9465165,
+    "pageid": 17052618,
     "ns": 0,
-    "title": "Tournoi de tennis de B\u00e2le (ATP 2015)",
+    "title": "Tournoi de tennis de B\u00e2le (ATP 2025)",
     "lat": 47.567,
     "lon": 7.583,
     "dist": 8390.3,
     "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202015%29"
+    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202025%29"
+  },
+  {
+    "pageid": 15935208,
+    "ns": 0,
+    "title": "Tournoi de tennis de B\u00e2le (ATP 2023)",
+    "lat": 47.567,
+    "lon": 7.583,
+    "dist": 8390.3,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20B%C3%A2le%20%28ATP%202023%29"
   },
   {
     "pageid": 10700605,
@@ -11380,16 +11380,6 @@
     "url": "https://fr.wikipedia.org/wiki/Dogern"
   },
   {
-    "pageid": 2342312,
-    "ns": 0,
-    "title": "Schinznach",
-    "lat": 47.448611,
-    "lon": 8.144452,
-    "dist": 12690.1,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Schinznach"
-  },
-  {
     "pageid": 226961,
     "ns": 0,
     "title": "Schinznach-Dorf",
@@ -11398,6 +11388,16 @@
     "dist": 12690.1,
     "primary": "",
     "url": "https://fr.wikipedia.org/wiki/Schinznach-Dorf"
+  },
+  {
+    "pageid": 2342312,
+    "ns": 0,
+    "title": "Schinznach",
+    "lat": 47.448611,
+    "lon": 8.144452,
+    "dist": 12690.1,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Schinznach"
   },
   {
     "pageid": 229595,
@@ -16640,16 +16640,6 @@
     "url": "https://fr.wikipedia.org/wiki/Hilsenfirst"
   },
   {
-    "pageid": 15041592,
-    "ns": 0,
-    "title": "Ancienne synagogue de Gundershoffen",
-    "lat": 47.8118,
-    "lon": 7.098245,
-    "dist": 12470.8,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Ancienne%20synagogue%20de%20Gundershoffen"
-  },
-  {
     "pageid": 6909865,
     "ns": 0,
     "title": "Synagogue de Thann",
@@ -16658,6 +16648,16 @@
     "dist": 12470.8,
     "primary": "",
     "url": "https://fr.wikipedia.org/wiki/Synagogue%20de%20Thann"
+  },
+  {
+    "pageid": 15041592,
+    "ns": 0,
+    "title": "Ancienne synagogue de Gundershoffen",
+    "lat": 47.8118,
+    "lon": 7.098245,
+    "dist": 12470.8,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Ancienne%20synagogue%20de%20Gundershoffen"
   },
   {
     "pageid": 7314129,
@@ -18360,16 +18360,6 @@
     "url": "https://fr.wikipedia.org/wiki/Cascade%20du%20Kletterbach"
   },
   {
-    "pageid": 6548852,
-    "ns": 0,
-    "title": "Unit\u00e9 urbaine de Thann-Cernay",
-    "lat": 47.8072,
-    "lon": 7.1767,
-    "dist": 9480.2,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Unit%C3%A9%20urbaine%20de%20Thann-Cernay"
-  },
-  {
     "pageid": 104887,
     "ns": 0,
     "title": "Cernay (Haut-Rhin)",
@@ -18378,6 +18368,16 @@
     "dist": 9480.2,
     "primary": "",
     "url": "https://fr.wikipedia.org/wiki/Cernay%20%28Haut-Rhin%29"
+  },
+  {
+    "pageid": 6548852,
+    "ns": 0,
+    "title": "Unit\u00e9 urbaine de Thann-Cernay",
+    "lat": 47.8072,
+    "lon": 7.1767,
+    "dist": 9480.2,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Unit%C3%A9%20urbaine%20de%20Thann-Cernay"
   },
   {
     "pageid": 7313935,
@@ -26590,16 +26590,6 @@
     "url": "https://fr.wikipedia.org/wiki/Cath%C3%A9drale%20Notre-Dame%20de%20Fribourg"
   },
   {
-    "pageid": 26570,
-    "ns": 0,
-    "title": "Fribourg-en-Brisgau",
-    "lat": 47.9955,
-    "lon": 7.8522,
-    "dist": 10745.2,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Fribourg-en-Brisgau"
-  },
-  {
     "pageid": 2957937,
     "ns": 0,
     "title": "Bataille de Fribourg (1644)",
@@ -26608,6 +26598,16 @@
     "dist": 10745.2,
     "primary": "",
     "url": "https://fr.wikipedia.org/wiki/Bataille%20de%20Fribourg%20%281644%29"
+  },
+  {
+    "pageid": 26570,
+    "ns": 0,
+    "title": "Fribourg-en-Brisgau",
+    "lat": 47.9955,
+    "lon": 7.8522,
+    "dist": 10745.2,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Fribourg-en-Brisgau"
   },
   {
     "pageid": 16719159,
@@ -37710,16 +37710,6 @@
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20Strasbourg%20%28WTA%202024%29"
   },
   {
-    "pageid": 11639051,
-    "ns": 0,
-    "title": "Tournoi de tennis de Strasbourg (WTA 2018)",
-    "lat": 48.6016,
-    "lon": 7.76887,
-    "dist": 1363.7,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20Strasbourg%20%28WTA%202018%29"
-  },
-  {
     "pageid": 13592523,
     "ns": 0,
     "title": "Tournoi de tennis de Strasbourg (WTA 2020)",
@@ -37728,6 +37718,16 @@
     "dist": 1363.7,
     "primary": "",
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20Strasbourg%20%28WTA%202020%29"
+  },
+  {
+    "pageid": 11639051,
+    "ns": 0,
+    "title": "Tournoi de tennis de Strasbourg (WTA 2018)",
+    "lat": 48.6016,
+    "lon": 7.76887,
+    "dist": 1363.7,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20Strasbourg%20%28WTA%202018%29"
   },
   {
     "pageid": 17316505,
@@ -37750,6 +37750,16 @@
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20Strasbourg%20%28WTA%202021%29"
   },
   {
+    "pageid": 10007485,
+    "ns": 0,
+    "title": "Tournoi de tennis de Strasbourg (WTA 2016)",
+    "lat": 48.6016,
+    "lon": 7.76887,
+    "dist": 1363.7,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20Strasbourg%20%28WTA%202016%29"
+  },
+  {
     "pageid": 14592963,
     "ns": 0,
     "title": "Tournoi de tennis de Strasbourg (WTA 2022)",
@@ -37768,16 +37778,6 @@
     "dist": 1363.7,
     "primary": "",
     "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20Strasbourg%20%28WTA%202023%29"
-  },
-  {
-    "pageid": 10007485,
-    "ns": 0,
-    "title": "Tournoi de tennis de Strasbourg (WTA 2016)",
-    "lat": 48.6016,
-    "lon": 7.76887,
-    "dist": 1363.7,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Tournoi%20de%20tennis%20de%20Strasbourg%20%28WTA%202016%29"
   },
   {
     "pageid": 486643,
@@ -39690,16 +39690,6 @@
     "url": "https://fr.wikipedia.org/wiki/Quartier%20de%20la%20Gare%20%28Strasbourg%29"
   },
   {
-    "pageid": 150307,
-    "ns": 0,
-    "title": "Arrondissement de Strasbourg-Campagne",
-    "lat": 48.5833,
-    "lon": 7.75,
-    "dist": 2340.5,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Arrondissement%20de%20Strasbourg-Campagne"
-  },
-  {
     "pageid": 12597342,
     "ns": 0,
     "title": "Lib\u00e9ration de Strasbourg",
@@ -39708,6 +39698,16 @@
     "dist": 2340.5,
     "primary": "",
     "url": "https://fr.wikipedia.org/wiki/Lib%C3%A9ration%20de%20Strasbourg"
+  },
+  {
+    "pageid": 150307,
+    "ns": 0,
+    "title": "Arrondissement de Strasbourg-Campagne",
+    "lat": 48.5833,
+    "lon": 7.75,
+    "dist": 2340.5,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Arrondissement%20de%20Strasbourg-Campagne"
   },
   {
     "pageid": 13639121,
@@ -40700,16 +40700,6 @@
     "url": "https://fr.wikipedia.org/wiki/Rue%20de%20la%20R%C3%A2pe"
   },
   {
-    "pageid": 2713920,
-    "ns": 0,
-    "title": "Cath\u00e9drale Notre-Dame de Strasbourg",
-    "lat": 48.5817,
-    "lon": 7.750565,
-    "dist": 2517.7,
-    "primary": "",
-    "url": "https://fr.wikipedia.org/wiki/Cath%C3%A9drale%20Notre-Dame%20de%20Strasbourg"
-  },
-  {
     "pageid": 14180516,
     "ns": 0,
     "title": "Cath\u00e9drale de Werner",
@@ -40718,6 +40708,16 @@
     "dist": 2517.7,
     "primary": "",
     "url": "https://fr.wikipedia.org/wiki/Cath%C3%A9drale%20de%20Werner"
+  },
+  {
+    "pageid": 2713920,
+    "ns": 0,
+    "title": "Cath\u00e9drale Notre-Dame de Strasbourg",
+    "lat": 48.5817,
+    "lon": 7.750565,
+    "dist": 2517.7,
+    "primary": "",
+    "url": "https://fr.wikipedia.org/wiki/Cath%C3%A9drale%20Notre-Dame%20de%20Strasbourg"
   },
   {
     "pageid": 6794632,
