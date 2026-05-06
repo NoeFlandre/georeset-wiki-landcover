@@ -1,0 +1,30 @@
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test and coverage output
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Project data lives in the Hugging Face bucket, not Git.
+data/
+
+# Local environment files
+.env
+.env.*
+
+# System/editor files
+.DS_Store
+*.swp

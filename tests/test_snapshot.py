@@ -1,11 +1,11 @@
 """Tests for snapshot."""
 
 from unittest.mock import patch, MagicMock
-from src.snapshot import snapshot
+from src.scripts.snapshot import snapshot
 
 
 class TestSnapshot:
-    @patch("src.snapshot.DataFetcher")
+    @patch("src.scripts.snapshot.DataFetcher")
     def test_snapshot_runs_without_error(self, mock_fetcher_class):
         """Should run without raising exceptions when mocked."""
         mock_gdf = MagicMock()
@@ -20,7 +20,7 @@ class TestSnapshot:
         with patch.object(mock_gdf, "__getitem__", side_effect=lambda key: MagicMock()):
             snapshot(n_samples=3)
 
-    @patch("src.snapshot.DataFetcher")
+    @patch("src.scripts.snapshot.DataFetcher")
     def test_snapshot_calls_load_data(self, mock_fetcher_class):
         """Should call load_data on the DataFetcher."""
         mock_gdf = MagicMock()
@@ -36,7 +36,7 @@ class TestSnapshot:
         snapshot(n_samples=1)
         mock_fetcher.load_data.assert_called_once()
 
-    @patch("src.snapshot.DataFetcher")
+    @patch("src.scripts.snapshot.DataFetcher")
     def test_snapshot_calls_get_bounds(self, mock_fetcher_class):
         """Should call get_bounds on the DataFetcher."""
         mock_gdf = MagicMock()
@@ -52,7 +52,7 @@ class TestSnapshot:
         snapshot(n_samples=1)
         mock_fetcher.get_bounds.assert_called_once()
 
-    @patch("src.snapshot.DataFetcher")
+    @patch("src.scripts.snapshot.DataFetcher")
     def test_snapshot_calls_get_sample_polygons(self, mock_fetcher_class):
         """Should call get_sample_polygons with correct n_samples."""
         mock_gdf = MagicMock()
@@ -69,7 +69,7 @@ class TestSnapshot:
         mock_fetcher.get_sample_polygons.assert_called_once_with(n=5, level=2)
 
     @patch("builtins.print")
-    @patch("src.snapshot.DataFetcher")
+    @patch("src.scripts.snapshot.DataFetcher")
     def test_snapshot_prints_dataset_info(self, mock_fetcher_class, mock_print):
         """Should print dataset information."""
         mock_gdf = MagicMock()
