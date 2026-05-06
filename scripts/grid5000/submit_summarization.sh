@@ -47,6 +47,9 @@ echo "Watch stderr: ssh -o BatchMode=yes ${ACCESS_HOST} \"ssh ${SITE} 'tail -f /
 echo "Syncing ${OUTPUT_PATH}; press Ctrl+C to stop after the job finishes."
 
 while true; do
-  rsync -az "${ACCESS_HOST}:${SITE}/${REMOTE_DIR}/${OUTPUT_PATH}" "./${OUTPUT_PATH}" || true
+  if ssh -o BatchMode=yes "${ACCESS_HOST}" "ssh ${SITE} 'test -f /home/nflandre/${REMOTE_DIR}/${OUTPUT_PATH}'"; then
+    ssh -o BatchMode=yes "${ACCESS_HOST}" "ssh ${SITE} 'cat /home/nflandre/${REMOTE_DIR}/${OUTPUT_PATH}'" > "./${OUTPUT_PATH}.tmp"
+    mv "./${OUTPUT_PATH}.tmp" "./${OUTPUT_PATH}"
+  fi
   sleep 30
 done
