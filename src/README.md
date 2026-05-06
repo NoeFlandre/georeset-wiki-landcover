@@ -1,23 +1,61 @@
 # Source Code Overview
 
-This directory contains the core logic for the GeoReset pipeline, which connects spatial land cover data with textual environmental descriptions.
+`src/` contains the GeoReset Python package. The package is organized around
+small modules for fetching geospatial/text data, analyzing polygon overlap, and
+writing visual checks.
 
-## Files
+## Packages
 
-- **[data_fetcher.py](file:///Users/noeflandre/georeset/src/data_fetcher.py)**: Manages loading and processing of Corine Land Cover (CLC) datasets using `geopandas`.
-    - Handles CRS transformations (Lambert 93 to WGS84).
-    - Extracts polygon centroids and bounding boxes.
+- `src.fetchers`
+  - `data_fetcher.py`: loads CORINE data from `data/corine/`, converts to WGS84,
+    maps CORINE codes to labels, and exposes bounds/sampling helpers.
+  - `wiki_fetcher.py`: fetches French Wikipedia geosearch metadata for the
+    CORINE bounds, with optional CORINE and OSM polygon filters.
+  - `wiki_content_fetcher.py`: fetches full Wikipedia article extracts from
+    `data/wiki/wiki_articles.json`. Existing output is sanitized before resume;
+    duplicate page IDs are skipped; progress is checkpointed after each batch.
+  - `osm_fetcher.py`: fetches OSM land-cover polygons from Overpass using the
+    project tag allowlist.
 
-- **[wiki_fetcher.py](file:///Users/noeflandre/georeset/src/wiki_fetcher.py)**: Fetches Wikipedia articles based on geographic coordinates.
-    - Uses the Wikipedia `geosearch` API.
-    - Implements a grid-based search to cover entire bounding boxes, as the API is limited to point-radius queries.
-    - Includes retry logic and rate-limiting (polite headers).
+- `src.analysis`
+  - `corine_polygon_stats.py`: computes CORINE class area/share distributions
+    inside OSM polygons.
+  - `distribution_summary.py`: summarizes distribution CSV outputs.
 
-- **[snapshot.py](file:///Users/noeflandre/georeset/src/snapshot.py)**: A utility script to provide a quick statistical overview of the loaded dataset (class distribution, polygon counts, etc.).
+- `src.visualization`
+  - `map_visualizer.py`: writes Folium maps for CORINE polygons, Wikipedia
+    article points, and OSM polygon overlays.
 
-## Implementation Notes
+- `src.scripts`
+  - `snapshot.py`: prints a quick CORINE dataset snapshot.
+  - `run_corine_analysis.py`: runs OSM/CORINE distribution and map generation.
+  - `summarize_articles.py`: summarizes fetched article content with an LLM.
 
-- **Spatial Precision**: Centroid calculations are performed in Lambert 93 (meters) for accuracy before being converted back to WGS84 (degrees) for use with the Wikipedia API.
-- **Coverage Strategy**: `WikiFetcher` uses an overlapping grid of circular searches (80% diameter step) to ensure no location is missed within a region's bounding box.
-- **Modularity**: The fetchers are designed to be independent, allowing for easy extension to other data sources (e.g., OpenStreetMap or different land cover datasets).
-- **Error Handling**: Wikipedia API calls include basic retry mechanisms to handle network instability during bulk downloads.
+## Data Contract
+
+The package reads and writes local paths under `data/`, but `data/` is not part
+of the Git repository. Sync it from the Hugging Face bucket before running
+pipeline commands:
+
+```bash
+hf sync hf://buckets/NoeFlandre/georeset ./data
+```
+
+After generating or fetching data, sync it back:
+
+```bash
+hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
+```
+
+## Common Entry Points
+
+```bash
+uv run python -m src.scripts.snapshot
+uv run python -m src.fetchers.wiki_fetcher
+uv run python -m src.fetchers.wiki_content_fetcher
+uv run python -m src.visualization.map_visualizer
+uv run python -m src.scripts.run_corine_analysis
+```
+
+Use `PYTHONDONTWRITEBYTECODE=1` while developing if you want to avoid local
+`__pycache__` churn.

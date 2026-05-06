@@ -1,46 +1,168 @@
 # GeoReset
 
-This repository is part of the GeoReset project: https://geo-reset.sylvainlobry.com/
+GeoReset experiments with whether text descriptions near land-cover polygons can
+help an LLM infer the correct CORINE land-cover class.
 
-This codebase focuses on experiments around CORINE land-cover polygons, nearby
-Wikipedia articles, and OpenStreetMap land-cover polygons for the same Alsace
-bounds.
+- Project site: https://geo-reset.sylvainlobry.com/
+- Code repository: https://github.com/NoeFlandre/georeset
+- Data bucket: https://huggingface.co/buckets/NoeFlandre/georeset
 
-Code lives on GitHub: https://github.com/NoeFlandre/georeset
+## Code And Data Split
 
-Generated and downloaded project data lives in the Hugging Face bucket:
-https://huggingface.co/buckets/NoeFlandre/georeset
+GitHub stores source code, tests, Docker configuration, and documentation.
+Generated and downloaded project data lives in the Hugging Face bucket. Keep
+`data/` out of Git.
 
-Sync the data locally with:
+Download or refresh data from Hugging Face:
 
 ```bash
 hf sync hf://buckets/NoeFlandre/georeset ./data
 ```
 
-## Current Pipeline
+Upload local data changes back to Hugging Face:
 
-- Choose a map (CORINE? EUNIS? LUCAS?) ==> CORINE
-- Choose a region (Alsace?) ==> Alsace
-- Choose the class to keep ==> Stick to a few number of classes (Level 1 or Level 2)
-- Scrape polygons and their classes from the map
-- Scrape relevant web pages with respect to these polygons
-- Ask an LLM to summarize / rephrase these web pages
-- Make sure there is no mention of the place itself in the resulting descriptions
-- Give the rephrased descriptions to another LLM and ask it to classify the associated polygon (classes will be provided to the LLM)
-- We evaluate the classification produced by the LLM using standard metrics like precision, recall and so on.
+```bash
+hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
+```
 
-The goal here is to assess whether based solely on the text description an LLM is able to deduce the correct class of the polygon.
+Before committing code, check that no data files are staged:
 
-The data used was downloaded here: https://www.datagrandest.fr/geonetwork/srv/api/records/c0ccbf45-2620-4bde-93f8-869558e51d7e?language=fre
+```bash
+git status --short
+git ls-files data build
+```
 
-## Main Modules
+`git ls-files data build` should print nothing. If data was staged by mistake:
 
-- `src/data_fetcher.py`: loads the CORINE shapefile and exposes its bounds.
-- `src/wiki_fetcher.py`: fetches French Wikipedia geosearch articles inside the CORINE bounds and optional polygon filter.
-- `src/osm_fetcher.py`: fetches OSM polygons from Overpass for the same CORINE bounds.
-- `src/corine_polygon_stats.py`: computes CORINE class area/share distributions inside OSM polygons.
-- `src/map_visualizer.py`: writes Folium maps for visual checks.
-- `src/run_corine_analysis.py`: orchestrates the OSM fetch, CORINE distribution CSV, and OSM/CORINE map.
+```bash
+git rm -r --cached data build
+git add .gitignore README.md src tests pyproject.toml uv.lock LICENSE Dockerfile .dockerignore
+```
+
+## Repository Layout
+
+- `src/fetchers/data_fetcher.py`: loads CORINE shapefiles and exposes bounds,
+  class labels, centroids, and samples.
+- `src/fetchers/wiki_fetcher.py`: fetches French Wikipedia geosearch metadata
+  inside the CORINE bounds and project polygon filters.
+- `src/fetchers/wiki_content_fetcher.py`: fetches full Wikipedia extracts from
+  page IDs. It sanitizes existing output, skips already-fetched entries, writes
+  checkpoints after each batch, and can be stopped/resumed at any time.
+- `src/fetchers/osm_fetcher.py`: fetches project-relevant OSM land-cover
+  polygons from Overpass.
+- `src/analysis/corine_polygon_stats.py`: computes CORINE class area/share
+  distributions inside OSM polygons.
+- `src/analysis/distribution_summary.py`: summarizes distribution outputs.
+- `src/visualization/map_visualizer.py`: writes Folium map visualizations.
+- `src/scripts/run_corine_analysis.py`: runs the OSM/CORINE distribution and
+  map generation workflow.
+- `src/scripts/snapshot.py`: prints a quick CORINE dataset snapshot.
+- `src/scripts/summarize_articles.py`: summarizes fetched article content with
+  a local LLM backend.
+
+## Data Artifacts
+
+These files are expected under `data/` after syncing the bucket:
+
+- `data/corine/`: CORINE shapefile and bounds.
+- `data/wiki/wiki_articles.json`: Wikipedia geosearch metadata.
+- `data/wiki/article_contents.json`: resumable Wikipedia article content.
+- `data/osm/osm_project_polygons.geojson`: project-relevant OSM polygons.
+- `data/distribution/osm_corine_distribution.csv`: CORINE class area/share
+  distribution inside OSM polygons.
+- `data/maps/`: generated HTML visualizations.
+
+The source CORINE data was downloaded from:
+https://www.datagrandest.fr/geonetwork/srv/api/records/c0ccbf45-2620-4bde-93f8-869558e51d7e?language=fre
+
+## Local Setup
+
+Install dependencies with `uv`:
+
+```bash
+uv sync --all-groups
+hf sync hf://buckets/NoeFlandre/georeset ./data
+```
+
+Run tests:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run pytest
+```
+
+Run only the resumable Wikipedia content fetcher tests:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run pytest tests/fetchers/test_wiki_content_fetcher.py -q
+```
+
+## Pipeline Commands
+
+Print a quick dataset snapshot:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run python -m src.scripts.snapshot
+```
+
+Fetch Wikipedia article metadata:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run python -m src.fetchers.wiki_fetcher
+```
+
+Fetch full Wikipedia article content. This command is resumable: stop it with
+`Ctrl-C`, then run it again and it will skip sane entries already saved in
+`data/wiki/article_contents.json`.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run python -m src.fetchers.wiki_content_fetcher
+hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
+```
+
+Regenerate the CORINE + Wikipedia article map:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run python -m src.visualization.map_visualizer
+```
+
+Fetch/use OSM polygons, compute CORINE distributions, and generate the separate
+CORINE + OSM map:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run python -m src.scripts.run_corine_analysis
+hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
+```
+
+## Docker
+
+The Docker image contains code and Python dependencies only. It intentionally
+does not bake in `data/`; mount local synced data at `/app/data`.
+
+Build the image:
+
+```bash
+docker build -t georeset .
+```
+
+Run a quick container smoke test:
+
+```bash
+docker run --rm georeset
+```
+
+Run tests in Docker:
+
+```bash
+docker run --rm -v "$PWD/data:/app/data" georeset uv run pytest tests/fetchers/test_wiki_content_fetcher.py -q
+```
+
+Run a pipeline command in Docker:
+
+```bash
+hf sync hf://buckets/NoeFlandre/georeset ./data
+docker run --rm -v "$PWD/data:/app/data" georeset uv run python -m src.fetchers.wiki_content_fetcher
+hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
+```
 
 ## OSM Scope
 
@@ -62,39 +184,25 @@ wood, scrub, grassland, wetland, heath, water, bare_rock, sand, scree,
 shingle, beach, mud
 ```
 
-## Generated Artifacts
+## Publishing Workflow
 
-Generated artifacts are intentionally not tracked in Git. They should be synced
-through the Hugging Face bucket above.
+Use this split every time:
 
-- `data/corine/`: CORINE shapefile and bounds
-- `data/osm/osm_project_polygons.geojson`: full project-relevant OSM polygon set for the same CORINE bounds
-- `data/distribution/osm_corine_distribution.csv`: area and share of CORINE classes inside each OSM polygon
-- `data/maps/`: HTML map visualizations (CORINE + OSM, CORINE + Wikipedia articles)
+1. Code/docs/tests go to GitHub.
+2. Generated/downloaded artifacts go to the Hugging Face bucket.
+3. Do not commit `data/`, `build/`, caches, or local environment files.
 
-## Commands
-
-Run tests:
+Code push:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run pytest
+git status --short
+git add .gitignore README.md Dockerfile .dockerignore src tests pyproject.toml uv.lock LICENSE
+git commit -m "Describe code change"
+git push origin main
 ```
 
-Fetch Wikipedia articles:
+Data push:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m src.wiki_fetcher
-```
-
-Regenerate the CORINE + Wikipedia article map:
-
-```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m src.map_visualizer
-```
-
-Fetch OSM polygons, compute CORINE distributions inside them, and generate the
-separate CORINE + OSM polygon map:
-
-```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m src.osm_corine_analysis
+hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```
