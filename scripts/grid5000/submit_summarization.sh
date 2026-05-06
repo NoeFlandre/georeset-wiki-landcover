@@ -44,12 +44,8 @@ fi
 echo "Submitted OAR job ${JOB_ID}"
 echo "Watch status: ssh -o BatchMode=yes ${ACCESS_HOST} \"ssh ${SITE} 'oarstat -j ${JOB_ID}'\""
 echo "Watch stderr: ssh -o BatchMode=yes ${ACCESS_HOST} \"ssh ${SITE} 'tail -f /home/nflandre/${REMOTE_DIR}/OAR_${JOB_ID}.err'\""
-echo "Syncing ${OUTPUT_PATH}; press Ctrl+C to stop after the job finishes."
+echo "Syncing ${OUTPUT_PATH}; press Ctrl+C to stop syncing after the job finishes."
 
-while true; do
-  if ssh -o BatchMode=yes "${ACCESS_HOST}" "ssh ${SITE} 'test -f /home/nflandre/${REMOTE_DIR}/${OUTPUT_PATH}'"; then
-    ssh -o BatchMode=yes "${ACCESS_HOST}" "ssh ${SITE} 'cat /home/nflandre/${REMOTE_DIR}/${OUTPUT_PATH}'" > "./${OUTPUT_PATH}.tmp"
-    mv "./${OUTPUT_PATH}.tmp" "./${OUTPUT_PATH}"
-  fi
-  sleep 30
-done
+G5K_ACCESS_HOST="${ACCESS_HOST}" G5K_SITE="${SITE}" G5K_REMOTE_DIR="${REMOTE_DIR}" \
+  GEORESET_SUMMARY_OUTPUT="${OUTPUT_PATH}" SYNC_INTERVAL_SECONDS="${SYNC_INTERVAL_SECONDS:-20}" \
+  bash scripts/grid5000/sync_summaries.sh
