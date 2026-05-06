@@ -30,6 +30,8 @@ writing visual checks.
   - `snapshot.py`: prints a quick CORINE dataset snapshot.
   - `run_corine_analysis.py`: runs OSM/CORINE distribution and map generation.
   - `summarize_articles.py`: summarizes fetched article content with an LLM.
+    It uses llama-cpp-python schema-constrained JSON generation and persists
+    only public summaries, never private thinking fields.
 
 ## Data Contract
 
@@ -55,6 +57,7 @@ uv run python -m src.fetchers.wiki_fetcher
 uv run python -m src.fetchers.wiki_content_fetcher
 uv run python -m src.visualization.map_visualizer
 uv run python -m src.scripts.run_corine_analysis
+uv run python -m src.scripts.summarize_articles
 ```
 
 Use `PYTHONDONTWRITEBYTECODE=1` while developing if you want to avoid local

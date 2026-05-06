@@ -7,7 +7,7 @@ import tempfile
 import pytest
 from unittest.mock import patch, MagicMock
 
-from src.scripts.summarize_articles import ArticleSummarizer
+from src.scripts.summarize_articles import ArticleSummarizer, parse_args
 
 
 class TestArticleSummarizer:
@@ -18,19 +18,36 @@ class TestArticleSummarizer:
             "url": "https://fr.wikipedia.org/wiki/Strasbourg"
         }
 
-    def test_summarize_returns_summary(self):
-        """Should return a dict with summary key for an article."""
-        summarizer = ArticleSummarizer(model_path=None)  # Will be mocked
-        with patch.object(summarizer, "_call_llm", return_value="Une ville française."):
+    def test_summarize_returns_summary_and_metadata(self):
+        """Should return a dict with summary key and metadata for an article."""
+        summarizer = ArticleSummarizer(model_path="test_model.gguf", seed=123, temperature=0.5)
+        expected_prompt = f"Résumez cet article Wikipedia en une phrase concise:\n\n{self.sample_article['content']}"
+        with patch.object(summarizer, "_generate_summary", return_value="Une ville française."):
             result = summarizer.summarize(self.sample_article)
             assert isinstance(result, dict)
             assert "summary" in result
             assert result["summary"] == "Une ville française."
+            assert "thinking" not in result
+            assert "metadata" in result
+            assert result["metadata"]["model"] == "test_model.gguf"
+            assert result["metadata"]["seed"] == 123
+            assert result["metadata"]["temperature"] == 0.5
+            assert result["metadata"]["prompt"] == expected_prompt
+
+    def test_gpu_optimization_enabled(self):
+        """Should initialize Llama with n_gpu_layers=-1 for GPU acceleration."""
+        summarizer = ArticleSummarizer(model_path="test_model.gguf")
+        mock_llama_cpp = MagicMock()
+        with patch.dict("sys.modules", {"llama_cpp": mock_llama_cpp}):
+            summarizer._get_llm()
+            mock_llama_cpp.Llama.from_pretrained.assert_called_once()
+            _, kwargs = mock_llama_cpp.Llama.from_pretrained.call_args
+            assert kwargs.get("n_gpu_layers") == -1
 
     def test_summarize_adds_summary_key(self):
         """Should add summary key to article dict without modifying original."""
         summarizer = ArticleSummarizer(model_path=None)
-        with patch.object(summarizer, "_call_llm", return_value="Résumé test"):
+        with patch.object(summarizer, "_generate_summary", return_value="Résumé test"):
             article_copy = dict(self.sample_article)
             result = summarizer.summarize(article_copy)
             assert "summary" in result
@@ -40,11 +57,49 @@ class TestArticleSummarizer:
     def test_summarize_preserves_original_fields(self):
         """Should not modify title, content, or url."""
         summarizer = ArticleSummarizer(model_path=None)
-        with patch.object(summarizer, "_call_llm", return_value="Résumé"):
+        with patch.object(summarizer, "_generate_summary", return_value="Résumé"):
             result = summarizer.summarize(self.sample_article)
             assert result["title"] == self.sample_article["title"]
             assert result["content"] == self.sample_article["content"]
             assert result["url"] == self.sample_article["url"]
+
+    def test_generate_summary_uses_llama_cpp_json_schema_mode(self):
+        """Should constrain llama.cpp output to the summary schema."""
+        summarizer = ArticleSummarizer(model_path=None, seed=123, temperature=0.5)
+        mock_llm = MagicMock()
+        mock_llm.create_chat_completion.return_value = {
+            "choices": [{"message": {"content": '{"summary": "Une ville française."}'}}]
+        }
+        summarizer._llm = mock_llm
+
+        assert summarizer._generate_summary("Prompt") == "Une ville française."
+
+        _, kwargs = mock_llm.create_chat_completion.call_args
+        assert kwargs["response_format"] == {
+            "type": "json_object",
+            "schema": ArticleSummarizer.SUMMARY_SCHEMA,
+        }
+        assert kwargs["max_tokens"] == 256
+        assert "thinking" not in json.dumps(kwargs["response_format"])
+
+    def test_generate_summary_rejects_thinking_polluted_response(self):
+        """Should fail loudly if the backend does not honor structured output."""
+        summarizer = ArticleSummarizer(model_path=None)
+        mock_llm = MagicMock()
+        mock_llm.create_chat_completion.return_value = {
+            "choices": [{"message": {"content": '<think>hidden</think>{"summary": "Résumé"}'}}]
+        }
+        summarizer._llm = mock_llm
+
+        with pytest.raises(ValueError, match="valid summary JSON"):
+            summarizer._generate_summary("Prompt")
+
+    def test_generate_summary_rejects_private_markers_inside_summary(self):
+        """Should not persist summaries that contain private reasoning markers."""
+        summarizer = ArticleSummarizer(model_path=None)
+
+        with pytest.raises(ValueError, match="private thinking markers"):
+            summarizer._summary_from_response('{"summary": "<think>hidden</think> Résumé"}')
 
     def test_process_file_skips_existing_and_saves_progress(self):
         """Should skip already-summarized articles and save progress."""
@@ -60,8 +115,12 @@ class TestArticleSummarizer:
                 json.dump(articles, f)
 
             summarizer = ArticleSummarizer(model_path=None)
-            with patch.object(summarizer, "_call_llm", side_effect=["Summary A", "Summary B"]):
-                summarizer.process_file(input_path, output_path)
+            with patch.object(summarizer, "_generate_summary", side_effect=["Summary A", "Summary B"]):
+                with patch("builtins.open", side_effect=open) as mock_open:
+                    summarizer.process_file(input_path, output_path)
+
+                    write_calls = [c for c in mock_open.call_args_list if c[0][0] == output_path and c[0][1] == "w"]
+                    assert len(write_calls) >= 2
 
             with open(output_path) as f:
                 result = json.load(f)
@@ -92,13 +151,34 @@ class TestArticleSummarizer:
 
             summarizer = ArticleSummarizer(model_path=None)
 
-            with patch.object(summarizer, "_call_llm", return_value=f"New summary for B"):
+            with patch.object(summarizer, "_generate_summary", return_value=f"New summary for B"):
                 summarizer.process_file(input_path, output_path)
 
             with open(output_path) as f:
                 result = json.load(f)
             assert result["1"]["summary"] == "Old summary"  # Preserved
             assert result["2"]["summary"] == "New summary for B"  # Added
+
+    def test_process_file_removes_existing_private_fields(self):
+        """Should clean private fields from resumed output files."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input_path = os.path.join(tmpdir, "articles.json")
+            output_path = os.path.join(tmpdir, "summaries.json")
+
+            article = {"title": "A", "content": "Content A", "url": "http://a"}
+            with open(input_path, "w") as f:
+                json.dump({"1": article}, f)
+
+            with open(output_path, "w") as f:
+                json.dump({"1": {**article, "summary": "Old summary", "thinking": "private"}}, f)
+
+            summarizer = ArticleSummarizer(model_path=None)
+            summarizer.process_file(input_path, output_path)
+
+            with open(output_path) as f:
+                result = json.load(f)
+            assert result["1"]["summary"] == "Old summary"
+            assert "thinking" not in result["1"]
 
     def test_process_file_handles_empty_content(self):
         """Should handle articles with empty content gracefully."""
@@ -113,9 +193,31 @@ class TestArticleSummarizer:
                 json.dump(articles, f)
 
             summarizer = ArticleSummarizer(model_path=None)
-            with patch.object(summarizer, "_call_llm", return_value="Summary of empty"):
+            with patch.object(summarizer, "_generate_summary", return_value="Summary of empty"):
                 summarizer.process_file(input_path, output_path)
 
             with open(output_path) as f:
                 result = json.load(f)
             assert "summary" in result["1"]
+
+
+def test_parse_args_uses_grid5000_ready_defaults(monkeypatch):
+    """Should default to the expected resumable summarization files."""
+    monkeypatch.delenv("GEORESET_MODEL_PATH", raising=False)
+
+    args = parse_args([])
+
+    assert args.input_path == "data/wiki/article_contents.json"
+    assert args.output_path == "data/wiki/article_summaries.json"
+    assert args.model_path == "Qwen3.6-27B-Q4_0.gguf"
+    assert args.seed == 42
+    assert args.temperature == 0.7
+
+
+def test_parse_args_allows_environment_model_override(monkeypatch):
+    """Should let Grid5000 jobs select a model without patching Python code."""
+    monkeypatch.setenv("GEORESET_MODEL_PATH", "custom.gguf")
+
+    args = parse_args([])
+
+    assert args.model_path == "custom.gguf"

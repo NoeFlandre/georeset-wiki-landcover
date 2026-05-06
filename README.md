@@ -59,6 +59,9 @@ git add .gitignore README.md src tests pyproject.toml uv.lock LICENSE Dockerfile
 - `src/scripts/snapshot.py`: prints a quick CORINE dataset snapshot.
 - `src/scripts/summarize_articles.py`: summarizes fetched article content with
   a local LLM backend.
+- `scripts/grid5000/submit_summarization.sh`: syncs the minimal repository
+  state to Grid5000/Nancy, submits the summarization OAR job, and continuously
+  syncs the resumable output back.
 
 ## Data Artifacts
 
@@ -131,6 +134,33 @@ CORINE + OSM map:
 ```bash
 PYTHONDONTWRITEBYTECODE=1 uv run python -m src.scripts.run_corine_analysis
 hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
+```
+
+## Grid5000 Article Summarization
+
+The summarization path is prepared so a coding agent only needs to run one
+local command:
+
+```bash
+bash scripts/grid5000/submit_summarization.sh
+```
+
+That script syncs the code and `data/wiki/article_contents.json` to Nancy,
+submits `scripts/grid5000/run_summarization_job.sh` through OAR, and keeps
+pulling `data/wiki/article_summaries.json` back locally every 30 seconds. The
+remote job uses CUDA llama-cpp-python, installs `uv` if needed, and runs:
+
+```bash
+uv run python -m src.scripts.summarize_articles \
+  --input-path data/wiki/article_contents.json \
+  --output-path data/wiki/article_summaries.json
+```
+
+Optional environment overrides:
+
+```bash
+G5K_SITE=nancy G5K_REMOTE_DIR=georeset GEORESET_MODEL_PATH=Qwen3.6-27B-Q4_0.gguf \
+  bash scripts/grid5000/submit_summarization.sh
 ```
 
 ## Docker

@@ -28,3 +28,9 @@ data/
 # System/editor files
 .DS_Store
 *.swp
+
+# Grid5000 specific
+grid5000_guide.md
+OAR_*.out
+OAR_*.err
+oar_submit.log
