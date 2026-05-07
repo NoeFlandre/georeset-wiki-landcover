@@ -23,7 +23,6 @@ rsync -az --delete \
   --exclude 'build' \
   --exclude 'dist' \
   --exclude '*.egg-info' \
-  --exclude 'data/wiki/article_summaries.json' \
   --exclude 'data/corine' \
   --exclude 'data/maps' \
   --exclude 'data/osm' \
