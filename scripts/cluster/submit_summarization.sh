@@ -5,7 +5,7 @@ ACCESS_HOST="${G5K_ACCESS_HOST:-nflandre@access.grid5000.fr}"
 SITE="${G5K_SITE:-nancy}"
 REMOTE_DIR="${G5K_REMOTE_DIR:-georeset}"
 OUTPUT_PATH="data/wiki/article_summaries.json"
-JOB_SCRIPT="scripts/grid5000/run_summarization_job.sh"
+JOB_SCRIPT="scripts/cluster/run_summarization_job.sh"
 
 mkdir -p data/wiki
 
@@ -47,4 +47,4 @@ echo "Syncing ${OUTPUT_PATH}; press Ctrl+C to stop syncing after the job finishe
 
 G5K_ACCESS_HOST="${ACCESS_HOST}" G5K_SITE="${SITE}" G5K_REMOTE_DIR="${REMOTE_DIR}" \
   GEORESET_SUMMARY_OUTPUT="${OUTPUT_PATH}" SYNC_INTERVAL_SECONDS="${SYNC_INTERVAL_SECONDS:-20}" \
-  bash scripts/grid5000/sync_summaries.sh
+  bash scripts/cluster/sync_summaries.sh

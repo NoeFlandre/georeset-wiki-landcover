@@ -2,6 +2,10 @@
 
 import json
 import os
+import sys
+
+# Ensure src is in path if running as a script
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 import geopandas as gpd
 import pandas as pd

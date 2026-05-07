@@ -7,7 +7,8 @@ import tempfile
 import pytest
 from unittest.mock import patch, MagicMock
 
-from src.scripts.summarize_articles import ArticleSummarizer, parse_args
+from src.fetchers.article_summarizer import ArticleSummarizer
+from scripts.data.summarize_articles import parse_args
 
 
 class TestArticleSummarizer:

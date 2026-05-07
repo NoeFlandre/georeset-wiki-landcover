@@ -30,7 +30,7 @@ export FORCE_CMAKE=1
 uv sync --all-groups
 uv pip install --no-cache-dir huggingface_hub llama-cpp-python
 
-uv run python -m src.scripts.summarize_articles \
+uv run python -m scripts.data.summarize_articles \
   --input-path data/wiki/article_contents.json \
   --output-path data/wiki/article_summaries.json \
   --model-path "${GEORESET_MODEL_PATH}"

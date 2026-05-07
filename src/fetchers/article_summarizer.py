@@ -1,13 +1,11 @@
-"""Summarize Wikipedia articles using an LLM."""
+"""Logic for summarizing Wikipedia articles using a local LLM."""
 
-import argparse
 import json
 import logging
 import os
 from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 
 class ArticleSummarizer:
@@ -179,40 +177,3 @@ class ArticleSummarizer:
             logger.info(f"  Checkpoint saved ({i} processed)")
 
         logger.info(f"Done. Saved {len(existing)} summaries to {output_path}")
-
-
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """Parse CLI options for local and Grid5000 summarization runs."""
-    parser = argparse.ArgumentParser(description="Summarize fetched Wikipedia articles with a local GGUF model.")
-    parser.add_argument(
-        "--input-path",
-        default="data/wiki/article_contents.json",
-        help="Path to fetched article contents JSON.",
-    )
-    parser.add_argument(
-        "--output-path",
-        default="data/wiki/article_summaries.json",
-        help="Path where resumable summaries JSON is written.",
-    )
-    parser.add_argument(
-        "--model-path",
-        default=os.environ.get("GEORESET_MODEL_PATH", "Qwen3.6-27B-Q4_0.gguf"),
-        help="GGUF filename or path passed to llama_cpp.Llama.from_pretrained.",
-    )
-    parser.add_argument("--seed", type=int, default=42, help="Deterministic generation seed.")
-    parser.add_argument("--temperature", type=float, default=0.7, help="Sampling temperature.")
-    return parser.parse_args(argv)
-
-
-def main(argv: list[str] | None = None) -> None:
-    args = parse_args(argv)
-    summarizer = ArticleSummarizer(
-        model_path=args.model_path,
-        seed=args.seed,
-        temperature=args.temperature,
-    )
-    summarizer.process_file(args.input_path, args.output_path)
-
-
-if __name__ == "__main__":
-    main()
