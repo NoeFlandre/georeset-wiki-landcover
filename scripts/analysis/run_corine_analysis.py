@@ -12,8 +12,8 @@ import pandas as pd
 
 from src.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
 from src.fetchers.data_fetcher import DataFetcher
-from src.visualization.map_visualizer import MapVisualizer
 from src.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES, OSMFetcher
+from src.visualization.map_visualizer import MapVisualizer
 
 
 def run(
@@ -25,7 +25,7 @@ def run(
     with open("data/corine/bounds.json") as f:
         bounds = json.load(f)
 
-    corine = DataFetcher().load_data()
+    corine = DataFetcher().load_data(exclude_artificial=True)
     if output_osm_path:
         osm = gpd.read_file(output_osm_path)
     else:

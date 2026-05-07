@@ -92,3 +92,24 @@ class TestDataFetcher:
         assert "min_lat" in data
         assert "max_lon" in data
         assert "max_lat" in data
+
+    @requires_data
+    def test_exclude_artificial_filters_class_1(self):
+        """Should exclude polygons where code_18 starts with '1' (artificial surfaces)."""
+        sample = self.fetcher.get_sample_polygons(n=50, exclude_artificial=True)
+        artificial_codes = sample[sample["code_18"].str.startswith("1")]
+        assert len(artificial_codes) == 0, f"Found artificial surface codes: {artificial_codes['code_18'].tolist()}"
+
+    @requires_data
+    def test_exclude_artificial_false_includes_class_1(self):
+        """When exclude_artificial=False, polygons with code starting in '1' should be present."""
+        sample = self.fetcher.get_sample_polygons(n=100, exclude_artificial=False)
+        artificial_codes = sample[sample["code_18"].str.startswith("1")]
+        assert len(artificial_codes) > 0, "Expected some artificial surface codes in full sample"
+
+    @requires_data
+    def test_load_data_exclude_artificial(self):
+        """load_data should accept exclude_artificial flag."""
+        gdf = self.fetcher.load_data(exclude_artificial=True)
+        artificial = gdf[gdf["code_18"].str.startswith("1")]
+        assert len(artificial) == 0

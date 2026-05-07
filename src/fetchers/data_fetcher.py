@@ -15,25 +15,30 @@ class DataFetcher:
     ):
         self.data_path = data_path
         self.gdf = None
+        self._exclude_artificial = False
 
-    def load_data(self) -> gpd.GeoDataFrame:
+    def load_data(self, exclude_artificial: bool = False) -> gpd.GeoDataFrame:
         """Loads the dataset into memory"""
         if not os.path.exists(self.data_path):
             raise FileNotFoundError(f"Dataset not found at {self.data_path}")
 
         print(f"Loading data from {self.data_path} ...")
-        self.gdf = gpd.read_file(self.data_path)
+        raw_gdf = gpd.read_file(self.data_path)
+        self.gdf = raw_gdf[~raw_gdf["code_18"].str.startswith("1")].copy() if exclude_artificial else raw_gdf
+        self._exclude_artificial = exclude_artificial
         return self.gdf
 
-    def get_sample_polygons(self, n: int = 5, level: int = 2) -> gpd.GeoDataFrame:
+    def get_sample_polygons(self, n: int = 5, level: int = 2, exclude_artificial: bool = False) -> gpd.GeoDataFrame:
         """
         Returns a sample of n polygons with their center point and their class.
         The level is the Corine Land Cover hierarchy level (1, 2, 3...)
+        If exclude_artificial is True, polygons where code_18 starts with '1' are filtered out.
 
         """
 
-        if self.gdf is None:
-            self.load_data()
+        if self.gdf is None or self._exclude_artificial != exclude_artificial:
+            self._exclude_artificial = exclude_artificial
+            self.load_data(exclude_artificial=exclude_artificial)
         assert self.gdf is not None
 
         # we take a random sample
