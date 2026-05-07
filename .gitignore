@@ -19,7 +19,7 @@ dist/
 *.egg-info/
 
 # Project data lives in the Hugging Face bucket, not Git.
-data/
+/data/
 
 # Local environment files
 .env
