@@ -41,6 +41,9 @@ lint.ignore = [
     "E501",  # line too long (handled by formatter)
 ]
 
+[tool.ruff.lint.isort]
+known-first-party = ["src", "scripts"]
+
 [tool.ruff.format]
 quote-style = "double"
 
