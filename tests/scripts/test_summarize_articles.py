@@ -233,3 +233,4 @@ def test_parse_args_allows_environment_model_override(monkeypatch):
     args = parse_args([])
 
     assert args.model_path == "custom.gguf"
+
