@@ -153,6 +153,9 @@ class ArticleSummarizer:
         with open(input_path) as f:
             articles = json.load(f)
 
+        valid_keys = {str(k) for k in articles}
+        existing = {k: v for k, v in existing.items() if str(k) in valid_keys}
+
         to_process = {
             k: v for k, v in articles.items() if k not in existing or "summary" not in existing[k]
         }

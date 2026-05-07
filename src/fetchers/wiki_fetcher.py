@@ -230,7 +230,7 @@ if __name__ == "__main__":
 
     # Load polygons for filtering
     data_fetcher = DataFetcher()
-    gdf = data_fetcher.load_data()
+    gdf = data_fetcher.load_data(exclude_artificial=True)
 
     # Create polygon filter function for CORINE
     def polygon_filter(lon, lat):

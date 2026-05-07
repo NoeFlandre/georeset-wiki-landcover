@@ -23,7 +23,7 @@ class TestSnapshot:
 
     @patch("scripts.dev.snapshot.DataFetcher")
     def test_snapshot_calls_load_data(self, mock_fetcher_class):
-        """Should call load_data on the DataFetcher."""
+        """Should load CORINE with artificial surfaces excluded."""
         mock_gdf = MagicMock()
         mock_gdf.__len__.return_value = 10
         mock_gdf.columns = ["ID", "code_18"]
@@ -35,7 +35,7 @@ class TestSnapshot:
         mock_fetcher.get_sample_polygons.return_value = mock_gdf
 
         snapshot(n_samples=1)
-        mock_fetcher.load_data.assert_called_once()
+        mock_fetcher.load_data.assert_called_once_with(exclude_artificial=True)
 
     @patch("scripts.dev.snapshot.DataFetcher")
     def test_snapshot_calls_get_bounds(self, mock_fetcher_class):
@@ -67,7 +67,9 @@ class TestSnapshot:
         mock_fetcher.get_sample_polygons.return_value = mock_gdf
 
         snapshot(n_samples=5)
-        mock_fetcher.get_sample_polygons.assert_called_once_with(n=5, level=2)
+        mock_fetcher.get_sample_polygons.assert_called_once_with(
+            n=5, level=2, exclude_artificial=True
+        )
 
     @patch("builtins.print")
     @patch("scripts.dev.snapshot.DataFetcher")

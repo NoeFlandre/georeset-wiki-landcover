@@ -212,7 +212,9 @@ class WikiContentFetcher:
             articles = json.load(f)
 
         pageids = self._unique_pageids(articles)
+        input_pageids = {str(pid) for pid in pageids}
         all_content = self._sanitize_existing_content(existing)
+        all_content = {k: v for k, v in all_content.items() if k in input_pageids}
         new_count = 0
         for i in range(0, len(pageids), batch_size):
             batch = pageids[i : i + batch_size]

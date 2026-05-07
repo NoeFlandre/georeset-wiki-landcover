@@ -87,7 +87,7 @@ class DataFetcher:
 if __name__ == "__main__":
     fetcher = DataFetcher()
     try:
-        sample = fetcher.get_sample_polygons(n=3)
+        sample = fetcher.get_sample_polygons(n=3, exclude_artificial=True)
         print("Succesfully sampled polygons:")
         print(sample[["class_label", "centroid", "code_18"]])
         fetcher.save_bounds()

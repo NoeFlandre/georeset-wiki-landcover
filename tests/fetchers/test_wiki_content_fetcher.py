@@ -340,3 +340,27 @@ class TestWikiContentFetcher:
         finally:
             os.unlink(output_path)
             os.unlink(input_path)
+
+    def test_fetch_from_file_prunes_stale_pageids(self):
+        """Existing output pageid absent from current input must be dropped on resume."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump({
+                "999": {"title": "Stale", "content": "Old", "url": "http://stale"},
+                "100": {"title": "Valid", "content": "Valid", "url": "http://valid"},
+            }, f)
+            output_path = f.name
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump([{"pageid": 100}], f)
+            input_path = f.name
+
+        try:
+            with patch.object(self.fetcher, "get_articles_content", return_value={}):
+                self.fetcher.fetch_from_file(input_path, output_path)
+            with open(output_path) as f:
+                result = json.load(f)
+            assert "999" not in result
+            assert "100" in result
+        finally:
+            os.unlink(output_path)
+            os.unlink(input_path)

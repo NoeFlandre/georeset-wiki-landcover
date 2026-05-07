@@ -212,6 +212,31 @@ class TestArticleSummarizer:
                 result = json.load(f)
             assert "summary" in result["1"]
 
+    def test_process_file_prunes_stale_pageids(self):
+        """Existing summary key absent from current contents must be dropped on resume."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input_path = os.path.join(tmpdir, "articles.json")
+            output_path = os.path.join(tmpdir, "summaries.json")
+
+            with open(input_path, "w") as f:
+                json.dump({"100": {"title": "A", "content": "Content A", "url": "http://a"}}, f)
+
+            with open(output_path, "w") as f:
+                json.dump({
+                    "100": {"title": "A", "content": "Content A", "url": "http://a", "summary": "Old"},
+                    "999": {"title": "Stale", "content": "Stale", "url": "http://stale", "summary": "StaleSum"},
+                }, f)
+
+            summarizer = ArticleSummarizer(model_path=None)
+            with patch.object(summarizer, "_generate_summary", return_value="New"):
+                summarizer.process_file(input_path, output_path)
+
+            with open(output_path) as f:
+                result = json.load(f)
+            assert "999" not in result
+            assert "100" in result
+            assert result["100"]["summary"] == "Old"
+
 
 def test_parse_args_uses_grid5000_ready_defaults(monkeypatch):
     """Should default to the expected resumable summarization files."""

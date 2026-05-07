@@ -90,3 +90,21 @@ class TestMapVisualizer:
         html = m._repr_html_()
         assert "CORINE polygons" in html
         assert "OSM polygons" in html
+
+    def test_plot_corine_with_osm_polygons_legend_has_counts(self):
+        osm_gdf = gpd.GeoDataFrame({
+            "osm_id": ["way/1"],
+            "geometry": [Polygon([(7.02, 48.02), (7.08, 48.02), (7.08, 48.08), (7.02, 48.08)])],
+        }, crs="EPSG:4326")
+        visualizer = MapVisualizer(self.gdf)
+        m = visualizer.plot_corine_with_osm_polygons(osm_gdf)
+        html = m._repr_html_()
+        assert f"CORINE: {len(self.gdf)}" in html
+        assert f"OSM: {len(osm_gdf)}" in html
+
+    def test_plot_polygons_with_articles_legend_counts_match_data(self):
+        visualizer = MapVisualizer(self.gdf)
+        m = visualizer.plot_polygons_with_articles(self.articles)
+        html = m._repr_html_()
+        assert str(len(self.gdf)) in html
+        assert str(len(self.articles)) in html

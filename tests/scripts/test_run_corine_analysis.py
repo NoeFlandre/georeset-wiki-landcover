@@ -56,6 +56,9 @@ class TestRunCorineAnalysisWithFilteredCorine:
         osm_path = data_dir / "osm" / "osm_project_polygons.geojson"
         map_path = data_dir / "maps" / "osm_corine_polygons.html"
         dist_path = data_dir / "distribution" / "osm_corine_distribution.csv"
+        osm_path.parent.mkdir()
+        map_path.parent.mkdir()
+        dist_path.parent.mkdir()
 
         osm_gdf = mock_osm_gdf.copy()
         corine_gdf = mock_corine_gdf.copy()
@@ -80,3 +83,67 @@ class TestRunCorineAnalysisWithFilteredCorine:
             call_kwargs = mock_load.call_args
             assert "exclude_artificial" in call_kwargs.kwargs
             assert call_kwargs.kwargs["exclude_artificial"] is True
+
+    def test_run_keeps_osm_polygons_overlapping_filtered_corine_only(self, tmp_path):
+        """run() should keep OSM polygons that intersect filtered (non-artificial) CORINE,
+        even if they also overlap artificial raw CORINE elsewhere in the raw layer."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "corine").mkdir()
+        (data_dir / "corine" / "bounds.json").write_text(
+            json.dumps({"min_lon": 0.0, "min_lat": 0.0, "max_lon": 30.0, "max_lat": 10.0})
+        )
+        osm_path = data_dir / "osm" / "osm_project_polygons.geojson"
+        map_path = data_dir / "maps" / "osm_corine_polygons.html"
+        dist_path = data_dir / "distribution" / "osm_corine_distribution.csv"
+        osm_path.parent.mkdir()
+        map_path.parent.mkdir()
+        dist_path.parent.mkdir()
+
+        full_corine = gpd.GeoDataFrame(
+            {
+                "code_18": ["112", "311", "211"],
+                "geometry": [
+                    Polygon([(0, 0), (2, 0), (2, 10), (0, 10)]),
+                    Polygon([(2, 0), (10, 0), (10, 10), (2, 10)]),
+                    Polygon([(20, 0), (30, 0), (30, 10), (20, 10)]),
+                ],
+            },
+            crs="EPSG:3857",
+        )
+        filtered_corine = full_corine[~full_corine["code_18"].str.startswith("1")].copy()
+        osm = gpd.GeoDataFrame(
+            {
+                "osm_id": ["mixed", "natural"],
+                "landuse": ["forest", "meadow"],
+                "natural": [None, None],
+                "geometry": [
+                    Polygon([(0, 0), (10, 0), (10, 10), (0, 10)]),
+                    Polygon([(20, 0), (30, 0), (30, 10), (20, 10)]),
+                ],
+            },
+            crs="EPSG:3857",
+        )
+        written = {}
+
+        def capture_to_file(gdf, path, *args, **kwargs):
+            written["osm"] = gdf.copy()
+
+        with (
+            patch("src.fetchers.data_fetcher.DataFetcher.load_data") as mock_load,
+            patch("geopandas.read_file", return_value=osm),
+            patch("geopandas.GeoDataFrame.to_file", new=capture_to_file),
+            patch("folium.Map.save"),
+        ):
+            mock_load.return_value = filtered_corine
+
+            run(
+                output_map_path=str(map_path),
+                output_csv_path=str(dist_path),
+                output_osm_path=str(osm_path),
+                chunk_size=1,
+            )
+
+        # 'mixed' overlaps artificial 112 AND natural 311 in raw; but filtered CORINE
+        # only has 311, so 'mixed' should be kept as it overlaps filtered CORINE.
+        assert written["osm"]["osm_id"].tolist() == ["mixed", "natural"]

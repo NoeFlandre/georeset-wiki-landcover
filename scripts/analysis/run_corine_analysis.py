@@ -10,6 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 import geopandas as gpd
 import pandas as pd
 
+from scripts.data.filter_pipeline import filter_osm_by_corine
 from src.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
 from src.fetchers.data_fetcher import DataFetcher
 from src.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES, OSMFetcher
@@ -25,7 +26,8 @@ def run(
     with open("data/corine/bounds.json") as f:
         bounds = json.load(f)
 
-    corine = DataFetcher().load_data(exclude_artificial=True)
+    fetcher = DataFetcher()
+    corine = fetcher.load_data(exclude_artificial=True)
     if output_osm_path:
         osm = gpd.read_file(output_osm_path)
     else:
@@ -36,6 +38,7 @@ def run(
             bounds["max_lat"],
         )
     osm = osm[osm["landuse"].isin(LANDUSE_VALUES) | osm["natural"].isin(NATURAL_VALUES)].copy()
+    osm = filter_osm_by_corine(osm, corine, chunk_size=chunk_size)
 
     parts = [
         corine_distribution_in_osm_polygons(osm.iloc[start:start + chunk_size], corine)
@@ -47,6 +50,8 @@ def run(
     osm = osm[osm["osm_id"].isin(distribution["osm_id"].unique())].copy()
 
     os.makedirs(os.path.dirname(output_map_path), exist_ok=True)
+    os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
+    os.makedirs(os.path.dirname(output_osm_path), exist_ok=True)
 
     map_osm = osm.copy()
     map_osm_metric = map_osm.to_crs("EPSG:2154")

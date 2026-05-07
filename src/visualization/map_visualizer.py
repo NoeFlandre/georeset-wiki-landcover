@@ -80,13 +80,13 @@ class MapVisualizer:
         ).add_to(m)
         folium.LayerControl().add_to(m)
 
-        legend_html = """
+        legend_html = f"""
         <div style="position: fixed; bottom: 50px; left: 50px; z-index: 1000;
                     background-color: white; padding: 10px; border: 2px solid gray;
                     font-size: 12px; border-radius: 5px;">
             <b>Legend</b><br>
-            <i style="background-color: blue; width: 20px; height: 10px; display: inline-block;"></i> CORINE<br>
-            <i style="background-color: red; width: 20px; height: 10px; display: inline-block;"></i> OSM
+            <i style="background-color: blue; width: 20px; height: 10px; display: inline-block;"></i> CORINE: {len(self.gdf)}<br>
+            <i style="background-color: red; width: 20px; height: 10px; display: inline-block;"></i> OSM: {len(osm_gdf)}
         </div>
         """
         m.get_root().html.add_child(folium.Element(legend_html))  # type: ignore[attr-defined]
@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
     print("Loading Alsace polygons...")
     fetcher = DataFetcher()
-    gdf = fetcher.load_data()
+    gdf = fetcher.load_data(exclude_artificial=True)
     print(f"Loaded {len(gdf)} polygons.")
 
     print("Generating map...")

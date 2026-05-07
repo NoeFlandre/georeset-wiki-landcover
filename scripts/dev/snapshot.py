@@ -11,7 +11,7 @@ from src.fetchers.data_fetcher import DataFetcher
 
 def snapshot(n_samples: int = 10) -> None:
     fetcher = DataFetcher()
-    gdf = fetcher.load_data()
+    gdf = fetcher.load_data(exclude_artificial=True)
 
     print("=== Dataset Snapshot ===")
     print(f"Total polygons: {len(gdf)}")
@@ -30,7 +30,7 @@ def snapshot(n_samples: int = 10) -> None:
 
     # Sample polygons
     print("\n--- Sample Polygons ---")
-    sample = fetcher.get_sample_polygons(n=n_samples, level=2)
+    sample = fetcher.get_sample_polygons(n=n_samples, level=2, exclude_artificial=True)
     for _, row in sample.iterrows():
         print(f"  Class: {row['class_label']}, Code: {row['code_18']}, Centroid: ({row['centroid'].y:.4f}, {row['centroid'].x:.4f})")
 
