@@ -42,11 +42,11 @@ class MapVisualizer:
                 fill=True,
                 fillColor="red",
                 fillOpacity=0.7,
-                popup=article.get("title", "Article")
+                popup=article.get("title", "Article"),
             ).add_to(m)
 
         legend_html = f"""
-        <div style="position: fixed; bottom: 50px; left: 50px; z-index: 1000; 
+        <div style="position: fixed; bottom: 50px; left: 50px; z-index: 1000;
                     background-color: white; padding: 10px; border: 2px solid gray;
                     font-size: 14px; border-radius: 5px;">
             <b>Legend</b><br>
@@ -54,11 +54,13 @@ class MapVisualizer:
             <i style="background-color: red; width: 10px; height: 10px; display: inline-block; border-radius: 50%;"></i> Articles: {len(articles)}
         </div>
         """
-        m.get_root().html.add_child(folium.Element(legend_html))
+        m.get_root().html.add_child(folium.Element(legend_html))  # type: ignore[attr-defined]
 
         return m
 
-    def plot_corine_with_osm_polygons(self, osm_gdf: gpd.GeoDataFrame, zoom_start: int = 8) -> folium.Map:
+    def plot_corine_with_osm_polygons(
+        self, osm_gdf: gpd.GeoDataFrame, zoom_start: int = 8
+    ) -> folium.Map:
         """Plot CORINE and OSM polygons as separate layers for visual checking."""
         bounds = self.gdf.total_bounds
         center_lat = (bounds[1] + bounds[3]) / 2
@@ -78,8 +80,8 @@ class MapVisualizer:
         ).add_to(m)
         folium.LayerControl().add_to(m)
 
-        legend_html = f"""
-        <div style="position: fixed; bottom: 50px; left: 50px; z-index: 1000; 
+        legend_html = """
+        <div style="position: fixed; bottom: 50px; left: 50px; z-index: 1000;
                     background-color: white; padding: 10px; border: 2px solid gray;
                     font-size: 12px; border-radius: 5px;">
             <b>Legend</b><br>
@@ -87,28 +89,26 @@ class MapVisualizer:
             <i style="background-color: red; width: 20px; height: 10px; display: inline-block;"></i> OSM
         </div>
         """
-        m.get_root().html.add_child(folium.Element(legend_html))
+        m.get_root().html.add_child(folium.Element(legend_html))  # type: ignore[attr-defined]
 
         return m
 
-    def save_map(self, output_path: str, articles: list = None) -> None:
+    def save_map(self, output_path: str, articles: list | None = None) -> None:
         """Save the map as an HTML file."""
-        if articles:
-            m = self.plot_polygons_with_articles(articles)
-        else:
-            m = self.plot_polygons()
+        m = self.plot_polygons_with_articles(articles) if articles else self.plot_polygons()
         m.save(output_path)
 
 
 if __name__ == "__main__":
     import json
     import os
+
     from src.fetchers.data_fetcher import DataFetcher
 
     print("Loading Wikipedia articles...")
     articles_path = "data/wiki/wiki_articles.json"
     if os.path.exists(articles_path):
-        with open(articles_path, "r") as f:
+        with open(articles_path) as f:
             articles = json.load(f)
         print(f"Loaded {len(articles)} articles.")
     else:

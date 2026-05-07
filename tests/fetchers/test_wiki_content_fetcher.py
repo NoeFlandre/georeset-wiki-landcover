@@ -3,9 +3,9 @@
 import json
 import os
 import tempfile
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch, MagicMock
 
 from src.fetchers.wiki_content_fetcher import WikiContentFetcher
 
@@ -28,7 +28,13 @@ class TestWikiContentFetcher:
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            existing = {"123": {"title": "AlreadyFetched", "content": "Old content", "url": "https://fr.wikipedia.org/wiki/AlreadyFetched"}}
+            existing = {
+                "123": {
+                    "title": "AlreadyFetched",
+                    "content": "Old content",
+                    "url": "https://fr.wikipedia.org/wiki/AlreadyFetched",
+                }
+            }
             json.dump(existing, f)
             output_path = f.name
 
@@ -131,9 +137,7 @@ class TestWikiContentFetcher:
         mock_get.return_value.headers = {"Content-Type": "application/json"}
         mock_get.return_value.json.return_value = {
             "query": {
-                "pages": {
-                    "100": {"pageid": 100, "title": "Test", "extract": "Full content here"}
-                }
+                "pages": {"100": {"pageid": 100, "title": "Test", "extract": "Full content here"}}
             }
         }
 
@@ -186,9 +190,20 @@ class TestWikiContentFetcher:
         """Should drop corrupt existing entries and re-fetch them on resume."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             existing = {
-                "100": {"title": "Valid", "content": "Existing content", "url": "https://fr.wikipedia.org/wiki/Valid"},
-                "200": {"title": "Empty", "content": "   ", "url": "https://fr.wikipedia.org/wiki/Empty"},
-                "300": {"title": "MissingContent", "url": "https://fr.wikipedia.org/wiki/MissingContent"},
+                "100": {
+                    "title": "Valid",
+                    "content": "Existing content",
+                    "url": "https://fr.wikipedia.org/wiki/Valid",
+                },
+                "200": {
+                    "title": "Empty",
+                    "content": "   ",
+                    "url": "https://fr.wikipedia.org/wiki/Empty",
+                },
+                "300": {
+                    "title": "MissingContent",
+                    "url": "https://fr.wikipedia.org/wiki/MissingContent",
+                },
             }
             json.dump(existing, f)
             output_path = f.name
@@ -203,7 +218,11 @@ class TestWikiContentFetcher:
                 self.fetcher,
                 "get_articles_content",
                 return_value={
-                    "200": {"title": "Empty", "content": "Fresh content", "url": "https://fr.wikipedia.org/wiki/Empty"},
+                    "200": {
+                        "title": "Empty",
+                        "content": "Fresh content",
+                        "url": "https://fr.wikipedia.org/wiki/Empty",
+                    },
                     "300": {
                         "title": "MissingContent",
                         "content": "Recovered content",
@@ -218,8 +237,16 @@ class TestWikiContentFetcher:
                 result = json.load(f)
 
             assert result == {
-                "100": {"title": "Valid", "content": "Existing content", "url": "https://fr.wikipedia.org/wiki/Valid"},
-                "200": {"title": "Empty", "content": "Fresh content", "url": "https://fr.wikipedia.org/wiki/Empty"},
+                "100": {
+                    "title": "Valid",
+                    "content": "Existing content",
+                    "url": "https://fr.wikipedia.org/wiki/Valid",
+                },
+                "200": {
+                    "title": "Empty",
+                    "content": "Fresh content",
+                    "url": "https://fr.wikipedia.org/wiki/Empty",
+                },
                 "300": {
                     "title": "MissingContent",
                     "content": "Recovered content",
@@ -246,8 +273,16 @@ class TestWikiContentFetcher:
                 self.fetcher,
                 "get_articles_content",
                 return_value={
-                    "100": {"title": "A", "content": "Content A", "url": "https://fr.wikipedia.org/wiki/A"},
-                    "200": {"title": "B", "content": "Content B", "url": "https://fr.wikipedia.org/wiki/B"},
+                    "100": {
+                        "title": "A",
+                        "content": "Content A",
+                        "url": "https://fr.wikipedia.org/wiki/A",
+                    },
+                    "200": {
+                        "title": "B",
+                        "content": "Content B",
+                        "url": "https://fr.wikipedia.org/wiki/B",
+                    },
                 },
             ) as get_articles_content:
                 self.fetcher.fetch_from_file(input_path, output_path, batch_size=2)
@@ -273,22 +308,34 @@ class TestWikiContentFetcher:
             input_path = f.name
 
         try:
-            with patch.object(
-                self.fetcher,
-                "get_articles_content",
-                side_effect=[
-                    {"100": {"title": "A", "content": "Content A", "url": "https://fr.wikipedia.org/wiki/A"}},
-                    KeyboardInterrupt,
-                ],
+            with (
+                patch.object(
+                    self.fetcher,
+                    "get_articles_content",
+                    side_effect=[
+                        {
+                            "100": {
+                                "title": "A",
+                                "content": "Content A",
+                                "url": "https://fr.wikipedia.org/wiki/A",
+                            }
+                        },
+                        KeyboardInterrupt,
+                    ],
+                ),
+                pytest.raises(KeyboardInterrupt),
             ):
-                with pytest.raises(KeyboardInterrupt):
-                    self.fetcher.fetch_from_file(input_path, output_path, batch_size=1)
+                self.fetcher.fetch_from_file(input_path, output_path, batch_size=1)
 
             with open(output_path) as f:
                 result = json.load(f)
 
             assert result == {
-                "100": {"title": "A", "content": "Content A", "url": "https://fr.wikipedia.org/wiki/A"}
+                "100": {
+                    "title": "A",
+                    "content": "Content A",
+                    "url": "https://fr.wikipedia.org/wiki/A",
+                }
             }
         finally:
             os.unlink(output_path)

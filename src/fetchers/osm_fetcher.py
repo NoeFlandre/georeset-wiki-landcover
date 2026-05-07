@@ -1,13 +1,11 @@
 """Fetch polygon features from OpenStreetMap within a bounding box."""
 
-from typing import Dict, List
 import time
 
 import geopandas as gpd
 import pandas as pd
 import requests
 from shapely.geometry import Polygon
-
 
 LANDUSE_VALUES = (
     "farmland",
@@ -51,7 +49,9 @@ class OSMFetcher:
         self.retries = retries
         self.headers = {"User-Agent": "GeoResetPipeline/1.0"}
 
-    def fetch_polygons(self, min_lon: float, min_lat: float, max_lon: float, max_lat: float) -> gpd.GeoDataFrame:
+    def fetch_polygons(
+        self, min_lon: float, min_lat: float, max_lon: float, max_lat: float
+    ) -> gpd.GeoDataFrame:
         """Return OSM polygon ways inside bounds matching CORINE order."""
         frames = [
             self._fetch_tile(west, south, east, north)
@@ -66,7 +66,9 @@ class OSMFetcher:
             return self._empty_gdf()
         return rows.drop_duplicates(subset=["osm_id"]).reset_index(drop=True)
 
-    def _fetch_tile(self, min_lon: float, min_lat: float, max_lon: float, max_lat: float) -> gpd.GeoDataFrame:
+    def _fetch_tile(
+        self, min_lon: float, min_lat: float, max_lon: float, max_lat: float
+    ) -> gpd.GeoDataFrame:
         for attempt in range(self.retries):
             response = requests.post(
                 self.api_url,
@@ -107,7 +109,7 @@ class OSMFetcher:
         out geom;
         """
 
-    def _elements_to_gdf(self, elements: List[Dict]) -> gpd.GeoDataFrame:
+    def _elements_to_gdf(self, elements: list[dict]) -> gpd.GeoDataFrame:
         rows = []
         for element in elements:
             geometry = self._polygon_from_element(element)
@@ -132,7 +134,7 @@ class OSMFetcher:
             return self._empty_gdf()
         return gpd.GeoDataFrame(rows, columns=self._columns(), geometry="geometry", crs="EPSG:4326")
 
-    def _polygon_from_element(self, element: Dict):
+    def _polygon_from_element(self, element: dict):
         coords = [(point["lon"], point["lat"]) for point in element.get("geometry", [])]
         if len(coords) < 4 or coords[0] != coords[-1]:
             return None
@@ -145,5 +147,14 @@ class OSMFetcher:
     def _empty_gdf(self) -> gpd.GeoDataFrame:
         return gpd.GeoDataFrame([], columns=self._columns(), geometry="geometry", crs="EPSG:4326")
 
-    def _columns(self) -> List[str]:
-        return ["osm_id", "name", "landuse", "natural", "leisure", "amenity", "building", "geometry"]
+    def _columns(self) -> list[str]:
+        return [
+            "osm_id",
+            "name",
+            "landuse",
+            "natural",
+            "leisure",
+            "amenity",
+            "building",
+            "geometry",
+        ]

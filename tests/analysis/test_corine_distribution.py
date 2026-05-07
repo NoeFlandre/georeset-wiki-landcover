@@ -62,7 +62,9 @@ def test_distribution_can_process_osm_polygons_in_chunks():
         crs="EPSG:3857",
     )
 
-    distribution = corine_distribution_in_osm_polygons(osm, corine, metric_crs="EPSG:3857", chunk_size=1)
+    distribution = corine_distribution_in_osm_polygons(
+        osm, corine, metric_crs="EPSG:3857", chunk_size=1
+    )
 
     assert distribution.to_dict("records") == [
         {"osm_id": 1, "class_label": "311", "area": 100.0, "share": 1.0},

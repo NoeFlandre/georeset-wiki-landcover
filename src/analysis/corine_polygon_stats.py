@@ -22,7 +22,7 @@ def corine_distribution_in_osm_polygons(
     if chunk_size:
         parts = [
             corine_distribution_in_osm_polygons(
-                osm_polygons.iloc[start:start + chunk_size],
+                osm_polygons.iloc[start : start + chunk_size],
                 corine_polygons,
                 osm_id_col=osm_id_col,
                 corine_class_col=corine_class_col,
@@ -32,7 +32,11 @@ def corine_distribution_in_osm_polygons(
         ]
         if not parts:
             return _empty_result()
-        return pd.concat(parts, ignore_index=True).sort_values(["osm_id", "class_label"]).reset_index(drop=True)
+        return (
+            pd.concat(parts, ignore_index=True)
+            .sort_values(["osm_id", "class_label"])
+            .reset_index(drop=True)
+        )
 
     osm = osm_polygons[[osm_id_col, "geometry"]].to_crs(metric_crs)
     corine = corine_polygons[[corine_class_col, "geometry"]].to_crs(metric_crs)

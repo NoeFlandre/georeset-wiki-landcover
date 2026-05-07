@@ -1,6 +1,7 @@
 """Tests for snapshot."""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from scripts.dev.snapshot import snapshot
 
 

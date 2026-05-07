@@ -110,14 +110,16 @@ def test_fetch_polygons_retries_rate_limited_tiles():
         def json(self):
             return self._payload
 
-    with patch("src.fetchers.osm_fetcher.time.sleep") as sleep:
-        with patch("src.fetchers.osm_fetcher.requests.post") as post:
-            post.side_effect = [
-                Response(429, {}),
-                Response(200, {"elements": []}),
-            ]
+    with (
+        patch("src.fetchers.osm_fetcher.time.sleep") as sleep,
+        patch("src.fetchers.osm_fetcher.requests.post") as post,
+    ):
+        post.side_effect = [
+            Response(429, {}),
+            Response(200, {"elements": []}),
+        ]
 
-            gdf = fetcher.fetch_polygons(min_lon=7.0, min_lat=48.0, max_lon=8.0, max_lat=49.0)
+        gdf = fetcher.fetch_polygons(min_lon=7.0, min_lat=48.0, max_lon=8.0, max_lat=49.0)
 
     assert gdf.empty
     assert post.call_count == 2

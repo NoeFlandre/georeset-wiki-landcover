@@ -3,7 +3,7 @@
 import json
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -16,11 +16,11 @@ class ArticleSummarizer:
         "properties": {
             "summary": {
                 "type": "string",
-                "description": "A concise one-sentence French summary of the Wikipedia article"
+                "description": "A concise one-sentence French summary of the Wikipedia article",
             }
         },
         "required": ["summary"],
-        "additionalProperties": False
+        "additionalProperties": False,
     }
     PRIVATE_OUTPUT_MARKERS = (
         "<think",
@@ -45,11 +45,11 @@ class ArticleSummarizer:
                 filename=self.model_path if self.model_path else "Qwen3.6-27B-Q4_0.gguf",
                 n_gpu_layers=-1,
                 seed=self.seed,
-                n_ctx=8192
+                n_ctx=8192,
             )
         return self._llm
 
-    def summarize(self, article: Dict) -> Dict:
+    def summarize(self, article: dict) -> dict:
         """
         Add a summary to an article dict.
 
@@ -71,7 +71,7 @@ class ArticleSummarizer:
             "model": self.model_path,
             "seed": self.seed,
             "temperature": self.temperature,
-            "prompt": prompt
+            "prompt": prompt,
         }
         return result
 
@@ -86,20 +86,14 @@ class ArticleSummarizer:
                         "Tu es un assistant qui résume des articles Wikipedia. "
                         "Réponds uniquement avec un objet JSON qui respecte le schéma fourni. "
                         "N'inclus aucun raisonnement, balise <think>, Markdown ou champ supplémentaire."
-                    )
+                    ),
                 },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
+                {"role": "user", "content": prompt},
             ],
             temperature=self.temperature,
             seed=self.seed,
             max_tokens=256,
-            response_format={
-                "type": "json_object",
-                "schema": self.SUMMARY_SCHEMA
-            }
+            response_format={"type": "json_object", "schema": self.SUMMARY_SCHEMA},
         )
         raw_content = response["choices"][0]["message"]["content"]
         return self._summary_from_response(raw_content)
@@ -114,9 +108,12 @@ class ArticleSummarizer:
         if not isinstance(payload, dict):
             raise ValueError("LLM summary JSON must be an object")
 
-        unexpected_keys = set(payload) - set(self.SUMMARY_SCHEMA["properties"])
+        payload_dict = cast(dict[str, Any], payload)
+        unexpected_keys = set(payload_dict.keys()) - set(self.SUMMARY_SCHEMA["properties"])  # type: ignore[call-overload]
         if unexpected_keys:
-            raise ValueError(f"LLM summary JSON contains unexpected keys: {sorted(unexpected_keys)}")
+            raise ValueError(
+                f"LLM summary JSON contains unexpected keys: {sorted(unexpected_keys)}"
+            )
 
         summary = payload.get("summary")
         if not isinstance(summary, str) or not summary.strip():
@@ -157,8 +154,7 @@ class ArticleSummarizer:
             articles = json.load(f)
 
         to_process = {
-            k: v for k, v in articles.items()
-            if k not in existing or "summary" not in existing[k]
+            k: v for k, v in articles.items() if k not in existing or "summary" not in existing[k]
         }
 
         logger.info(f"Processing {len(to_process)} of {len(articles)} articles...")

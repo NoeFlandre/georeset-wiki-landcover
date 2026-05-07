@@ -3,12 +3,12 @@
 import json
 import os
 import tempfile
+from unittest.mock import MagicMock, patch
 
 import pytest
-from unittest.mock import patch, MagicMock
 
-from src.fetchers.article_summarizer import ArticleSummarizer
 from scripts.data.summarize_articles import parse_args
+from src.fetchers.article_summarizer import ArticleSummarizer
 
 
 class TestArticleSummarizer:
@@ -16,7 +16,7 @@ class TestArticleSummarizer:
         self.sample_article = {
             "title": "Strasbourg",
             "content": "Strasbourg est une ville française, préfecture du Bas-Rhin. Elle est connue pour sa cathédrale gothique.",
-            "url": "https://fr.wikipedia.org/wiki/Strasbourg"
+            "url": "https://fr.wikipedia.org/wiki/Strasbourg",
         }
 
     def test_summarize_returns_summary_and_metadata(self):
@@ -116,12 +116,18 @@ class TestArticleSummarizer:
                 json.dump(articles, f)
 
             summarizer = ArticleSummarizer(model_path=None)
-            with patch.object(summarizer, "_generate_summary", side_effect=["Summary A", "Summary B"]):
-                with patch("builtins.open", side_effect=open) as mock_open:
-                    summarizer.process_file(input_path, output_path)
+            with (
+                patch.object(
+                    summarizer, "_generate_summary", side_effect=["Summary A", "Summary B"]
+                ),
+                patch("builtins.open", side_effect=open) as mock_open,
+            ):
+                summarizer.process_file(input_path, output_path)
 
-                    write_calls = [c for c in mock_open.call_args_list if c[0][0] == output_path and c[0][1] == "w"]
-                    assert len(write_calls) >= 2
+                write_calls = [
+                    c for c in mock_open.call_args_list if c[0][0] == output_path and c[0][1] == "w"
+                ]
+                assert len(write_calls) >= 2
 
             with open(output_path) as f:
                 result = json.load(f)
@@ -145,14 +151,19 @@ class TestArticleSummarizer:
 
             # Pre-existing output with article 1 already summarized
             existing = {
-                "1": {"title": "A", "content": "Content A", "url": "http://a", "summary": "Old summary"}
+                "1": {
+                    "title": "A",
+                    "content": "Content A",
+                    "url": "http://a",
+                    "summary": "Old summary",
+                }
             }
             with open(output_path, "w") as f:
                 json.dump(existing, f)
 
             summarizer = ArticleSummarizer(model_path=None)
 
-            with patch.object(summarizer, "_generate_summary", return_value=f"New summary for B"):
+            with patch.object(summarizer, "_generate_summary", return_value="New summary for B"):
                 summarizer.process_file(input_path, output_path)
 
             with open(output_path) as f:

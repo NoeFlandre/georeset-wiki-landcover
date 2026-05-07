@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from typing import List, Dict
+from typing import Any
 
 import requests
 
@@ -15,7 +15,7 @@ class WikiContentFetcher:
             "User-Agent": "GeoResetPipeline/1.0 (https://geo-reset.sylvainlobry.com/; research@sylvainlobry.com) python-requests/2.33.1"
         }
 
-    def get_articles_content(self, pageids: List[int]) -> Dict[int, Dict]:
+    def get_articles_content(self, pageids: list[int]) -> dict[int, dict]:
         """
         Fetch content for multiple Wikipedia articles.
 
@@ -35,32 +35,28 @@ class WikiContentFetcher:
         batch_results = self._batch_fetch(pageids)
 
         # Filter out empty content - only keep articles with actual text
-        valid_batch = {
-            pid: data for pid, data in batch_results.items()
-            if data["content"].strip()
-        }
+        valid_batch = {pid: data for pid, data in batch_results.items() if data["content"].strip()}
         results.update(valid_batch)
 
         # Find pids that returned empty or missing content
         fetched_pids = set(results.keys())
-        empty_pids = [
-            pid for pid in (str(p) for p in pageids)
-            if pid not in fetched_pids
-        ]
+        empty_pids = [pid for pid in (str(p) for p in pageids) if pid not in fetched_pids]
 
         # Fall back to individual requests for empty ones (1 retry max)
         if empty_pids:
-            individual_results = self._individual_fetch([int(pid) for pid in empty_pids], max_retries=1)
+            individual_results = self._individual_fetch(
+                [int(pid) for pid in empty_pids], max_retries=1
+            )
             results.update(individual_results)
 
         return results
 
-    def _batch_fetch(self, pageids: List[int]) -> Dict[int, Dict]:
+    def _batch_fetch(self, pageids: list[int]) -> dict[int, dict]:
         """Batch fetch multiple articles at once for speed."""
         results = {}
 
         for i in range(0, len(pageids), 50):
-            batch = pageids[i:i + 50]
+            batch = pageids[i : i + 50]
             pageids_str = "|".join(str(pid) for pid in batch)
 
             params = {
@@ -69,12 +65,14 @@ class WikiContentFetcher:
                 "pageids": pageids_str,
                 "explaintext": True,
                 "exlimit": 1,
-                "format": "json"
+                "format": "json",
             }
 
             for attempt in range(3):
                 try:
-                    response = requests.get(self.api_url, params=params, headers=self.headers, timeout=30)
+                    response = requests.get(
+                        self.api_url, params=params, headers=self.headers, timeout=30
+                    )
                     response.raise_for_status()
                     time.sleep(1.0)
 
@@ -90,24 +88,22 @@ class WikiContentFetcher:
                         content = page_data.get("extract", "")
                         url = f"https://fr.wikipedia.org/wiki/{title.replace(' ', '_')}"
 
-                        results[str(pageid)] = {
-                            "title": title,
-                            "content": content,
-                            "url": url
-                        }
+                        results[pageid] = {"title": title, "content": content, "url": url}
 
                     break
 
                 except (requests.RequestException, ValueError):
                     if attempt < 2:
-                        time.sleep(2 ** attempt)
+                        time.sleep(2**attempt)
                     continue
 
         return results
 
-    def _individual_fetch(self, pageids: List[int], max_retries: int = 3) -> Dict[int, Dict]:
+    def _individual_fetch(
+        self, pageids: list[int], max_retries: int = 3
+    ) -> dict[int, dict[str, Any]]:
         """Fetch articles one at a time for reliability."""
-        results = {}
+        results: dict[int, dict[str, Any]] = {}
 
         for pageid in pageids:
             params = {
@@ -116,12 +112,14 @@ class WikiContentFetcher:
                 "pageids": str(pageid),
                 "explaintext": True,
                 "exlimit": 1,
-                "format": "json"
+                "format": "json",
             }
 
             for attempt in range(max_retries):
                 try:
-                    response = requests.get(self.api_url, params=params, headers=self.headers, timeout=30)
+                    response = requests.get(
+                        self.api_url, params=params, headers=self.headers, timeout=30
+                    )
                     response.raise_for_status()
                     time.sleep(0.5)
 
@@ -141,23 +139,19 @@ class WikiContentFetcher:
 
                         url = f"https://fr.wikipedia.org/wiki/{title.replace(' ', '_')}"
 
-                        results[str(pageid)] = {
-                            "title": title,
-                            "content": content,
-                            "url": url
-                        }
+                        results[pageid] = {"title": title, "content": content, "url": url}
 
                     break
 
                 except (requests.RequestException, ValueError):
                     if attempt < max_retries - 1:
-                        time.sleep(2 ** attempt)
+                        time.sleep(2**attempt)
                     continue
 
         return results
 
     @staticmethod
-    def _has_sane_content(article_content: Dict) -> bool:
+    def _has_sane_content(article_content: dict) -> bool:
         """Return whether a persisted article has usable content."""
         return (
             isinstance(article_content, dict)
@@ -166,7 +160,7 @@ class WikiContentFetcher:
         )
 
     @classmethod
-    def _sanitize_existing_content(cls, existing) -> Dict[str, Dict]:
+    def _sanitize_existing_content(cls, existing) -> dict[str, dict]:
         """Normalize persisted content keys and drop unusable entries."""
         if not isinstance(existing, dict):
             return {}
@@ -178,7 +172,7 @@ class WikiContentFetcher:
         return sane_content
 
     @staticmethod
-    def _unique_pageids(articles: List[Dict]) -> List[int]:
+    def _unique_pageids(articles: list[dict]) -> list[int]:
         """Return input page IDs once, preserving source order."""
         pageids = []
         seen = set()
@@ -192,7 +186,7 @@ class WikiContentFetcher:
         return pageids
 
     @staticmethod
-    def _save_content(output_path: str, content: Dict[str, Dict]) -> None:
+    def _save_content(output_path: str, content: dict[str, dict]) -> None:
         with open(output_path, "w") as f:
             json.dump(content, f, indent=2)
 
@@ -221,13 +215,17 @@ class WikiContentFetcher:
         all_content = self._sanitize_existing_content(existing)
         new_count = 0
         for i in range(0, len(pageids), batch_size):
-            batch = pageids[i:i + batch_size]
+            batch = pageids[i : i + batch_size]
             # Skip pageids already fetched with non-empty content
             batch_to_fetch = [pid for pid in batch if str(pid) not in all_content]
             if not batch_to_fetch:
-                print(f"Articles {i + 1} to {i + len(batch)} of {len(pageids)}: already fetched, skipping")
+                print(
+                    f"Articles {i + 1} to {i + len(batch)} of {len(pageids)}: already fetched, skipping"
+                )
                 continue
-            print(f"Fetching articles {i + 1} to {i + len(batch)} of {len(pageids)} ({len(batch_to_fetch)} new)...")
+            print(
+                f"Fetching articles {i + 1} to {i + len(batch)} of {len(pageids)} ({len(batch_to_fetch)} new)..."
+            )
             batch_content = self.get_articles_content(batch_to_fetch)
             sane_batch_content = self._sanitize_existing_content(batch_content)
             all_content.update(sane_batch_content)
@@ -235,7 +233,9 @@ class WikiContentFetcher:
 
             # Checkpoint after every batch
             self._save_content(output_path, all_content)
-            print(f"  Checkpoint saved ({len(all_content)} total, {new_count} new) - batch {i // batch_size + 1}")
+            print(
+                f"  Checkpoint saved ({len(all_content)} total, {new_count} new) - batch {i // batch_size + 1}"
+            )
 
         self._save_content(output_path, all_content)
         print(f"Saved {len(all_content)} articles ({new_count} new) to {output_path}")
@@ -243,7 +243,4 @@ class WikiContentFetcher:
 
 if __name__ == "__main__":
     fetcher = WikiContentFetcher()
-    fetcher.fetch_from_file(
-        "data/wiki/wiki_articles.json",
-        "data/wiki/article_contents.json"
-    )
+    fetcher.fetch_from_file("data/wiki/wiki_articles.json", "data/wiki/article_contents.json")

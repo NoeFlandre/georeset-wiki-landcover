@@ -2,17 +2,21 @@
 
 import geopandas as gpd
 from shapely.geometry import Polygon
+
 from src.visualization.map_visualizer import MapVisualizer
 
 
 class TestMapVisualizer:
     def setup_method(self):
         self.basic_polygon = Polygon([(7.0, 48.0), (7.1, 48.0), (7.1, 48.1), (7.0, 48.1)])
-        self.gdf = gpd.GeoDataFrame({
-            "class_label": ["311", "312"],
-            "code_18": ["311", "312"],
-            "geometry": [self.basic_polygon, self.basic_polygon]
-        }, crs="EPSG:4326")
+        self.gdf = gpd.GeoDataFrame(
+            {
+                "class_label": ["311", "312"],
+                "code_18": ["311", "312"],
+                "geometry": [self.basic_polygon, self.basic_polygon],
+            },
+            crs="EPSG:4326",
+        )
         self.articles = [
             {"title": "Strasbourg", "lat": 48.5, "lon": 7.5},
             {"title": "Mulhouse", "lat": 48.1, "lon": 7.3},
@@ -26,6 +30,7 @@ class TestMapVisualizer:
     def test_plot_polygons_returns_folium_map(self):
         """Should return a folium Map object."""
         import folium
+
         visualizer = MapVisualizer(self.gdf)
         m = visualizer.plot_polygons()
         assert isinstance(m, folium.Map)
@@ -47,6 +52,7 @@ class TestMapVisualizer:
     def test_plot_polygons_with_articles_returns_map(self):
         """Should return a folium Map with article markers."""
         import folium
+
         visualizer = MapVisualizer(self.gdf)
         m = visualizer.plot_polygons_with_articles(self.articles)
         assert isinstance(m, folium.Map)

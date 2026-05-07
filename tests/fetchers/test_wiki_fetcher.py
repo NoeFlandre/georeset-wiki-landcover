@@ -1,7 +1,9 @@
 """Tests for WikiFetcher."""
 
-import pytest
 from unittest.mock import patch
+
+import pytest
+
 from src.fetchers.wiki_fetcher import WikiFetcher, WikiFetchError
 
 
@@ -44,7 +46,7 @@ class TestWikiFetcher:
                         for i in range(500)
                     ]
                 },
-                "continue": {"gscontinue": "next_page_token"}
+                "continue": {"gscontinue": "next_page_token"},
             },
             {
                 "query": {
@@ -53,13 +55,15 @@ class TestWikiFetcher:
                         for i in range(100)
                     ]
                 }
-            }
+            },
         ]
 
         articles = self.fetcher.get_articles_in_bbox(north=49.0, west=7.0, south=48.0, east=8.0)
 
         # Should have made 2 calls (initial + continuation)
-        assert mock_get.call_count == 2, f"Expected 2 calls for continuation, got {mock_get.call_count}"
+        assert mock_get.call_count == 2, (
+            f"Expected 2 calls for continuation, got {mock_get.call_count}"
+        )
         assert len(articles) == 600
 
     @patch("requests.get")
@@ -185,12 +189,7 @@ class TestWikiFetcher:
                 ]
             }
         }
-        bounds = {
-            "min_lon": 7.0,
-            "min_lat": 48.0,
-            "max_lon": 7.2,
-            "max_lat": 48.2
-        }
+        bounds = {"min_lon": 7.0, "min_lat": 48.0, "max_lon": 7.2, "max_lat": 48.2}
         self.fetcher.get_articles_in_bounds(**bounds)
 
         # Should call with gsbbox format
@@ -209,15 +208,23 @@ class TestWikiFetcher:
                     {"pageid": 1, "title": "InCorineOnly", "lat": 48.1, "lon": 7.1},
                     {"pageid": 2, "title": "InOSMOnly", "lat": 48.2, "lon": 7.4},
                     {"pageid": 3, "title": "InBoth", "lat": 48.3, "lon": 7.15},
-                    {"pageid": 4, "title": "InNeither", "lat": 48.15, "lon": 7.25},  # in the gap: not in corine range [7.0,7.2], not in osm range [7.4,7.5]
+                    {
+                        "pageid": 4,
+                        "title": "InNeither",
+                        "lat": 48.15,
+                        "lon": 7.25,
+                    },  # in the gap: not in corine range [7.0,7.2], not in osm range [7.4,7.5]
                 ]
             }
         }
 
         # Corine filter: only articles with lon in [7.0, 7.2]
-        corine_filter = lambda lon, lat: 7.0 <= lon <= 7.2
+        def corine_filter(lon: float, lat: float) -> bool:
+            return 7.0 <= lon <= 7.2
+
         # OSM filter: only articles with lon in [7.4, 7.5]
-        osm_filter = lambda lon, lat: 7.4 <= lon <= 7.5
+        def osm_filter(lon: float, lat: float) -> bool:
+            return 7.4 <= lon <= 7.5
 
         articles = self.fetcher.get_articles_in_bounds(
             min_lon=7.0,
@@ -275,7 +282,9 @@ class TestWikiFetcher:
                 lon += 0.01
             lat += 0.01
 
-        assert len(uncovered) == 0, f"Found {len(uncovered)} uncovered points. Tiles used: {len(captured_tiles)}"
+        assert len(uncovered) == 0, (
+            f"Found {len(uncovered)} uncovered points. Tiles used: {len(captured_tiles)}"
+        )
 
     def test_get_nearby_articles_handles_no_results(self):
         """Should return empty list when no articles found."""

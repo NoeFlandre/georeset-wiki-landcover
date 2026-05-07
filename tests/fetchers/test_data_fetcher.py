@@ -1,7 +1,8 @@
 """Tests for DataFetcher."""
 
-import pytest
 import geopandas as gpd
+import pytest
+
 from src.fetchers.data_fetcher import DataFetcher
 
 
@@ -70,6 +71,7 @@ class TestDataFetcher:
         output_path = tmp_path / "bounds.json"
         self.fetcher.save_bounds(str(output_path))
         import json
+
         with open(output_path) as f:
             data = json.load(f)
         assert "min_lon" in data
