@@ -62,7 +62,11 @@ class ArticleSummarizer:
             New dict with all original keys plus 'summary' and 'metadata'.
         """
         result = dict(article)
-        prompt = f"Résumez cet article Wikipedia en une phrase concise:\n\n{article['content']}"
+        max_content_chars = 24000
+        content = article["content"]
+        if len(content) > max_content_chars:
+            content = content[:max_content_chars]
+        prompt = f"Résumez cet article Wikipedia en une phrase concise:\n\n{content}"
         result["summary"] = self._generate_summary(prompt)
 
         result["metadata"] = {
