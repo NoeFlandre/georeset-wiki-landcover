@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-#OAR -q besteffort
-#OAR -l host=1/gpu=1,walltime=10:00:00
+#OAR -q production
+#OAR -l host=1/gpu=1,walltime=20:00:00
+#OAR -p gpu_mem>=32000
 #OAR -O /home/nflandre/georeset/OAR_%jobid%.out
 #OAR -E /home/nflandre/georeset/OAR_%jobid%.err
 
@@ -24,6 +25,8 @@ fi
 
 export CMAKE_ARGS="-DGGML_CUDA=on"
 export FORCE_CMAKE=1
+export UV_PROJECT_ENVIRONMENT="$HOME/georeset/.venv_${OAR_JOB_ID}"
+export VIRTUAL_ENV="${UV_PROJECT_ENVIRONMENT}"
 
 uv sync --all-groups
 uv pip install --no-cache-dir huggingface_hub llama-cpp-python

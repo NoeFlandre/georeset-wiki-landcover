@@ -15,7 +15,7 @@ ssh -o BatchMode=yes "${ACCESS_HOST}" "mkdir -p ${SITE}/${REMOTE_DIR}"
 echo "Syncing repository to Grid5000"
 rsync -az --delete \
   --exclude '.git' \
-  --exclude '.venv' \
+  --exclude '.venv*' \
   --exclude '.pytest_cache' \
   --exclude '.ruff_cache' \
   --exclude '__pycache__' \
@@ -26,6 +26,9 @@ rsync -az --delete \
   --exclude 'data/corine' \
   --exclude 'data/maps' \
   --exclude 'data/distribution' \
+  --exclude 'data/classification' \
+  --exclude 'OAR_*' \
+  --exclude 'wrapper*.sh' \
   --exclude '*.db' \
   ./ "${ACCESS_HOST}:${SITE}/${REMOTE_DIR}/"
 
@@ -42,10 +45,11 @@ echo "Submitting OAR job"
 SUBMIT_OUTPUT="$(
   ssh -o BatchMode=yes "${ACCESS_HOST}" "
     ssh ${SITE} 'cd ${REMOTE_DIR} && chmod +x ${JOB_SCRIPT} && \
-    GEORESET_CLASSIFICATION_TASK=${TASK} \
-    GEORESET_CLASSIFICATION_TEXT_SOURCE=${TEXT_SOURCE} \
-    GEORESET_MODEL_PATH=\${GEORESET_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf} \
-    oarsub -S ./${JOB_SCRIPT}'
+    WRAPPER_NAME=\"wrapper_${TASK}_${TEXT_SOURCE}.sh\" && \
+    cp ${JOB_SCRIPT} \${WRAPPER_NAME} && \
+    sed -i \"2i export GEORESET_CLASSIFICATION_TASK=${TASK}\\nexport GEORESET_CLASSIFICATION_TEXT_SOURCE=${TEXT_SOURCE}\\nexport GEORESET_MODEL_PATH=\\\${GEORESET_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf}\" \${WRAPPER_NAME} && \
+    chmod +x \${WRAPPER_NAME} && \
+    oarsub -S ./\${WRAPPER_NAME}'
   ")"
 echo "${SUBMIT_OUTPUT}"
 

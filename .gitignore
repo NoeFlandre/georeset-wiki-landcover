@@ -34,3 +34,6 @@ grid5000_guide.md
 OAR_*.out
 OAR_*.err
 oar_submit.log
+
+# GPU Classification docs (User requested not to push)
+docs/gpu_classification_guide.md
