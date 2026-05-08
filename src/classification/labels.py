@@ -26,11 +26,17 @@ def osm_allowed_labels() -> list[str]:
     return sorted(set(LANDUSE_VALUES) | set(NATURAL_VALUES))
 
 
-def osm_label_from_row(row: Mapping) -> str | None:
+def osm_labels_from_row(row: Mapping) -> list[str]:
+    labels = []
     landuse = row.get("landuse")
     natural = row.get("natural")
     if landuse in LANDUSE_VALUES:
-        return str(landuse)
-    if natural in NATURAL_VALUES:
-        return str(natural)
-    return None
+        labels.append(str(landuse))
+    if natural in NATURAL_VALUES and str(natural) not in labels:
+        labels.append(str(natural))
+    return labels
+
+
+def osm_label_from_row(row: Mapping) -> str | None:
+    labels = osm_labels_from_row(row)
+    return labels[0] if labels else None

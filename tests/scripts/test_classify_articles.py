@@ -206,6 +206,7 @@ class TestPredictionRecordShape:
             classifier = MagicMock()
             classifier.classify_single_label.return_value = {
                 "prediction": "31",
+                "prediction_labels": ["31"],
                 "parse_status": "ok",
                 "error": None,
                 "raw_response": '{"label":"31"}',
@@ -258,6 +259,7 @@ class TestPredictionRecordShape:
                 "title",
                 "target",
                 "prediction",
+                "prediction_labels",
                 "parse_status",
                 "raw_response",
                 "error",

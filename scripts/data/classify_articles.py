@@ -22,6 +22,8 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
+CLASSIFICATION_POLICY_VERSION = 2
+
 
 def prediction_fingerprint(
     task: str,
@@ -38,6 +40,7 @@ def prediction_fingerprint(
         "seed": seed,
         "temperature": temperature,
         "allowed_labels": sorted(allowed_labels),
+        "classification_policy_version": CLASSIFICATION_POLICY_VERSION,
     }
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
@@ -233,6 +236,7 @@ def main(argv: list[str] | None = None) -> None:
             "title": title,
             "target": target[pageid],
             "prediction": result.get("prediction"),
+            "prediction_labels": result.get("prediction_labels", []),
             "parse_status": result.get("parse_status"),
             "raw_response": result.get("raw_response"),
             "error": result.get("error"),

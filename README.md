@@ -187,10 +187,14 @@ PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
 ```
 
 Outputs:
-- `data/classification/{task}_{text_source}_predictions.json`: per-article predictions with raw LLM response and full metadata including fingerprint.
+- `data/classification/{task}_{text_source}_predictions.json`: per-article predictions with raw LLM response, parsed `prediction`, a normalized `prediction_labels` list, and full metadata including fingerprint.
 - `data/classification/{task}_{text_source}_metrics.json`: aggregate metrics (n_eligible, n_predicted_ok, n_parse_error, coverage, accuracy/F1 scores, task, text_source, allowed_labels, labels_evaluated).
 
-Resumability: articles with matching fingerprint and `parse_status=="ok"` are skipped; parse errors are re-run. Use `--limit N` for smoke testing.
+Resumability: articles with matching fingerprint and `parse_status=="ok"` are skipped; parse errors and ambiguous predictions are re-run. A classification policy version bump in the fingerprint invalidates old caches automatically. Use `--limit N` for smoke testing.
+
+Label Policies:
+- **OSM** is fully multi-label. Ground truth and predictions support multiple valid tags (e.g., both `landuse` and `natural` from the same polygon, or from overlapping polygons).
+- **CORINE** remains single-label. If the LLM generates multiple valid labels for a single CORINE prediction, it is flagged as `parse_status="ambiguous"`. Ambiguous records are excluded from metrics (lowering coverage) but are preserved for audit.
 
 Grid5000 runs:
 

@@ -1,7 +1,7 @@
 import geopandas as gpd
 from shapely.geometry import Point
 
-from src.classification.labels import osm_label_from_row
+from src.classification.labels import osm_labels_from_row
 
 
 def _articles_to_points(articles: list[dict]) -> gpd.GeoDataFrame:
@@ -38,7 +38,7 @@ def build_corine_ground_truth(
     corine = corine[~corine["code_18"].astype(str).str.startswith("1")].copy()
     corine["label"] = corine["code_18"].astype(str).str[:2]
     joined = gpd.sjoin(
-        points, corine[["label", "geometry"]], how="inner", predicate="within"
+        points, corine[["label", "geometry"]], how="inner", predicate="intersects"
     )
     result = {}
     for pageid, group in joined.groupby("pageid", sort=False):
@@ -53,19 +53,21 @@ def build_osm_ground_truth(
 ) -> dict[str, list[str]]:
     """
     OSM ground truth: multi-label per pageid.
-    - Collect all osm_label_from_row results, deduplicate, sort.
+    - Collect all osm_labels_from_row results, deduplicate, sort.
     - Zero allowed labels → exclude (no dict entry).
     """
     points = _articles_to_points(articles)
     if points.empty or osm_gdf.empty:
         return {}
     osm = _to_wgs84(osm_gdf).copy()
-    osm["label"] = osm.apply(osm_label_from_row, axis=1)
-    osm = osm[osm["label"].notna()].copy()
+    osm["labels"] = osm.apply(osm_labels_from_row, axis=1)
+    osm = osm[osm["labels"].astype(bool)].copy()
     if osm.empty:
         return {}
+    osm = osm.explode("labels")
+    osm = osm.rename(columns={"labels": "label"})
     joined = gpd.sjoin(
-        points, osm[["label", "geometry"]], how="inner", predicate="within"
+        points, osm[["label", "geometry"]], how="inner", predicate="intersects"
     )
     result = {}
     for pageid, group in joined.groupby("pageid", sort=False):

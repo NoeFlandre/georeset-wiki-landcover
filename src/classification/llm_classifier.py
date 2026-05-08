@@ -1,10 +1,12 @@
 import json
 from typing import Any
 
+from src.classification.prediction_parser import normalize_prediction_response
+
 SINGLE_SCHEMA = {
     "type": "object",
-    "properties": {"label": {"type": "string"}},
-    "required": ["label"],
+    "properties": {"labels": {"type": "array", "items": {"type": "string"}}},
+    "required": ["labels"],
     "additionalProperties": False,
 }
 MULTI_SCHEMA = {
@@ -81,9 +83,11 @@ class LLMClassifier:
         text_source: str,
         prompt: str,
         allowed_labels: list[str],
+        prediction_labels: list[str] | None = None,
     ) -> dict[str, Any]:
         return {
             "prediction": None,
+            "prediction_labels": prediction_labels or [],
             "parse_status": "error",
             "error": error,
             "raw_response": raw_response,
@@ -114,41 +118,31 @@ class LLMClassifier:
                 response_format={"type": "json_object", "schema": SINGLE_SCHEMA},
             )
             raw_response = response["choices"][0]["message"]["content"]
-            payload = json.loads(raw_response)
-            label = payload.get("label")
-            if not isinstance(label, str):
+            labels, error = normalize_prediction_response(raw_response, allowed_labels)
+
+            if error:
                 return self._error_result(
-                    "label is not a string",
-                    raw_response,
-                    task,
-                    text_source,
-                    user_prompt,
-                    allowed_labels,
+                    error, raw_response, task, text_source, user_prompt, allowed_labels, labels
                 )
-            if label not in allowed_labels:
-                return self._error_result(
-                    f"label '{label}' not in allowed labels",
-                    raw_response,
-                    task,
-                    text_source,
-                    user_prompt,
-                    allowed_labels,
+
+            if len(labels) == 1:
+                return {
+                    "prediction": labels[0],
+                    "prediction_labels": labels,
+                    "parse_status": "ok",
+                    "error": None,
+                    "raw_response": raw_response,
+                    "metadata": self._metadata(task, text_source, user_prompt, allowed_labels),
+                }
+            else:
+                res = self._error_result(
+                    "multiple labels for single-label task", raw_response, task, text_source, user_prompt, allowed_labels, labels
                 )
-            return {
-                "prediction": label,
-                "parse_status": "ok",
-                "error": None,
-                "raw_response": raw_response,
-                "metadata": self._metadata(task, text_source, user_prompt, allowed_labels),
-            }
+                res["parse_status"] = "ambiguous"
+                return res
         except Exception as exc:
             return self._error_result(
-                str(exc),
-                raw_response,
-                task,
-                text_source,
-                user_prompt,
-                allowed_labels,
+                str(exc), raw_response, task, text_source, user_prompt, allowed_labels
             )
 
     def classify_multilabel(
@@ -174,44 +168,16 @@ class LLMClassifier:
                 response_format={"type": "json_object", "schema": MULTI_SCHEMA},
             )
             raw_response = response["choices"][0]["message"]["content"]
-            payload = json.loads(raw_response)
-            raw_labels = payload.get("labels")
-            if not isinstance(raw_labels, list):
+            labels, error = normalize_prediction_response(raw_response, allowed_labels)
+
+            if error:
                 return self._error_result(
-                    "labels is not a list",
-                    raw_response,
-                    task,
-                    text_source,
-                    user_prompt,
-                    allowed_labels,
+                    error, raw_response, task, text_source, user_prompt, allowed_labels, labels
                 )
-            seen, deduped = set(), []
-            for lbl in raw_labels:
-                if not isinstance(lbl, str):
-                    return self._error_result(
-                        f"invalid label type {type(lbl)}",
-                        raw_response,
-                        task,
-                        text_source,
-                        user_prompt,
-                        allowed_labels,
-                    )
-                if lbl not in seen:
-                    seen.add(lbl)
-                    deduped.append(lbl)
-            deduped.sort()
-            invalid = [lbl for lbl in deduped if lbl not in allowed_labels]
-            if invalid:
-                return self._error_result(
-                    f"labels {invalid} not in allowed labels",
-                    raw_response,
-                    task,
-                    text_source,
-                    user_prompt,
-                    allowed_labels,
-                )
+
             return {
-                "prediction": deduped,
+                "prediction": labels,
+                "prediction_labels": labels,
                 "parse_status": "ok",
                 "error": None,
                 "raw_response": raw_response,
@@ -219,10 +185,5 @@ class LLMClassifier:
             }
         except Exception as exc:
             return self._error_result(
-                str(exc),
-                raw_response,
-                task,
-                text_source,
-                user_prompt,
-                allowed_labels,
+                str(exc), raw_response, task, text_source, user_prompt, allowed_labels
             )

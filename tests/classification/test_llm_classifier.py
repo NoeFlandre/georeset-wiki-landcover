@@ -7,7 +7,7 @@ def test_classify_single_label_returns_ok_with_valid_response():
     classifier = LLMClassifier(model_path="model.gguf", seed=123, temperature=0.0)
     mock_llm = MagicMock()
     mock_llm.create_chat_completion.return_value = {
-        "choices": [{"message": {"content": '{"label": "31"}'}}]
+        "choices": [{"message": {"content": '{"labels": ["31"]}'}}]
     }
     classifier._llm = mock_llm
 
@@ -20,6 +20,7 @@ def test_classify_single_label_returns_ok_with_valid_response():
     )
 
     assert result["prediction"] == "31"
+    assert result["prediction_labels"] == ["31"]
     assert result["parse_status"] == "ok"
     assert result["error"] is None
     assert result["metadata"]["model"] == "model.gguf"
@@ -30,6 +31,50 @@ def test_classify_single_label_returns_ok_with_valid_response():
     _, kwargs = mock_llm.create_chat_completion.call_args
     assert kwargs["response_format"]["type"] == "json_object"
     assert kwargs["temperature"] == 0.0
+
+
+def test_classify_single_label_multiple_labels_returns_ambiguous():
+    classifier = LLMClassifier(model_path=None)
+    mock_llm = MagicMock()
+    mock_llm.create_chat_completion.return_value = {
+        "choices": [{"message": {"content": '{"labels": ["31", "32"]}'}}]
+    }
+    classifier._llm = mock_llm
+
+    result = classifier.classify_single_label(
+        text="Une forêt dense.",
+        allowed_labels=["21", "31", "32"],
+        label_descriptions={},
+        task="corine_level2",
+        text_source="summary",
+    )
+
+    assert result["prediction"] is None
+    assert result["prediction_labels"] == ["31", "32"]
+    assert result["parse_status"] == "ambiguous"
+    assert "multiple labels" in result["error"]
+
+
+def test_classify_single_label_comma_string_returns_ambiguous():
+    classifier = LLMClassifier(model_path=None)
+    mock_llm = MagicMock()
+    mock_llm.create_chat_completion.return_value = {
+        "choices": [{"message": {"content": '{"label": "31, 32"}'}}]
+    }
+    classifier._llm = mock_llm
+
+    result = classifier.classify_single_label(
+        text="Une forêt dense.",
+        allowed_labels=["21", "31", "32"],
+        label_descriptions={},
+        task="corine_level2",
+        text_source="summary",
+    )
+
+    assert result["prediction"] is None
+    assert result["prediction_labels"] == ["31", "32"]
+    assert result["parse_status"] == "ambiguous"
+    assert "multiple labels" in result["error"]
 
 
 def test_classify_multilabel_deduplicates_and_sorts():
@@ -47,6 +92,26 @@ def test_classify_multilabel_deduplicates_and_sorts():
         text_source="summary",
     )
     assert result["prediction"] == ["meadow", "wood"]
+    assert result["prediction_labels"] == ["meadow", "wood"]
+    assert result["parse_status"] == "ok"
+
+
+def test_classify_multilabel_mixed_returns_ok():
+    classifier = LLMClassifier(model_path=None)
+    mock_llm = MagicMock()
+    mock_llm.create_chat_completion.return_value = {
+        "choices": [{"message": {"content": '{"label": "meadow, wood"}'}}]
+    }
+    classifier._llm = mock_llm
+
+    result = classifier.classify_multilabel(
+        text="Prairie.",
+        allowed_labels=["meadow", "wood"],
+        task="osm",
+        text_source="summary",
+    )
+    assert result["prediction"] == ["meadow", "wood"]
+    assert result["prediction_labels"] == ["meadow", "wood"]
     assert result["parse_status"] == "ok"
 
 
@@ -54,7 +119,7 @@ def test_invalid_label_returns_error_with_full_metadata():
     classifier = LLMClassifier(model_path=None)
     mock_llm = MagicMock()
     mock_llm.create_chat_completion.return_value = {
-        "choices": [{"message": {"content": '{"label": "residential"}'}}]
+        "choices": [{"message": {"content": '{"labels": ["residential"]}'}}]
     }
     classifier._llm = mock_llm
 
@@ -67,7 +132,7 @@ def test_invalid_label_returns_error_with_full_metadata():
     )
     assert result["parse_status"] == "error"
     assert "residential" in result["error"]
-    assert result["raw_response"] == '{"label": "residential"}'
+    assert result["raw_response"] == '{"labels": ["residential"]}'
     assert result["prediction"] is None
     assert result["metadata"]["prompt"]
     assert result["metadata"]["system_prompt"]

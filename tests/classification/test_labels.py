@@ -5,6 +5,7 @@ from src.classification.labels import (
     corine_level2_labels,
     osm_allowed_labels,
     osm_label_from_row,
+    osm_labels_from_row,
 )
 from src.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES
 
@@ -34,3 +35,8 @@ def test_osm_label_ignores_out_of_scope_tags():
 
 def test_osm_allowed_labels_are_project_scope_constants():
     assert osm_allowed_labels() == sorted(set(LANDUSE_VALUES) | set(NATURAL_VALUES))
+
+
+def test_osm_labels_from_row_returns_landuse_and_natural_when_both_allowed():
+    row = {"landuse": "meadow", "natural": "wood"}
+    assert osm_labels_from_row(row) == ["meadow", "wood"]
