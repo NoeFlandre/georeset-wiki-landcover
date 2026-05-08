@@ -34,4 +34,6 @@ uv pip install --no-cache-dir huggingface_hub llama-cpp-python
 uv run python -m scripts.data.classify_articles \
   --task "${TASK}" \
   --text-source "${TEXT_SOURCE}" \
-  --model-path "${GEORESET_MODEL_PATH}"
+  --model-path "${GEORESET_MODEL_PATH}" \
+  --temperature "${GEORESET_CLASSIFICATION_TEMPERATURE:-0.0}" \
+  ${GEORESET_EXTRA_ARGS:-}

@@ -82,6 +82,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument("--retry-failed", action="store_true")
     parser.add_argument("--limit", type=int, default=None)
     return parser.parse_args(argv)
 
@@ -205,12 +206,9 @@ def main(argv: list[str] | None = None) -> None:
 
     for pageid in eligible:
         record = existing.get(pageid)
-        if (
-            record
-            and record.get("parse_status") == "ok"
-            and record.get("metadata", {}).get("fingerprint") == fp_current
-        ):
-            continue
+        if record and record.get("parse_status") == "ok":
+            if args.retry_failed or record.get("metadata", {}).get("fingerprint") == fp_current:
+                continue
         article = next(
             (a for a in articles if str(a.get("pageid")) == pageid), None
         )
