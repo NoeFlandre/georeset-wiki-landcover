@@ -41,4 +41,4 @@ docs/gpu_classification_guide.md
 # LaTeX build artifacts
 *.aux
 *.log
-pipeline_diagram.pdf
+docs/diagrams/pipeline_diagram.pdf

@@ -1,4 +1,4 @@
-![Pipeline Overview](docs/pipeline_diagram-1.png)
+![Pipeline Overview](docs/diagrams/pipeline_diagram-1.png)
 
 # GeoReset
 
