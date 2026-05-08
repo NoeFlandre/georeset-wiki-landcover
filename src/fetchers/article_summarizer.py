@@ -64,30 +64,29 @@ class ArticleSummarizer:
         content = article["content"]
         if len(content) > max_content_chars:
             content = content[:max_content_chars]
-        prompt = f"Résumez cet article Wikipedia en une phrase concise:\n\n{content}"
-        result["summary"] = self._generate_summary(prompt)
+        prompt = f"Résumez cet article Wikipedia en une phrase concise, sans jamais mentionner le nom du lieu décrit:\n\n{content}"
+        system_prompt = (
+            "Tu es un assistant qui résume des articles Wikipedia. "
+            "Réponds uniquement avec un objet JSON qui respecte le schéma fourni. "
+            "N'inclus aucun raisonnement, balise <think>, Markdown ou champ supplémentaire."
+        )
+        result["summary"] = self._generate_summary(prompt, system_prompt)
 
         result["metadata"] = {
             "model": self.model_path,
             "seed": self.seed,
             "temperature": self.temperature,
             "prompt": prompt,
+            "system_prompt": system_prompt,
         }
         return result
 
-    def _generate_summary(self, prompt: str) -> str:
+    def _generate_summary(self, prompt: str, system_prompt: str) -> str:
         """Call the LLM with structured JSON output."""
         llm = self._get_llm()
         response = llm.create_chat_completion(
             messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "Tu es un assistant qui résume des articles Wikipedia. "
-                        "Réponds uniquement avec un objet JSON qui respecte le schéma fourni. "
-                        "N'inclus aucun raisonnement, balise <think>, Markdown ou champ supplémentaire."
-                    ),
-                },
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt},
             ],
             temperature=self.temperature,
