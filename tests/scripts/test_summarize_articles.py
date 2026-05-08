@@ -22,7 +22,7 @@ class TestArticleSummarizer:
     def test_summarize_returns_summary_and_metadata(self):
         """Should return a dict with summary key and metadata for an article."""
         summarizer = ArticleSummarizer(model_path="test_model.gguf", seed=123, temperature=0.5)
-        expected_prompt = f"Résumez cet article Wikipedia en une phrase concise:\n\n{self.sample_article['content']}"
+        expected_prompt = f"Résumez cet article Wikipedia en une phrase concise, sans jamais mentionner le nom du lieu décrit:\n\n{self.sample_article['content']}"
         with patch.object(summarizer, "_generate_summary", return_value="Une ville française."):
             result = summarizer.summarize(self.sample_article)
             assert isinstance(result, dict)
@@ -73,7 +73,7 @@ class TestArticleSummarizer:
         }
         summarizer._llm = mock_llm
 
-        assert summarizer._generate_summary("Prompt") == "Une ville française."
+        assert summarizer._generate_summary("Prompt", "System prompt") == "Une ville française."
 
         _, kwargs = mock_llm.create_chat_completion.call_args
         assert kwargs["response_format"] == {
@@ -93,7 +93,7 @@ class TestArticleSummarizer:
         summarizer._llm = mock_llm
 
         with pytest.raises(ValueError, match="valid summary JSON"):
-            summarizer._generate_summary("Prompt")
+            summarizer._generate_summary("Prompt", "System prompt")
 
     def test_generate_summary_rejects_private_markers_inside_summary(self):
         """Should not persist summaries that contain private reasoning markers."""

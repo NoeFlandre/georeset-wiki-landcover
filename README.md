@@ -59,6 +59,8 @@ git add .gitignore README.md src tests pyproject.toml uv.lock LICENSE Dockerfile
 - `src/scripts/snapshot.py`: prints a quick CORINE dataset snapshot.
 - `src/scripts/summarize_articles.py`: summarizes fetched article content with
   a local LLM backend.
+- `src/classification/`: label utilities, ground-truth builders, LLM
+  classifier, and metrics for CORINE level-2 and OSM tag classification.
 - `scripts/grid5000/submit_summarization.sh`: syncs the minimal repository
   state to Grid5000/Nancy, submits the summarization OAR job, and continuously
   syncs the resumable output back.
@@ -161,6 +163,41 @@ Optional environment overrides:
 ```bash
 G5K_SITE=nancy G5K_REMOTE_DIR=georeset GEORESET_MODEL_PATH=Qwen3.6-27B-Q4_0.gguf \
   bash scripts/grid5000/submit_summarization.sh
+```
+
+## Article-Text Land-Cover Classification
+
+Six classification runs are supported: 2 tasks (CORINE level-2 single-label, OSM multi-label) × 3 text sources (normal summary, no-place summary, raw article content).
+
+Local runs:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+  --task corine_level2 --text-source summary
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+  --task corine_level2 --text-source summary_no_place
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+  --task corine_level2 --text-source content
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+  --task osm --text-source summary
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+  --task osm --text-source summary_no_place
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+  --task osm --text-source content
+```
+
+Outputs:
+- `data/classification/{task}_{text_source}_predictions.json`: per-article predictions with raw LLM response and full metadata including fingerprint.
+- `data/classification/{task}_{text_source}_metrics.json`: aggregate metrics (n_eligible, n_predicted_ok, n_parse_error, coverage, accuracy/F1 scores, task, text_source, allowed_labels, labels_evaluated).
+
+Resumability: articles with matching fingerprint and `parse_status=="ok"` are skipped; parse errors are re-run. Use `--limit N` for smoke testing.
+
+Grid5000 runs:
+
+```bash
+GEORESET_CLASSIFICATION_TASK=corine_level2 \
+GEORESET_CLASSIFICATION_TEXT_SOURCE=summary \
+bash scripts/cluster/submit_classification.sh
 ```
 
 ## Docker
