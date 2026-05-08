@@ -1,0 +1,189 @@
+\documentclass[tikz,border=8pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, shapes.misc, arrows.meta, positioning, fit, backgrounds, calc}
+
+\definecolor{clcblue}{RGB}{52, 101, 164}
+\definecolor{wikigreen}{RGB}{34, 139, 34}
+\definecolor{osmred}{RGB}{180, 50, 30}
+\definecolor{llmviolet}{RGB}{100, 50, 160}
+\definecolor{metricgold}{RGB}{180, 130, 0}
+\definecolor{filtergray}{RGB}{90, 90, 90}
+\definecolor{boxbg}{RGB}{245, 247, 252}
+\definecolor{arrowcol}{RGB}{60, 60, 80}
+
+\tikzset{
+  datasrc/.style={
+    rectangle, rounded corners=4pt,
+    draw=#1!70!black, fill=#1!12,
+    text width=3.0cm, align=center,
+    font=\sffamily\footnotesize,
+    inner sep=5pt, minimum height=1.0cm
+  },
+  process/.style={
+    rectangle, rounded corners=3pt,
+    draw=#1!80!black, fill=#1!10,
+    text width=3.2cm, align=center,
+    font=\sffamily\scriptsize,
+    inner sep=4pt, minimum height=0.85cm
+  },
+  taskbox/.style={
+    rectangle, rounded corners=4pt,
+    draw=#1!80!black, fill=#1!10,
+    text width=2.8cm, align=center,
+    font=\sffamily\scriptsize,
+    inner sep=4pt, minimum height=0.85cm
+  },
+  metricbox/.style={
+    rectangle, rounded corners=4pt,
+    draw=metricgold!80!black, fill=metricgold!10,
+    text width=2.6cm, align=center,
+    font=\sffamily\scriptsize,
+    inner sep=4pt, minimum height=0.85cm
+  },
+  sectionlabel/.style={
+    font=\sffamily\bfseries\small,
+    text=#1!60!black
+  },
+  myarrow/.style={
+    ->, >=Stealth, line width=0.8pt, color=arrowcol
+  },
+  myarrowdashed/.style={
+    ->, >=Stealth, line width=0.7pt, color=arrowcol, dashed
+  },
+  grouplabel/.style={
+    font=\sffamily\bfseries\scriptsize, align=center
+  },
+  notebox/.style={
+    rectangle, rounded corners=2pt,
+    draw=gray!50, fill=gray!8,
+    text width=2.4cm, align=center,
+    font=\sffamily\tiny, inner sep=3pt
+  }
+}
+
+\begin{document}
+\begin{tikzpicture}[node distance=0.45cm and 0.55cm]
+
+%% ============================================================
+%% COLUMN 1 — DATA SOURCES
+%% ============================================================
+
+\node[datasrc=clcblue] (clc)
+  {\textbf{CORINE LC 2018}\\\relax Alt Alsace shapefile};
+
+\node[datasrc=osmred, below=0.7cm of clc] (osm)
+  {\textbf{OpenStreetMap}\\\relax Overpass API (10\~deg x 10\~deg tiles)};
+
+\node[datasrc=wikigreen, below=0.7cm of osm] (wiki)
+  {\textbf{Wikipedia (FR)}\\\relax Geosearch API (tiled 0.18 x 0.26 deg, 500 res/tile)};
+
+\node[sectionlabel=clcblue, above=0.15cm of clc] {Data Sources};
+
+\node[process=filtergray, right=1.1cm of clc] (clcfilter)
+  {\textbf{CLC Filter}\\\relax Remove class 1xx (artificial)};
+
+\node[process=osmred, right=1.1cm of osm] (osmfilter)
+  {\textbf{OSM Filter}\\\relax Only landuse/natural tags\\\relax Keep CLC-overlapping polys};
+
+\node[process=wikigreen, right=1.1cm of wiki] (wikiproc)
+  {\textbf{Wiki Pipeline}\\\relax 1. Metadata fetch (Geosearch)\\\relax 2. Content fetch (batches of 50)};
+
+\node[sectionlabel=filtergray, above=0.15cm of clcfilter] {Preprocessing};
+
+\node[process=filtergray, right=1.15cm of osmfilter] (filterpipe)
+  {\textbf{Wiki Spatial Filter}\\\relax Keep articles in CLC OR OSM\\\relax spatial join (within)};
+
+\node[process=wikigreen, below=0.38cm of filterpipe] (summaries)
+  {\textbf{Summaries}\\\relax Qwen3.6-27B-Q4\_0.gguf\\\relax temp=0.7\\\relax summary: with place name\\\relax summary\_no\_place};
+
+\node[sectionlabel=filtergray, above=0.15cm of filterpipe, yshift=1.65cm] {Spatial Filtering};
+
+\node[process=clcblue, right=1.15cm of filterpipe, yshift=0.6cm] (gtcorine)
+  {\textbf{CORINE GT}\\\relax Point intersect CLC polygon\\\relax Single level-2 label (9 classes)};
+
+\node[process=osmred, below=0.50cm of gtcorine] (gtosm)
+  {\textbf{OSM GT}\\\relax Point intersect OSM polygon\\\relax Multi-label (21 landuse/natural)};
+
+\node[sectionlabel=clcblue, above=0.15cm of gtcorine] {Ground Truth};
+
+\node[taskbox=llmviolet, right=1.15cm of gtcorine] (taskcorine)
+  {\textbf{CORINE Task}\\\relax Single-label x3 text sources\\\relax summary / no\_place / content};
+
+\node[taskbox=llmviolet, below=0.50cm of taskcorine] (taskosm)
+  {\textbf{OSM Task}\\\relax Multi-label x3 text sources\\\relax summary / no\_place / content};
+
+\begin{scope}[on background layer]
+  \node[draw=llmviolet!70, fill=llmviolet!6, rounded corners=5pt,
+        fit=(taskcorine)(taskosm), inner sep=8pt] (llmfit) {};
+\end{scope}
+
+\node[sectionlabel=llmviolet, above=0.15cm of llmfit.north,
+      anchor=south, align=center] {LLM Classifier\\Qwen3.6-27B-Q4\_0.gguf};
+
+\node[notebox, below=0.25cm of llmfit.south, anchor=north] (g5k)
+  {temp=0, seed=42\\JSON-schema output};
+
+\node[process=filtergray, right=1.1cm of taskcorine] (parser)
+  {\textbf{Prediction Parser}\\\relax JSON parse then regex fallback};
+
+\node[metricbox, below=0.45cm of parser] (msingle)
+  {\textbf{Single-label Metrics}\\\relax Accuracy, Coverage\\\relax Macro P/R/F1\\\relax Per-class support};
+
+\node[metricbox, below=0.38cm of msingle] (mmulti)
+  {\textbf{Multi-label Metrics}\\\relax Exact-match accuracy\\\relax Micro/Macro P/R/F1\\\relax Per-label support};
+
+\node[sectionlabel=metricgold, above=0.15cm of parser] {Evaluation};
+
+\draw[myarrow] (clc) -- (clcfilter);
+\draw[myarrow] (osm) -- (osmfilter);
+\draw[myarrow] (wiki) -- (wikiproc);
+
+\draw[myarrow, color=clcblue!70] (clcfilter.south) -- (osmfilter.north);
+
+\draw[myarrow, color=clcblue!70] (clcfilter.east)
+    to[out=0,in=180] (filterpipe.160);
+\draw[myarrow, color=osmred!70] (osmfilter.east)
+    -- (filterpipe.180);
+\draw[myarrow, color=wikigreen!70] (wikiproc.east)
+    to[out=0,in=180] (filterpipe.200);
+
+\draw[myarrow, color=wikigreen!70] (filterpipe.south) -- (summaries.north);
+
+\draw[myarrow, color=clcblue!70] (filterpipe.east)
+    to[out=0,in=180] (gtcorine.west);
+\draw[myarrow, color=osmred!70] (filterpipe.east)
+    to[out=0,in=180] (gtosm.west);
+
+\coordinate (midgt) at ($(gtcorine.south)!0.5!(gtosm.north)$);
+\draw[myarrowdashed, color=wikigreen!80] (summaries.east)
+    to[out=0,in=180] (midgt)
+    to[out=0,in=180] (taskcorine.south west);
+\draw[myarrowdashed, color=wikigreen!80] (summaries.east)
+    to[out=0,in=180] (midgt)
+    to[out=0,in=180] (taskosm.north west);
+
+\draw[myarrow, color=clcblue!70] (gtcorine.east) -- (taskcorine.west);
+\draw[myarrow, color=osmred!70] (gtosm.east) -- (taskosm.west);
+
+\draw[myarrow, color=llmviolet!80] (taskcorine.east) -- (parser.west);
+\draw[myarrow, color=llmviolet!80] (taskosm.east)
+    to[out=0,in=200] (parser.south west);
+
+\draw[myarrow] (parser.south) -- (msingle.north);
+\draw[myarrow] (msingle.south) -- (mmulti.north);
+
+\begin{scope}[on background layer]
+  \node[draw=gray!25, fill=boxbg, rounded corners=6pt,
+        fit=(clc)(osm)(wiki), inner sep=6pt] {};
+  \node[draw=gray!25, fill=boxbg, rounded corners=6pt,
+        fit=(clcfilter)(osmfilter)(wikiproc), inner sep=6pt] {};
+  \node[draw=gray!25, fill=boxbg, rounded corners=6pt,
+        fit=(filterpipe)(summaries), inner sep=6pt] {};
+  \node[draw=gray!25, fill=boxbg, rounded corners=6pt,
+        fit=(gtcorine)(gtosm), inner sep=6pt] {};
+  \node[draw=gray!25, fill=boxbg, rounded corners=6pt,
+        fit=(parser)(msingle)(mmulti), inner sep=6pt] {};
+\end{scope}
+
+\end{tikzpicture}
+\end{document}

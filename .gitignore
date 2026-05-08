@@ -37,3 +37,8 @@ oar_submit.log
 
 # GPU Classification docs (User requested not to push)
 docs/gpu_classification_guide.md
+
+# LaTeX build artifacts
+*.aux
+*.log
+pipeline_diagram.pdf

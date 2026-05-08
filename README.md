@@ -1,3 +1,5 @@
+![Pipeline Overview](docs/pipeline_diagram-1.png)
+
 # GeoReset
 
 GeoReset experiments with whether text descriptions near land-cover polygons can
