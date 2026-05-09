@@ -55,6 +55,80 @@ def test_classify_single_label_multiple_labels_returns_ambiguous():
     assert "multiple labels" in result["error"]
 
 
+def test_classify_single_label_retries_empty_response_to_ok():
+    classifier = LLMClassifier(model_path=None)
+    mock_llm = MagicMock()
+    mock_llm.create_chat_completion.side_effect = [
+        {"choices": [{"message": {"content": '{"labels": []}'}}]},
+        {"choices": [{"message": {"content": '{"labels": ["31"]}'}}]},
+    ]
+    classifier._llm = mock_llm
+
+    result = classifier.classify_single_label(
+        text="Une forêt dense.",
+        allowed_labels=["21", "31"],
+        label_descriptions={"21": "Arable land", "31": "Forests"},
+        task="corine_level2",
+        text_source="summary",
+    )
+
+    assert result["prediction"] == "31"
+    assert result["prediction_labels"] == ["31"]
+    assert result["parse_status"] == "ok"
+    assert result["metadata"]["attempt_count"] == 2
+    assert result["metadata"]["resolved_from_retry"] is True
+    assert len(result["metadata"]["attempt_history"]) == 2
+    assert "Never return an empty list" in mock_llm.create_chat_completion.call_args_list[1].kwargs["messages"][1]["content"]
+
+
+def test_classify_single_label_retries_ambiguous_response_to_ok():
+    classifier = LLMClassifier(model_path=None)
+    mock_llm = MagicMock()
+    mock_llm.create_chat_completion.side_effect = [
+        {"choices": [{"message": {"content": '{"labels": ["31", "32"]}'}}]},
+        {"choices": [{"message": {"content": '{"labels": ["31"]}'}}]},
+    ]
+    classifier._llm = mock_llm
+
+    result = classifier.classify_single_label(
+        text="Une forêt dense.",
+        allowed_labels=["21", "31", "32"],
+        label_descriptions={},
+        task="corine_level2",
+        text_source="summary",
+    )
+
+    assert result["prediction"] == "31"
+    assert result["prediction_labels"] == ["31"]
+    assert result["parse_status"] == "ok"
+    assert result["metadata"]["attempt_count"] == 2
+    assert result["metadata"]["attempt_history"][0]["parse_status"] == "ambiguous"
+
+
+def test_classify_single_label_keeps_ambiguous_when_retry_still_ambiguous():
+    classifier = LLMClassifier(model_path=None)
+    mock_llm = MagicMock()
+    mock_llm.create_chat_completion.side_effect = [
+        {"choices": [{"message": {"content": '{"labels": ["31", "32"]}'}}]},
+        {"choices": [{"message": {"content": '{"labels": ["21", "31"]}'}}]},
+    ]
+    classifier._llm = mock_llm
+
+    result = classifier.classify_single_label(
+        text="Une forêt dense.",
+        allowed_labels=["21", "31", "32"],
+        label_descriptions={},
+        task="corine_level2",
+        text_source="summary",
+    )
+
+    assert result["prediction"] is None
+    assert result["prediction_labels"] == ["21", "31"]
+    assert result["parse_status"] == "ambiguous"
+    assert result["metadata"]["attempt_count"] == 2
+    assert result["metadata"]["resolved_from_retry"] is False
+
+
 def test_classify_single_label_comma_string_returns_ambiguous():
     classifier = LLMClassifier(model_path=None)
     mock_llm = MagicMock()
@@ -113,6 +187,52 @@ def test_classify_multilabel_mixed_returns_ok():
     assert result["prediction"] == ["meadow", "wood"]
     assert result["prediction_labels"] == ["meadow", "wood"]
     assert result["parse_status"] == "ok"
+
+
+def test_classify_multilabel_retries_empty_response_to_ok():
+    classifier = LLMClassifier(model_path=None)
+    mock_llm = MagicMock()
+    mock_llm.create_chat_completion.side_effect = [
+        {"choices": [{"message": {"content": '{"labels": []}'}}]},
+        {"choices": [{"message": {"content": '{"labels": ["wood"]}'}}]},
+    ]
+    classifier._llm = mock_llm
+
+    result = classifier.classify_multilabel(
+        text="Bois.",
+        allowed_labels=["meadow", "wood"],
+        task="osm",
+        text_source="summary",
+    )
+
+    assert result["prediction"] == ["wood"]
+    assert result["prediction_labels"] == ["wood"]
+    assert result["parse_status"] == "ok"
+    assert result["metadata"]["attempt_count"] == 2
+    assert result["metadata"]["resolved_from_retry"] is True
+
+
+def test_classify_multilabel_keeps_error_when_retry_still_empty():
+    classifier = LLMClassifier(model_path=None)
+    mock_llm = MagicMock()
+    mock_llm.create_chat_completion.side_effect = [
+        {"choices": [{"message": {"content": '{"labels": []}'}}]},
+        {"choices": [{"message": {"content": '{"labels": []}'}}]},
+    ]
+    classifier._llm = mock_llm
+
+    result = classifier.classify_multilabel(
+        text="Bois.",
+        allowed_labels=["meadow", "wood"],
+        task="osm",
+        text_source="summary",
+    )
+
+    assert result["prediction"] is None
+    assert result["prediction_labels"] == []
+    assert result["parse_status"] == "error"
+    assert result["metadata"]["attempt_count"] == 2
+    assert result["metadata"]["resolved_from_retry"] is False
 
 
 def test_invalid_label_returns_error_with_full_metadata():

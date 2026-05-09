@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from scripts.data import classify_articles
 from scripts.data.classify_articles import parse_args, prediction_fingerprint
 
 
@@ -55,6 +56,20 @@ class TestFingerprint:
             "corine_level2", "summary", "m.gguf", 42, 0.0, ["21", "31"]
         )
         assert fp1 == fp2
+
+    def test_fingerprint_includes_policy_version(self, monkeypatch):
+        current_fp = prediction_fingerprint(
+            "corine_level2", "summary", "m.gguf", 42, 0.0, ["21"]
+        )
+        monkeypatch.setattr(
+            classify_articles,
+            "CLASSIFICATION_POLICY_VERSION",
+            classify_articles.CLASSIFICATION_POLICY_VERSION + 1,
+        )
+        next_fp = prediction_fingerprint(
+            "corine_level2", "summary", "m.gguf", 42, 0.0, ["21"]
+        )
+        assert current_fp != next_fp
 
 
 class TestSourceLoading:
@@ -219,6 +234,9 @@ class TestPredictionRecordShape:
                     "prompt": "...",
                     "system_prompt": "...",
                     "allowed_labels": ["31"],
+                    "attempt_count": 2,
+                    "attempt_history": [{"parse_status": "error"}, {"parse_status": "ok"}],
+                    "resolved_from_retry": True,
                 },
             }
             from scripts.data.classify_articles import main
@@ -268,6 +286,9 @@ class TestPredictionRecordShape:
                 assert field in rec, f"Missing field: {field}"
             assert rec["parse_status"] == "ok"
             assert rec["metadata"]["fingerprint"]
+            assert rec["metadata"]["attempt_count"] == 2
+            assert rec["metadata"]["resolved_from_retry"] is True
+            assert len(rec["metadata"]["attempt_history"]) == 2
             assert "prompt" in rec["metadata"]
             assert "system_prompt" in rec["metadata"]
             assert "error" in rec

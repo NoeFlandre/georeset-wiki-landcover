@@ -22,7 +22,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-CLASSIFICATION_POLICY_VERSION = 2
+CLASSIFICATION_POLICY_VERSION = 3
 
 
 def prediction_fingerprint(
@@ -206,9 +206,10 @@ def main(argv: list[str] | None = None) -> None:
 
     for pageid in eligible:
         record = existing.get(pageid)
-        if record and record.get("parse_status") == "ok":
-            if args.retry_failed or record.get("metadata", {}).get("fingerprint") == fp_current:
-                continue
+        if record and record.get("parse_status") == "ok" and (
+            args.retry_failed or record.get("metadata", {}).get("fingerprint") == fp_current
+        ):
+            continue
         article = next(
             (a for a in articles if str(a.get("pageid")) == pageid), None
         )

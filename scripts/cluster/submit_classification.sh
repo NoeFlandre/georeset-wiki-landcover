@@ -8,6 +8,7 @@ TASK="${GEORESET_CLASSIFICATION_TASK:?Set GEORESET_CLASSIFICATION_TASK}"
 TEXT_SOURCE="${GEORESET_CLASSIFICATION_TEXT_SOURCE:?Set GEORESET_CLASSIFICATION_TEXT_SOURCE}"
 OUTPUT_PREFIX="data/classification/${TASK}_${TEXT_SOURCE}"
 JOB_SCRIPT="scripts/cluster/run_classification_job.sh"
+AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"
 
 echo "Preparing remote directory ${SITE}/${REMOTE_DIR}"
 ssh -o BatchMode=yes "${ACCESS_HOST}" "mkdir -p ${SITE}/${REMOTE_DIR}"
@@ -41,6 +42,11 @@ rsync -az \
 
 ssh -o BatchMode=yes "${ACCESS_HOST}" "mkdir -p ${SITE}/${REMOTE_DIR}/data/classification"
 
+echo "Syncing existing classification outputs to Grid5000 for resumable retry"
+rsync -az \
+  data/classification/ \
+  "${ACCESS_HOST}:${SITE}/${REMOTE_DIR}/data/classification/"
+
 echo "Submitting OAR job"
 SUBMIT_OUTPUT="$(
   ssh -o BatchMode=yes "${ACCESS_HOST}" "
@@ -62,6 +68,12 @@ fi
 echo "Submitted OAR job ${JOB_ID}"
 echo "Watch status: ssh -o BatchMode=yes ${ACCESS_HOST} \"ssh ${SITE} 'oarstat -j ${JOB_ID}'\""
 echo "Watch stderr: ssh -o BatchMode=yes ${ACCESS_HOST} \"ssh ${SITE} 'tail -f /home/nflandre/${REMOTE_DIR}/OAR_${JOB_ID}.err'\""
+if [ "${AUTO_SYNC}" != "1" ]; then
+  echo "Auto-sync disabled to avoid repeated SSH polling. Run sync_classification.sh manually when needed."
+  echo "Manual sync: GEORESET_CLASSIFICATION_TASK=${TASK} GEORESET_CLASSIFICATION_TEXT_SOURCE=${TEXT_SOURCE} SYNC_ONCE=1 bash scripts/cluster/sync_classification.sh"
+  exit 0
+fi
+
 echo "Syncing ${OUTPUT_PREFIX}_predictions.json and _metrics.json; press Ctrl+C to stop."
 
 GEORESET_CLASSIFICATION_TASK="${TASK}" \

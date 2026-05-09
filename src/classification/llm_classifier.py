@@ -75,6 +75,68 @@ class LLMClassifier:
             "allowed_labels": sorted(allowed_labels),
         }
 
+    def _call_llm(self, user_prompt: str, schema: dict) -> str:
+        llm = self._get_llm()
+        response = llm.create_chat_completion(
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=self.temperature,
+            seed=self.seed,
+            response_format={"type": "json_object", "schema": schema},
+        )
+        return response["choices"][0]["message"]["content"]
+
+    def _build_retry_prompt(
+        self,
+        original_prompt: str,
+        raw_response: str | None,
+        error: str | None,
+        task: str,
+    ) -> str:
+        if task == "corine_level2":
+            instruction = (
+                "Retry the classification. You must choose exactly one best label "
+                "from allowed_labels. Never return an empty list. If uncertain, "
+                "choose the closest valid label based only on the article text."
+            )
+        else:
+            instruction = (
+                "Retry the classification. You must choose at least one best label "
+                "from allowed_labels. Never return an empty list. If uncertain, "
+                "choose the closest valid label or labels based only on the article text."
+            )
+        return "\n".join(
+            [
+                original_prompt,
+                "",
+                "Previous invalid response:",
+                raw_response or "",
+                f"Previous error: {error or ''}",
+                instruction,
+                'Respond only with JSON like {"labels": ["label"]}.',
+            ]
+        )
+
+    def _attempt_summary(self, result: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "raw_response": result.get("raw_response"),
+            "parse_status": result.get("parse_status"),
+            "error": result.get("error"),
+            "prediction_labels": result.get("prediction_labels", []),
+        }
+
+    def _attach_attempt_metadata(
+        self, result: dict[str, Any], attempts: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        metadata = dict(result.get("metadata", {}))
+        metadata["attempt_count"] = len(attempts)
+        metadata["attempt_history"] = [self._attempt_summary(attempt) for attempt in attempts]
+        metadata["resolved_from_retry"] = len(attempts) > 1 and result.get("parse_status") == "ok"
+        result["metadata"] = metadata
+        return result
+
     def _error_result(
         self,
         error: str,
@@ -94,6 +156,67 @@ class LLMClassifier:
             "metadata": self._metadata(task, text_source, prompt, allowed_labels),
         }
 
+    def _parse_single_label_response(
+        self,
+        raw_response: str,
+        task: str,
+        text_source: str,
+        prompt: str,
+        allowed_labels: list[str],
+    ) -> dict[str, Any]:
+        labels, error = normalize_prediction_response(raw_response, allowed_labels)
+
+        if error:
+            return self._error_result(
+                error, raw_response, task, text_source, prompt, allowed_labels, labels
+            )
+
+        if len(labels) == 1:
+            return {
+                "prediction": labels[0],
+                "prediction_labels": labels,
+                "parse_status": "ok",
+                "error": None,
+                "raw_response": raw_response,
+                "metadata": self._metadata(task, text_source, prompt, allowed_labels),
+            }
+
+        result = self._error_result(
+            "multiple labels for single-label task",
+            raw_response,
+            task,
+            text_source,
+            prompt,
+            allowed_labels,
+            labels,
+        )
+        result["parse_status"] = "ambiguous"
+        return result
+
+    def _parse_multilabel_response(
+        self,
+        raw_response: str,
+        task: str,
+        text_source: str,
+        prompt: str,
+        allowed_labels: list[str],
+    ) -> dict[str, Any]:
+        labels, error = normalize_prediction_response(raw_response, allowed_labels)
+
+        if error:
+            return self._error_result(
+                error, raw_response, task, text_source, prompt, allowed_labels, labels
+            )
+
+        return {
+            "prediction": labels,
+            "prediction_labels": labels,
+            "parse_status": "ok",
+            "error": None,
+            "raw_response": raw_response,
+            "metadata": self._metadata(task, text_source, prompt, allowed_labels),
+        }
+
     def classify_single_label(
         self,
         text: str,
@@ -106,44 +229,34 @@ class LLMClassifier:
             task, text_source, allowed_labels, label_descriptions, text
         )
         raw_response = None
+        attempts = []
         try:
-            llm = self._get_llm()
-            response = llm.create_chat_completion(
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=self.temperature,
-                seed=self.seed,
-                response_format={"type": "json_object", "schema": SINGLE_SCHEMA},
+            raw_response = self._call_llm(user_prompt, SINGLE_SCHEMA)
+            first_result = self._parse_single_label_response(
+                raw_response, task, text_source, user_prompt, allowed_labels
             )
-            raw_response = response["choices"][0]["message"]["content"]
-            labels, error = normalize_prediction_response(raw_response, allowed_labels)
+            attempts.append(first_result)
+            if first_result["parse_status"] == "ok":
+                return self._attach_attempt_metadata(first_result, attempts)
 
-            if error:
-                return self._error_result(
-                    error, raw_response, task, text_source, user_prompt, allowed_labels, labels
-                )
-
-            if len(labels) == 1:
-                return {
-                    "prediction": labels[0],
-                    "prediction_labels": labels,
-                    "parse_status": "ok",
-                    "error": None,
-                    "raw_response": raw_response,
-                    "metadata": self._metadata(task, text_source, user_prompt, allowed_labels),
-                }
-            else:
-                res = self._error_result(
-                    "multiple labels for single-label task", raw_response, task, text_source, user_prompt, allowed_labels, labels
-                )
-                res["parse_status"] = "ambiguous"
-                return res
+            retry_prompt = self._build_retry_prompt(
+                user_prompt,
+                first_result.get("raw_response"),
+                first_result.get("error"),
+                task,
+            )
+            raw_response = self._call_llm(retry_prompt, SINGLE_SCHEMA)
+            retry_result = self._parse_single_label_response(
+                raw_response, task, text_source, retry_prompt, allowed_labels
+            )
+            attempts.append(retry_result)
+            return self._attach_attempt_metadata(retry_result, attempts)
         except Exception as exc:
-            return self._error_result(
+            result = self._error_result(
                 str(exc), raw_response, task, text_source, user_prompt, allowed_labels
             )
+            attempts.append(result)
+            return self._attach_attempt_metadata(result, attempts)
 
     def classify_multilabel(
         self,
@@ -156,34 +269,31 @@ class LLMClassifier:
             task, text_source, allowed_labels, {}, text
         )
         raw_response = None
+        attempts = []
         try:
-            llm = self._get_llm()
-            response = llm.create_chat_completion(
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=self.temperature,
-                seed=self.seed,
-                response_format={"type": "json_object", "schema": MULTI_SCHEMA},
+            raw_response = self._call_llm(user_prompt, MULTI_SCHEMA)
+            first_result = self._parse_multilabel_response(
+                raw_response, task, text_source, user_prompt, allowed_labels
             )
-            raw_response = response["choices"][0]["message"]["content"]
-            labels, error = normalize_prediction_response(raw_response, allowed_labels)
+            attempts.append(first_result)
+            if first_result["parse_status"] == "ok":
+                return self._attach_attempt_metadata(first_result, attempts)
 
-            if error:
-                return self._error_result(
-                    error, raw_response, task, text_source, user_prompt, allowed_labels, labels
-                )
-
-            return {
-                "prediction": labels,
-                "prediction_labels": labels,
-                "parse_status": "ok",
-                "error": None,
-                "raw_response": raw_response,
-                "metadata": self._metadata(task, text_source, user_prompt, allowed_labels),
-            }
+            retry_prompt = self._build_retry_prompt(
+                user_prompt,
+                first_result.get("raw_response"),
+                first_result.get("error"),
+                task,
+            )
+            raw_response = self._call_llm(retry_prompt, MULTI_SCHEMA)
+            retry_result = self._parse_multilabel_response(
+                raw_response, task, text_source, retry_prompt, allowed_labels
+            )
+            attempts.append(retry_result)
+            return self._attach_attempt_metadata(retry_result, attempts)
         except Exception as exc:
-            return self._error_result(
+            result = self._error_result(
                 str(exc), raw_response, task, text_source, user_prompt, allowed_labels
             )
+            attempts.append(result)
+            return self._attach_attempt_metadata(result, attempts)
