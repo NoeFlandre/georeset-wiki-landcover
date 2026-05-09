@@ -28,11 +28,21 @@ class ArticleSummarizer:
         "here's a thinking process",
         "output matches",
     )
+    SUMMARY_MODES = ("place", "no_place")
 
-    def __init__(self, model_path: str, seed: int = 42, temperature: float = 0.7):
+    def __init__(
+        self,
+        model_path: str,
+        seed: int = 42,
+        temperature: float = 0.7,
+        summary_mode: str = "place",
+    ):
+        if summary_mode not in self.SUMMARY_MODES:
+            raise ValueError(f"summary_mode must be one of {self.SUMMARY_MODES}")
         self.model_path = model_path
         self.seed = seed
         self.temperature = temperature
+        self.summary_mode = summary_mode
         self._llm = None
 
     def _get_llm(self):
@@ -64,7 +74,13 @@ class ArticleSummarizer:
         content = article["content"]
         if len(content) > max_content_chars:
             content = content[:max_content_chars]
-        prompt = f"Résumez cet article Wikipedia en une phrase concise, sans jamais mentionner le nom du lieu décrit:\n\n{content}"
+        if self.summary_mode == "no_place":
+            prompt = (
+                "Résumez cet article Wikipedia en une phrase concise, sans jamais mentionner "
+                f"le nom du lieu décrit:\n\n{content}"
+            )
+        else:
+            prompt = f"Résumez cet article Wikipedia en une phrase concise:\n\n{content}"
         system_prompt = (
             "Tu es un assistant qui résume des articles Wikipedia. "
             "Réponds uniquement avec un objet JSON qui respecte le schéma fourni. "
@@ -76,6 +92,7 @@ class ArticleSummarizer:
             "model": self.model_path,
             "seed": self.seed,
             "temperature": self.temperature,
+            "summary_mode": self.summary_mode,
             "prompt": prompt,
             "system_prompt": system_prompt,
         }
@@ -137,6 +154,23 @@ class ArticleSummarizer:
             return [self._remove_private_fields(item) for item in value]
         return value
 
+    def _has_current_summary(self, article: dict[str, Any]) -> bool:
+        if "summary" not in article:
+            return False
+        metadata = article.get("metadata")
+        if not isinstance(metadata, dict):
+            return False
+        summary_mode = metadata.get("summary_mode")
+        if summary_mode == self.summary_mode:
+            return True
+
+        # Legacy artifacts did not store summary_mode, but did persist the prompt.
+        prompt = metadata.get("prompt")
+        if not isinstance(prompt, str):
+            return False
+        is_no_place_prompt = "sans jamais mentionner le nom du lieu décrit" in prompt
+        return (self.summary_mode == "no_place") == is_no_place_prompt
+
     def process_file(self, input_path: str, output_path: str):
         """
         Process all articles from input_path and save summaries to output_path.
@@ -155,9 +189,7 @@ class ArticleSummarizer:
         valid_keys = {str(k) for k in articles}
         existing = {k: v for k, v in existing.items() if str(k) in valid_keys}
 
-        to_process = {
-            k: v for k, v in articles.items() if k not in existing or "summary" not in existing[k]
-        }
+        to_process = {k: v for k, v in articles.items() if not self._has_current_summary(existing.get(k, {}))}
 
         logger.info(f"Processing {len(to_process)} of {len(articles)} articles...")
 

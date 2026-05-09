@@ -32,4 +32,5 @@ uv pip install --no-cache-dir huggingface_hub llama-cpp-python
 uv run python -m scripts.data.summarize_articles \
   --input-path data/wiki/article_contents.json \
   --output-path data/wiki/article_summaries_no_place.json \
+  --summary-mode no_place \
   --model-path "${GEORESET_MODEL_PATH}"

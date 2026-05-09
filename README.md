@@ -142,29 +142,42 @@ hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store
 
 ## Grid5000 Article Summarization
 
-The summarization path is prepared so a coding agent only needs to run one
-local command:
+Two summary variants are supported and must be generated with distinct
+`--summary-mode` values:
+
+- `place`: normal one-sentence summary; place names may appear.
+- `no_place`: one-sentence summary that asks the model not to mention the
+  described place name.
+
+The standard summary job writes `data/wiki/article_summaries.json`:
 
 ```bash
-bash scripts/grid5000/submit_summarization.sh
+bash scripts/cluster/submit_summarization.sh
 ```
 
-That script syncs the code and `data/wiki/article_contents.json` to Nancy,
-submits `scripts/grid5000/run_summarization_job.sh` through OAR, and keeps
-pulling `data/wiki/article_summaries.json` back locally every 30 seconds. The
-remote job uses CUDA llama-cpp-python, installs `uv` if needed, and runs:
+The remote job uses CUDA llama-cpp-python, installs `uv` if needed, and runs:
 
 ```bash
-uv run python -m src.scripts.summarize_articles \
+uv run python -m scripts.data.summarize_articles \
   --input-path data/wiki/article_contents.json \
-  --output-path data/wiki/article_summaries.json
+  --output-path data/wiki/article_summaries.json \
+  --summary-mode place
+```
+
+The no-place job writes `data/wiki/article_summaries_no_place.json`:
+
+```bash
+uv run python -m scripts.data.summarize_articles \
+  --input-path data/wiki/article_contents.json \
+  --output-path data/wiki/article_summaries_no_place.json \
+  --summary-mode no_place
 ```
 
 Optional environment overrides:
 
 ```bash
 G5K_SITE=nancy G5K_REMOTE_DIR=georeset GEORESET_MODEL_PATH=Qwen3.6-27B-Q4_0.gguf \
-  bash scripts/grid5000/submit_summarization.sh
+  bash scripts/cluster/submit_summarization.sh
 ```
 
 ## Article-Text Land-Cover Classification

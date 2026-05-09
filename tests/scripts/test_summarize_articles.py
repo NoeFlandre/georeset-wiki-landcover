@@ -22,7 +22,10 @@ class TestArticleSummarizer:
     def test_summarize_returns_summary_and_metadata(self):
         """Should return a dict with summary key and metadata for an article."""
         summarizer = ArticleSummarizer(model_path="test_model.gguf", seed=123, temperature=0.5)
-        expected_prompt = f"Résumez cet article Wikipedia en une phrase concise, sans jamais mentionner le nom du lieu décrit:\n\n{self.sample_article['content']}"
+        expected_prompt = (
+            f"Résumez cet article Wikipedia en une phrase concise:\n\n"
+            f"{self.sample_article['content']}"
+        )
         with patch.object(summarizer, "_generate_summary", return_value="Une ville française."):
             result = summarizer.summarize(self.sample_article)
             assert isinstance(result, dict)
@@ -33,7 +36,21 @@ class TestArticleSummarizer:
             assert result["metadata"]["model"] == "test_model.gguf"
             assert result["metadata"]["seed"] == 123
             assert result["metadata"]["temperature"] == 0.5
+            assert result["metadata"]["summary_mode"] == "place"
             assert result["metadata"]["prompt"] == expected_prompt
+
+    def test_no_place_mode_uses_no_place_prompt_and_metadata(self):
+        summarizer = ArticleSummarizer(model_path=None, summary_mode="no_place")
+
+        with patch.object(summarizer, "_generate_summary", return_value="Une ville française."):
+            result = summarizer.summarize(self.sample_article)
+
+        assert "sans jamais mentionner le nom du lieu décrit" in result["metadata"]["prompt"]
+        assert result["metadata"]["summary_mode"] == "no_place"
+
+    def test_invalid_summary_mode_fails_fast(self):
+        with pytest.raises(ValueError, match="summary_mode"):
+            ArticleSummarizer(model_path=None, summary_mode="invalid")
 
     def test_gpu_optimization_enabled(self):
         """Should initialize Llama with n_gpu_layers=-1 for GPU acceleration."""
@@ -156,6 +173,9 @@ class TestArticleSummarizer:
                     "content": "Content A",
                     "url": "http://a",
                     "summary": "Old summary",
+                    "metadata": {
+                        "prompt": "Résumez cet article Wikipedia en une phrase concise:\n\nContent A"
+                    },
                 }
             }
             with open(output_path, "w") as f:
@@ -171,6 +191,37 @@ class TestArticleSummarizer:
             assert result["1"]["summary"] == "Old summary"  # Preserved
             assert result["2"]["summary"] == "New summary for B"  # Added
 
+    def test_process_file_reprocesses_existing_summary_from_wrong_mode(self):
+        """Existing summaries must not be reused across place/no_place modes."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input_path = os.path.join(tmpdir, "articles.json")
+            output_path = os.path.join(tmpdir, "summaries.json")
+
+            article = {"title": "A", "content": "Content A", "url": "http://a"}
+            with open(input_path, "w") as f:
+                json.dump({"1": article}, f)
+
+            with open(output_path, "w") as f:
+                json.dump(
+                    {
+                        "1": {
+                            **article,
+                            "summary": "Old no-place summary",
+                            "metadata": {"summary_mode": "no_place"},
+                        }
+                    },
+                    f,
+                )
+
+            summarizer = ArticleSummarizer(model_path=None, summary_mode="place")
+            with patch.object(summarizer, "_generate_summary", return_value="New place summary"):
+                summarizer.process_file(input_path, output_path)
+
+            with open(output_path) as f:
+                result = json.load(f)
+            assert result["1"]["summary"] == "New place summary"
+            assert result["1"]["metadata"]["summary_mode"] == "place"
+
     def test_process_file_removes_existing_private_fields(self):
         """Should clean private fields from resumed output files."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -185,11 +236,12 @@ class TestArticleSummarizer:
                 json.dump({"1": {**article, "summary": "Old summary", "thinking": "private"}}, f)
 
             summarizer = ArticleSummarizer(model_path=None)
-            summarizer.process_file(input_path, output_path)
+            with patch.object(summarizer, "_generate_summary", return_value="New summary"):
+                summarizer.process_file(input_path, output_path)
 
             with open(output_path) as f:
                 result = json.load(f)
-            assert result["1"]["summary"] == "Old summary"
+            assert result["1"]["summary"] == "New summary"
             assert "thinking" not in result["1"]
 
     def test_process_file_handles_empty_content(self):
@@ -223,7 +275,15 @@ class TestArticleSummarizer:
 
             with open(output_path, "w") as f:
                 json.dump({
-                    "100": {"title": "A", "content": "Content A", "url": "http://a", "summary": "Old"},
+                    "100": {
+                        "title": "A",
+                        "content": "Content A",
+                        "url": "http://a",
+                        "summary": "Old",
+                        "metadata": {
+                            "prompt": "Résumez cet article Wikipedia en une phrase concise:\n\nContent A"
+                        },
+                    },
                     "999": {"title": "Stale", "content": "Stale", "url": "http://stale", "summary": "StaleSum"},
                 }, f)
 
@@ -246,6 +306,7 @@ def test_parse_args_uses_grid5000_ready_defaults(monkeypatch):
 
     assert args.input_path == "data/wiki/article_contents.json"
     assert args.output_path == "data/wiki/article_summaries.json"
+    assert args.summary_mode == "place"
     assert args.model_path == "Qwen3.6-27B-Q4_0.gguf"
     assert args.seed == 42
     assert args.temperature == 0.7
@@ -258,3 +319,9 @@ def test_parse_args_allows_environment_model_override(monkeypatch):
     args = parse_args([])
 
     assert args.model_path == "custom.gguf"
+
+
+def test_parse_args_accepts_no_place_summary_mode():
+    args = parse_args(["--summary-mode", "no_place"])
+
+    assert args.summary_mode == "no_place"

@@ -30,8 +30,10 @@ writing visual checks.
   - `snapshot.py`: prints a quick CORINE dataset snapshot.
   - `run_corine_analysis.py`: runs OSM/CORINE distribution and map generation.
   - `summarize_articles.py`: summarizes fetched article content with an LLM.
-    It uses llama-cpp-python schema-constrained JSON generation and persists
-    only public summaries, never private thinking fields.
+    It supports `--summary-mode place` for normal summaries and
+    `--summary-mode no_place` for summaries that suppress the described place
+    name. It uses llama-cpp-python schema-constrained JSON generation and
+    persists only public summaries, never private thinking fields.
 
 ## Data Contract
 

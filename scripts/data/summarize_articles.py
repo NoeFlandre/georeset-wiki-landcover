@@ -34,6 +34,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--seed", type=int, default=42, help="Deterministic generation seed.")
     parser.add_argument("--temperature", type=float, default=0.7, help="Sampling temperature.")
+    parser.add_argument(
+        "--summary-mode",
+        choices=["place", "no_place"],
+        default="place",
+        help="Use place to allow place names, or no_place to suppress the described place name.",
+    )
     return parser.parse_args(argv)
 
 
@@ -43,6 +49,7 @@ def main(argv: list[str] | None = None) -> None:
         model_path=args.model_path,
         seed=args.seed,
         temperature=args.temperature,
+        summary_mode=args.summary_mode,
     )
     summarizer.process_file(args.input_path, args.output_path)
 

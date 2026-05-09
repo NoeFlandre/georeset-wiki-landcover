@@ -1,0 +1,236 @@
+"""Summarize classification experiment metrics into compact overview tables."""
+
+import argparse
+import csv
+import json
+from pathlib import Path
+from typing import Any
+
+FIELDNAMES = [
+    "run",
+    "task",
+    "text_source",
+    "n_eligible",
+    "n_predicted_ok",
+    "n_parse_error",
+    "coverage",
+    "primary_metric",
+    "primary_score",
+    "accuracy",
+    "exact_match_accuracy",
+    "macro_precision",
+    "macro_recall",
+    "macro_f1",
+    "micro_precision",
+    "micro_recall",
+    "micro_f1",
+    "n_labels_evaluated",
+]
+
+
+TEXT_SOURCE_ORDER = {
+    "summary": 0,
+    "summary_no_place": 1,
+    "content": 2,
+}
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    with path.open(encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _run_sort_key(row: dict[str, Any]) -> tuple[str, int, str]:
+    return (
+        str(row["task"]),
+        TEXT_SOURCE_ORDER.get(str(row["text_source"]), 99),
+        str(row["text_source"]),
+    )
+
+
+def _metric_value(metrics: dict[str, Any], key: str) -> Any:
+    return metrics.get(key, "")
+
+
+def _primary_metric(metrics: dict[str, Any]) -> tuple[str, Any]:
+    if metrics.get("task") == "osm":
+        return "exact_match_accuracy", _metric_value(metrics, "exact_match_accuracy")
+    return "accuracy", _metric_value(metrics, "accuracy")
+
+
+def collect_metric_rows(experiment_dir: Path) -> list[dict[str, Any]]:
+    rows = []
+    for path in sorted(experiment_dir.glob("*_metrics.json")):
+        metrics = _load_json(path)
+        primary_name, primary_score = _primary_metric(metrics)
+        labels_evaluated = metrics.get("labels_evaluated", [])
+        row = {
+            "run": f"{metrics['task']}/{metrics['text_source']}",
+            "task": metrics["task"],
+            "text_source": metrics["text_source"],
+            "n_eligible": metrics["n_eligible"],
+            "n_predicted_ok": metrics["n_predicted_ok"],
+            "n_parse_error": metrics["n_parse_error"],
+            "coverage": metrics["coverage"],
+            "primary_metric": primary_name,
+            "primary_score": primary_score,
+            "accuracy": _metric_value(metrics, "accuracy"),
+            "exact_match_accuracy": _metric_value(metrics, "exact_match_accuracy"),
+            "macro_precision": _metric_value(metrics, "macro_precision"),
+            "macro_recall": _metric_value(metrics, "macro_recall"),
+            "macro_f1": _metric_value(metrics, "macro_f1"),
+            "micro_precision": _metric_value(metrics, "micro_precision"),
+            "micro_recall": _metric_value(metrics, "micro_recall"),
+            "micro_f1": _metric_value(metrics, "micro_f1"),
+            "n_labels_evaluated": len(labels_evaluated),
+        }
+        rows.append(row)
+    return sorted(rows, key=_run_sort_key)
+
+
+def write_overview_csv(rows: list[dict[str, Any]], output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def _format_cell(value: Any) -> str:
+    if isinstance(value, float):
+        return f"{value:.4f}"
+    return str(value)
+
+
+def write_overview_markdown(rows: list[dict[str, Any]], output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        "# Classification Experiment Overview",
+        "",
+        "| run | n eligible | n predicted ok | parse errors | coverage | accuracy | exact match accuracy | macro precision | macro recall | macro F1 | micro precision | micro recall | micro F1 | labels |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    for row in rows:
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    _format_cell(row["run"]),
+                    _format_cell(row["n_eligible"]),
+                    _format_cell(row["n_predicted_ok"]),
+                    _format_cell(row["n_parse_error"]),
+                    _format_cell(row["coverage"]),
+                    _format_cell(row["accuracy"]),
+                    _format_cell(row["exact_match_accuracy"]),
+                    _format_cell(row["macro_precision"]),
+                    _format_cell(row["macro_recall"]),
+                    _format_cell(row["macro_f1"]),
+                    _format_cell(row["micro_precision"]),
+                    _format_cell(row["micro_recall"]),
+                    _format_cell(row["micro_f1"]),
+                    _format_cell(row["n_labels_evaluated"]),
+                ]
+            )
+            + " |"
+        )
+    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_readme(rows: list[dict[str, Any]], output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    total_records = sum(int(row["n_eligible"]) for row in rows)
+    parse_errors = sum(int(row["n_parse_error"]) for row in rows)
+    lines = [
+        "# Article-Text Classification E2E v1",
+        "",
+        "This folder contains the frozen outputs for the article-text classification experiment.",
+        "It covers 2 tasks x 3 text sources:",
+        "",
+        "- CORINE level-2 single-label classification",
+        "- OSM multi-label classification",
+        "- text sources: `summary`, `summary_no_place`, and `content`",
+        "- `summary`: generated with `summary_mode=place`",
+        "- `summary_no_place`: generated with `summary_mode=no_place`",
+        "- `content`: raw Wikipedia article content",
+        "",
+        "## Contents",
+        "",
+        "- `*_predictions.json`: per-article predictions, raw model responses, parse status, and metadata",
+        "- `*_metrics.json`: aggregate metrics for each task/text-source run",
+        "- `overview.csv`: machine-readable summary table",
+        "- `overview.md`: Markdown summary table for quick review",
+        "",
+        "## Batch Summary",
+        "",
+        f"- runs: {len(rows)}",
+        f"- eligible article-run records: {total_records}",
+        f"- parse errors: {parse_errors}",
+        "",
+        "## Runs",
+        "",
+    ]
+    for row in rows:
+        lines.append(
+            f"- `{row['run']}`: n={row['n_eligible']}, "
+            f"{row['primary_metric']}={_format_cell(row['primary_score'])}, "
+            f"macro_f1={_format_cell(row['macro_f1'])}"
+        )
+    lines.extend(
+        [
+            "",
+            "## Metric Explanations",
+            "",
+            "- `n_eligible`: number of articles that have ground truth for this task and are included in the evaluation denominator.",
+            "- `n_predicted_ok`: number of eligible articles with a valid parsed prediction.",
+            "- `n_parse_error`: number of eligible articles without a valid parsed prediction. These are excluded from accuracy/F1, but reduce coverage.",
+            "- `coverage`: `n_predicted_ok / n_eligible`. This answers: among evaluable articles, how many received a usable model prediction?",
+            "- `accuracy`: CORINE single-label score. A prediction is correct only when the one predicted CORINE level-2 label exactly equals the one true label.",
+            "- `exact_match_accuracy`: OSM multi-label score. A prediction is correct only when the full predicted label set exactly equals the full true label set.",
+            "- `precision`: among labels the model predicted, the fraction that were actually correct. High precision means fewer false positive labels.",
+            "- `recall`: among labels that were truly present, the fraction the model recovered. High recall means fewer missed labels.",
+            "- `F1`: harmonic mean of precision and recall. It is high only when both precision and recall are high.",
+            "- `macro_precision`, `macro_recall`, `macro_f1`: compute the metric independently for each label, then average labels equally. Example: with labels like `meadow`, `wood`, and `water`, macro precision treats `meadow` with 100 occurrences and `water` with 5 occurrences equally.",
+            "- `micro_precision`, `micro_recall`, `micro_f1`: aggregate all true positives, false positives, and false negatives across all labels first, then compute the metric. Example: if `meadow` appears 100 times and `water` appears 5 times, `meadow` contributes 100x more than `water`.",
+            "- `n_labels_evaluated`: number of distinct labels appearing in the evaluated true or predicted labels for that run.",
+            "",
+            "Interpretation notes:",
+            "",
+            "- CORINE uses `accuracy` as the primary score because it is single-label.",
+            "- OSM uses `exact_match_accuracy` as the strict primary score because it is multi-label.",
+            "- Macro scores are better for seeing whether rare labels are handled well.",
+            "- Micro scores are better for seeing overall label-decision performance weighted by common labels.",
+            "- Coverage should be read before accuracy/F1. A high score with low coverage can be misleading because many failures were excluded from scoring.",
+        ]
+    )
+    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Summarize classification experiment metrics into overview tables."
+    )
+    parser.add_argument(
+        "--experiment-dir",
+        type=Path,
+        default=Path("data/experiments/article_text_classification_e2e_v1"),
+    )
+    parser.add_argument("--csv-output", type=Path, default=None)
+    parser.add_argument("--markdown-output", type=Path, default=None)
+    parser.add_argument("--readme-output", type=Path, default=None)
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
+    rows = collect_metric_rows(args.experiment_dir)
+    csv_output = args.csv_output or args.experiment_dir / "overview.csv"
+    markdown_output = args.markdown_output or args.experiment_dir / "overview.md"
+    readme_output = args.readme_output or args.experiment_dir / "README.md"
+    write_overview_csv(rows, csv_output)
+    write_overview_markdown(rows, markdown_output)
+    write_readme(rows, readme_output)
+    print(f"Wrote {len(rows)} rows to {csv_output}, {markdown_output}, and {readme_output}")
+
+
+if __name__ == "__main__":
+    main()
