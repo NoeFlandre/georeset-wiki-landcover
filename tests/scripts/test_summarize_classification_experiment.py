@@ -188,9 +188,44 @@ def test_write_readme_describes_experiment_inputs_and_outputs(tmp_path):
     assert "corine_level2/summary" in text
     assert "Metric Explanations" in text
     assert "best delta vs majority baseline" in text
+    assert "Majority Baseline Finding" in text
     assert "meadow" in text
     assert "water" in text
     assert "100x more" in text
     assert "`n_eligible`" in text
     assert "`exact_match_accuracy`" in text
     assert "`majority_baseline_score`" in text
+
+
+def test_write_readme_accepts_custom_experiment_title(tmp_path):
+    rows = [
+        {
+            "run": "osm/summary_shuffled",
+            "task": "osm",
+            "text_source": "summary_shuffled",
+            "n_eligible": 10,
+            "n_predicted_ok": 10,
+            "n_parse_error": 0,
+            "coverage": 1.0,
+            "primary_metric": "exact_match_accuracy",
+            "primary_score": 0.1,
+            "majority_baseline_score": 0.2,
+            "delta_vs_majority": -0.1,
+            "accuracy": "",
+            "exact_match_accuracy": 0.1,
+            "macro_precision": 0.2,
+            "macro_recall": 0.3,
+            "macro_f1": 0.25,
+            "micro_precision": 0.4,
+            "micro_recall": 0.5,
+            "micro_f1": 0.45,
+            "n_labels_evaluated": 3,
+        }
+    ]
+    readme_path = tmp_path / "README.md"
+
+    write_readme(rows, readme_path, title="Article-Text Classification Shuffled Control v1")
+
+    text = readme_path.read_text(encoding="utf-8")
+    assert "# Article-Text Classification Shuffled Control v1" in text
+    assert "summary_shuffled" in text

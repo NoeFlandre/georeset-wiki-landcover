@@ -182,7 +182,7 @@ G5K_SITE=nancy G5K_REMOTE_DIR=georeset GEORESET_MODEL_PATH=Qwen3.6-27B-Q4_0.gguf
 
 ## Article-Text Land-Cover Classification
 
-Six classification runs are supported: 2 tasks (CORINE level-2 single-label, OSM multi-label) × 3 text sources (normal summary, no-place summary, raw article content).
+Six primary classification runs are supported: 2 tasks (CORINE level-2 single-label, OSM multi-label) × 3 text sources (normal summary, no-place summary, raw article content). The same three text sources also have deterministic shuffled controls: `summary_shuffled`, `summary_no_place_shuffled`, and `content_shuffled`. Shuffled controls preserve the task, targets, and eligible article set, but reassign texts across eligible articles with the run seed and store `shuffled_from_pageid` in prediction metadata.
 
 Local runs:
 
@@ -201,6 +201,23 @@ PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
   --task osm --text-source content
 ```
 
+Shuffled-control local runs:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+  --task corine_level2 --text-source summary_shuffled
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+  --task corine_level2 --text-source summary_no_place_shuffled
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+  --task corine_level2 --text-source content_shuffled
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+  --task osm --text-source summary_shuffled
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+  --task osm --text-source summary_no_place_shuffled
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+  --task osm --text-source content_shuffled
+```
+
 Outputs:
 - `data/classification/{task}_{text_source}_predictions.json`: per-article predictions with raw LLM response, parsed `prediction`, a normalized `prediction_labels` list, and full metadata including fingerprint.
 - `data/classification/{task}_{text_source}_metrics.json`: aggregate metrics (n_eligible, n_predicted_ok, n_parse_error, coverage, accuracy/F1 scores, task, text_source, allowed_labels, labels_evaluated).
@@ -217,6 +234,33 @@ Grid5000 runs:
 GEORESET_CLASSIFICATION_TASK=corine_level2 \
 GEORESET_CLASSIFICATION_TEXT_SOURCE=summary \
 bash scripts/cluster/submit_classification.sh
+```
+
+Grid5000 shuffled-control runs use the same launcher with a shuffled text
+source. Auto-sync is disabled by default to avoid repeated SSH polling; sync
+finished jobs with one-shot syncs only:
+
+```bash
+GEORESET_CLASSIFICATION_TASK=corine_level2 \
+GEORESET_CLASSIFICATION_TEXT_SOURCE=summary_shuffled \
+bash scripts/cluster/submit_classification.sh
+
+GEORESET_CLASSIFICATION_TASK=corine_level2 \
+GEORESET_CLASSIFICATION_TEXT_SOURCE=summary_shuffled \
+SYNC_ONCE=1 bash scripts/cluster/sync_classification.sh
+```
+
+To freeze the shuffled-control batch after all six shuffled outputs are synced
+locally:
+
+```bash
+mkdir -p data/experiments/article_text_classification_shuffled_control_v1
+cp data/classification/*_shuffled_predictions.json \
+  data/classification/*_shuffled_metrics.json \
+  data/experiments/article_text_classification_shuffled_control_v1/
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.analysis.summarize_classification_experiment \
+  --experiment-dir data/experiments/article_text_classification_shuffled_control_v1 \
+  --title "Article-Text Classification Shuffled Control v1"
 ```
 
 ## Docker

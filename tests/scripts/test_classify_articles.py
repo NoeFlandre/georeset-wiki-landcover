@@ -6,7 +6,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from scripts.data import classify_articles
-from scripts.data.classify_articles import parse_args, prediction_fingerprint
+from scripts.data.classify_articles import (
+    apply_shuffled_text_control,
+    parse_args,
+    prediction_fingerprint,
+)
 
 
 class TestParseArgs:
@@ -29,6 +33,11 @@ class TestParseArgs:
         monkeypatch.delenv("GEORESET_MODEL_PATH", raising=False)
         args = parse_args(["--limit", "5"])
         assert args.limit == 5
+
+    def test_accepts_shuffled_text_sources(self, monkeypatch):
+        monkeypatch.delenv("GEORESET_MODEL_PATH", raising=False)
+        args = parse_args(["--text-source", "summary_shuffled"])
+        assert args.text_source == "summary_shuffled"
 
 
 class TestFingerprint:
@@ -105,6 +114,21 @@ class TestSourceLoading:
             )
             assert result["100"] == "Strasbourg est une ville."
 
+    def test_loads_base_summary_for_shuffled_summary_variant(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            (
+                summaries_path,
+                contents_path,
+                no_place_path,
+                _,
+            ) = self._make_temp_files(tmpdir)
+            from scripts.data.classify_articles import load_text_source
+
+            result = load_text_source(
+                "summary_shuffled", contents_path, summaries_path, no_place_path
+            )
+            assert result["100"] == "Strasbourg est une ville."
+
     def test_loads_summary_field_from_summary_no_place_variant(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             (
@@ -117,6 +141,21 @@ class TestSourceLoading:
 
             result = load_text_source(
                 "summary_no_place", contents_path, summaries_path, no_place_path
+            )
+            assert result["100"] == "No place summary here."
+
+    def test_loads_base_summary_for_shuffled_no_place_variant(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            (
+                summaries_path,
+                contents_path,
+                no_place_path,
+                _,
+            ) = self._make_temp_files(tmpdir)
+            from scripts.data.classify_articles import load_text_source
+
+            result = load_text_source(
+                "summary_no_place_shuffled", contents_path, summaries_path, no_place_path
             )
             assert result["100"] == "No place summary here."
 
@@ -135,6 +174,21 @@ class TestSourceLoading:
             )
             assert result["100"] == "Full content"
 
+    def test_loads_base_content_for_shuffled_content_variant(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            (
+                summaries_path,
+                contents_path,
+                no_place_path,
+                _,
+            ) = self._make_temp_files(tmpdir)
+            from scripts.data.classify_articles import load_text_source
+
+            result = load_text_source(
+                "content_shuffled", contents_path, summaries_path, no_place_path
+            )
+            assert result["100"] == "Full content"
+
     def test_load_text_source_raises_on_unknown_variant(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             (
@@ -149,6 +203,27 @@ class TestSourceLoading:
                 load_text_source(
                     "unknown", contents_path, summaries_path, no_place_path
                 )
+
+
+class TestShuffledTextControl:
+    def test_apply_shuffled_text_control_is_deterministic_and_records_source_pageid(self):
+        text_records = {"1": "Text A", "2": "Text B", "3": "Text C"}
+        eligible = ["1", "2", "3"]
+
+        shuffled_1, mapping_1 = apply_shuffled_text_control(text_records, eligible, seed=42)
+        shuffled_2, mapping_2 = apply_shuffled_text_control(text_records, eligible, seed=42)
+
+        assert shuffled_1 == shuffled_2
+        assert mapping_1 == mapping_2
+        assert set(mapping_1) == set(eligible)
+        assert all(mapping_1[pageid] != pageid for pageid in eligible)
+        assert {shuffled_1[pageid] for pageid in eligible} == {"Text A", "Text B", "Text C"}
+
+    def test_apply_shuffled_text_control_leaves_singletons_in_place(self):
+        shuffled, mapping = apply_shuffled_text_control({"1": "Only text"}, ["1"], seed=42)
+
+        assert shuffled == {"1": "Only text"}
+        assert mapping == {"1": "1"}
 
 
 def _corine_temp_setup(tmpdir):
@@ -730,3 +805,100 @@ class TestLimit:
             with open(metrics_path) as f:
                 metrics = json.load(f)
             assert metrics["n_eligible"] == 2
+
+
+class TestShuffledRunner:
+    def test_summary_shuffled_swaps_texts_and_records_source_pageid(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            summaries_path = os.path.join(tmpdir, "summaries.json")
+            contents_path = os.path.join(tmpdir, "contents.json")
+            no_place_path = os.path.join(tmpdir, "no_place.json")
+            wiki_path = os.path.join(tmpdir, "wiki.json")
+            output_dir = os.path.join(tmpdir, "out")
+            corine_shp = os.path.join(tmpdir, "corine.shp")
+            os.makedirs(output_dir, exist_ok=True)
+            with open(summaries_path, "w") as f:
+                json.dump(
+                    {
+                        "100": {"summary": "Text from article 100"},
+                        "200": {"summary": "Text from article 200"},
+                    },
+                    f,
+                )
+            with open(contents_path, "w") as f:
+                json.dump({"100": {"content": "A"}, "200": {"content": "B"}}, f)
+            with open(no_place_path, "w") as f:
+                json.dump({"100": {"summary": "A"}, "200": {"summary": "B"}}, f)
+            with open(wiki_path, "w") as f:
+                json.dump(
+                    [
+                        {"pageid": 100, "lat": 0.5, "lon": 0.5, "title": "A"},
+                        {"pageid": 200, "lat": 1.5, "lon": 1.5, "title": "B"},
+                    ],
+                    f,
+                )
+            import geopandas as gpd
+            from shapely.geometry import box
+
+            gdf = gpd.GeoDataFrame(
+                {"code_18": ["311", "311"]},
+                geometry=[box(0, 0, 1, 1), box(1, 1, 2, 2)],
+                crs="EPSG:4326",
+            )
+            gdf.to_file(corine_shp)
+            classifier = MagicMock()
+            classifier.classify_single_label.return_value = {
+                "prediction": "31",
+                "prediction_labels": ["31"],
+                "parse_status": "ok",
+                "error": None,
+                "raw_response": '{"label":"31"}',
+                "metadata": {
+                    "task": "corine_level2",
+                    "text_source": "summary_shuffled",
+                    "model": "m.gguf",
+                    "seed": 42,
+                    "temperature": 0.0,
+                    "prompt": "...",
+                    "system_prompt": "...",
+                    "allowed_labels": ["31"],
+                },
+            }
+            from scripts.data.classify_articles import main
+
+            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
+                main(
+                    [
+                        "--task",
+                        "corine_level2",
+                        "--text-source",
+                        "summary_shuffled",
+                        "--wiki-articles-path",
+                        wiki_path,
+                        "--article-contents-path",
+                        contents_path,
+                        "--article-summaries-path",
+                        summaries_path,
+                        "--article-summaries-no-place-path",
+                        no_place_path,
+                        "--corine-polygons-path",
+                        corine_shp,
+                        "--output-dir",
+                        output_dir,
+                        "--model-path",
+                        "m.gguf",
+                    ]
+                )
+
+            seen_texts = [
+                call.kwargs["text"] for call in classifier.classify_single_label.call_args_list
+            ]
+            assert seen_texts == ["Text from article 200", "Text from article 100"]
+            pred_path = os.path.join(
+                output_dir, "corine_level2_summary_shuffled_predictions.json"
+            )
+            with open(pred_path) as f:
+                records = json.load(f)
+            assert records["100"]["metadata"]["text_control"] == "shuffled"
+            assert records["100"]["metadata"]["base_text_source"] == "summary"
+            assert records["100"]["metadata"]["shuffled_from_pageid"] == "200"

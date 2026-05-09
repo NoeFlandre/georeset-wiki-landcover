@@ -33,8 +33,11 @@ FIELDNAMES = [
 
 TEXT_SOURCE_ORDER = {
     "summary": 0,
-    "summary_no_place": 1,
-    "content": 2,
+    "summary_shuffled": 1,
+    "summary_no_place": 2,
+    "summary_no_place_shuffled": 3,
+    "content": 4,
+    "content_shuffled": 5,
 }
 
 
@@ -178,7 +181,11 @@ def write_overview_markdown(rows: list[dict[str, Any]], output_path: Path) -> No
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def write_readme(rows: list[dict[str, Any]], output_path: Path) -> None:
+def write_readme(
+    rows: list[dict[str, Any]],
+    output_path: Path,
+    title: str = "Article-Text Classification E2E v1",
+) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     total_records = sum(int(row["n_eligible"]) for row in rows)
     parse_errors = sum(int(row["n_parse_error"]) for row in rows)
@@ -187,8 +194,13 @@ def write_readme(rows: list[dict[str, Any]], output_path: Path) -> None:
         for row in rows
         if isinstance(row["delta_vs_majority"], (int, float))
     )
+    n_beating_majority = sum(
+        1
+        for row in rows
+        if isinstance(row["delta_vs_majority"], (int, float)) and row["delta_vs_majority"] > 0
+    )
     lines = [
-        "# Article-Text Classification E2E v1",
+        f"# {title}",
         "",
         "This folder contains the frozen outputs for the article-text classification experiment.",
         "It covers 2 tasks x 3 text sources:",
@@ -250,8 +262,14 @@ def write_readme(rows: list[dict[str, Any]], output_path: Path) -> None:
             "- Macro scores are better for seeing whether rare labels are handled well.",
             "- Micro scores are better for seeing overall label-decision performance weighted by common labels.",
             "- Coverage should be read before accuracy/F1. A high score with low coverage can be misleading because many failures were excluded from scoring.",
-            "- The majority baseline should be read next. If `delta_vs_majority` is near or below zero, the model is not clearly adding useful signal beyond class imbalance.",
-        ]
+        "- The majority baseline should be read next. If `delta_vs_majority` is near or below zero, the model is not clearly adding useful signal beyond class imbalance.",
+        "",
+        "## Majority Baseline Finding",
+        "",
+        f"- Runs beating the majority baseline: {n_beating_majority}/{len(rows)}",
+        f"- Best observed delta vs majority baseline: {_format_cell(best_delta)}",
+        "- In this batch, a negative best delta means the strict primary scores do not yet beat a simple class-imbalance baseline. Treat the current classification results as a diagnostic baseline, not as evidence that the text source is already predictive.",
+    ]
     )
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -268,6 +286,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--csv-output", type=Path, default=None)
     parser.add_argument("--markdown-output", type=Path, default=None)
     parser.add_argument("--readme-output", type=Path, default=None)
+    parser.add_argument("--title", default="Article-Text Classification E2E v1")
     return parser.parse_args(argv)
 
 
@@ -279,7 +298,7 @@ def main(argv: list[str] | None = None) -> None:
     readme_output = args.readme_output or args.experiment_dir / "README.md"
     write_overview_csv(rows, csv_output)
     write_overview_markdown(rows, markdown_output)
-    write_readme(rows, readme_output)
+    write_readme(rows, readme_output, title=args.title)
     print(f"Wrote {len(rows)} rows to {csv_output}, {markdown_output}, and {readme_output}")
 
 
