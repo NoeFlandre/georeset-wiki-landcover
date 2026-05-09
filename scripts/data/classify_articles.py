@@ -15,6 +15,7 @@ from src.classification.ground_truth import build_corine_ground_truth, build_osm
 from src.classification.labels import corine_level2_labels, osm_allowed_labels
 from src.classification.llm_classifier import LLMClassifier
 from src.classification.metrics import multilabel_metrics, single_label_metrics
+from src.classification.records import build_prediction_record, should_skip_record
 from src.classification.text_sources import (
     SHUFFLED_TEXT_SOURCES,
     TEXT_SOURCE_CHOICES,
@@ -218,9 +219,7 @@ def main(argv: list[str] | None = None) -> None:
 
     for pageid in eligible:
         record = existing.get(pageid)
-        if record and record.get("parse_status") == "ok" and (
-            args.retry_failed or record.get("metadata", {}).get("fingerprint") == fp_current
-        ):
+        if should_skip_record(record, fp_current, retry_failed=args.retry_failed):
             continue
         article = next(
             (a for a in articles if str(a.get("pageid")) == pageid), None
@@ -242,21 +241,19 @@ def main(argv: list[str] | None = None) -> None:
                 task=args.task,
                 text_source=args.text_source,
             )
-        record = {
-            "pageid": pageid,
-            "title": title,
-            "target": target[pageid],
-            "prediction": result.get("prediction"),
-            "prediction_labels": result.get("prediction_labels", []),
-            "parse_status": result.get("parse_status"),
-            "raw_response": result.get("raw_response"),
-            "error": result.get("error"),
-            "metadata": {**result.get("metadata", {}), "fingerprint": fp_current},
-        }
+        extra_metadata = None
         if shuffled_source_pageids:
-            record["metadata"].update(
-                shuffled_metadata(args.text_source, shuffled_source_pageids[pageid])
+            extra_metadata = shuffled_metadata(
+                args.text_source, shuffled_source_pageids[pageid]
             )
+        record = build_prediction_record(
+            pageid=pageid,
+            title=title,
+            target=target[pageid],
+            result=result,
+            fingerprint=fp_current,
+            extra_metadata=extra_metadata,
+        )
         existing[pageid] = record
         with open(out_pred, "w") as f:
             json.dump(existing, f, indent=2, ensure_ascii=False)
