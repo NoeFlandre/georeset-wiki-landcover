@@ -5,7 +5,6 @@ import hashlib
 import json
 import logging
 import os
-import random
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -16,6 +15,13 @@ from src.classification.ground_truth import build_corine_ground_truth, build_osm
 from src.classification.labels import corine_level2_labels, osm_allowed_labels
 from src.classification.llm_classifier import LLMClassifier
 from src.classification.metrics import multilabel_metrics, single_label_metrics
+from src.classification.text_sources import (
+    SHUFFLED_TEXT_SOURCES,
+    TEXT_SOURCE_CHOICES,
+    apply_shuffled_text_control,
+    base_text_source,
+    shuffled_metadata,
+)
 from src.fetchers.data_fetcher import DataFetcher
 
 logger = logging.getLogger(__name__)
@@ -24,19 +30,6 @@ logging.basicConfig(
 )
 
 CLASSIFICATION_POLICY_VERSION = 3
-
-SHUFFLED_TEXT_SOURCES = {
-    "summary_shuffled": "summary",
-    "summary_no_place_shuffled": "summary_no_place",
-    "content_shuffled": "content",
-}
-TEXT_SOURCE_CHOICES = [
-    "summary",
-    "summary_no_place",
-    "content",
-    *SHUFFLED_TEXT_SOURCES,
-]
-
 
 def prediction_fingerprint(
     task: str,
@@ -106,7 +99,7 @@ def load_text_source(
     article_summaries_path: str,
     article_summaries_no_place_path: str,
 ) -> dict[str, str]:
-    text_source = SHUFFLED_TEXT_SOURCES.get(text_source, text_source)
+    text_source = base_text_source(text_source)
     if text_source == "summary":
         with open(article_summaries_path) as f:
             data = json.load(f)
@@ -121,32 +114,6 @@ def load_text_source(
         return {k: v.get("content", "") for k, v in data.items()}
     else:
         raise ValueError(f"Unknown text source: {text_source}")
-
-
-def apply_shuffled_text_control(
-    text_records: dict[str, str], eligible: list[str], seed: int
-) -> tuple[dict[str, str], dict[str, str]]:
-    """Return text records where eligible article texts are deterministically reassigned."""
-    if len(eligible) <= 1:
-        return dict(text_records), {pageid: pageid for pageid in eligible}
-
-    shuffled_ids = list(eligible)
-    rng = random.Random(seed)
-    for _ in range(100):
-        rng.shuffle(shuffled_ids)
-        if all(
-            pageid != source_pageid
-            for pageid, source_pageid in zip(eligible, shuffled_ids, strict=True)
-        ):
-            break
-    else:
-        shuffled_ids = eligible[1:] + eligible[:1]
-
-    shuffled_records = dict(text_records)
-    mapping = dict(zip(eligible, shuffled_ids, strict=True))
-    for pageid, source_pageid in mapping.items():
-        shuffled_records[pageid] = text_records[source_pageid]
-    return shuffled_records, mapping
 
 
 def compute_metrics(
@@ -287,9 +254,9 @@ def main(argv: list[str] | None = None) -> None:
             "metadata": {**result.get("metadata", {}), "fingerprint": fp_current},
         }
         if shuffled_source_pageids:
-            record["metadata"]["text_control"] = "shuffled"
-            record["metadata"]["base_text_source"] = SHUFFLED_TEXT_SOURCES[args.text_source]
-            record["metadata"]["shuffled_from_pageid"] = shuffled_source_pageids[pageid]
+            record["metadata"].update(
+                shuffled_metadata(args.text_source, shuffled_source_pageids[pageid])
+            )
         existing[pageid] = record
         with open(out_pred, "w") as f:
             json.dump(existing, f, indent=2, ensure_ascii=False)
