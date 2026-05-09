@@ -31,6 +31,7 @@ def test_majority_baseline_score_handles_single_and_multilabel_targets():
     }
 
     assert majority_baseline_score(corine_records, "accuracy") == 2 / 3
+    assert majority_baseline_score(corine_records, "macro_recall") == 1 / 2
     assert majority_baseline_score(osm_records, "exact_match_accuracy") == 2 / 3
 
 
@@ -91,9 +92,13 @@ def test_collect_metric_rows_sorts_and_selects_task_specific_scores(tmp_path):
     rows = collect_metric_rows(experiment_dir)
 
     assert [row["run"] for row in rows] == ["corine_level2/content", "osm/summary"]
-    assert rows[0]["primary_score"] == 2 / 3
-    assert rows[0]["majority_baseline_score"] == 2 / 3
-    assert rows[0]["delta_vs_majority"] == 0
+    assert rows[0]["primary_metric"] == "macro_recall"
+    assert rows[0]["primary_score"] == 0.75
+    assert rows[0]["majority_baseline_score"] == 0.5
+    assert rows[0]["delta_vs_majority"] == 0.25
+    assert rows[0]["majority_target_share"] == 2 / 3
+    assert rows[0]["majority_macro_recall_baseline"] == 0.5
+    assert rows[0]["delta_macro_recall_vs_majority"] == 0.25
     assert rows[0]["accuracy"] == 2 / 3
     assert rows[0]["exact_match_accuracy"] == ""
     assert rows[0]["macro_precision"] == 0.5
@@ -122,6 +127,9 @@ def test_write_overview_outputs_csv_and_markdown(tmp_path):
             "primary_score": 0.5,
             "majority_baseline_score": 0.4,
             "delta_vs_majority": 0.1,
+            "majority_target_share": 0.4,
+            "majority_macro_recall_baseline": "",
+            "delta_macro_recall_vs_majority": "",
             "accuracy": "",
             "exact_match_accuracy": 0.5,
             "macro_precision": 0.6,
@@ -145,6 +153,7 @@ def test_write_overview_outputs_csv_and_markdown(tmp_path):
     assert csv_rows[0]["primary_metric"] == "exact_match_accuracy"
     assert csv_rows[0]["majority_baseline_score"] == "0.4"
     assert csv_rows[0]["delta_vs_majority"] == "0.1"
+    assert csv_rows[0]["majority_target_share"] == "0.4"
     assert csv_rows[0]["micro_precision"] == "0.75"
     assert "majority baseline" in md_path.read_text(encoding="utf-8")
     assert "micro precision" in md_path.read_text(encoding="utf-8")
@@ -161,10 +170,13 @@ def test_write_readme_describes_experiment_inputs_and_outputs(tmp_path):
             "n_predicted_ok": 1251,
             "n_parse_error": 0,
             "coverage": 1.0,
-            "primary_metric": "accuracy",
-            "primary_score": 0.23,
-            "majority_baseline_score": 0.2,
-            "delta_vs_majority": 0.03,
+            "primary_metric": "macro_recall",
+            "primary_score": 0.26,
+            "majority_baseline_score": 1 / 9,
+            "delta_vs_majority": 0.26 - (1 / 9),
+            "majority_target_share": 0.3789,
+            "majority_macro_recall_baseline": 1 / 9,
+            "delta_macro_recall_vs_majority": 0.26 - (1 / 9),
             "accuracy": 0.23,
             "exact_match_accuracy": "",
             "macro_precision": 0.25,
@@ -196,6 +208,10 @@ def test_write_readme_describes_experiment_inputs_and_outputs(tmp_path):
     assert "`n_eligible`" in text
     assert "`exact_match_accuracy`" in text
     assert "`majority_baseline_score`" in text
+    assert "CORINE uses `macro_recall` as the primary score" in text
+    assert "balanced accuracy" in text
+    assert "1 / number of evaluated classes" in text
+    assert "`majority_target_share`" in text
 
 
 def test_write_readme_accepts_custom_experiment_title(tmp_path):
@@ -212,6 +228,9 @@ def test_write_readme_accepts_custom_experiment_title(tmp_path):
             "primary_score": 0.1,
             "majority_baseline_score": 0.2,
             "delta_vs_majority": -0.1,
+            "majority_target_share": 0.2,
+            "majority_macro_recall_baseline": "",
+            "delta_macro_recall_vs_majority": "",
             "accuracy": "",
             "exact_match_accuracy": 0.1,
             "macro_precision": 0.2,
@@ -242,10 +261,13 @@ def test_write_readme_describes_shuffled_controls_when_present(tmp_path):
             "n_predicted_ok": 10,
             "n_parse_error": 0,
             "coverage": 1.0,
-            "primary_metric": "accuracy",
+            "primary_metric": "macro_recall",
             "primary_score": 0.3,
-            "majority_baseline_score": 0.2,
-            "delta_vs_majority": 0.1,
+            "majority_baseline_score": 0.5,
+            "delta_vs_majority": -0.2,
+            "majority_target_share": 0.2,
+            "majority_macro_recall_baseline": 0.5,
+            "delta_macro_recall_vs_majority": -0.2,
             "accuracy": 0.3,
             "exact_match_accuracy": "",
             "macro_precision": 0.3,
@@ -264,10 +286,13 @@ def test_write_readme_describes_shuffled_controls_when_present(tmp_path):
             "n_predicted_ok": 10,
             "n_parse_error": 0,
             "coverage": 1.0,
-            "primary_metric": "accuracy",
+            "primary_metric": "macro_recall",
             "primary_score": 0.1,
-            "majority_baseline_score": 0.2,
-            "delta_vs_majority": -0.1,
+            "majority_baseline_score": 0.5,
+            "delta_vs_majority": -0.4,
+            "majority_target_share": 0.2,
+            "majority_macro_recall_baseline": 0.5,
+            "delta_macro_recall_vs_majority": -0.4,
             "accuracy": 0.1,
             "exact_match_accuracy": "",
             "macro_precision": 0.1,

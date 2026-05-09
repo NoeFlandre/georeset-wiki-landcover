@@ -19,6 +19,9 @@ FIELDNAMES = [
     "primary_score",
     "majority_baseline_score",
     "delta_vs_majority",
+    "majority_target_share",
+    "majority_macro_recall_baseline",
+    "delta_macro_recall_vs_majority",
     "accuracy",
     "exact_match_accuracy",
     "macro_precision",
@@ -61,7 +64,7 @@ def _metric_value(metrics: dict[str, Any], key: str) -> Any:
 def _primary_metric(metrics: dict[str, Any]) -> tuple[str, Any]:
     if metrics.get("task") == "osm":
         return "exact_match_accuracy", _metric_value(metrics, "exact_match_accuracy")
-    return "accuracy", _metric_value(metrics, "accuracy")
+    return "macro_recall", _metric_value(metrics, "macro_recall")
 
 
 def _target_key(target: Any) -> str:
@@ -70,18 +73,43 @@ def _target_key(target: Any) -> str:
     return str(target)
 
 
-def majority_baseline_score(records: dict[str, Any], primary_metric: str) -> float | str:
-    targets = [
+def _evaluated_targets(records: dict[str, Any]) -> list[Any]:
+    return [
         record["target"]
         for record in records.values()
         if isinstance(record, dict) and record.get("parse_status") == "ok" and "target" in record
     ]
+
+
+def majority_target_share(records: dict[str, Any]) -> float | str:
+    targets = _evaluated_targets(records)
     if not targets:
         return ""
     majority_key = Counter(_target_key(target) for target in targets).most_common(1)[0][0]
     correct = sum(1 for target in targets if _target_key(target) == majority_key)
+    return correct / len(targets)
+
+
+def majority_macro_recall_baseline(
+    records: dict[str, Any], labels_evaluated: list[str] | None = None
+) -> float | str:
+    labels = labels_evaluated or sorted(
+        {str(target) for target in _evaluated_targets(records) if not isinstance(target, list)}
+    )
+    if not labels:
+        return ""
+    return 1 / len(labels)
+
+
+def majority_baseline_score(
+    records: dict[str, Any],
+    primary_metric: str,
+    labels_evaluated: list[str] | None = None,
+) -> float | str:
     if primary_metric in {"accuracy", "exact_match_accuracy"}:
-        return correct / len(targets)
+        return majority_target_share(records)
+    if primary_metric == "macro_recall":
+        return majority_macro_recall_baseline(records, labels_evaluated)
     return ""
 
 
@@ -96,9 +124,15 @@ def collect_metric_rows(experiment_dir: Path) -> list[dict[str, Any]]:
         primary_name, primary_score = _primary_metric(metrics)
         predictions_path = _predictions_path(path)
         majority_score = ""
-        if predictions_path.exists():
-            majority_score = majority_baseline_score(_load_json(predictions_path), primary_name)
+        majority_share: float | str = ""
+        majority_macro_recall: float | str = ""
         labels_evaluated = metrics.get("labels_evaluated", [])
+        if predictions_path.exists():
+            records = _load_json(predictions_path)
+            majority_score = majority_baseline_score(records, primary_name, labels_evaluated)
+            majority_share = majority_target_share(records)
+            if metrics.get("task") == "corine_level2":
+                majority_macro_recall = majority_macro_recall_baseline(records, labels_evaluated)
         row = {
             "run": f"{metrics['task']}/{metrics['text_source']}",
             "task": metrics["task"],
@@ -114,6 +148,14 @@ def collect_metric_rows(experiment_dir: Path) -> list[dict[str, Any]]:
                 primary_score - majority_score
                 if isinstance(primary_score, (int, float))
                 and isinstance(majority_score, (int, float))
+                else ""
+            ),
+            "majority_target_share": majority_share,
+            "majority_macro_recall_baseline": majority_macro_recall,
+            "delta_macro_recall_vs_majority": (
+                metrics["macro_recall"] - majority_macro_recall
+                if isinstance(metrics.get("macro_recall"), (int, float))
+                and isinstance(majority_macro_recall, (int, float))
                 else ""
             ),
             "accuracy": _metric_value(metrics, "accuracy"),
@@ -153,8 +195,8 @@ def write_overview_markdown(rows: list[dict[str, Any]], output_path: Path) -> No
     lines = [
         "# Classification Experiment Overview",
         "",
-        "| run | n eligible | n predicted ok | parse errors | coverage | primary score | majority baseline | delta vs majority | accuracy | exact match accuracy | macro precision | macro recall | macro F1 | micro precision | micro recall | micro F1 | labels |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| run | n eligible | n predicted ok | parse errors | coverage | primary score | majority baseline | delta vs majority | majority target share | majority macro recall baseline | delta macro recall vs majority | accuracy | exact match accuracy | macro precision | macro recall | macro F1 | micro precision | micro recall | micro F1 | labels |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in rows:
         lines.append(
@@ -169,6 +211,9 @@ def write_overview_markdown(rows: list[dict[str, Any]], output_path: Path) -> No
                     _format_cell(row["primary_score"]),
                     _format_cell(row["majority_baseline_score"]),
                     _format_cell(row["delta_vs_majority"]),
+                    _format_cell(row["majority_target_share"]),
+                    _format_cell(row["majority_macro_recall_baseline"]),
+                    _format_cell(row["delta_macro_recall_vs_majority"]),
                     _format_cell(row["accuracy"]),
                     _format_cell(row["exact_match_accuracy"]),
                     _format_cell(row["macro_precision"]),
@@ -261,9 +306,12 @@ def write_readme(
             "- `n_predicted_ok`: number of eligible articles with a valid parsed prediction.",
             "- `n_parse_error`: number of eligible articles without a valid parsed prediction. These are excluded from accuracy/F1, but reduce coverage.",
             "- `coverage`: `n_predicted_ok / n_eligible`. This answers: among evaluable articles, how many received a usable model prediction?",
-            "- `majority_baseline_score`: score from a simple classifier that always predicts the most frequent ground-truth class or label-set in that run.",
+            "- `majority_baseline_score`: score from a simple classifier that always predicts the most frequent ground-truth class or label-set in that run, using the run's primary metric.",
             "- `delta_vs_majority`: primary model score minus `majority_baseline_score`. Positive means the model beats the class-imbalance baseline; negative means it underperforms that baseline.",
-            "- `accuracy`: CORINE single-label score. A prediction is correct only when the one predicted CORINE level-2 label exactly equals the one true label.",
+            "- `majority_target_share`: raw frequency of the most common target class or label-set. For CORINE this is the raw accuracy achieved by always predicting the most common land-cover class.",
+            "- `majority_macro_recall_baseline`: CORINE-only balanced majority baseline. If there are 9 evaluated classes, always predicting the majority class has recall 1.0 for that class and 0.0 for the other 8, so macro recall is `1 / number of evaluated classes` = 0.1111.",
+            "- `delta_macro_recall_vs_majority`: CORINE `macro_recall` minus `majority_macro_recall_baseline`.",
+            "- `accuracy`: CORINE single-label score. A prediction is correct only when the one predicted CORINE level-2 label exactly equals the one true label. In imbalanced land-cover data, accuracy can be misleading because the most common class alone can dominate it.",
             "- `exact_match_accuracy`: OSM multi-label score. A prediction is correct only when the full predicted label set exactly equals the full true label set.",
             "- `precision`: among labels the model predicted, the fraction that were actually correct. High precision means fewer false positive labels.",
             "- `recall`: among labels that were truly present, the fraction the model recovered. High recall means fewer missed labels.",
@@ -274,18 +322,20 @@ def write_readme(
             "",
             "Interpretation notes:",
             "",
-            "- CORINE uses `accuracy` as the primary score because it is single-label.",
+            "- CORINE uses `macro_recall` as the primary score. For single-label multiclass classification, macro recall is the balanced accuracy view: compute recall for each class, then average classes equally.",
             "- OSM uses `exact_match_accuracy` as the strict primary score because it is multi-label.",
+            "- Read CORINE `accuracy` together with `majority_target_share`. A model can lose on raw accuracy while still beating the majority baseline on balanced accuracy if it recovers minority classes.",
             "- Macro scores are better for seeing whether rare labels are handled well.",
             "- Micro scores are better for seeing overall label-decision performance weighted by common labels.",
             "- Coverage should be read before accuracy/F1. A high score with low coverage can be misleading because many failures were excluded from scoring.",
-        "- The majority baseline should be read next. If `delta_vs_majority` is near or below zero, the model is not clearly adding useful signal beyond class imbalance.",
+        "- The majority baseline should be read next. If `delta_vs_majority` is near or below zero, the model is not clearly adding useful signal beyond the relevant class-imbalance baseline.",
         "",
         "## Majority Baseline Finding",
         "",
         f"- Runs beating the majority baseline: {n_beating_majority}/{len(rows)}",
         f"- Best observed delta vs majority baseline: {_format_cell(best_delta)}",
-        "- In this batch, a negative best delta means the strict primary scores do not yet beat a simple class-imbalance baseline. Treat the current classification results as a diagnostic baseline, not as evidence that the text source is already predictive.",
+        "- For CORINE, compare `macro_recall` against `majority_macro_recall_baseline`, not only raw accuracy against `majority_target_share`.",
+        "- For OSM, the majority baseline remains strict exact-match accuracy for the most common true label-set.",
     ]
     )
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
