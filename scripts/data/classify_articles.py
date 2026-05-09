@@ -9,13 +9,10 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-import geopandas as gpd
-
-from src.classification.ground_truth import build_corine_ground_truth, build_osm_ground_truth
-from src.classification.labels import corine_level2_labels, osm_allowed_labels
 from src.classification.llm_classifier import LLMClassifier
 from src.classification.metrics import multilabel_metrics, single_label_metrics
 from src.classification.records import build_prediction_record, should_skip_record
+from src.classification.task_setup import load_task_setup
 from src.classification.text_sources import (
     SHUFFLED_TEXT_SOURCES,
     TEXT_SOURCE_CHOICES,
@@ -23,7 +20,6 @@ from src.classification.text_sources import (
     base_text_source,
     shuffled_metadata,
 )
-from src.fetchers.data_fetcher import DataFetcher
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -164,31 +160,15 @@ def main(argv: list[str] | None = None) -> None:
         args.article_summaries_no_place_path,
     )
 
-    if args.task == "corine_level2":
-        fetcher = DataFetcher(args.corine_polygons_path)
-        corine_gdf = fetcher.load_data(exclude_artificial=True)
-        target = build_corine_ground_truth(articles, corine_gdf)
-        allowed_labels = corine_level2_labels(corine_gdf)
-        label_descriptions = {
-            k: v
-            for k, v in {
-                "21": "Arable land",
-                "22": "Permanent crops",
-                "23": "Pastures",
-                "24": "Heterogeneous agricultural areas",
-                "31": "Forests",
-                "32": "Shrub and/or herbaceous vegetation associations",
-                "33": "Open spaces with little or no vegetation",
-                "41": "Inland wetlands",
-                "51": "Inland waters",
-            }.items()
-            if k in allowed_labels
-        }
-    else:
-        osm_gdf = gpd.read_file(args.osm_polygons_path)
-        target = build_osm_ground_truth(articles, osm_gdf)
-        allowed_labels = osm_allowed_labels()
-        label_descriptions = {}
+    task_setup = load_task_setup(
+        task=args.task,
+        articles=articles,
+        corine_polygons_path=args.corine_polygons_path,
+        osm_polygons_path=args.osm_polygons_path,
+    )
+    target = task_setup.target
+    allowed_labels = task_setup.allowed_labels
+    label_descriptions = task_setup.label_descriptions
 
     eligible = [pid for pid in text_records if pid in target]
     if args.limit:
