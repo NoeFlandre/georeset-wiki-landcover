@@ -182,7 +182,8 @@ def test_write_readme_describes_experiment_inputs_and_outputs(tmp_path):
 
     text = readme_path.read_text(encoding="utf-8")
     assert "Article-Text Classification E2E v1" in text
-    assert "2 tasks x 3 text sources" in text
+    assert "1 task(s) x 1 text source(s)" in text
+    assert "text sources: `summary`" in text
     assert "`summary`: generated with `summary_mode=place`" in text
     assert "overview.csv" in text
     assert "corine_level2/summary" in text
@@ -229,3 +230,60 @@ def test_write_readme_accepts_custom_experiment_title(tmp_path):
     text = readme_path.read_text(encoding="utf-8")
     assert "# Article-Text Classification Shuffled Control v1" in text
     assert "summary_shuffled" in text
+
+
+def test_write_readme_describes_shuffled_controls_when_present(tmp_path):
+    rows = [
+        {
+            "run": "corine_level2/summary",
+            "task": "corine_level2",
+            "text_source": "summary",
+            "n_eligible": 10,
+            "n_predicted_ok": 10,
+            "n_parse_error": 0,
+            "coverage": 1.0,
+            "primary_metric": "accuracy",
+            "primary_score": 0.3,
+            "majority_baseline_score": 0.2,
+            "delta_vs_majority": 0.1,
+            "accuracy": 0.3,
+            "exact_match_accuracy": "",
+            "macro_precision": 0.3,
+            "macro_recall": 0.3,
+            "macro_f1": 0.3,
+            "micro_precision": "",
+            "micro_recall": "",
+            "micro_f1": "",
+            "n_labels_evaluated": 2,
+        },
+        {
+            "run": "corine_level2/summary_shuffled",
+            "task": "corine_level2",
+            "text_source": "summary_shuffled",
+            "n_eligible": 10,
+            "n_predicted_ok": 10,
+            "n_parse_error": 0,
+            "coverage": 1.0,
+            "primary_metric": "accuracy",
+            "primary_score": 0.1,
+            "majority_baseline_score": 0.2,
+            "delta_vs_majority": -0.1,
+            "accuracy": 0.1,
+            "exact_match_accuracy": "",
+            "macro_precision": 0.1,
+            "macro_recall": 0.1,
+            "macro_f1": 0.1,
+            "micro_precision": "",
+            "micro_recall": "",
+            "micro_f1": "",
+            "n_labels_evaluated": 2,
+        },
+    ]
+    readme_path = tmp_path / "README.md"
+
+    write_readme(rows, readme_path, title="Combined Classification Comparison")
+
+    text = readme_path.read_text(encoding="utf-8")
+    assert "text sources: `summary`, `summary_shuffled`" in text
+    assert "Includes deterministic shuffled controls." in text
+    assert "runs: 2" in text

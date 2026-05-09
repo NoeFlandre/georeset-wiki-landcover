@@ -144,6 +144,10 @@ def _format_cell(value: Any) -> str:
     return str(value)
 
 
+def _format_code_list(values: list[str]) -> str:
+    return ", ".join(f"`{value}`" for value in values)
+
+
 def write_overview_markdown(rows: list[dict[str, Any]], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
@@ -189,6 +193,12 @@ def write_readme(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     total_records = sum(int(row["n_eligible"]) for row in rows)
     parse_errors = sum(int(row["n_parse_error"]) for row in rows)
+    tasks = sorted({str(row["task"]) for row in rows})
+    text_sources = sorted(
+        {str(row["text_source"]) for row in rows},
+        key=lambda source: TEXT_SOURCE_ORDER.get(source, 99),
+    )
+    has_shuffled_controls = any(source.endswith("_shuffled") for source in text_sources)
     best_delta = max(
         row["delta_vs_majority"]
         for row in rows
@@ -203,14 +213,21 @@ def write_readme(
         f"# {title}",
         "",
         "This folder contains the frozen outputs for the article-text classification experiment.",
-        "It covers 2 tasks x 3 text sources:",
+        f"It covers {len(tasks)} task(s) x {len(text_sources)} text source(s):",
         "",
         "- CORINE level-2 single-label classification",
         "- OSM multi-label classification",
-        "- text sources: `summary`, `summary_no_place`, and `content`",
+        f"- tasks: {_format_code_list(tasks)}",
+        f"- text sources: {_format_code_list(text_sources)}",
         "- `summary`: generated with `summary_mode=place`",
         "- `summary_no_place`: generated with `summary_mode=no_place`",
         "- `content`: raw Wikipedia article content",
+    ]
+    if has_shuffled_controls:
+        lines.append(
+            "- Includes deterministic shuffled controls. These preserve targets and eligible articles while reassigning texts across articles."
+        )
+    lines.extend([
         "",
         "## Contents",
         "",
@@ -228,7 +245,7 @@ def write_readme(
         "",
         "## Runs",
         "",
-    ]
+    ])
     for row in rows:
         lines.append(
             f"- `{row['run']}`: n={row['n_eligible']}, "
