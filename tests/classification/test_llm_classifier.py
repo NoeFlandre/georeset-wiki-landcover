@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from src.classification.llm_classifier import LLMClassifier
+from src.classification.llm_classifier import MULTI_SCHEMA, SINGLE_SCHEMA, LLMClassifier
 
 
 def test_classify_single_label_returns_ok_with_valid_response():
@@ -31,6 +31,20 @@ def test_classify_single_label_returns_ok_with_valid_response():
     _, kwargs = mock_llm.create_chat_completion.call_args
     assert kwargs["response_format"]["type"] == "json_object"
     assert kwargs["temperature"] == 0.0
+
+
+def test_single_label_schema_requires_exactly_one_label():
+    labels_schema = SINGLE_SCHEMA["properties"]["labels"]
+
+    assert labels_schema["minItems"] == 1
+    assert labels_schema["maxItems"] == 1
+
+
+def test_multilabel_schema_requires_at_least_one_label():
+    labels_schema = MULTI_SCHEMA["properties"]["labels"]
+
+    assert labels_schema["minItems"] == 1
+    assert "maxItems" not in labels_schema
 
 
 def test_classify_single_label_multiple_labels_returns_ambiguous():

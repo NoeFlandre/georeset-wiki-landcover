@@ -26,7 +26,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-CLASSIFICATION_POLICY_VERSION = 3
+CLASSIFICATION_POLICY_VERSION = 4
 
 def prediction_fingerprint(
     task: str,

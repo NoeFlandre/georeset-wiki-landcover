@@ -6,13 +6,26 @@ from src.classification.types import PredictionResult
 
 SINGLE_SCHEMA = {
     "type": "object",
-    "properties": {"labels": {"type": "array", "items": {"type": "string"}}},
+    "properties": {
+        "labels": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1,
+            "maxItems": 1,
+        }
+    },
     "required": ["labels"],
     "additionalProperties": False,
 }
 MULTI_SCHEMA = {
     "type": "object",
-    "properties": {"labels": {"type": "array", "items": {"type": "string"}}},
+    "properties": {
+        "labels": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1,
+        }
+    },
     "required": ["labels"],
     "additionalProperties": False,
 }
