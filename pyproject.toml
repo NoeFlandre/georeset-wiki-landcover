@@ -56,3 +56,8 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+addopts = [
+    "--cov=src.classification",
+    "--cov-report=term-missing",
+    "--cov-fail-under=95",
+]

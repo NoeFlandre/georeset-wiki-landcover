@@ -297,6 +297,27 @@ def test_infrastructure_exception_returns_error_with_full_metadata():
     assert result["metadata"]["allowed_labels"] == ["21"]
 
 
+def test_multilabel_infrastructure_exception_returns_error_with_full_metadata():
+    classifier = LLMClassifier(model_path=None)
+    mock_llm = MagicMock()
+    mock_llm.create_chat_completion.side_effect = RuntimeError("boom")
+    classifier._llm = mock_llm
+
+    result = classifier.classify_multilabel(
+        text="Texte.",
+        allowed_labels=["meadow"],
+        task="osm",
+        text_source="summary",
+    )
+
+    assert result["parse_status"] == "error"
+    assert "boom" in result["error"]
+    assert result["raw_response"] is None
+    assert result["metadata"]["prompt"]
+    assert result["metadata"]["system_prompt"]
+    assert result["metadata"]["allowed_labels"] == ["meadow"]
+
+
 def test_gpu_optimization_enabled():
     classifier = LLMClassifier(model_path="model.gguf")
     mock_llama_cpp = MagicMock()

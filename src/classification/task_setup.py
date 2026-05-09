@@ -1,7 +1,7 @@
 """Task-specific ground-truth and label setup for classification runs."""
 
 from dataclasses import dataclass
-from typing import Any
+from typing import cast
 
 import geopandas as gpd
 
@@ -11,12 +11,13 @@ from src.classification.labels import (
     corine_level2_labels,
     osm_allowed_labels,
 )
+from src.classification.types import ClassificationTarget
 from src.fetchers.data_fetcher import DataFetcher
 
 
 @dataclass(frozen=True)
 class ClassificationTaskSetup:
-    target: dict[str, Any]
+    target: dict[str, ClassificationTarget]
     allowed_labels: list[str]
     label_descriptions: dict[str, str]
 
@@ -32,7 +33,10 @@ def load_task_setup(
         corine_gdf = DataFetcher(corine_polygons_path).load_data(exclude_artificial=True)
         allowed_labels = corine_level2_labels(corine_gdf)
         return ClassificationTaskSetup(
-            target=build_corine_ground_truth(articles, corine_gdf),
+            target=cast(
+                dict[str, ClassificationTarget],
+                build_corine_ground_truth(articles, corine_gdf),
+            ),
             allowed_labels=allowed_labels,
             label_descriptions={
                 label: description
@@ -43,7 +47,10 @@ def load_task_setup(
     if task == "osm":
         osm_gdf = gpd.read_file(osm_polygons_path)
         return ClassificationTaskSetup(
-            target=build_osm_ground_truth(articles, osm_gdf),
+            target=cast(
+                dict[str, ClassificationTarget],
+                build_osm_ground_truth(articles, osm_gdf),
+            ),
             allowed_labels=osm_allowed_labels(),
             label_descriptions={},
         )

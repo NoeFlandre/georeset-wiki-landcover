@@ -2,6 +2,8 @@
 
 from typing import Any
 
+from src.classification.types import ClassificationTarget, PredictionRecord, PredictionResult
+
 
 def should_skip_record(
     record: dict[str, Any] | None, fingerprint: str, retry_failed: bool
@@ -15,11 +17,11 @@ def build_prediction_record(
     *,
     pageid: str,
     title: str,
-    target: Any,
-    result: dict[str, Any],
+    target: ClassificationTarget,
+    result: PredictionResult,
     fingerprint: str,
     extra_metadata: dict[str, Any] | None = None,
-) -> dict[str, Any]:
+) -> PredictionRecord:
     metadata = {**result.get("metadata", {}), "fingerprint": fingerprint}
     if extra_metadata:
         metadata.update(extra_metadata)

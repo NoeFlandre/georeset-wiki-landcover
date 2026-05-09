@@ -22,6 +22,22 @@ writing visual checks.
     inside OSM polygons.
   - `distribution_summary.py`: summarizes distribution CSV outputs.
 
+- `src.classification`
+  - `labels.py`: CORINE level-2 and OSM label allowlists.
+  - `ground_truth.py`: spatial joins that build CORINE single-label and OSM
+    multi-label ground truth.
+  - `prediction_parser.py`: conservative JSON/text normalization for model
+    responses. It catches only JSON decoding failures and otherwise lets
+    programmer errors surface.
+  - `llm_classifier.py`: llama-cpp boundary for classification. This is the
+    module that converts external inference exceptions into structured
+    `parse_status="error"` records with metadata.
+  - `records.py`: checkpoint record shape and resumability skip policy.
+  - `task_setup.py`: task-specific data loading, ground-truth construction, and
+    label-description setup.
+  - `text_sources.py`: primary and shuffled text-source policy.
+  - `types.py`: shared typed contracts for prediction results and records.
+
 - `src.visualization`
   - `map_visualizer.py`: writes Folium maps for CORINE polygons, Wikipedia
     article points, and OSM polygon overlays.
@@ -64,3 +80,24 @@ uv run python -m src.scripts.summarize_articles
 
 Use `PYTHONDONTWRITEBYTECODE=1` while developing if you want to avoid local
 `__pycache__` churn.
+
+## Quality Checks
+
+The test suite enforces focused coverage for `src.classification` with
+`pytest-cov` and a 95% fail-under threshold. Run the full local gate before
+committing:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run ruff check .
+PYTHONDONTWRITEBYTECODE=1 uv run mypy src/classification scripts/data/classify_articles.py
+PYTHONDONTWRITEBYTECODE=1 uv run pytest -q
+```
+
+Exception handling policy for classification code:
+
+- pure helpers catch narrow, expected exceptions only, such as
+  `json.JSONDecodeError` in prediction parsing;
+- the LLM boundary catches broad inference/runtime exceptions and records them
+  as auditable prediction errors;
+- task setup and geospatial loaders let IO/data errors fail loudly so bad inputs
+  are fixed rather than silently converted into misleading metrics.

@@ -173,7 +173,7 @@ def main(argv: list[str] | None = None) -> None:
     eligible = [pid for pid in text_records if pid in target]
     if args.limit:
         eligible = eligible[: args.limit]
-    shuffled_source_pageids = {}
+    shuffled_source_pageids: dict[str, str] = {}
     if args.text_source in SHUFFLED_TEXT_SOURCES:
         text_records, shuffled_source_pageids = apply_shuffled_text_control(
             text_records, eligible, seed=args.seed

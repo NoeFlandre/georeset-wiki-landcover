@@ -97,6 +97,14 @@ Run tests:
 PYTHONDONTWRITEBYTECODE=1 uv run pytest
 ```
 
+Run the full local quality gate:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run ruff check .
+PYTHONDONTWRITEBYTECODE=1 uv run mypy src/classification scripts/data/classify_articles.py
+PYTHONDONTWRITEBYTECODE=1 uv run pytest -q
+```
+
 Run only the resumable Wikipedia content fetcher tests:
 
 ```bash

@@ -45,6 +45,15 @@ def test_normalize_prediction_response_json_with_unknown_label_returns_error():
     assert "99" in error
 
 
+def test_normalize_prediction_response_rejects_non_string_json_labels():
+    raw = '{"labels": ["31", 32]}'
+
+    labels, error = normalize_prediction_response(raw, ["31", "32"])
+
+    assert labels == ["31"]
+    assert error == "JSON list fields must contain only strings"
+
+
 def test_normalize_prediction_response_invalid_json_but_valid_text():
     raw = "I predict 31."
     labels, error = normalize_prediction_response(raw, ["31"])

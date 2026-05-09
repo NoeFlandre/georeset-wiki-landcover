@@ -1,7 +1,8 @@
 import json
-from typing import Any
+from typing import Any, cast
 
 from src.classification.prediction_parser import normalize_prediction_response
+from src.classification.types import PredictionResult
 
 SINGLE_SCHEMA = {
     "type": "object",
@@ -24,6 +25,13 @@ SYSTEM_PROMPT = (
 
 
 class LLMClassifier:
+    """LLM-backed classifier.
+
+    Error policy: JSON validation errors become structured parse records, and
+    exceptions from the external LLM boundary become structured error records.
+    Lower-level pure helpers should not catch broad exceptions.
+    """
+
     def __init__(self, model_path: str | None, seed: int = 42, temperature: float = 0.0):
         self.model_path = model_path
         self.seed = seed
@@ -63,7 +71,7 @@ class LLMClassifier:
 
     def _metadata(
         self, task: str, text_source: str, prompt: str, allowed_labels: list[str]
-    ) -> dict:
+    ) -> dict[str, Any]:
         return {
             "task": task,
             "text_source": text_source,
@@ -75,7 +83,7 @@ class LLMClassifier:
             "allowed_labels": sorted(allowed_labels),
         }
 
-    def _call_llm(self, user_prompt: str, schema: dict) -> str:
+    def _call_llm(self, user_prompt: str, schema: dict[str, Any]) -> str:
         llm = self._get_llm()
         response = llm.create_chat_completion(
             messages=[
@@ -86,7 +94,7 @@ class LLMClassifier:
             seed=self.seed,
             response_format={"type": "json_object", "schema": schema},
         )
-        return response["choices"][0]["message"]["content"]
+        return cast(str, response["choices"][0]["message"]["content"])
 
     def _build_retry_prompt(
         self,
@@ -119,7 +127,7 @@ class LLMClassifier:
             ]
         )
 
-    def _attempt_summary(self, result: dict[str, Any]) -> dict[str, Any]:
+    def _attempt_summary(self, result: PredictionResult) -> dict[str, Any]:
         return {
             "raw_response": result.get("raw_response"),
             "parse_status": result.get("parse_status"),
@@ -128,8 +136,8 @@ class LLMClassifier:
         }
 
     def _attach_attempt_metadata(
-        self, result: dict[str, Any], attempts: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+        self, result: PredictionResult, attempts: list[PredictionResult]
+    ) -> PredictionResult:
         metadata = dict(result.get("metadata", {}))
         metadata["attempt_count"] = len(attempts)
         metadata["attempt_history"] = [self._attempt_summary(attempt) for attempt in attempts]
@@ -146,7 +154,7 @@ class LLMClassifier:
         prompt: str,
         allowed_labels: list[str],
         prediction_labels: list[str] | None = None,
-    ) -> dict[str, Any]:
+    ) -> PredictionResult:
         return {
             "prediction": None,
             "prediction_labels": prediction_labels or [],
@@ -163,7 +171,7 @@ class LLMClassifier:
         text_source: str,
         prompt: str,
         allowed_labels: list[str],
-    ) -> dict[str, Any]:
+    ) -> PredictionResult:
         labels, error = normalize_prediction_response(raw_response, allowed_labels)
 
         if error:
@@ -200,7 +208,7 @@ class LLMClassifier:
         text_source: str,
         prompt: str,
         allowed_labels: list[str],
-    ) -> dict[str, Any]:
+    ) -> PredictionResult:
         labels, error = normalize_prediction_response(raw_response, allowed_labels)
 
         if error:
@@ -224,12 +232,12 @@ class LLMClassifier:
         label_descriptions: dict[str, str],
         task: str,
         text_source: str,
-    ) -> dict[str, Any]:
+    ) -> PredictionResult:
         user_prompt = self._build_user_prompt(
             task, text_source, allowed_labels, label_descriptions, text
         )
         raw_response = None
-        attempts = []
+        attempts: list[PredictionResult] = []
         try:
             raw_response = self._call_llm(user_prompt, SINGLE_SCHEMA)
             first_result = self._parse_single_label_response(
@@ -264,12 +272,12 @@ class LLMClassifier:
         allowed_labels: list[str],
         task: str,
         text_source: str,
-    ) -> dict[str, Any]:
+    ) -> PredictionResult:
         user_prompt = self._build_user_prompt(
             task, text_source, allowed_labels, {}, text
         )
         raw_response = None
-        attempts = []
+        attempts: list[PredictionResult] = []
         try:
             raw_response = self._call_llm(user_prompt, MULTI_SCHEMA)
             first_result = self._parse_multilabel_response(
