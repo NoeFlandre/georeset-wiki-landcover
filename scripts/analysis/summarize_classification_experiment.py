@@ -3,6 +3,7 @@
 import argparse
 import csv
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,8 @@ FIELDNAMES = [
     "coverage",
     "primary_metric",
     "primary_score",
+    "majority_baseline_score",
+    "delta_vs_majority",
     "accuracy",
     "exact_match_accuracy",
     "macro_precision",
@@ -58,11 +61,40 @@ def _primary_metric(metrics: dict[str, Any]) -> tuple[str, Any]:
     return "accuracy", _metric_value(metrics, "accuracy")
 
 
+def _target_key(target: Any) -> str:
+    if isinstance(target, list):
+        return json.dumps(sorted(target), ensure_ascii=False)
+    return str(target)
+
+
+def majority_baseline_score(records: dict[str, Any], primary_metric: str) -> float | str:
+    targets = [
+        record["target"]
+        for record in records.values()
+        if isinstance(record, dict) and record.get("parse_status") == "ok" and "target" in record
+    ]
+    if not targets:
+        return ""
+    majority_key = Counter(_target_key(target) for target in targets).most_common(1)[0][0]
+    correct = sum(1 for target in targets if _target_key(target) == majority_key)
+    if primary_metric in {"accuracy", "exact_match_accuracy"}:
+        return correct / len(targets)
+    return ""
+
+
+def _predictions_path(metrics_path: Path) -> Path:
+    return metrics_path.with_name(metrics_path.name.replace("_metrics.json", "_predictions.json"))
+
+
 def collect_metric_rows(experiment_dir: Path) -> list[dict[str, Any]]:
     rows = []
     for path in sorted(experiment_dir.glob("*_metrics.json")):
         metrics = _load_json(path)
         primary_name, primary_score = _primary_metric(metrics)
+        predictions_path = _predictions_path(path)
+        majority_score = ""
+        if predictions_path.exists():
+            majority_score = majority_baseline_score(_load_json(predictions_path), primary_name)
         labels_evaluated = metrics.get("labels_evaluated", [])
         row = {
             "run": f"{metrics['task']}/{metrics['text_source']}",
@@ -74,6 +106,13 @@ def collect_metric_rows(experiment_dir: Path) -> list[dict[str, Any]]:
             "coverage": metrics["coverage"],
             "primary_metric": primary_name,
             "primary_score": primary_score,
+            "majority_baseline_score": majority_score,
+            "delta_vs_majority": (
+                primary_score - majority_score
+                if isinstance(primary_score, (int, float))
+                and isinstance(majority_score, (int, float))
+                else ""
+            ),
             "accuracy": _metric_value(metrics, "accuracy"),
             "exact_match_accuracy": _metric_value(metrics, "exact_match_accuracy"),
             "macro_precision": _metric_value(metrics, "macro_precision"),
@@ -107,8 +146,8 @@ def write_overview_markdown(rows: list[dict[str, Any]], output_path: Path) -> No
     lines = [
         "# Classification Experiment Overview",
         "",
-        "| run | n eligible | n predicted ok | parse errors | coverage | accuracy | exact match accuracy | macro precision | macro recall | macro F1 | micro precision | micro recall | micro F1 | labels |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| run | n eligible | n predicted ok | parse errors | coverage | primary score | majority baseline | delta vs majority | accuracy | exact match accuracy | macro precision | macro recall | macro F1 | micro precision | micro recall | micro F1 | labels |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in rows:
         lines.append(
@@ -120,6 +159,9 @@ def write_overview_markdown(rows: list[dict[str, Any]], output_path: Path) -> No
                     _format_cell(row["n_predicted_ok"]),
                     _format_cell(row["n_parse_error"]),
                     _format_cell(row["coverage"]),
+                    _format_cell(row["primary_score"]),
+                    _format_cell(row["majority_baseline_score"]),
+                    _format_cell(row["delta_vs_majority"]),
                     _format_cell(row["accuracy"]),
                     _format_cell(row["exact_match_accuracy"]),
                     _format_cell(row["macro_precision"]),
@@ -140,6 +182,11 @@ def write_readme(rows: list[dict[str, Any]], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     total_records = sum(int(row["n_eligible"]) for row in rows)
     parse_errors = sum(int(row["n_parse_error"]) for row in rows)
+    best_delta = max(
+        row["delta_vs_majority"]
+        for row in rows
+        if isinstance(row["delta_vs_majority"], (int, float))
+    )
     lines = [
         "# Article-Text Classification E2E v1",
         "",
@@ -165,6 +212,7 @@ def write_readme(rows: list[dict[str, Any]], output_path: Path) -> None:
         f"- runs: {len(rows)}",
         f"- eligible article-run records: {total_records}",
         f"- parse errors: {parse_errors}",
+        f"- best delta vs majority baseline: {_format_cell(best_delta)}",
         "",
         "## Runs",
         "",
@@ -184,6 +232,8 @@ def write_readme(rows: list[dict[str, Any]], output_path: Path) -> None:
             "- `n_predicted_ok`: number of eligible articles with a valid parsed prediction.",
             "- `n_parse_error`: number of eligible articles without a valid parsed prediction. These are excluded from accuracy/F1, but reduce coverage.",
             "- `coverage`: `n_predicted_ok / n_eligible`. This answers: among evaluable articles, how many received a usable model prediction?",
+            "- `majority_baseline_score`: score from a simple classifier that always predicts the most frequent ground-truth class or label-set in that run.",
+            "- `delta_vs_majority`: primary model score minus `majority_baseline_score`. Positive means the model beats the class-imbalance baseline; negative means it underperforms that baseline.",
             "- `accuracy`: CORINE single-label score. A prediction is correct only when the one predicted CORINE level-2 label exactly equals the one true label.",
             "- `exact_match_accuracy`: OSM multi-label score. A prediction is correct only when the full predicted label set exactly equals the full true label set.",
             "- `precision`: among labels the model predicted, the fraction that were actually correct. High precision means fewer false positive labels.",
@@ -200,6 +250,7 @@ def write_readme(rows: list[dict[str, Any]], output_path: Path) -> None:
             "- Macro scores are better for seeing whether rare labels are handled well.",
             "- Micro scores are better for seeing overall label-decision performance weighted by common labels.",
             "- Coverage should be read before accuracy/F1. A high score with low coverage can be misleading because many failures were excluded from scoring.",
+            "- The majority baseline should be read next. If `delta_vs_majority` is near or below zero, the model is not clearly adding useful signal beyond class imbalance.",
         ]
     )
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")

@@ -42,3 +42,6 @@ docs/guides/gpu_classification_guide.md
 *.aux
 *.log
 docs/diagrams/pipeline_diagram.pdf
+
+#Brainstorm
+docs/brainstorm
