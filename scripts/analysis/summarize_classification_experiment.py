@@ -5,7 +5,7 @@ import csv
 import json
 from collections import Counter
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 FIELDNAMES = [
     "run",
@@ -46,7 +46,7 @@ TEXT_SOURCE_ORDER = {
 
 def _load_json(path: Path) -> dict[str, Any]:
     with path.open(encoding="utf-8") as f:
-        return json.load(f)
+        return cast(dict[str, Any], json.load(f))
 
 
 def _run_sort_key(row: dict[str, Any]) -> tuple[str, int, str]:
@@ -123,7 +123,7 @@ def collect_metric_rows(experiment_dir: Path) -> list[dict[str, Any]]:
         metrics = _load_json(path)
         primary_name, primary_score = _primary_metric(metrics)
         predictions_path = _predictions_path(path)
-        majority_score = ""
+        majority_score: float | str = ""
         majority_share: float | str = ""
         majority_macro_recall: float | str = ""
         labels_evaluated = metrics.get("labels_evaluated", [])
@@ -272,25 +272,27 @@ def write_readme(
         lines.append(
             "- Includes deterministic shuffled controls. These preserve targets and eligible articles while reassigning texts across articles."
         )
-    lines.extend([
-        "",
-        "## Contents",
-        "",
-        "- `*_predictions.json`: per-article predictions, raw model responses, parse status, and metadata",
-        "- `*_metrics.json`: aggregate metrics for each task/text-source run",
-        "- `overview.csv`: machine-readable summary table",
-        "- `overview.md`: Markdown summary table for quick review",
-        "",
-        "## Batch Summary",
-        "",
-        f"- runs: {len(rows)}",
-        f"- eligible article-run records: {total_records}",
-        f"- parse errors: {parse_errors}",
-        f"- best delta vs majority baseline: {_format_cell(best_delta)}",
-        "",
-        "## Runs",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Contents",
+            "",
+            "- `*_predictions.json`: per-article predictions, raw model responses, parse status, and metadata",
+            "- `*_metrics.json`: aggregate metrics for each task/text-source run",
+            "- `overview.csv`: machine-readable summary table",
+            "- `overview.md`: Markdown summary table for quick review",
+            "",
+            "## Batch Summary",
+            "",
+            f"- runs: {len(rows)}",
+            f"- eligible article-run records: {total_records}",
+            f"- parse errors: {parse_errors}",
+            f"- best delta vs majority baseline: {_format_cell(best_delta)}",
+            "",
+            "## Runs",
+            "",
+        ]
+    )
     for row in rows:
         lines.append(
             f"- `{row['run']}`: n={row['n_eligible']}, "
@@ -328,15 +330,15 @@ def write_readme(
             "- Macro scores are better for seeing whether rare labels are handled well.",
             "- Micro scores are better for seeing overall label-decision performance weighted by common labels.",
             "- Coverage should be read before accuracy/F1. A high score with low coverage can be misleading because many failures were excluded from scoring.",
-        "- The majority baseline should be read next. If `delta_vs_majority` is near or below zero, the model is not clearly adding useful signal beyond the relevant class-imbalance baseline.",
-        "",
-        "## Majority Baseline Finding",
-        "",
-        f"- Runs beating the majority baseline: {n_beating_majority}/{len(rows)}",
-        f"- Best observed delta vs majority baseline: {_format_cell(best_delta)}",
-        "- For CORINE, compare `macro_recall` against `majority_macro_recall_baseline`, not only raw accuracy against `majority_target_share`.",
-        "- For OSM, the majority baseline remains strict exact-match accuracy for the most common true label-set.",
-    ]
+            "- The majority baseline should be read next. If `delta_vs_majority` is near or below zero, the model is not clearly adding useful signal beyond the relevant class-imbalance baseline.",
+            "",
+            "## Majority Baseline Finding",
+            "",
+            f"- Runs beating the majority baseline: {n_beating_majority}/{len(rows)}",
+            f"- Best observed delta vs majority baseline: {_format_cell(best_delta)}",
+            "- For CORINE, compare `macro_recall` against `majority_macro_recall_baseline`, not only raw accuracy against `majority_target_share`.",
+            "- For OSM, the majority baseline remains strict exact-match accuracy for the most common true label-set.",
+        ]
     )
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 

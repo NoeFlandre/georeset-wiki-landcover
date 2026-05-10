@@ -42,10 +42,11 @@ writing visual checks.
   - `map_visualizer.py`: writes Folium maps for CORINE polygons, Wikipedia
     article points, and OSM polygon overlays.
 
-- `src.scripts`
-  - `snapshot.py`: prints a quick CORINE dataset snapshot.
-  - `run_corine_analysis.py`: runs OSM/CORINE distribution and map generation.
-  - `summarize_articles.py`: summarizes fetched article content with an LLM.
+- top-level `scripts`
+  - `scripts/dev/snapshot.py`: prints a quick CORINE dataset snapshot.
+  - `scripts/analysis/run_corine_analysis.py`: runs OSM/CORINE distribution and
+    map generation.
+  - `scripts/data/summarize_articles.py`: summarizes fetched article content with an LLM.
     It supports `--summary-mode place` for normal summaries and
     `--summary-mode no_place` for summaries that suppress the described place
     name. It uses llama-cpp-python schema-constrained JSON generation and
@@ -70,12 +71,12 @@ hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store
 ## Common Entry Points
 
 ```bash
-uv run python -m src.scripts.snapshot
+uv run python -m scripts.dev.snapshot
 uv run python -m src.fetchers.wiki_fetcher
 uv run python -m src.fetchers.wiki_content_fetcher
 uv run python -m src.visualization.map_visualizer
-uv run python -m src.scripts.run_corine_analysis
-uv run python -m src.scripts.summarize_articles
+uv run python -m scripts.analysis.run_corine_analysis
+uv run python -m scripts.data.summarize_articles
 ```
 
 Use `PYTHONDONTWRITEBYTECODE=1` while developing if you want to avoid local
@@ -89,7 +90,8 @@ committing:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 uv run ruff check .
-PYTHONDONTWRITEBYTECODE=1 uv run mypy src/classification scripts/data/classify_articles.py
+PYTHONDONTWRITEBYTECODE=1 uv run ruff format --check .
+PYTHONDONTWRITEBYTECODE=1 uv run mypy src scripts
 PYTHONDONTWRITEBYTECODE=1 uv run pytest -q
 ```
 

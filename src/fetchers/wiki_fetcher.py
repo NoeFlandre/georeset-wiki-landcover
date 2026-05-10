@@ -1,6 +1,10 @@
 import time
+from collections.abc import Callable
+from typing import Any, cast
 
 import requests
+
+from src.contracts import ArticleMeta
 
 
 class WikiFetchError(RuntimeError):
@@ -16,7 +20,7 @@ class WikiFetcher:
 
     def get_nearby_articles(
         self, lat: float, lon: float, radius: int = 2000, retries: int = 3
-    ) -> list[dict]:
+    ) -> list[ArticleMeta]:
         """
         Find Wikipedia articles within a radius in meters around the coordinates (latitude, longitude)
         """
@@ -35,7 +39,8 @@ class WikiFetcher:
                 )
                 response.raise_for_status()
                 time.sleep(0.1)
-                return response.json().get("query", {}).get("geosearch", [])  # type: ignore[no-any-return]
+                data = cast(dict[str, Any], response.json())
+                return cast(list[ArticleMeta], data.get("query", {}).get("geosearch", []))
             except (requests.RequestException, ValueError):
                 if attempt < retries - 1:
                     time.sleep(1)
@@ -44,14 +49,14 @@ class WikiFetcher:
 
     def get_articles_in_bbox(
         self, north: float, west: float, south: float, east: float, retries: int = 3
-    ) -> list[dict]:
+    ) -> list[ArticleMeta]:
         """
         Find Wikipedia articles within a rectangular bounding box.
         Coordinates order: Top(North), Left(West), Bottom(South), Right(East).
         Handles pagination automatically when results exceed 500.
         Raises WikiFetchError if any page cannot be fetched after retries.
         """
-        all_articles = []
+        all_articles: list[ArticleMeta] = []
         continuation = None
 
         while True:
@@ -67,7 +72,7 @@ class WikiFetcher:
 
             data = self._request_json(params, retries, timeout=15)
 
-            geosearch = data.get("query", {}).get("geosearch", [])
+            geosearch = cast(list[ArticleMeta], data.get("query", {}).get("geosearch", []))
             all_articles.extend(geosearch)
 
             # Handle continuation
@@ -84,9 +89,9 @@ class WikiFetcher:
         min_lat: float,
         max_lon: float,
         max_lat: float,
-        polygon_filter=None,
-        osm_polygon_filter=None,
-    ) -> list[dict]:
+        polygon_filter: Callable[[float, float], bool] | None = None,
+        osm_polygon_filter: Callable[[float, float], bool] | None = None,
+    ) -> list[ArticleMeta]:
         """
         Fetch Wikipedia articles within a bounding box by tiling small bboxes.
         API has limits on bbox size, so we split into tiles and merge results.
@@ -96,7 +101,7 @@ class WikiFetcher:
         An article is kept if it is in a corine polygon OR in an OSM polygon (or both).
         If only one filter is provided, articles must satisfy that filter.
         """
-        articles = []
+        articles: list[ArticleMeta] = []
         seen_ids = set()
 
         # Tile the area - API works with ~0.2 degree tiles
@@ -159,7 +164,7 @@ class WikiFetcher:
         return articles
 
     def _in_bounds(
-        self, article: dict, min_lon: float, min_lat: float, max_lon: float, max_lat: float
+        self, article: ArticleMeta, min_lon: float, min_lat: float, max_lon: float, max_lat: float
     ) -> bool:
         """Check if article coordinates fall within bounds."""
         lon = article.get("lon")
@@ -168,7 +173,7 @@ class WikiFetcher:
             return False
         return min_lon <= lon <= max_lon and min_lat <= lat <= max_lat
 
-    def _request_json(self, params: dict, retries: int, timeout: int) -> dict:
+    def _request_json(self, params: dict[str, Any], retries: int, timeout: int) -> dict[str, Any]:
         """Fetch one Wikipedia API page, retrying transient failures."""
         last_error: Exception | None = None
 
@@ -190,7 +195,7 @@ class WikiFetcher:
                         continue
                     raise ValueError("Non-JSON response received")
 
-                data = response.json()
+                data = cast(dict[str, Any], response.json())
 
                 error_code = data.get("error", {}).get("code")
                 if error_code in {"ratelimited", "request-too-large"}:
@@ -198,7 +203,7 @@ class WikiFetcher:
                     continue
 
                 time.sleep(0.5)
-                return data  # type: ignore[no-any-return]
+                return data
             except Exception as exc:
                 last_error = exc
                 if attempt < retries - 1:

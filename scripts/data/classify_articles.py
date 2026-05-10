@@ -20,6 +20,8 @@ from src.classification.text_sources import (
     base_text_source,
     shuffled_metadata,
 )
+from src.contracts import ArticleMeta, ClassificationTarget, MetricResult
+from src.utils.json_io import write_json_atomic
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -27,6 +29,7 @@ logging.basicConfig(
 )
 
 CLASSIFICATION_POLICY_VERSION = 4
+
 
 def prediction_fingerprint(
     task: str,
@@ -52,28 +55,20 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Classify Wikipedia articles into land-cover labels."
     )
-    parser.add_argument(
-        "--task", choices=["corine_level2", "osm"], default="corine_level2"
-    )
+    parser.add_argument("--task", choices=["corine_level2", "osm"], default="corine_level2")
     parser.add_argument(
         "--text-source",
         choices=TEXT_SOURCE_CHOICES,
         default="summary",
     )
     parser.add_argument("--wiki-articles-path", default="data/wiki/wiki_articles.json")
-    parser.add_argument(
-        "--article-contents-path", default="data/wiki/article_contents.json"
-    )
-    parser.add_argument(
-        "--article-summaries-path", default="data/wiki/article_summaries.json"
-    )
+    parser.add_argument("--article-contents-path", default="data/wiki/article_contents.json")
+    parser.add_argument("--article-summaries-path", default="data/wiki/article_summaries.json")
     parser.add_argument(
         "--article-summaries-no-place-path",
         default="data/wiki/article_summaries_no_place.json",
     )
-    parser.add_argument(
-        "--osm-polygons-path", default="data/osm/osm_project_polygons.geojson"
-    )
+    parser.add_argument("--osm-polygons-path", default="data/osm/osm_project_polygons.geojson")
     parser.add_argument(
         "--corine-polygons-path",
         default="data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp",
@@ -116,23 +111,33 @@ def load_text_source(
 def compute_metrics(
     task: str,
     text_source: str,
-    y_true: dict,
-    y_pred: dict,
+    y_true: dict[str, ClassificationTarget],
+    y_pred: dict[str, ClassificationTarget],
     allowed_labels: list[str],
-) -> tuple[dict, list[str]]:
+) -> tuple[MetricResult, list[str]]:
     """Returns (metrics_dict, labels_evaluated)."""
     eval_labels = sorted(
-        {v
-         for vals in y_true.values()
-         for v in (vals if isinstance(vals, list) else [vals])}
-        | {v
-           for vals in y_pred.values()
-           for v in (vals if isinstance(vals, list) else [vals])}
+        {v for vals in y_true.values() for v in (vals if isinstance(vals, list) else [vals])}
+        | {v for vals in y_pred.values() for v in (vals if isinstance(vals, list) else [vals])}
     )
     if task == "corine_level2":
-        metrics = single_label_metrics(y_true, y_pred, labels=eval_labels)
+        metrics = single_label_metrics(
+            {key: str(value) for key, value in y_true.items()},
+            {key: str(value) for key, value in y_pred.items()},
+            labels=eval_labels,
+        )
     else:
-        metrics = multilabel_metrics(y_true, y_pred, labels=eval_labels)
+        metrics = multilabel_metrics(
+            {
+                key: [str(item) for item in value] if isinstance(value, list) else [str(value)]
+                for key, value in y_true.items()
+            },
+            {
+                key: [str(item) for item in value] if isinstance(value, list) else [str(value)]
+                for key, value in y_pred.items()
+            },
+            labels=eval_labels,
+        )
     metrics["task"] = task
     metrics["text_source"] = text_source
     metrics["allowed_labels"] = sorted(allowed_labels)
@@ -143,15 +148,11 @@ def compute_metrics(
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     os.makedirs(args.output_dir, exist_ok=True)
-    out_pred = os.path.join(
-        args.output_dir, f"{args.task}_{args.text_source}_predictions.json"
-    )
-    out_metrics = os.path.join(
-        args.output_dir, f"{args.task}_{args.text_source}_metrics.json"
-    )
+    out_pred = os.path.join(args.output_dir, f"{args.task}_{args.text_source}_predictions.json")
+    out_metrics = os.path.join(args.output_dir, f"{args.task}_{args.text_source}_metrics.json")
 
     with open(args.wiki_articles_path) as f:
-        articles = json.load(f)
+        articles: list[ArticleMeta] = json.load(f)
 
     text_records = load_text_source(
         args.text_source,
@@ -201,9 +202,7 @@ def main(argv: list[str] | None = None) -> None:
         record = existing.get(pageid)
         if should_skip_record(record, fp_current, retry_failed=args.retry_failed):
             continue
-        article = next(
-            (a for a in articles if str(a.get("pageid")) == pageid), None
-        )
+        article = next((a for a in articles if str(a.get("pageid")) == pageid), None)
         title = article.get("title", pageid) if article else pageid
         text = text_records[pageid]
         if args.task == "corine_level2":
@@ -223,9 +222,7 @@ def main(argv: list[str] | None = None) -> None:
             )
         extra_metadata = None
         if shuffled_source_pageids:
-            extra_metadata = shuffled_metadata(
-                args.text_source, shuffled_source_pageids[pageid]
-            )
+            extra_metadata = shuffled_metadata(args.text_source, shuffled_source_pageids[pageid])
         record = build_prediction_record(
             pageid=pageid,
             title=title,
@@ -235,8 +232,7 @@ def main(argv: list[str] | None = None) -> None:
             extra_metadata=extra_metadata,
         )
         existing[pageid] = record
-        with open(out_pred, "w") as f:
-            json.dump(existing, f, indent=2, ensure_ascii=False)
+        write_json_atomic(out_pred, existing, indent=2, ensure_ascii=False)
         status = result.get("parse_status", "error")
         logger.info(f"[{len(existing)}/{len(eligible)}] {pageid} ({title}): {status}")
 
@@ -246,11 +242,8 @@ def main(argv: list[str] | None = None) -> None:
         if k in eligible and v.get("parse_status") == "ok"
     }
     y_true = {k: target[k] for k in eligible}
-    metrics, _ = compute_metrics(
-        args.task, args.text_source, y_true, y_pred, allowed_labels
-    )
-    with open(out_metrics, "w") as f:
-        json.dump(metrics, f, indent=2, ensure_ascii=False)
+    metrics, _ = compute_metrics(args.task, args.text_source, y_true, y_pred, allowed_labels)
+    write_json_atomic(out_metrics, metrics, indent=2, ensure_ascii=False)
     logger.info(f"Wrote metrics to {out_metrics}")
 
 

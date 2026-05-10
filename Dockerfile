@@ -18,6 +18,7 @@ RUN uv sync --frozen --all-groups --no-install-project
 
 COPY LICENSE ./
 COPY src ./src
+COPY scripts ./scripts
 COPY tests ./tests
 RUN uv sync --frozen --all-groups
 

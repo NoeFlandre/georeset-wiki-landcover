@@ -8,17 +8,20 @@ import json
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import pandas as pd
 
 from src.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from src.classification.metrics import multilabel_metrics, single_label_metrics
+from src.contracts import MetricResult, PerLabelMetric
 
 EXPERIMENT_ID = "article_text_classification_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
 SPATIAL_EXPERIMENT_ID = "corine_spatial_confidence_v1"
-DEFAULT_PARENT_DIR = Path("data/experiments/article_text_classification_e2e_with_shuffled_control_v1")
+DEFAULT_PARENT_DIR = Path(
+    "data/experiments/article_text_classification_e2e_with_shuffled_control_v1"
+)
 DEFAULT_SPATIAL_PATH = Path("data/experiments/corine_spatial_confidence_v1/spatial_confidence.csv")
 DEFAULT_OUTPUT_DIR = Path("data/experiments/article_text_classification_spatial_confidence_v1")
 
@@ -92,7 +95,9 @@ def _safe_div(num: float, den: float) -> float:
     return num / den if den else 0.0
 
 
-def _weighted_from_per_label(per_label: dict[str, dict[str, float]], key: str) -> float:
+def _weighted_from_per_label(
+    per_label: dict[str, PerLabelMetric], key: Literal["precision", "recall", "f1"]
+) -> float:
     total_support = sum(values["support"] for values in per_label.values())
     return _safe_div(
         sum(values[key] * values["support"] for values in per_label.values()),
@@ -100,9 +105,12 @@ def _weighted_from_per_label(per_label: dict[str, dict[str, float]], key: str) -
     )
 
 
-def _single_metrics(records: pd.DataFrame, labels: list[str]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def _single_metrics(
+    records: pd.DataFrame, labels: list[str]
+) -> tuple[MetricResult, list[dict[str, Any]]]:
     y_true = dict(zip(records["pageid"], records["target"].astype(str), strict=False))
-    y_pred = dict(zip(records["pageid"], records["prediction"].astype(str), strict=False))
+    ok_records = records[records["parse_status"] == "ok"]
+    y_pred = dict(zip(ok_records["pageid"], ok_records["prediction"].astype(str), strict=False))
     metrics = single_label_metrics(y_true, y_pred, labels)
     metrics["n"] = metrics.pop("n_eligible")
     metrics["balanced_accuracy"] = metrics["macro_recall"]
@@ -132,7 +140,7 @@ def _single_metrics(records: pd.DataFrame, labels: list[str]) -> tuple[dict[str,
         }
         for label, values in metrics.pop("per_label").items()
     ]
-    return metrics, per_class
+    return metrics, cast(list[dict[str, Any]], per_class)
 
 
 def _label_universe(records: pd.DataFrame) -> list[str]:
@@ -144,11 +152,12 @@ def _label_universe(records: pd.DataFrame) -> list[str]:
     return sorted(labels)
 
 
-def _multilabel_metrics(records: pd.DataFrame, labels: list[str]) -> dict[str, Any]:
+def _multilabel_metrics(records: pd.DataFrame, labels: list[str]) -> MetricResult:
     y_true = {row.pageid: [str(v) for v in row.target] for row in records.itertuples()}
+    ok_records = records[records["parse_status"] == "ok"]
     y_pred = {
         row.pageid: [str(v) for v in row.prediction] if isinstance(row.prediction, list) else []
-        for row in records.itertuples()
+        for row in ok_records.itertuples()
     }
     metrics = multilabel_metrics(y_true, y_pred, labels)
     metrics["n"] = metrics.pop("n_eligible")
@@ -156,12 +165,14 @@ def _multilabel_metrics(records: pd.DataFrame, labels: list[str]) -> dict[str, A
     hamming_errors = 0
     for pageid, true_values in y_true.items():
         true_set = set(true_values)
+        if pageid not in y_pred:
+            continue
         pred_set = set(y_pred[pageid])
         union = true_set | pred_set
         jaccards.append(1.0 if not union else len(true_set & pred_set) / len(union))
         hamming_errors += len(true_set ^ pred_set)
     metrics["jaccard"] = _safe_div(sum(jaccards), len(jaccards))
-    metrics["hamming_loss"] = _safe_div(hamming_errors, len(y_true) * len(labels))
+    metrics["hamming_loss"] = _safe_div(hamming_errors, len(y_pred) * len(labels))
 
     target_keys = [json.dumps(sorted(values), ensure_ascii=False) for values in y_true.values()]
     majority_key = Counter(target_keys).most_common(1)[0][0] if target_keys else "[]"
@@ -197,7 +208,12 @@ def _write_md(path: Path, title: str, rows: list[dict[str, Any]]) -> None:
         path.write_text(f"# {title}\n\nNo rows.\n", encoding="utf-8")
         return
     columns = sorted({key for row in rows for key in row})
-    lines = [f"# {title}", "", "| " + " | ".join(columns) + " |", "| " + " | ".join(["---"] * len(columns)) + " |"]
+    lines = [
+        f"# {title}",
+        "",
+        "| " + " | ".join(columns) + " |",
+        "| " + " | ".join(["---"] * len(columns)) + " |",
+    ]
     for row in rows:
         lines.append("| " + " | ".join(str(row.get(column, "")) for column in columns) + " |")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -210,7 +226,9 @@ def _primary_score(row: dict[str, Any]) -> tuple[str, float]:
 
 
 def _class_distribution(records: pd.DataFrame, task: str) -> list[dict[str, Any]]:
-    labels = CORINE_LEVEL2_DESCRIPTIONS.keys() if task == "corine_level2" else _label_universe(records)
+    labels = (
+        CORINE_LEVEL2_DESCRIPTIONS.keys() if task == "corine_level2" else _label_universe(records)
+    )
     total = len(records)
     rows = []
     for label in sorted(labels):
@@ -224,7 +242,9 @@ def _class_distribution(records: pd.DataFrame, task: str) -> list[dict[str, Any]
 
 def evaluate(parent_dir: Path, spatial_path: Path, output_dir: Path) -> None:
     spatial = load_spatial_confidence(spatial_path)
-    prediction_frames = [_records_frame(path) for path in sorted(parent_dir.glob("*_predictions.json"))]
+    prediction_frames = [
+        _records_frame(path) for path in sorted(parent_dir.glob("*_predictions.json"))
+    ]
     all_records = pd.concat(prediction_frames, ignore_index=True)
     joined = all_records.merge(spatial, on="pageid", how="left", indicator=True)
     joined_with_spatial = joined[joined["_merge"] == "both"].copy()
@@ -242,8 +262,14 @@ def evaluate(parent_dir: Path, spatial_path: Path, output_dir: Path) -> None:
     per_class_rows: list[dict[str, Any]] = []
     distribution_rows: list[dict[str, Any]] = []
 
-    for (task, text_source), group in joined_with_spatial.groupby(["task", "text_source"], sort=True):
-        labels = sorted(CORINE_LEVEL2_DESCRIPTIONS) if task == "corine_level2" else _label_universe(group)
+    for (task, text_source), group in joined_with_spatial.groupby(
+        ["task", "text_source"], sort=True
+    ):
+        labels = (
+            sorted(CORINE_LEVEL2_DESCRIPTIONS)
+            if task == "corine_level2"
+            else _label_universe(group)
+        )
         for subset_name in SUBSET_DEFINITIONS:
             subset = group[_subset_mask(group, subset_name)]
             subset_rows.append(
@@ -251,7 +277,13 @@ def evaluate(parent_dir: Path, spatial_path: Path, output_dir: Path) -> None:
                     "task": task,
                     "text_source": text_source,
                     "subset": subset_name,
-                    "n_parent_predictions": int(len(joined[(joined["task"] == task) & (joined["text_source"] == text_source)])),
+                    "n_parent_predictions": int(
+                        len(
+                            joined[
+                                (joined["task"] == task) & (joined["text_source"] == text_source)
+                            ]
+                        )
+                    ),
                     "n_with_spatial_confidence": int(len(group)),
                     "n_subset": int(len(subset)),
                 }
@@ -261,7 +293,9 @@ def evaluate(parent_dir: Path, spatial_path: Path, output_dir: Path) -> None:
             if task == "corine_level2":
                 metrics, per_class = _single_metrics(subset, labels)
                 for item in per_class:
-                    per_class_rows.append({"task": task, "text_source": text_source, "subset": subset_name, **item})
+                    per_class_rows.append(
+                        {"task": task, "text_source": text_source, "subset": subset_name, **item}
+                    )
             else:
                 metrics = _multilabel_metrics(subset, labels)
             row = {"task": task, "text_source": text_source, "subset": subset_name, **metrics}
@@ -282,9 +316,13 @@ def evaluate(parent_dir: Path, spatial_path: Path, output_dir: Path) -> None:
                 }
             )
             for dist in _class_distribution(subset, task):
-                distribution_rows.append({"task": task, "text_source": text_source, "subset": subset_name, **dist})
+                distribution_rows.append(
+                    {"task": task, "text_source": text_source, "subset": subset_name, **dist}
+                )
 
-    overview_by_key = {(row["task"], row["text_source"], row["subset"]): row for row in overview_rows}
+    overview_by_key = {
+        (row["task"], row["text_source"], row["subset"]): row for row in overview_rows
+    }
     delta_rows: list[dict[str, Any]] = []
     for task in sorted(set(all_records["task"])):
         for source, shuffled in TEXT_PAIRS.items():
@@ -316,8 +354,16 @@ def evaluate(parent_dir: Path, spatial_path: Path, output_dir: Path) -> None:
         ("subset_counts", subset_rows, "Spatial Subset Counts"),
         ("shuffled_delta_spatial_subsets", delta_rows, "Spatial Subset Shuffled Deltas"),
         ("majority_baselines_spatial_subsets", majority_rows, "Spatial Subset Majority Baselines"),
-        ("per_class_metrics_corine_spatial_subsets", per_class_rows, "CORINE Per-Class Spatial Metrics"),
-        ("class_distribution_by_spatial_subset", distribution_rows, "Class Distribution by Spatial Subset"),
+        (
+            "per_class_metrics_corine_spatial_subsets",
+            per_class_rows,
+            "CORINE Per-Class Spatial Metrics",
+        ),
+        (
+            "class_distribution_by_spatial_subset",
+            distribution_rows,
+            "Class Distribution by Spatial Subset",
+        ),
     ]
     for stem, rows, title in outputs:
         _write_csv(output_dir / f"{stem}.csv", rows)

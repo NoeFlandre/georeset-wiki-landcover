@@ -7,28 +7,28 @@ import pandas as pd
 from scripts.analysis.evaluate_predictions_with_spatial_confidence import main
 
 
-def _write_prediction(path: Path, records: dict[str, dict]) -> None:
+def _write_prediction(path: Path, records: dict[str, dict[str, object]]) -> None:
     path.write_text(json.dumps(records), encoding="utf-8")
 
 
 def _make_parent(path: Path) -> None:
     path.mkdir()
-    corine_base = {
+    corine_base: dict[str, dict[str, object]] = {
         "1": {"pageid": "1", "target": "31", "prediction": "31", "parse_status": "ok"},
         "2": {"pageid": "2", "target": "21", "prediction": "31", "parse_status": "ok"},
         "3": {"pageid": "3", "target": "31", "prediction": "21", "parse_status": "ok"},
     }
-    corine_shuffled = {
+    corine_shuffled: dict[str, dict[str, object]] = {
         "1": {"pageid": "1", "target": "31", "prediction": "21", "parse_status": "ok"},
         "2": {"pageid": "2", "target": "21", "prediction": "21", "parse_status": "ok"},
         "3": {"pageid": "3", "target": "31", "prediction": "21", "parse_status": "ok"},
     }
-    osm_base = {
+    osm_base: dict[str, dict[str, object]] = {
         "1": {"pageid": "1", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
         "2": {"pageid": "2", "target": ["water"], "prediction": [], "parse_status": "ok"},
         "4": {"pageid": "4", "target": ["wood"], "prediction": ["water"], "parse_status": "ok"},
     }
-    osm_shuffled = {
+    osm_shuffled: dict[str, dict[str, object]] = {
         "1": {"pageid": "1", "target": ["wood"], "prediction": [], "parse_status": "ok"},
         "2": {"pageid": "2", "target": ["water"], "prediction": ["water"], "parse_status": "ok"},
         "4": {"pageid": "4", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
@@ -39,6 +39,30 @@ def _make_parent(path: Path) -> None:
     for source in ["summary_shuffled", "summary_no_place_shuffled", "content_shuffled"]:
         _write_prediction(path / f"corine_level2_{source}_predictions.json", corine_shuffled)
         _write_prediction(path / f"osm_{source}_predictions.json", osm_shuffled)
+
+
+def _make_parent_with_parse_errors(path: Path) -> None:
+    path.mkdir()
+    corine: dict[str, dict[str, object]] = {
+        "1": {"pageid": "1", "target": "31", "prediction": "31", "parse_status": "ok"},
+        "2": {"pageid": "2", "target": "21", "prediction": None, "parse_status": "error"},
+        "3": {"pageid": "3", "target": "31", "prediction": "21", "parse_status": "ok"},
+    }
+    osm: dict[str, dict[str, object]] = {
+        "1": {"pageid": "1", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
+        "2": {"pageid": "2", "target": ["water"], "prediction": None, "parse_status": "error"},
+        "4": {"pageid": "4", "target": ["wood"], "prediction": ["water"], "parse_status": "ok"},
+    }
+    for source in [
+        "summary",
+        "summary_no_place",
+        "content",
+        "summary_shuffled",
+        "summary_no_place_shuffled",
+        "content_shuffled",
+    ]:
+        _write_prediction(path / f"corine_level2_{source}_predictions.json", corine)
+        _write_prediction(path / f"osm_{source}_predictions.json", osm)
 
 
 def _write_spatial(path: Path) -> None:
@@ -152,9 +176,61 @@ def test_spatial_subset_evaluation_recomputes_metrics_and_preserves_parent(tmp_p
     )
 
     manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["parent_experiment_id"] == "article_text_classification_e2e_with_shuffled_control_v1"
+    assert (
+        manifest["parent_experiment_id"]
+        == "article_text_classification_e2e_with_shuffled_control_v1"
+    )
     assert manifest["spatial_confidence_experiment_id"] == "corine_spatial_confidence_v1"
     assert manifest["no_llm_rerun"] is True
     assert manifest["osm_spatial_join_coverage"]["n_osm_predictions_total"] == 18
     assert manifest["osm_spatial_join_coverage"]["n_osm_predictions_with_spatial_confidence"] == 12
-    assert manifest["osm_spatial_join_coverage"]["n_osm_predictions_missing_spatial_confidence"] == 6
+    assert (
+        manifest["osm_spatial_join_coverage"]["n_osm_predictions_missing_spatial_confidence"] == 6
+    )
+
+
+def test_spatial_subset_evaluation_treats_non_ok_predictions_as_parse_errors(tmp_path):
+    parent_dir = tmp_path / "parent"
+    output_dir = tmp_path / "out"
+    spatial_path = tmp_path / "spatial.csv"
+
+    _make_parent_with_parse_errors(parent_dir)
+    _write_spatial(spatial_path)
+
+    main(
+        [
+            "--parent-experiment-dir",
+            str(parent_dir),
+            "--spatial-confidence-path",
+            str(spatial_path),
+            "--output-dir",
+            str(output_dir),
+        ]
+    )
+
+    overview = _read_csv(output_dir / "overview_spatial_subsets.csv")
+    corine_all = next(
+        row
+        for row in overview
+        if row["task"] == "corine_level2"
+        and row["text_source"] == "summary"
+        and row["subset"] == "all_available_spatial_confidence"
+    )
+    assert corine_all["n"] == "3"
+    assert corine_all["n_predicted_ok"] == "2"
+    assert corine_all["n_parse_error"] == "1"
+    assert corine_all["coverage"] == "0.6666666666666666"
+    assert corine_all["accuracy"] == "0.5"
+
+    osm_all = next(
+        row
+        for row in overview
+        if row["task"] == "osm"
+        and row["text_source"] == "summary"
+        and row["subset"] == "all_available_spatial_confidence"
+    )
+    assert osm_all["n"] == "2"
+    assert osm_all["n_predicted_ok"] == "1"
+    assert osm_all["n_parse_error"] == "1"
+    assert osm_all["coverage"] == "0.5"
+    assert osm_all["exact_match_accuracy"] == "1.0"

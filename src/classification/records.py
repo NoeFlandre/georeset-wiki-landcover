@@ -5,9 +5,7 @@ from typing import Any
 from src.classification.types import ClassificationTarget, PredictionRecord, PredictionResult
 
 
-def should_skip_record(
-    record: dict[str, Any] | None, fingerprint: str, retry_failed: bool
-) -> bool:
+def should_skip_record(record: dict[str, Any] | None, fingerprint: str, retry_failed: bool) -> bool:
     if not record or record.get("parse_status") != "ok":
         return False
     return retry_failed or record.get("metadata", {}).get("fingerprint") == fingerprint

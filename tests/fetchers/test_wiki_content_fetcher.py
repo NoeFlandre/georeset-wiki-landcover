@@ -344,10 +344,13 @@ class TestWikiContentFetcher:
     def test_fetch_from_file_prunes_stale_pageids(self):
         """Existing output pageid absent from current input must be dropped on resume."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump({
-                "999": {"title": "Stale", "content": "Old", "url": "http://stale"},
-                "100": {"title": "Valid", "content": "Valid", "url": "http://valid"},
-            }, f)
+            json.dump(
+                {
+                    "999": {"title": "Stale", "content": "Old", "url": "http://stale"},
+                    "100": {"title": "Valid", "content": "Valid", "url": "http://valid"},
+                },
+                f,
+            )
             output_path = f.name
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:

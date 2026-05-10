@@ -1,28 +1,21 @@
-"""Shared type contracts for classification modules."""
+"""Classification type aliases.
 
-from typing import Any, Literal, TypedDict
+The canonical JSON-facing contracts live in :mod:`src.contracts`; this module
+keeps the existing classification import path stable.
+"""
 
-ClassificationTask = Literal["corine_level2", "osm"]
-ParseStatus = Literal["ok", "error", "ambiguous"]
-ClassificationTarget = str | list[str]
+from src.contracts import (
+    ClassificationTarget,
+    ClassificationTask,
+    ParseStatus,
+    PredictionRecord,
+    PredictionResult,
+)
 
-
-class PredictionResult(TypedDict, total=False):
-    prediction: ClassificationTarget | None
-    prediction_labels: list[str]
-    parse_status: ParseStatus
-    raw_response: str | None
-    error: str | None
-    metadata: dict[str, Any]
-
-
-class PredictionRecord(TypedDict):
-    pageid: str
-    title: str
-    target: ClassificationTarget
-    prediction: ClassificationTarget | None
-    prediction_labels: list[str]
-    parse_status: ParseStatus | None
-    raw_response: str | None
-    error: str | None
-    metadata: dict[str, Any]
+__all__ = [
+    "ClassificationTarget",
+    "ClassificationTask",
+    "ParseStatus",
+    "PredictionRecord",
+    "PredictionResult",
+]

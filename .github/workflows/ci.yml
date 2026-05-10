@@ -25,13 +25,13 @@ jobs:
         run: uv sync --all-groups
 
       - name: Run ruff
-        run: uv run ruff check src tests
+        run: uv run ruff check .
 
       - name: Run ruff format check
-        run: uv run ruff format --check src tests
+        run: uv run ruff format --check .
 
       - name: Run mypy
-        run: uv run mypy src
+        run: uv run mypy src scripts
 
   test:
     runs-on: ubuntu-latest

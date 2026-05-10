@@ -98,7 +98,9 @@ class TestDataFetcher:
         """Should exclude polygons where code_18 starts with '1' (artificial surfaces)."""
         sample = self.fetcher.get_sample_polygons(n=50, exclude_artificial=True)
         artificial_codes = sample[sample["code_18"].str.startswith("1")]
-        assert len(artificial_codes) == 0, f"Found artificial surface codes: {artificial_codes['code_18'].tolist()}"
+        assert len(artificial_codes) == 0, (
+            f"Found artificial surface codes: {artificial_codes['code_18'].tolist()}"
+        )
 
     @requires_data
     def test_exclude_artificial_false_includes_class_1(self):

@@ -12,6 +12,7 @@ from src.classification.labels import (
     osm_allowed_labels,
 )
 from src.classification.types import ClassificationTarget
+from src.contracts import ArticleMeta
 from src.fetchers.data_fetcher import DataFetcher
 
 
@@ -25,7 +26,7 @@ class ClassificationTaskSetup:
 def load_task_setup(
     *,
     task: str,
-    articles: list[dict],
+    articles: list[ArticleMeta],
     corine_polygons_path: str,
     osm_polygons_path: str,
 ) -> ClassificationTaskSetup:

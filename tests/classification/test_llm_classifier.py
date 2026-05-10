@@ -92,7 +92,10 @@ def test_classify_single_label_retries_empty_response_to_ok():
     assert result["metadata"]["attempt_count"] == 2
     assert result["metadata"]["resolved_from_retry"] is True
     assert len(result["metadata"]["attempt_history"]) == 2
-    assert "Never return an empty list" in mock_llm.create_chat_completion.call_args_list[1].kwargs["messages"][1]["content"]
+    assert (
+        "Never return an empty list"
+        in mock_llm.create_chat_completion.call_args_list[1].kwargs["messages"][1]["content"]
+    )
 
 
 def test_classify_single_label_retries_ambiguous_response_to_ok():
@@ -282,8 +285,11 @@ def test_invalid_json_returns_error_with_full_metadata():
     classifier._llm = mock_llm
 
     result = classifier.classify_single_label(
-        text="Texte.", allowed_labels=["21"], label_descriptions={},
-        task="corine_level2", text_source="summary",
+        text="Texte.",
+        allowed_labels=["21"],
+        label_descriptions={},
+        task="corine_level2",
+        text_source="summary",
     )
     assert result["parse_status"] == "error"
     assert "error" in result
@@ -300,8 +306,11 @@ def test_infrastructure_exception_returns_error_with_full_metadata():
     classifier._llm = mock_llm
 
     result = classifier.classify_single_label(
-        text="Texte.", allowed_labels=["21"], label_descriptions={},
-        task="corine_level2", text_source="summary",
+        text="Texte.",
+        allowed_labels=["21"],
+        label_descriptions={},
+        task="corine_level2",
+        text_source="summary",
     )
     assert result["parse_status"] == "error"
     assert "boom" in result["error"]

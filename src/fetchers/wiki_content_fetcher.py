@@ -1,9 +1,12 @@
 import json
 import os
 import time
-from typing import Any
+from typing import cast
 
 import requests
+
+from src.contracts import ArticleContent, ArticleMeta
+from src.utils.json_io import write_json_atomic
 
 
 class WikiContentFetcher:
@@ -15,7 +18,7 @@ class WikiContentFetcher:
             "User-Agent": "GeoResetPipeline/1.0 (https://geo-reset.sylvainlobry.com/; research@sylvainlobry.com) python-requests/2.33.1"
         }
 
-    def get_articles_content(self, pageids: list[int]) -> dict[int, dict]:
+    def get_articles_content(self, pageids: list[int]) -> dict[int, ArticleContent]:
         """
         Fetch content for multiple Wikipedia articles.
 
@@ -29,7 +32,7 @@ class WikiContentFetcher:
             Dict mapping pageid -> {title, content, url}.
             Skips pages with negative IDs (not found) or empty content.
         """
-        results = {}
+        results: dict[int, ArticleContent] = {}
 
         # First: batch request for speed
         batch_results = self._batch_fetch(pageids)
@@ -51,9 +54,9 @@ class WikiContentFetcher:
 
         return results
 
-    def _batch_fetch(self, pageids: list[int]) -> dict[int, dict]:
+    def _batch_fetch(self, pageids: list[int]) -> dict[int, ArticleContent]:
         """Batch fetch multiple articles at once for speed."""
-        results = {}
+        results: dict[int, ArticleContent] = {}
 
         for i in range(0, len(pageids), 50):
             batch = pageids[i : i + 50]
@@ -101,9 +104,9 @@ class WikiContentFetcher:
 
     def _individual_fetch(
         self, pageids: list[int], max_retries: int = 3
-    ) -> dict[int, dict[str, Any]]:
+    ) -> dict[int, ArticleContent]:
         """Fetch articles one at a time for reliability."""
-        results: dict[int, dict[str, Any]] = {}
+        results: dict[int, ArticleContent] = {}
 
         for pageid in pageids:
             params = {
@@ -151,7 +154,7 @@ class WikiContentFetcher:
         return results
 
     @staticmethod
-    def _has_sane_content(article_content: dict) -> bool:
+    def _has_sane_content(article_content: object) -> bool:
         """Return whether a persisted article has usable content."""
         return (
             isinstance(article_content, dict)
@@ -160,19 +163,19 @@ class WikiContentFetcher:
         )
 
     @classmethod
-    def _sanitize_existing_content(cls, existing) -> dict[str, dict]:
+    def _sanitize_existing_content(cls, existing: object) -> dict[str, ArticleContent]:
         """Normalize persisted content keys and drop unusable entries."""
         if not isinstance(existing, dict):
             return {}
 
-        sane_content = {}
+        sane_content: dict[str, ArticleContent] = {}
         for pageid, article_content in existing.items():
             if cls._has_sane_content(article_content):
-                sane_content[str(pageid)] = article_content
+                sane_content[str(pageid)] = cast(ArticleContent, article_content)
         return sane_content
 
     @staticmethod
-    def _unique_pageids(articles: list[dict]) -> list[int]:
+    def _unique_pageids(articles: list[ArticleMeta]) -> list[int]:
         """Return input page IDs once, preserving source order."""
         pageids = []
         seen = set()
@@ -186,9 +189,8 @@ class WikiContentFetcher:
         return pageids
 
     @staticmethod
-    def _save_content(output_path: str, content: dict[str, dict]) -> None:
-        with open(output_path, "w") as f:
-            json.dump(content, f, indent=2)
+    def _save_content(output_path: str, content: dict[str, ArticleContent]) -> None:
+        write_json_atomic(output_path, content, indent=2)
 
     def fetch_from_file(self, input_path: str, output_path: str, batch_size: int = 50):
         """

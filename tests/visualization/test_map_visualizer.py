@@ -92,10 +92,13 @@ class TestMapVisualizer:
         assert "OSM polygons" in html
 
     def test_plot_corine_with_osm_polygons_legend_has_counts(self):
-        osm_gdf = gpd.GeoDataFrame({
-            "osm_id": ["way/1"],
-            "geometry": [Polygon([(7.02, 48.02), (7.08, 48.02), (7.08, 48.08), (7.02, 48.08)])],
-        }, crs="EPSG:4326")
+        osm_gdf = gpd.GeoDataFrame(
+            {
+                "osm_id": ["way/1"],
+                "geometry": [Polygon([(7.02, 48.02), (7.08, 48.02), (7.08, 48.08), (7.02, 48.08)])],
+            },
+            crs="EPSG:4326",
+        )
         visualizer = MapVisualizer(self.gdf)
         m = visualizer.plot_corine_with_osm_polygons(osm_gdf)
         html = m._repr_html_()

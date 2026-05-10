@@ -11,12 +11,16 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 from src.fetchers.article_summarizer import ArticleSummarizer
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse CLI options for local and Grid5000 summarization runs."""
-    parser = argparse.ArgumentParser(description="Summarize fetched Wikipedia articles with a local GGUF model.")
+    parser = argparse.ArgumentParser(
+        description="Summarize fetched Wikipedia articles with a local GGUF model."
+    )
     parser.add_argument(
         "--input-path",
         default="data/wiki/article_contents.json",

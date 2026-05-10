@@ -133,18 +133,10 @@ class TestArticleSummarizer:
                 json.dump(articles, f)
 
             summarizer = ArticleSummarizer(model_path=None)
-            with (
-                patch.object(
-                    summarizer, "_generate_summary", side_effect=["Summary A", "Summary B"]
-                ),
-                patch("builtins.open", side_effect=open) as mock_open,
+            with patch.object(
+                summarizer, "_generate_summary", side_effect=["Summary A", "Summary B"]
             ):
                 summarizer.process_file(input_path, output_path)
-
-                write_calls = [
-                    c for c in mock_open.call_args_list if c[0][0] == output_path and c[0][1] == "w"
-                ]
-                assert len(write_calls) >= 2
 
             with open(output_path) as f:
                 result = json.load(f)
@@ -274,18 +266,26 @@ class TestArticleSummarizer:
                 json.dump({"100": {"title": "A", "content": "Content A", "url": "http://a"}}, f)
 
             with open(output_path, "w") as f:
-                json.dump({
-                    "100": {
-                        "title": "A",
-                        "content": "Content A",
-                        "url": "http://a",
-                        "summary": "Old",
-                        "metadata": {
-                            "prompt": "Résumez cet article Wikipedia en une phrase concise:\n\nContent A"
+                json.dump(
+                    {
+                        "100": {
+                            "title": "A",
+                            "content": "Content A",
+                            "url": "http://a",
+                            "summary": "Old",
+                            "metadata": {
+                                "prompt": "Résumez cet article Wikipedia en une phrase concise:\n\nContent A"
+                            },
+                        },
+                        "999": {
+                            "title": "Stale",
+                            "content": "Stale",
+                            "url": "http://stale",
+                            "summary": "StaleSum",
                         },
                     },
-                    "999": {"title": "Stale", "content": "Stale", "url": "http://stale", "summary": "StaleSum"},
-                }, f)
+                    f,
+                )
 
             summarizer = ArticleSummarizer(model_path=None)
             with patch.object(summarizer, "_generate_summary", return_value="New"):

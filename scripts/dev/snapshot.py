@@ -32,7 +32,9 @@ def snapshot(n_samples: int = 10) -> None:
     print("\n--- Sample Polygons ---")
     sample = fetcher.get_sample_polygons(n=n_samples, level=2, exclude_artificial=True)
     for _, row in sample.iterrows():
-        print(f"  Class: {row['class_label']}, Code: {row['code_18']}, Centroid: ({row['centroid'].y:.4f}, {row['centroid'].x:.4f})")
+        print(
+            f"  Class: {row['class_label']}, Code: {row['code_18']}, Centroid: ({row['centroid'].y:.4f}, {row['centroid'].x:.4f})"
+        )
 
 
 if __name__ == "__main__":

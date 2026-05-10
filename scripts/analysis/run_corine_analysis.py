@@ -41,10 +41,14 @@ def run(
     osm = filter_osm_by_corine(osm, corine, chunk_size=chunk_size)
 
     parts = [
-        corine_distribution_in_osm_polygons(osm.iloc[start:start + chunk_size], corine)
+        corine_distribution_in_osm_polygons(osm.iloc[start : start + chunk_size], corine)
         for start in range(0, len(osm), chunk_size)
     ]
-    distribution = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=["osm_id", "class_label", "area", "share"])
+    distribution = (
+        pd.concat(parts, ignore_index=True)
+        if parts
+        else pd.DataFrame(columns=["osm_id", "class_label", "area", "share"])
+    )
 
     # Keep only OSM polygons that have at least one CORINE class
     osm = osm[osm["osm_id"].isin(distribution["osm_id"].unique())].copy()

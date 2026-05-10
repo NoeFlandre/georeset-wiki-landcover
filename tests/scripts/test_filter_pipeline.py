@@ -44,35 +44,68 @@ class TestFilterPipeline:
     def test_filter_removes_articles_outside_corine(self, temp_data_dir):
         """Should remove wiki articles whose coordinates are not in any filtered CORINE polygon."""
         wiki_articles = [
-            {"pageid": 1, "lat": 48.5, "lon": 7.5},   # inside CORINE
-            {"pageid": 2, "lat": 48.5, "lon": 9.5},   # outside CORINE
+            {"pageid": 1, "lat": 48.5, "lon": 7.5},  # inside CORINE
+            {"pageid": 2, "lat": 48.5, "lon": 9.5},  # outside CORINE
         ]
         wiki_path = temp_data_dir / "wiki" / "wiki_articles.json"
         wiki_path.write_text(json.dumps(wiki_articles))
 
         article_contents_path = temp_data_dir / "wiki" / "article_contents.json"
-        article_contents_path.write_text(json.dumps({
-            "1": {"title": "In", "content": "Content in", "url": "http://in"},
-            "2": {"title": "Out", "content": "Content out", "url": "http://out"},
-        }))
+        article_contents_path.write_text(
+            json.dumps(
+                {
+                    "1": {"title": "In", "content": "Content in", "url": "http://in"},
+                    "2": {"title": "Out", "content": "Content out", "url": "http://out"},
+                }
+            )
+        )
 
         article_summaries_path = temp_data_dir / "wiki" / "article_summaries.json"
-        article_summaries_path.write_text(json.dumps({
-            "1": {"title": "In", "content": "Content in", "url": "http://in", "summary": "Sum in"},
-            "2": {"title": "Out", "content": "Content out", "url": "http://out", "summary": "Sum out"},
-        }))
+        article_summaries_path.write_text(
+            json.dumps(
+                {
+                    "1": {
+                        "title": "In",
+                        "content": "Content in",
+                        "url": "http://in",
+                        "summary": "Sum in",
+                    },
+                    "2": {
+                        "title": "Out",
+                        "content": "Content out",
+                        "url": "http://out",
+                        "summary": "Sum out",
+                    },
+                }
+            )
+        )
 
         osm_path = temp_data_dir / "osm" / "osm_project_polygons.geojson"
-        osm_path.write_text(json.dumps({
-            "type": "FeatureCollection",
-            "features": [
+        osm_path.write_text(
+            json.dumps(
                 {
-                    "type": "Feature",
-                    "properties": {"osm_id": "way/1"},
-                    "geometry": {"type": "Polygon", "coordinates": [[[7.4, 48.4], [7.6, 48.4], [7.6, 48.6], [7.4, 48.6], [7.4, 48.4]]]},
+                    "type": "FeatureCollection",
+                    "features": [
+                        {
+                            "type": "Feature",
+                            "properties": {"osm_id": "way/1"},
+                            "geometry": {
+                                "type": "Polygon",
+                                "coordinates": [
+                                    [
+                                        [7.4, 48.4],
+                                        [7.6, 48.4],
+                                        [7.6, 48.6],
+                                        [7.4, 48.6],
+                                        [7.4, 48.4],
+                                    ]
+                                ],
+                            },
+                        }
+                    ],
                 }
-            ]
-        }))
+            )
+        )
 
         distribution_path = temp_data_dir / "distribution" / "osm_corine_distribution.csv"
         distribution_path.write_text("osm_id,class_label,area,share\nway/1,311,1000,1.0\n")
@@ -127,14 +160,20 @@ class TestFilterOsmStep:
         OSM 'mixed' covers x=0..10, overlapping artificial 112 at x=0..2 AND natural 311 at x=2..10.
         OSM 'natural' covers x=20..30, overlapping only natural 211.
         Result: both 'mixed' and 'natural' must be kept."""
-        osm = gpd.GeoDataFrame({
-            "osm_id": ["mixed", "natural"],
-            "geometry": [box(0, 0, 10, 10), box(20, 0, 30, 10)],
-        }, crs="EPSG:3857")
-        full_corine = gpd.GeoDataFrame({
-            "code_18": ["112", "311", "211"],
-            "geometry": [box(0, 0, 2, 10), box(2, 0, 10, 10), box(20, 0, 30, 10)],
-        }, crs="EPSG:3857")
+        osm = gpd.GeoDataFrame(
+            {
+                "osm_id": ["mixed", "natural"],
+                "geometry": [box(0, 0, 10, 10), box(20, 0, 30, 10)],
+            },
+            crs="EPSG:3857",
+        )
+        full_corine = gpd.GeoDataFrame(
+            {
+                "code_18": ["112", "311", "211"],
+                "geometry": [box(0, 0, 2, 10), box(2, 0, 10, 10), box(20, 0, 30, 10)],
+            },
+            crs="EPSG:3857",
+        )
         filtered_corine = full_corine[~full_corine["code_18"].str.startswith("1")].copy()
 
         filtered = filter_osm_by_corine(osm, filtered_corine)
@@ -145,17 +184,23 @@ class TestFilterOsmStep:
 class TestFilterArticlesStep:
     @pytest.fixture
     def corine_gdf(self):
-        return gpd.GeoDataFrame({
-            "code_18": ["311"],
-            "geometry": [box(7.0, 48.0, 7.1, 48.1)],
-        }, crs="EPSG:4326")
+        return gpd.GeoDataFrame(
+            {
+                "code_18": ["311"],
+                "geometry": [box(7.0, 48.0, 7.1, 48.1)],
+            },
+            crs="EPSG:4326",
+        )
 
     @pytest.fixture
     def osm_gdf(self):
-        return gpd.GeoDataFrame({
-            "osm_id": ["way/1"],
-            "geometry": [box(7.05, 48.05, 7.15, 48.15)],
-        }, crs="EPSG:4326")
+        return gpd.GeoDataFrame(
+            {
+                "osm_id": ["way/1"],
+                "geometry": [box(7.05, 48.05, 7.15, 48.15)],
+            },
+            crs="EPSG:4326",
+        )
 
     def test_article_in_both_is_kept_once(self, corine_gdf, osm_gdf):
         # Point (7.075, 48.075) is inside OSM interior — not on boundary at (7.05, 48.05)
@@ -171,10 +216,13 @@ class TestFilterArticlesStep:
         assert result[0]["pageid"] == 2
 
     def test_article_in_osm_only_not_in_corine_is_kept(self, corine_gdf, osm_gdf):
-        osm_only = gpd.GeoDataFrame({
-            "osm_id": ["way/2"],
-            "geometry": [box(8.0, 48.0, 8.1, 48.1)],
-        }, crs="EPSG:4326")
+        osm_only = gpd.GeoDataFrame(
+            {
+                "osm_id": ["way/2"],
+                "geometry": [box(8.0, 48.0, 8.1, 48.1)],
+            },
+            crs="EPSG:4326",
+        )
         articles = [{"pageid": 3, "lat": 48.05, "lon": 8.05}]
         result = filter_articles_by_polygons(articles, corine_gdf, osm_only)
         assert len(result) == 1
@@ -195,15 +243,21 @@ class TestFilterArticlesStep:
         assert len(result) == 0
 
     def test_duplicate_pageids_deduplicated(self, corine_gdf, osm_gdf):
-        articles = [{"pageid": 8, "lat": 48.075, "lon": 7.075}, {"pageid": 8, "lat": 48.075, "lon": 7.075}]
+        articles = [
+            {"pageid": 8, "lat": 48.075, "lon": 7.075},
+            {"pageid": 8, "lat": 48.075, "lon": 7.075},
+        ]
         result = filter_articles_by_polygons(articles, corine_gdf, osm_gdf)
         assert len(result) == 1
 
     def test_preserves_source_order(self, corine_gdf, osm_gdf):
-        osm_only = gpd.GeoDataFrame({
-            "osm_id": ["way/2"],
-            "geometry": [box(8.0, 48.0, 8.1, 48.1)],
-        }, crs="EPSG:4326")
+        osm_only = gpd.GeoDataFrame(
+            {
+                "osm_id": ["way/2"],
+                "geometry": [box(8.0, 48.0, 8.1, 48.1)],
+            },
+            crs="EPSG:4326",
+        )
         articles = [
             {"pageid": 10, "lat": 48.05, "lon": 8.05},
             {"pageid": 11, "lat": 48.02, "lon": 7.02},

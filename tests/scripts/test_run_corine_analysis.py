@@ -21,31 +21,39 @@ class TestRunCorineAnalysisWithFilteredCorine:
     @pytest.fixture
     def mock_corine_gdf(self):
         """Create a mock CORINE GeoDataFrame with mixed classes."""
-        return gpd.GeoDataFrame({
-            "code_18": ["111", "211", "311", "112"],
-            "geometry": [
-                Polygon([(7.0, 48.0), (7.1, 48.0), (7.1, 48.1), (7.0, 48.1)]),
-                Polygon([(7.1, 48.0), (7.2, 48.0), (7.2, 48.1), (7.1, 48.1)]),
-                Polygon([(7.2, 48.0), (7.3, 48.0), (7.3, 48.1), (7.2, 48.1)]),
-                Polygon([(7.3, 48.0), (7.4, 48.0), (7.4, 48.1), (7.3, 48.1)]),
-            ]
-        }, crs="EPSG:4326")
+        return gpd.GeoDataFrame(
+            {
+                "code_18": ["111", "211", "311", "112"],
+                "geometry": [
+                    Polygon([(7.0, 48.0), (7.1, 48.0), (7.1, 48.1), (7.0, 48.1)]),
+                    Polygon([(7.1, 48.0), (7.2, 48.0), (7.2, 48.1), (7.1, 48.1)]),
+                    Polygon([(7.2, 48.0), (7.3, 48.0), (7.3, 48.1), (7.2, 48.1)]),
+                    Polygon([(7.3, 48.0), (7.4, 48.0), (7.4, 48.1), (7.3, 48.1)]),
+                ],
+            },
+            crs="EPSG:4326",
+        )
 
     @pytest.fixture
     def mock_osm_gdf(self):
         """Create a mock OSM GeoDataFrame."""
-        return gpd.GeoDataFrame({
-            "osm_id": ["way/1", "way/2", "way/3"],
-            "landuse": ["forest", "meadow", "farmland"],
-            "natural": [None, None, None],
-            "geometry": [
-                Polygon([(7.05, 48.05), (7.15, 48.05), (7.15, 48.15), (7.05, 48.15)]),
-                Polygon([(7.15, 48.05), (7.25, 48.05), (7.25, 48.15), (7.15, 48.15)]),
-                Polygon([(7.25, 48.05), (7.35, 48.05), (7.35, 48.15), (7.25, 48.15)]),
-            ]
-        }, crs="EPSG:4326")
+        return gpd.GeoDataFrame(
+            {
+                "osm_id": ["way/1", "way/2", "way/3"],
+                "landuse": ["forest", "meadow", "farmland"],
+                "natural": [None, None, None],
+                "geometry": [
+                    Polygon([(7.05, 48.05), (7.15, 48.05), (7.15, 48.15), (7.05, 48.15)]),
+                    Polygon([(7.15, 48.05), (7.25, 48.05), (7.25, 48.15), (7.15, 48.15)]),
+                    Polygon([(7.25, 48.05), (7.35, 48.05), (7.35, 48.15), (7.25, 48.15)]),
+                ],
+            },
+            crs="EPSG:4326",
+        )
 
-    def test_run_with_exclude_artificial_loads_filtered_corine(self, mock_corine_gdf, mock_osm_gdf, tmp_path):
+    def test_run_with_exclude_artificial_loads_filtered_corine(
+        self, mock_corine_gdf, mock_osm_gdf, tmp_path
+    ):
         """run() should use exclude_artificial=True when loading CORINE."""
         data_dir = tmp_path / "data"
         data_dir.mkdir()

@@ -61,6 +61,20 @@ def _write_corine(path: Path) -> None:
     gdf.to_file(path)
 
 
+def _write_corine_missing_parent_target(path: Path) -> None:
+    articles = gpd.GeoDataFrame(
+        geometry=gpd.points_from_xy([7.0, 7.002], [48.0, 48.002]),
+        crs="EPSG:4326",
+    ).to_crs("EPSG:2154")
+    geoms = [point.buffer(20).envelope for point in articles.geometry]
+    gdf = gpd.GeoDataFrame(
+        {"code_18": ["311", "112"]},
+        geometry=geoms,
+        crs="EPSG:2154",
+    ).to_crs("EPSG:4326")
+    gdf.to_file(path)
+
+
 def test_cli_computes_spatial_confidence_for_union_of_parent_prediction_pageids(tmp_path):
     parent_dir = tmp_path / "parent"
     output_dir = tmp_path / "spatial"
@@ -107,7 +121,10 @@ def test_cli_computes_spatial_confidence_for_union_of_parent_prediction_pageids(
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["experiment_id"] == "corine_spatial_confidence_v1"
-    assert manifest["parent_experiment_id"] == "article_text_classification_e2e_with_shuffled_control_v1"
+    assert (
+        manifest["parent_experiment_id"]
+        == "article_text_classification_e2e_with_shuffled_control_v1"
+    )
     assert manifest["used_full_corine"] is True
     assert manifest["number_of_articles"] == 3
 
@@ -123,6 +140,33 @@ def test_cli_fails_loudly_when_derived_point_label_disagrees_with_corine_target(
     _write_corine(corine_path)
 
     with pytest.raises(ValueError, match="CORINE target mismatch"):
+        main(
+            [
+                "--parent-experiment-dir",
+                str(parent_dir),
+                "--wiki-articles-path",
+                str(wiki_path),
+                "--corine-polygons-path",
+                str(corine_path),
+                "--output-dir",
+                str(output_dir),
+                "--radii",
+                "250",
+            ]
+        )
+
+
+def test_cli_fails_loudly_when_parent_corine_target_has_no_derived_point_label(tmp_path):
+    parent_dir = tmp_path / "parent"
+    output_dir = tmp_path / "spatial"
+    wiki_path = tmp_path / "wiki.json"
+    corine_path = tmp_path / "corine.geojson"
+
+    _make_parent_experiment(parent_dir)
+    _write_articles(wiki_path)
+    _write_corine_missing_parent_target(corine_path)
+
+    with pytest.raises(ValueError, match="Missing derived full-CORINE point labels"):
         main(
             [
                 "--parent-experiment-dir",

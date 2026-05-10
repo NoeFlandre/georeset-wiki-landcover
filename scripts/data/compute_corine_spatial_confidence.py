@@ -13,6 +13,7 @@ import pandas as pd
 from shapely import make_valid
 from shapely.geometry import Point
 
+from src.contracts import ArticleMeta
 from src.spatial.corine_confidence import (
     METRIC_CRS,
     compute_article_spatial_confidence,
@@ -22,7 +23,9 @@ from src.spatial.corine_confidence import (
 
 EXPERIMENT_ID = "corine_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
-DEFAULT_PARENT_DIR = Path("data/experiments/article_text_classification_e2e_with_shuffled_control_v1")
+DEFAULT_PARENT_DIR = Path(
+    "data/experiments/article_text_classification_e2e_with_shuffled_control_v1"
+)
 DEFAULT_OUTPUT_DIR = Path("data/experiments/corine_spatial_confidence_v1")
 DEFAULT_RADII = [100, 250, 500, 1000]
 
@@ -30,7 +33,9 @@ DEFAULT_RADII = [100, 250, 500, 1000]
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--parent-experiment-dir", type=Path, default=DEFAULT_PARENT_DIR)
-    parser.add_argument("--wiki-articles-path", type=Path, default=Path("data/wiki/wiki_articles.json"))
+    parser.add_argument(
+        "--wiki-articles-path", type=Path, default=Path("data/wiki/wiki_articles.json")
+    )
     parser.add_argument(
         "--corine-polygons-path",
         type=Path,
@@ -72,14 +77,18 @@ def load_corine_targets(parent_dir: Path) -> dict[str, str]:
     return targets
 
 
-def articles_to_points(articles: list[dict[str, Any]], pageids: set[str]) -> gpd.GeoDataFrame:
+def articles_to_points(articles: list[ArticleMeta], pageids: set[str]) -> gpd.GeoDataFrame:
     rows: list[dict[str, Any]] = []
     geometries: list[Point] = []
     for article in articles:
         pageid = str(article.get("pageid"))
         lat = article.get("lat")
         lon = article.get("lon")
-        if pageid not in pageids or not isinstance(lat, (int, float)) or not isinstance(lon, (int, float)):
+        if (
+            pageid not in pageids
+            or not isinstance(lat, (int, float))
+            or not isinstance(lon, (int, float))
+        ):
             continue
         rows.append({"pageid": pageid, "title": article.get("title", pageid)})
         geometries.append(Point(float(lon), float(lat)))
@@ -121,14 +130,27 @@ def derive_point_labels(
 def validate_corine_targets(point_labels: pd.DataFrame, corine_targets: dict[str, str]) -> None:
     mismatches = []
     labels = dict(
-        zip(point_labels["pageid"].astype(str), point_labels["point_label"].astype(str), strict=False)
+        zip(
+            point_labels["pageid"].astype(str),
+            point_labels["point_label"].astype(str),
+            strict=False,
+        )
     )
+    missing = sorted(set(corine_targets) - set(labels))
+    if missing:
+        raise ValueError(
+            f"Missing derived full-CORINE point labels for parent CORINE targets: {missing[:10]}"
+        )
     for pageid, target in corine_targets.items():
         derived = labels.get(pageid)
         if derived is not None and derived != target:
-            mismatches.append({"pageid": pageid, "derived_point_label": derived, "corine_target": target})
+            mismatches.append(
+                {"pageid": pageid, "derived_point_label": derived, "corine_target": target}
+            )
     if mismatches:
-        raise ValueError(f"CORINE target mismatch against derived full-CORINE point labels: {mismatches[:10]}")
+        raise ValueError(
+            f"CORINE target mismatch against derived full-CORINE point labels: {mismatches[:10]}"
+        )
 
 
 def _add_artificial_shares(confidence: pd.DataFrame, radii: list[int]) -> pd.DataFrame:
@@ -137,7 +159,9 @@ def _add_artificial_shares(confidence: pd.DataFrame, radii: list[int]) -> pd.Dat
         if column not in confidence.columns:
             continue
         confidence[f"artificial_share_{radius}m"] = confidence[column].map(
-            lambda shares: sum(value for label, value in shares.items() if str(label).startswith("1"))
+            lambda shares: sum(
+                value for label, value in shares.items() if str(label).startswith("1")
+            )
         )
     return confidence
 

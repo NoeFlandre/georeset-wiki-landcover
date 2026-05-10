@@ -42,7 +42,12 @@ def test_build_osm_ground_truth_is_multilabel_and_ignores_out_of_scope():
 def test_build_osm_ground_truth_excludes_articles_without_allowed_osm_labels():
     articles = [{"pageid": 100, "lat": 5.0, "lon": 5.0}]
     osm = gpd.GeoDataFrame(
-        {"osm_id": ["way/1"], "landuse": ["meadow"], "natural": [None], "geometry": [box(0, 0, 1, 1)]},
+        {
+            "osm_id": ["way/1"],
+            "landuse": ["meadow"],
+            "natural": [None],
+            "geometry": [box(0, 0, 1, 1)],
+        },
         crs="EPSG:4326",
     )
     assert build_osm_ground_truth(articles, osm) == {}

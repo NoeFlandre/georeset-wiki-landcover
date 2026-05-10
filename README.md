@@ -38,7 +38,7 @@ git ls-files data build
 
 ```bash
 git rm -r --cached data build
-git add .gitignore README.md src tests pyproject.toml uv.lock LICENSE Dockerfile .dockerignore
+git add .gitignore README.md src scripts tests pyproject.toml uv.lock LICENSE Dockerfile .dockerignore
 ```
 
 ## Repository Layout
@@ -56,14 +56,14 @@ git add .gitignore README.md src tests pyproject.toml uv.lock LICENSE Dockerfile
   distributions inside OSM polygons.
 - `src/analysis/distribution_summary.py`: summarizes distribution outputs.
 - `src/visualization/map_visualizer.py`: writes Folium map visualizations.
-- `src/scripts/run_corine_analysis.py`: runs the OSM/CORINE distribution and
+- `scripts/analysis/run_corine_analysis.py`: runs the OSM/CORINE distribution and
   map generation workflow.
-- `src/scripts/snapshot.py`: prints a quick CORINE dataset snapshot.
-- `src/scripts/summarize_articles.py`: summarizes fetched article content with
+- `scripts/dev/snapshot.py`: prints a quick CORINE dataset snapshot.
+- `scripts/data/summarize_articles.py`: summarizes fetched article content with
   a local LLM backend.
 - `src/classification/`: label utilities, ground-truth builders, LLM
   classifier, and metrics for CORINE level-2 and OSM tag classification.
-- `scripts/grid5000/submit_summarization.sh`: syncs the minimal repository
+- `scripts/cluster/submit_summarization.sh`: syncs the minimal repository
   state to Grid5000/Nancy, submits the summarization OAR job, and continuously
   syncs the resumable output back.
 
@@ -101,7 +101,8 @@ Run the full local quality gate:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 uv run ruff check .
-PYTHONDONTWRITEBYTECODE=1 uv run mypy src/classification scripts/data/classify_articles.py
+PYTHONDONTWRITEBYTECODE=1 uv run ruff format --check .
+PYTHONDONTWRITEBYTECODE=1 uv run mypy src scripts
 PYTHONDONTWRITEBYTECODE=1 uv run pytest -q
 ```
 
@@ -116,7 +117,7 @@ PYTHONDONTWRITEBYTECODE=1 uv run pytest tests/fetchers/test_wiki_content_fetcher
 Print a quick dataset snapshot:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m src.scripts.snapshot
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.dev.snapshot
 ```
 
 Fetch Wikipedia article metadata:
@@ -144,7 +145,7 @@ Fetch/use OSM polygons, compute CORINE distributions, and generate the separate
 CORINE + OSM map:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m src.scripts.run_corine_analysis
+PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.analysis.run_corine_analysis
 hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```
 
@@ -273,8 +274,9 @@ PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.analysis.summarize_classifica
 
 ## Docker
 
-The Docker image contains code and Python dependencies only. It intentionally
-does not bake in `data/`; mount local synced data at `/app/data`.
+The Docker image contains code, top-level `scripts/` CLIs, tests, and Python
+dependencies. It intentionally does not bake in `data/`; mount local synced
+data at `/app/data`.
 
 Build the image:
 
@@ -292,6 +294,12 @@ Run tests in Docker:
 
 ```bash
 docker run --rm -v "$PWD/data:/app/data" georeset uv run pytest tests/fetchers/test_wiki_content_fetcher.py -q
+```
+
+Run a script-based smoke test in Docker:
+
+```bash
+docker run --rm -v "$PWD/data:/app/data" georeset uv run python -m scripts.dev.snapshot
 ```
 
 Run a pipeline command in Docker:

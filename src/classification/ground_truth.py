@@ -2,9 +2,10 @@ import geopandas as gpd
 from shapely.geometry import Point
 
 from src.classification.labels import osm_labels_from_row
+from src.contracts import ArticleMeta
 
 
-def _articles_to_points(articles: list[dict]) -> gpd.GeoDataFrame:
+def _articles_to_points(articles: list[ArticleMeta]) -> gpd.GeoDataFrame:
     rows, points = [], []
     for article in articles:
         lat, lon, pageid = article.get("lat"), article.get("lon"), article.get("pageid")
@@ -24,7 +25,7 @@ def _to_wgs84(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
 
 def build_corine_ground_truth(
-    articles: list[dict], corine_gdf: gpd.GeoDataFrame
+    articles: list[ArticleMeta], corine_gdf: gpd.GeoDataFrame
 ) -> dict[str, str]:
     """
     CORINE ground truth: single-label per pageid.
@@ -37,9 +38,7 @@ def build_corine_ground_truth(
     corine = _to_wgs84(corine_gdf).copy()
     corine = corine[~corine["code_18"].astype(str).str.startswith("1")].copy()
     corine["label"] = corine["code_18"].astype(str).str[:2]
-    joined = gpd.sjoin(
-        points, corine[["label", "geometry"]], how="inner", predicate="intersects"
-    )
+    joined = gpd.sjoin(points, corine[["label", "geometry"]], how="inner", predicate="intersects")
     result = {}
     for pageid, group in joined.groupby("pageid", sort=False):
         distinct = sorted(set(group["label"].astype(str)))
@@ -49,7 +48,7 @@ def build_corine_ground_truth(
 
 
 def build_osm_ground_truth(
-    articles: list[dict], osm_gdf: gpd.GeoDataFrame
+    articles: list[ArticleMeta], osm_gdf: gpd.GeoDataFrame
 ) -> dict[str, list[str]]:
     """
     OSM ground truth: multi-label per pageid.
@@ -66,9 +65,7 @@ def build_osm_ground_truth(
         return {}
     osm = osm.explode("labels")
     osm = osm.rename(columns={"labels": "label"})
-    joined = gpd.sjoin(
-        points, osm[["label", "geometry"]], how="inner", predicate="intersects"
-    )
+    joined = gpd.sjoin(points, osm[["label", "geometry"]], how="inner", predicate="intersects")
     result = {}
     for pageid, group in joined.groupby("pageid", sort=False):
         labels = sorted(set(group["label"].astype(str)))

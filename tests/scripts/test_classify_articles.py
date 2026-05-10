@@ -42,42 +42,28 @@ class TestParseArgs:
 
 class TestFingerprint:
     def test_same_inputs_same_fingerprint(self):
-        fp1 = prediction_fingerprint(
-            "corine_level2", "summary", "m.gguf", 42, 0.0, ["21", "31"]
-        )
-        fp2 = prediction_fingerprint(
-            "corine_level2", "summary", "m.gguf", 42, 0.0, ["21", "31"]
-        )
+        fp1 = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["21", "31"])
+        fp2 = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["21", "31"])
         assert fp1 == fp2
 
     def test_different_task_different_fingerprint(self):
-        fp1 = prediction_fingerprint(
-            "corine_level2", "summary", "m.gguf", 42, 0.0, ["21"]
-        )
+        fp1 = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["21"])
         fp2 = prediction_fingerprint("osm", "summary", "m.gguf", 42, 0.0, ["meadow"])
         assert fp1 != fp2
 
     def test_fingerprint_order_independent(self):
-        fp1 = prediction_fingerprint(
-            "corine_level2", "summary", "m.gguf", 42, 0.0, ["31", "21"]
-        )
-        fp2 = prediction_fingerprint(
-            "corine_level2", "summary", "m.gguf", 42, 0.0, ["21", "31"]
-        )
+        fp1 = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["31", "21"])
+        fp2 = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["21", "31"])
         assert fp1 == fp2
 
     def test_fingerprint_includes_policy_version(self, monkeypatch):
-        current_fp = prediction_fingerprint(
-            "corine_level2", "summary", "m.gguf", 42, 0.0, ["21"]
-        )
+        current_fp = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["21"])
         monkeypatch.setattr(
             classify_articles,
             "CLASSIFICATION_POLICY_VERSION",
             classify_articles.CLASSIFICATION_POLICY_VERSION + 1,
         )
-        next_fp = prediction_fingerprint(
-            "corine_level2", "summary", "m.gguf", 42, 0.0, ["21"]
-        )
+        next_fp = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["21"])
         assert current_fp != next_fp
 
 
@@ -94,9 +80,7 @@ class TestSourceLoading:
         with open(no_place_path, "w") as f:
             json.dump({"100": {"summary": "No place summary here."}}, f)
         with open(wiki_path, "w") as f:
-            json.dump(
-                [{"pageid": 100, "lat": 0.5, "lon": 0.5, "title": "Strasbourg"}], f
-            )
+            json.dump([{"pageid": 100, "lat": 0.5, "lon": 0.5, "title": "Strasbourg"}], f)
         return summaries_path, contents_path, no_place_path, wiki_path
 
     def test_loads_summary_field_from_summary_variant(self):
@@ -109,9 +93,7 @@ class TestSourceLoading:
             ) = self._make_temp_files(tmpdir)
             from scripts.data.classify_articles import load_text_source
 
-            result = load_text_source(
-                "summary", contents_path, summaries_path, no_place_path
-            )
+            result = load_text_source("summary", contents_path, summaries_path, no_place_path)
             assert result["100"] == "Strasbourg est une ville."
 
     def test_loads_base_summary_for_shuffled_summary_variant(self):
@@ -169,9 +151,7 @@ class TestSourceLoading:
             ) = self._make_temp_files(tmpdir)
             from scripts.data.classify_articles import load_text_source
 
-            result = load_text_source(
-                "content", contents_path, summaries_path, no_place_path
-            )
+            result = load_text_source("content", contents_path, summaries_path, no_place_path)
             assert result["100"] == "Full content"
 
     def test_loads_base_content_for_shuffled_content_variant(self):
@@ -200,9 +180,7 @@ class TestSourceLoading:
             from scripts.data.classify_articles import load_text_source
 
             with pytest.raises(ValueError, match="Unknown text source"):
-                load_text_source(
-                    "unknown", contents_path, summaries_path, no_place_path
-                )
+                load_text_source("unknown", contents_path, summaries_path, no_place_path)
 
 
 class TestShuffledTextControl:
@@ -246,9 +224,7 @@ def _corine_temp_setup(tmpdir):
     import geopandas as gpd
     from shapely.geometry import box
 
-    gdf = gpd.GeoDataFrame(
-        {"code_18": ["311"]}, geometry=[box(0, 0, 1, 1)], crs="EPSG:4326"
-    )
+    gdf = gpd.GeoDataFrame({"code_18": ["311"]}, geometry=[box(0, 0, 1, 1)], crs="EPSG:4326")
     gdf.to_file(corine_shp)
     return summaries_path, contents_path, no_place_path, wiki_path, corine_shp, output_dir
 
@@ -316,9 +292,7 @@ class TestPredictionRecordShape:
             }
             from scripts.data.classify_articles import main
 
-            with patch(
-                "scripts.data.classify_articles.LLMClassifier", return_value=classifier
-            ):
+            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
                 main(
                     [
                         "--task",
@@ -341,9 +315,7 @@ class TestPredictionRecordShape:
                         "m.gguf",
                     ]
                 )
-            pred_path = os.path.join(
-                output_dir, "corine_level2_summary_predictions.json"
-            )
+            pred_path = os.path.join(output_dir, "corine_level2_summary_predictions.json")
             with open(pred_path) as f:
                 records = json.load(f)
             rec = records["100"]
@@ -381,9 +353,7 @@ class TestResumability:
                 output_dir,
             ) = _corine_temp_setup(tmpdir)
             classifier = MagicMock()
-            fp = prediction_fingerprint(
-                "corine_level2", "summary", "m.gguf", 42, 0.0, ["31"]
-            )
+            fp = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["31"])
             classifier.classify_single_label.return_value = {
                 "prediction": "31",
                 "parse_status": "ok",
@@ -401,9 +371,7 @@ class TestResumability:
                     "fingerprint": fp,
                 },
             }
-            pred_path = os.path.join(
-                output_dir, "corine_level2_summary_predictions.json"
-            )
+            pred_path = os.path.join(output_dir, "corine_level2_summary_predictions.json")
             with open(pred_path, "w") as f:
                 json.dump(
                     {
@@ -432,9 +400,7 @@ class TestResumability:
                 )
             from scripts.data.classify_articles import main
 
-            with patch(
-                "scripts.data.classify_articles.LLMClassifier", return_value=classifier
-            ):
+            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
                 main(
                     [
                         "--task",
@@ -470,9 +436,7 @@ class TestResumability:
                 output_dir,
             ) = _corine_temp_setup(tmpdir)
             classifier = MagicMock()
-            fp = prediction_fingerprint(
-                "corine_level2", "summary", "m.gguf", 42, 0.0, ["31"]
-            )
+            fp = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["31"])
             classifier.classify_single_label.return_value = {
                 "prediction": "31",
                 "parse_status": "ok",
@@ -490,9 +454,7 @@ class TestResumability:
                     "fingerprint": fp,
                 },
             }
-            pred_path = os.path.join(
-                output_dir, "corine_level2_summary_predictions.json"
-            )
+            pred_path = os.path.join(output_dir, "corine_level2_summary_predictions.json")
             with open(pred_path, "w") as f:
                 json.dump(
                     {
@@ -521,9 +483,7 @@ class TestResumability:
                 )
             from scripts.data.classify_articles import main
 
-            with patch(
-                "scripts.data.classify_articles.LLMClassifier", return_value=classifier
-            ):
+            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
                 main(
                     [
                         "--task",
@@ -561,9 +521,7 @@ class TestOSMRunner:
                 output_dir,
             ) = _osm_temp_setup(tmpdir)
             classifier = MagicMock()
-            fp = prediction_fingerprint(
-                "osm", "summary", "m.gguf", 42, 0.0, ["meadow"]
-            )
+            fp = prediction_fingerprint("osm", "summary", "m.gguf", 42, 0.0, ["meadow"])
             classifier.classify_multilabel.return_value = {
                 "prediction": ["meadow"],
                 "parse_status": "ok",
@@ -583,9 +541,7 @@ class TestOSMRunner:
             }
             from scripts.data.classify_articles import main
 
-            with patch(
-                "scripts.data.classify_articles.LLMClassifier", return_value=classifier
-            ):
+            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
                 main(
                     [
                         "--task",
@@ -629,9 +585,7 @@ class TestMetricsOutput:
                 output_dir,
             ) = _corine_temp_setup(tmpdir)
             classifier = MagicMock()
-            fp = prediction_fingerprint(
-                "corine_level2", "summary", "m.gguf", 42, 0.0, ["31"]
-            )
+            fp = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["31"])
             classifier.classify_single_label.return_value = {
                 "prediction": "31",
                 "parse_status": "ok",
@@ -651,9 +605,7 @@ class TestMetricsOutput:
             }
             from scripts.data.classify_articles import main
 
-            with patch(
-                "scripts.data.classify_articles.LLMClassifier", return_value=classifier
-            ):
+            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
                 main(
                     [
                         "--task",
@@ -676,9 +628,7 @@ class TestMetricsOutput:
                         "m.gguf",
                     ]
                 )
-            metrics_path = os.path.join(
-                output_dir, "corine_level2_summary_metrics.json"
-            )
+            metrics_path = os.path.join(output_dir, "corine_level2_summary_metrics.json")
             with open(metrics_path) as f:
                 metrics = json.load(f)
             for field in (
@@ -750,9 +700,7 @@ class TestLimit:
             )
             gdf.to_file(corine_shp)
             classifier = MagicMock()
-            fp = prediction_fingerprint(
-                "corine_level2", "summary", "m.gguf", 42, 0.0, ["31"]
-            )
+            fp = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["31"])
             classifier.classify_single_label.return_value = {
                 "prediction": "31",
                 "parse_status": "ok",
@@ -772,9 +720,7 @@ class TestLimit:
             }
             from scripts.data.classify_articles import main
 
-            with patch(
-                "scripts.data.classify_articles.LLMClassifier", return_value=classifier
-            ):
+            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
                 main(
                     [
                         "--task",
@@ -799,9 +745,7 @@ class TestLimit:
                         "2",
                     ]
                 )
-            metrics_path = os.path.join(
-                output_dir, "corine_level2_summary_metrics.json"
-            )
+            metrics_path = os.path.join(output_dir, "corine_level2_summary_metrics.json")
             with open(metrics_path) as f:
                 metrics = json.load(f)
             assert metrics["n_eligible"] == 2
@@ -894,9 +838,7 @@ class TestShuffledRunner:
                 call.kwargs["text"] for call in classifier.classify_single_label.call_args_list
             ]
             assert seen_texts == ["Text from article 200", "Text from article 100"]
-            pred_path = os.path.join(
-                output_dir, "corine_level2_summary_shuffled_predictions.json"
-            )
+            pred_path = os.path.join(output_dir, "corine_level2_summary_shuffled_predictions.json")
             with open(pred_path) as f:
                 records = json.load(f)
             assert records["100"]["metadata"]["text_control"] == "shuffled"

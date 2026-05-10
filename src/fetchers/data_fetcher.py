@@ -24,11 +24,17 @@ class DataFetcher:
 
         print(f"Loading data from {self.data_path} ...")
         raw_gdf = gpd.read_file(self.data_path)
-        self.gdf = raw_gdf[~raw_gdf["code_18"].str.startswith("1")].copy() if exclude_artificial else raw_gdf
+        self.gdf = (
+            raw_gdf[~raw_gdf["code_18"].str.startswith("1")].copy()
+            if exclude_artificial
+            else raw_gdf
+        )
         self._exclude_artificial = exclude_artificial
         return self.gdf
 
-    def get_sample_polygons(self, n: int = 5, level: int = 2, exclude_artificial: bool = False) -> gpd.GeoDataFrame:
+    def get_sample_polygons(
+        self, n: int = 5, level: int = 2, exclude_artificial: bool = False
+    ) -> gpd.GeoDataFrame:
         """
         Returns a sample of n polygons with their center point and their class.
         The level is the Corine Land Cover hierarchy level (1, 2, 3...)

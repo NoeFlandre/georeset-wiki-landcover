@@ -1,10 +1,13 @@
+from src.contracts import MetricResult, PerLabelMetric
+
+
 def _safe_div(num, den):
     return num / den if den else 0.0
 
 
 def single_label_metrics(
     y_true: dict[str, str], y_pred: dict[str, str], labels: list[str]
-) -> dict:
+) -> MetricResult:
     n_eligible = len(y_true)
     evaluated = {k: v for k, v in y_pred.items() if k in y_true}
     evaluated_n = len(evaluated)
@@ -15,7 +18,7 @@ def single_label_metrics(
         evaluated_n,
     )
     evaluated_true = {k: y_true[k] for k in evaluated}
-    per_label = {}
+    per_label: dict[str, PerLabelMetric] = {}
     for label in labels:
         tp = sum(1 for k, v in evaluated.items() if y_true[k] == label and v == label)
         fp = sum(1 for k, v in evaluated.items() if y_true[k] != label and v == label)
@@ -31,9 +34,7 @@ def single_label_metrics(
             "recall": _safe_div(tp, tp + fn),
             "f1": _safe_div(2 * tp, 2 * tp + fp + fn),
         }
-    macro_precision = _safe_div(
-        sum(p["precision"] for p in per_label.values()), len(labels)
-    )
+    macro_precision = _safe_div(sum(p["precision"] for p in per_label.values()), len(labels))
     macro_recall = _safe_div(sum(p["recall"] for p in per_label.values()), len(labels))
     macro_f1 = _safe_div(sum(p["f1"] for p in per_label.values()), len(labels))
     return {
@@ -51,7 +52,7 @@ def single_label_metrics(
 
 def multilabel_metrics(
     y_true: dict[str, list[str]], y_pred: dict[str, list[str]], labels: list[str]
-) -> dict:
+) -> MetricResult:
     n_eligible = len(y_true)
     evaluated = {k: v for k, v in y_pred.items() if k in y_true}
     evaluated_n = len(evaluated)
@@ -61,27 +62,17 @@ def multilabel_metrics(
         sum(1 for k, v in evaluated.items() if set(y_true[k]) == set(v)),
         evaluated_n,
     )
-    micro_tp = sum(
-        1 for k, v in evaluated.items() for label in set(y_true[k]) & set(v)
-    )
-    micro_fp = sum(
-        1 for k, v in evaluated.items() for label in set(v) - set(y_true[k])
-    )
-    micro_fn = sum(
-        1 for k, v in evaluated.items() for label in set(y_true[k]) - set(v)
-    )
+    micro_tp = sum(1 for k, v in evaluated.items() for label in set(y_true[k]) & set(v))
+    micro_fp = sum(1 for k, v in evaluated.items() for label in set(v) - set(y_true[k]))
+    micro_fn = sum(1 for k, v in evaluated.items() for label in set(y_true[k]) - set(v))
     micro_precision = _safe_div(micro_tp, micro_tp + micro_fp)
     micro_recall = _safe_div(micro_tp, micro_tp + micro_fn)
     micro_f1 = _safe_div(2 * micro_tp, 2 * micro_tp + micro_fp + micro_fn)
-    per_label = {}
+    per_label: dict[str, PerLabelMetric] = {}
     for label in labels:
         tp = sum(1 for k, v in evaluated.items() if label in y_true[k] and label in v)
-        fp = sum(
-            1 for k, v in evaluated.items() if label not in y_true[k] and label in v
-        )
-        fn = sum(
-            1 for k, v in evaluated.items() if label in y_true[k] and label not in v
-        )
+        fp = sum(1 for k, v in evaluated.items() if label not in y_true[k] and label in v)
+        fn = sum(1 for k, v in evaluated.items() if label in y_true[k] and label not in v)
         support = sum(1 for k, v in y_true.items() if label in v)
         per_label[label] = {
             "support": support,
@@ -89,9 +80,7 @@ def multilabel_metrics(
             "recall": _safe_div(tp, tp + fn),
             "f1": _safe_div(2 * tp, 2 * tp + fp + fn),
         }
-    macro_precision = _safe_div(
-        sum(p["precision"] for p in per_label.values()), len(labels)
-    )
+    macro_precision = _safe_div(sum(p["precision"] for p in per_label.values()), len(labels))
     macro_recall = _safe_div(sum(p["recall"] for p in per_label.values()), len(labels))
     macro_f1 = _safe_div(sum(p["f1"] for p in per_label.values()), len(labels))
     return {

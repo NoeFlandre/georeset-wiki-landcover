@@ -5,6 +5,9 @@ import logging
 import os
 from typing import Any, cast
 
+from src.contracts import ArticleContent, SummaryRecord
+from src.utils.json_io import write_json_atomic
+
 logger = logging.getLogger(__name__)
 
 
@@ -59,7 +62,7 @@ class ArticleSummarizer:
             )
         return self._llm
 
-    def summarize(self, article: dict) -> dict:
+    def summarize(self, article: ArticleContent) -> SummaryRecord:
         """
         Add a summary to an article dict.
 
@@ -69,7 +72,7 @@ class ArticleSummarizer:
         Returns:
             New dict with all original keys plus 'summary' and 'metadata'.
         """
-        result = dict(article)
+        result = cast(SummaryRecord, dict(article))
         max_content_chars = 24000
         content = article["content"]
         if len(content) > max_content_chars:
@@ -171,39 +174,41 @@ class ArticleSummarizer:
         is_no_place_prompt = "sans jamais mentionner le nom du lieu décrit" in prompt
         return (self.summary_mode == "no_place") == is_no_place_prompt
 
-    def process_file(self, input_path: str, output_path: str):
+    def process_file(self, input_path: str, output_path: str) -> None:
         """
         Process all articles from input_path and save summaries to output_path.
 
         Skips articles that already have a 'summary' key.
         Saves progress incrementally.
         """
-        existing = {}
+        existing: dict[str, SummaryRecord] = {}
         if os.path.exists(output_path):
             with open(output_path) as f:
-                existing = self._remove_private_fields(json.load(f))
+                existing = cast(dict[str, SummaryRecord], self._remove_private_fields(json.load(f)))
 
         with open(input_path) as f:
-            articles = json.load(f)
+            articles = cast(dict[str, ArticleContent], json.load(f))
 
         valid_keys = {str(k) for k in articles}
         existing = {k: v for k, v in existing.items() if str(k) in valid_keys}
 
-        to_process = {k: v for k, v in articles.items() if not self._has_current_summary(existing.get(k, {}))}
+        to_process = {
+            k: v
+            for k, v in articles.items()
+            if not self._has_current_summary(cast(dict[str, Any], existing.get(k, {})))
+        }
 
         logger.info(f"Processing {len(to_process)} of {len(articles)} articles...")
 
         if existing and not to_process:
-            with open(output_path, "w") as f:
-                json.dump(existing, f, indent=2, ensure_ascii=False)
+            write_json_atomic(output_path, existing, indent=2, ensure_ascii=False)
 
         for i, (pageid, article) in enumerate(to_process.items(), 1):
             logger.info(f"[{i}/{len(to_process)}] Summarizing: {article.get('title', pageid)}")
             result = self.summarize(article)
             existing[pageid] = result
 
-            with open(output_path, "w") as f:
-                json.dump(existing, f, indent=2, ensure_ascii=False)
+            write_json_atomic(output_path, existing, indent=2, ensure_ascii=False)
             logger.info(f"  Checkpoint saved ({i} processed)")
 
         logger.info(f"Done. Saved {len(existing)} summaries to {output_path}")

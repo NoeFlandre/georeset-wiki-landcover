@@ -24,6 +24,7 @@ from shapely.geometry import Point
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from src.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
+from src.contracts import ArticleMeta
 from src.fetchers.article_summarizer import ArticleSummarizer
 from src.fetchers.data_fetcher import DataFetcher
 from src.fetchers.osm_fetcher import OSMFetcher
@@ -41,18 +42,18 @@ def _to_wgs84(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
 
 def filter_articles_by_polygons(
-    articles: list[dict],
+    articles: list[ArticleMeta],
     corine_gdf: gpd.GeoDataFrame,
     osm_gdf: gpd.GeoDataFrame,
-) -> list[dict]:
+) -> list[ArticleMeta]:
     """Keep articles inside filtered CORINE OR filtered OSM. Preserves order, deduplicates by pageid."""
     if not articles:
         return []
 
-    seen_pageids = set()
-    kept_articles = []
-    points = []
-    kept_positions = []
+    seen_pageids: set[str] = set()
+    kept_articles: list[ArticleMeta] = []
+    points: list[Point] = []
+    kept_positions: list[int] = []
 
     for article in articles:
         pid = str(article.get("pageid", ""))
@@ -130,7 +131,9 @@ def _prune_json_file(path: str, valid_keys: set[str]) -> None:
         json.dump(filtered, f, indent=2)
 
 
-def regenerate_maps(corine_gdf: gpd.GeoDataFrame, osm_gdf: gpd.GeoDataFrame, output_map_path: str) -> None:
+def regenerate_maps(
+    corine_gdf: gpd.GeoDataFrame, osm_gdf: gpd.GeoDataFrame, output_map_path: str
+) -> None:
     """Re-run map generation with filtered data."""
     os.makedirs(os.path.dirname(output_map_path), exist_ok=True)
 
@@ -143,7 +146,10 @@ def regenerate_maps(corine_gdf: gpd.GeoDataFrame, osm_gdf: gpd.GeoDataFrame, out
 
 
 def regenerate_distribution(
-    osm_gdf: gpd.GeoDataFrame, corine_gdf: gpd.GeoDataFrame, output_csv_path: str, chunk_size: int = 5000
+    osm_gdf: gpd.GeoDataFrame,
+    corine_gdf: gpd.GeoDataFrame,
+    output_csv_path: str,
+    chunk_size: int = 5000,
 ) -> None:
     """Re-run CORINE distribution computation with filtered data."""
     parts = [
@@ -153,7 +159,11 @@ def regenerate_distribution(
         )
         for start in range(0, len(osm_gdf), chunk_size)
     ]
-    distribution = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=["osm_id", "class_label", "area", "share"])
+    distribution = (
+        pd.concat(parts, ignore_index=True)
+        if parts
+        else pd.DataFrame(columns=["osm_id", "class_label", "area", "share"])
+    )
 
     os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
     distribution.to_csv(output_csv_path, index=False)
@@ -184,17 +194,25 @@ def audit_artifacts(
             violations.append(f"required file missing: {path}")
 
     # 3. OSM overlaps filtered CORINE (use provided osm_polygons_path)
-    osm = gpd.read_file(osm_polygons_path) if os.path.exists(osm_polygons_path) \
-          else gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+    osm = (
+        gpd.read_file(osm_polygons_path)
+        if os.path.exists(osm_polygons_path)
+        else gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+    )
     osm_filtered = filter_osm_by_corine(osm, corine_gdf)
     if len(osm_filtered) != len(osm):
-        violations.append(f"OSM has {len(osm)} total but {len(osm_filtered)} overlap filtered CORINE")
+        violations.append(
+            f"OSM has {len(osm)} total but {len(osm_filtered)} overlap filtered CORINE"
+        )
 
     # 4. Every article is in CORINE or OSM (set-diff logic)
     if os.path.exists(wiki_articles_path):
         with open(wiki_articles_path) as f:
             articles = json.load(f)
-        valid_ids = {str(a["pageid"]) for a in filter_articles_by_polygons(articles, corine_gdf, osm_filtered)}
+        valid_ids = {
+            str(a["pageid"])
+            for a in filter_articles_by_polygons(articles, corine_gdf, osm_filtered)
+        }
         all_ids = {str(a["pageid"]) for a in articles}
         invalid_ids = all_ids - valid_ids
         if invalid_ids:
@@ -287,8 +305,11 @@ def filter_pipeline(
             bounds["min_lon"], bounds["min_lat"], bounds["max_lon"], bounds["max_lat"]
         )
     else:
-        osm_gdf = gpd.read_file(osm_polygons_path) if os.path.exists(osm_polygons_path) \
-                  else gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+        osm_gdf = (
+            gpd.read_file(osm_polygons_path)
+            if os.path.exists(osm_polygons_path)
+            else gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+        )
 
     osm_gdf = filter_osm_by_corine(osm_gdf, corine_gdf)
 
@@ -297,7 +318,16 @@ def filter_pipeline(
     if osm_gdf.empty:
         osm_gdf = gpd.GeoDataFrame(
             [],
-            columns=["osm_id", "name", "landuse", "natural", "leisure", "amenity", "building", "geometry"],
+            columns=[
+                "osm_id",
+                "name",
+                "landuse",
+                "natural",
+                "leisure",
+                "amenity",
+                "building",
+                "geometry",
+            ],
             geometry="geometry",
             crs="EPSG:4326",
         )
@@ -339,8 +369,11 @@ def filter_pipeline(
 
     # 9. Summarize if requested
     if summarize:
-        ArticleSummarizer(model_path=model_path, seed=seed, temperature=temperature)\
-            .process_file(article_contents_path, article_summaries_path)
+        ArticleSummarizer(
+            model_path=model_path or "Qwen3.6-27B-Q4_0.gguf",
+            seed=seed,
+            temperature=temperature,
+        ).process_file(article_contents_path, article_summaries_path)
 
     # 10. Regenerate distribution
     if not osm_gdf.empty and len(corine_gdf) > 0:
@@ -358,12 +391,16 @@ def filter_pipeline(
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Filter pipeline to exclude artificial surfaces from all data artifacts.")
+    parser = argparse.ArgumentParser(
+        description="Filter pipeline to exclude artificial surfaces from all data artifacts."
+    )
     parser.add_argument("--wiki-articles-path", default="data/wiki/wiki_articles.json")
     parser.add_argument("--article-contents-path", default="data/wiki/article_contents.json")
     parser.add_argument("--article-summaries-path", default="data/wiki/article_summaries.json")
     parser.add_argument("--osm-polygons-path", default="data/osm/osm_project_polygons.geojson")
-    parser.add_argument("--distribution-csv-path", default="data/distribution/osm_corine_distribution.csv")
+    parser.add_argument(
+        "--distribution-csv-path", default="data/distribution/osm_corine_distribution.csv"
+    )
     parser.add_argument("--map-articles-path", default="data/maps/corine_with_articles.html")
     parser.add_argument("--map-osm-path", default="data/maps/osm_corine_polygons.html")
     parser.add_argument("--refetch-osm", action="store_true")

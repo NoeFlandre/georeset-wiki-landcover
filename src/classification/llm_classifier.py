@@ -54,6 +54,7 @@ class LLMClassifier:
     def _get_llm(self):
         if self._llm is None:
             import llama_cpp
+
             self._llm = llama_cpp.Llama.from_pretrained(
                 repo_id="unsloth/Qwen3.6-27B-GGUF",
                 filename=self.model_path if self.model_path else "Qwen3.6-27B-Q4_0.gguf",
@@ -286,9 +287,7 @@ class LLMClassifier:
         task: str,
         text_source: str,
     ) -> PredictionResult:
-        user_prompt = self._build_user_prompt(
-            task, text_source, allowed_labels, {}, text
-        )
+        user_prompt = self._build_user_prompt(task, text_source, allowed_labels, {}, text)
         raw_response = None
         attempts: list[PredictionResult] = []
         try:
