@@ -2,6 +2,7 @@ import logging
 import os
 
 import geopandas as gpd
+from numpy.typing import NDArray
 
 from src.config import DataPaths
 from src.utils.json_io import write_json_atomic
@@ -74,7 +75,7 @@ class DataFetcher:
 
         return sample[["class_label", "geometry", "centroid", "code_18"]]
 
-    def get_bounds(self):
+    def get_bounds(self) -> tuple[float, float, float, float]:
         """
         Return the bounding box containing all the polygons
         """
@@ -82,10 +83,13 @@ class DataFetcher:
         if self.gdf is None:
             self.load_data()
 
-        bounds = self.gdf.total_bounds
-        return tuple(bounds)
+        if self.gdf is None:
+            raise RuntimeError("Dataset could not be loaded")
 
-    def save_bounds(self, output_path: str = DataPaths().corine_bounds):
+        bounds: NDArray = self.gdf.total_bounds
+        return tuple(float(value) for value in bounds)
+
+    def save_bounds(self, output_path: str = DataPaths().corine_bounds) -> None:
         """
         Save the dataset bounding box to a json file
         """

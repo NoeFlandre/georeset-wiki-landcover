@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from typing import Any
 
 import geopandas as gpd
 
@@ -26,8 +27,8 @@ def osm_allowed_labels() -> list[str]:
     return sorted(set(LANDUSE_VALUES) | set(NATURAL_VALUES))
 
 
-def osm_labels_from_row(row: Mapping) -> list[str]:
-    labels = []
+def osm_labels_from_row(row: Mapping[str, Any]) -> list[str]:
+    labels: list[str] = []
     landuse = row.get("landuse")
     natural = row.get("natural")
     if landuse in LANDUSE_VALUES:
@@ -37,6 +38,6 @@ def osm_labels_from_row(row: Mapping) -> list[str]:
     return labels
 
 
-def osm_label_from_row(row: Mapping) -> str | None:
+def osm_label_from_row(row: Mapping[str, Any]) -> str | None:
     labels = osm_labels_from_row(row)
     return labels[0] if labels else None

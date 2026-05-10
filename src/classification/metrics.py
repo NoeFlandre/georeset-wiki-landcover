@@ -1,7 +1,7 @@
 from src.contracts import MetricResult, PerLabelMetric
 
 
-def _safe_div(num, den):
+def _safe_div(num: float, den: float) -> float:
     return num / den if den else 0.0
 
 

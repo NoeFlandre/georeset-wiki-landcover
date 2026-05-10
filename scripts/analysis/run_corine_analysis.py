@@ -22,7 +22,7 @@ def run(
     corine_bounds_path: str = DataPaths().corine_bounds,
     refetch_osm: bool = True,
     chunk_size: int = 5000,
-):
+) -> None:
     fetcher = DataFetcher()
     corine = fetcher.load_data(exclude_artificial=True)
     if refetch_osm:

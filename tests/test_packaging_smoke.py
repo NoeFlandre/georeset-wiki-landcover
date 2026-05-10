@@ -44,6 +44,15 @@ def test_pre_commit_scopes_match_ci_quality_commands():
     assert "pass_filenames: false" in config
 
 
+def test_mypy_has_strict_overrides_for_typed_core_modules():
+    pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+
+    assert 'module = ["src.utils.*", "src.config", "src.contracts"]' in pyproject
+    assert 'module = ["src.classification.*"]' in pyproject
+    assert 'module = ["src.fetchers.*", "src.visualization.*", "scripts.*"]' in pyproject
+    assert "strict = true" in pyproject
+
+
 def test_production_outputs_use_atomic_file_helpers():
     forbidden_patterns = [
         re.compile(r"with open\([^\\n]+,\\s*[\"']w"),

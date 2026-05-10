@@ -2,6 +2,8 @@
 
 import logging
 import time
+from collections.abc import Iterator
+from typing import Any
 
 import geopandas as gpd
 import pandas as pd
@@ -123,7 +125,9 @@ class OSMFetcher:
         logger.info("Overpass transient failure (%s). Retrying in %ss", reason, wait_time)
         time.sleep(wait_time)
 
-    def _tiles(self, min_lon: float, min_lat: float, max_lon: float, max_lat: float):
+    def _tiles(
+        self, min_lon: float, min_lat: float, max_lon: float, max_lat: float
+    ) -> Iterator[tuple[float, float, float, float]]:
         south = min_lat
         while south < max_lat:
             north = min(south + self.tile_size, max_lat)
@@ -147,7 +151,7 @@ class OSMFetcher:
         out geom;
         """
 
-    def _elements_to_gdf(self, elements: list[dict]) -> gpd.GeoDataFrame:
+    def _elements_to_gdf(self, elements: list[dict[str, Any]]) -> gpd.GeoDataFrame:
         rows = []
         for element in elements:
             geometry = self._polygon_from_element(element)
@@ -172,7 +176,7 @@ class OSMFetcher:
             return self._empty_gdf()
         return gpd.GeoDataFrame(rows, columns=self._columns(), geometry="geometry", crs="EPSG:4326")
 
-    def _polygon_from_element(self, element: dict):
+    def _polygon_from_element(self, element: dict[str, Any]) -> Polygon | None:
         coords = [(point["lon"], point["lat"]) for point in element.get("geometry", [])]
         if len(coords) < 4 or coords[0] != coords[-1]:
             return None

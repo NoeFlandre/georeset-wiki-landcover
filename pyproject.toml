@@ -59,6 +59,21 @@ warn_unused_ignores = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["src.utils.*", "src.config", "src.contracts"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["src.classification.*"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["src.fetchers.*", "src.visualization.*", "scripts.*"]
+strict = false
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+disallow_any_generics = false
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 addopts = [

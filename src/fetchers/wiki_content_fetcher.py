@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class WikiContentFetcher:
     """Fetches Wikipedia article content using the extracts API."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.api_url = "https://fr.wikipedia.org/w/api.php"
         self.headers = {
             "User-Agent": "GeoResetPipeline/1.0 (https://geo-reset.sylvainlobry.com/; research@sylvainlobry.com) python-requests/2.33.1"
@@ -194,7 +194,7 @@ class WikiContentFetcher:
     def _save_content(output_path: str, content: dict[str, ArticleContent]) -> None:
         write_json_atomic(output_path, content, indent=2)
 
-    def fetch_from_file(self, input_path: str, output_path: str, batch_size: int = 50):
+    def fetch_from_file(self, input_path: str, output_path: str, batch_size: int = 50) -> None:
         """
         Read wiki_articles.json and fetch content for all articles.
 

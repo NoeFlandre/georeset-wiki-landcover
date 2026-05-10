@@ -58,7 +58,7 @@ class LLMClassifier:
         self.temperature = temperature
         self._client = client or LlamaChatClient(model_path=model_path, seed=seed)
 
-    def _get_llm(self):
+    def _get_llm(self) -> Any:
         if not isinstance(self._client, LlamaChatClient):
             raise TypeError("_get_llm is only available for the default LlamaChatClient")
         return self._client._get_llm()
