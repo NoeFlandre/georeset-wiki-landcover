@@ -21,12 +21,6 @@ the Hugging Face bucket instead of Git.
 - [`experiments/article_text_classification_spatial_confidence_v1_analysis.md`](experiments/article_text_classification_spatial_confidence_v1_analysis.md):
   verified analysis of spatial-confidence subset reevaluation.
 
-## Design And Brainstorming Notes
-
-- [`brainstorm/gpt5.5-pro.md`](brainstorm/gpt5.5-pro.md): historical external
-  research-advice note. Treat it as context, not as current run instructions or
-  an authoritative description of the current code layout.
-
 ## Diagrams
 
 - `diagrams/pipeline_diagram.tex`: TikZ source for the README diagram.
