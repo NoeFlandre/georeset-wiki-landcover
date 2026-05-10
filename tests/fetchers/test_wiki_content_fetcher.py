@@ -284,6 +284,29 @@ class TestWikiContentFetcher:
             os.unlink(output_path)
             os.unlink(input_path)
 
+    def test_fetch_from_file_uses_logging_not_print(self, tmp_path):
+        input_path = tmp_path / "articles.json"
+        output_path = tmp_path / "contents.json"
+        input_path.write_text(json.dumps([{"pageid": 100}]))
+
+        with (
+            patch.object(
+                self.fetcher,
+                "get_articles_content",
+                return_value={
+                    100: {
+                        "title": "A",
+                        "content": "Content A",
+                        "url": "https://fr.wikipedia.org/wiki/A",
+                    }
+                },
+            ),
+            patch("builtins.print") as print_mock,
+        ):
+            self.fetcher.fetch_from_file(str(input_path), str(output_path), batch_size=1)
+
+        print_mock.assert_not_called()
+
     def test_fetch_from_file_deduplicates_input_pageids(self):
         """Should fetch duplicate page IDs once and write one content entry."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:

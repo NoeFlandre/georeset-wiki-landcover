@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import time
 from typing import cast
@@ -7,6 +8,8 @@ import requests
 
 from src.contracts import ArticleContent, ArticleMeta
 from src.utils.json_io import write_json_atomic
+
+logger = logging.getLogger(__name__)
 
 
 class WikiContentFetcher:
@@ -221,12 +224,19 @@ class WikiContentFetcher:
             # Skip pageids already fetched with non-empty content
             batch_to_fetch = [pid for pid in batch if str(pid) not in all_content]
             if not batch_to_fetch:
-                print(
-                    f"Articles {i + 1} to {i + len(batch)} of {len(pageids)}: already fetched, skipping"
+                logger.info(
+                    "Articles %s to %s of %s: already fetched, skipping",
+                    i + 1,
+                    i + len(batch),
+                    len(pageids),
                 )
                 continue
-            print(
-                f"Fetching articles {i + 1} to {i + len(batch)} of {len(pageids)} ({len(batch_to_fetch)} new)..."
+            logger.info(
+                "Fetching articles %s to %s of %s (%s new)...",
+                i + 1,
+                i + len(batch),
+                len(pageids),
+                len(batch_to_fetch),
             )
             batch_content = self.get_articles_content(batch_to_fetch)
             sane_batch_content = self._sanitize_existing_content(batch_content)
@@ -235,14 +245,18 @@ class WikiContentFetcher:
 
             # Checkpoint after every batch
             self._save_content(output_path, all_content)
-            print(
-                f"  Checkpoint saved ({len(all_content)} total, {new_count} new) - batch {i // batch_size + 1}"
+            logger.info(
+                "Checkpoint saved (%s total, %s new) - batch %s",
+                len(all_content),
+                new_count,
+                i // batch_size + 1,
             )
 
         self._save_content(output_path, all_content)
-        print(f"Saved {len(all_content)} articles ({new_count} new) to {output_path}")
+        logger.info("Saved %s articles (%s new) to %s", len(all_content), new_count, output_path)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     fetcher = WikiContentFetcher()
     fetcher.fetch_from_file("data/wiki/wiki_articles.json", "data/wiki/article_contents.json")

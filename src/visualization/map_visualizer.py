@@ -1,9 +1,12 @@
 """OSM map visualizer for Corine Land Cover polygons."""
 
+import logging
+
 import folium
 import geopandas as gpd
 
 DEFAULT_MAP_LOCATION = [48.5, 7.5]
+logger = logging.getLogger(__name__)
 
 
 class MapVisualizer:
@@ -105,22 +108,23 @@ if __name__ == "__main__":
 
     from src.fetchers.data_fetcher import DataFetcher
 
-    print("Loading Wikipedia articles...")
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logger.info("Loading Wikipedia articles...")
     articles_path = "data/wiki/wiki_articles.json"
     if os.path.exists(articles_path):
         with open(articles_path) as f:
             articles = json.load(f)
-        print(f"Loaded {len(articles)} articles.")
+        logger.info("Loaded %s articles.", len(articles))
     else:
         articles = []
-        print("No articles found.")
+        logger.info("No articles found.")
 
-    print("Loading Alsace polygons...")
+    logger.info("Loading Alsace polygons...")
     fetcher = DataFetcher()
     gdf = fetcher.load_data(exclude_artificial=True)
-    print(f"Loaded {len(gdf)} polygons.")
+    logger.info("Loaded %s polygons.", len(gdf))
 
-    print("Generating map...")
+    logger.info("Generating map...")
     viz = MapVisualizer(gdf)
     viz.save_map("data/maps/map.html", articles=articles)
-    print("Map saved to data/map.html")
+    logger.info("Map saved to data/map.html")

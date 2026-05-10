@@ -189,6 +189,12 @@ class TestWikiFetcher:
         assert isinstance(articles, list)
         assert len(articles) == 0
 
+    def test_sleep_before_retry_uses_logging_not_print(self):
+        with patch("builtins.print") as print_mock:
+            self.fetcher._sleep_before_retry("Rate limited", attempt=0, scale=1)
+
+        print_mock.assert_not_called()
+
     @patch("requests.get")
     def test_get_articles_in_bounds_uses_bbox_method(self, mock_get):
         """get_articles_in_bounds should use gsbbox internally via tiling."""
@@ -208,6 +214,21 @@ class TestWikiFetcher:
         # Verify at least one call used gsbbox
         calls_with_bbox = [c for c in mock_get.call_args_list if "gsbbox" in str(c)]
         assert len(calls_with_bbox) > 0
+
+    @patch("requests.get")
+    def test_get_articles_in_bounds_uses_logging_not_print(self, mock_get):
+        mock_get.return_value.headers = {"Content-Type": "application/json"}
+        mock_get.return_value.json.return_value = {"query": {"geosearch": []}}
+
+        with patch("builtins.print") as print_mock:
+            self.fetcher.get_articles_in_bounds(
+                min_lon=7.0,
+                min_lat=48.0,
+                max_lon=7.05,
+                max_lat=48.05,
+            )
+
+        print_mock.assert_not_called()
 
     @patch("requests.get")
     def test_get_articles_in_bounds_with_osm_filter(self, mock_get):

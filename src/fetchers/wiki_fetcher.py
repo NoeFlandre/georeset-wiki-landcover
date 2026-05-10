@@ -1,3 +1,4 @@
+import logging
 import time
 from collections.abc import Callable
 from typing import Any, cast
@@ -5,6 +6,8 @@ from typing import Any, cast
 import requests
 
 from src.contracts import ArticleMeta
+
+logger = logging.getLogger(__name__)
 
 
 class WikiFetchError(RuntimeError):
@@ -109,8 +112,14 @@ class WikiFetcher:
                 tile_articles = self.get_articles_in_bbox(
                     north=north, west=west, south=lat, east=east
                 )
-                print(
-                    f"Tile {tile_count}: ({lat:.4f}, {lon:.4f}) to ({north:.4f}, {east:.4f}) -> {len(tile_articles)} articles"
+                logger.info(
+                    "Tile %s: (%.4f, %.4f) to (%.4f, %.4f) -> %s articles",
+                    tile_count,
+                    lat,
+                    lon,
+                    north,
+                    east,
+                    len(tile_articles),
                 )
                 for article in tile_articles:
                     pageid = article.get("pageid")
@@ -147,7 +156,7 @@ class WikiFetcher:
                 lon += lon_step
             lat += lat_step
 
-        print(f"Made {tile_count} API calls, found {len(articles)} unique articles")
+        logger.info("Made %s API calls, found %s unique articles", tile_count, len(articles))
 
         return articles
 
@@ -205,7 +214,7 @@ class WikiFetcher:
 
     def _sleep_before_retry(self, message: str, attempt: int, scale: int) -> None:
         wait_time = (2**attempt) * scale
-        print(f"  {message}. Retrying in {wait_time}s...")
+        logger.info("%s. Retrying in %ss", message, wait_time)
         time.sleep(wait_time)
 
 
@@ -214,12 +223,13 @@ if __name__ == "__main__":
 
     from src.fetchers.data_fetcher import DataFetcher
 
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     fetcher = WikiFetcher()
 
     with open("data/corine/bounds.json") as f:
         bounds = json.load(f)
 
-    print("Fetching Wikipedia articles for Alsace region...")
+    logger.info("Fetching Wikipedia articles for Alsace region...")
 
     # Load polygons for filtering
     data_fetcher = DataFetcher()
@@ -252,7 +262,7 @@ if __name__ == "__main__":
         polygon_filter=polygon_filter,
         osm_polygon_filter=osm_polygon_filter,
     )
-    print(f"Found {len(articles)} unique articles")
+    logger.info("Found %s unique articles", len(articles))
 
     # Add URL to each article
     for article in articles:
@@ -263,4 +273,4 @@ if __name__ == "__main__":
     output_path = "data/wiki/wiki_articles.json"
     with open(output_path, "w") as f:
         json.dump(articles, f, indent=2)
-    print(f"Saved to {output_path}")
+    logger.info("Saved to %s", output_path)

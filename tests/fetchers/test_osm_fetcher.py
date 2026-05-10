@@ -139,6 +139,18 @@ def test_fetch_polygons_retries_rate_limited_tiles():
     sleep.assert_called_once()
 
 
+def test_sleep_before_retry_uses_logging_not_print():
+    fetcher = OSMFetcher(tile_size=10)
+
+    with (
+        patch("src.fetchers.osm_fetcher.time.sleep"),
+        patch("builtins.print") as print_mock,
+    ):
+        fetcher._sleep_before_retry(429, attempt=0)
+
+    print_mock.assert_not_called()
+
+
 def test_fetch_polygons_retries_transient_server_errors():
     fetcher = OSMFetcher(tile_size=10, retries=2)
 

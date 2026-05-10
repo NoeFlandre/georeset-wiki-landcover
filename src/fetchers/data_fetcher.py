@@ -1,9 +1,11 @@
 import json
+import logging
 import os
 
 import geopandas as gpd
 
 WGS84 = "EPSG:4326"
+logger = logging.getLogger(__name__)
 
 
 class DataFetcher:
@@ -24,7 +26,7 @@ class DataFetcher:
         if not os.path.exists(self.data_path):
             raise FileNotFoundError(f"Dataset not found at {self.data_path}")
 
-        print(f"Loading data from {self.data_path} ...")
+        logger.info("Loading data from %s", self.data_path)
         raw_gdf = gpd.read_file(self.data_path)
         if "code_18" not in raw_gdf.columns:
             raise ValueError(f"Dataset at {self.data_path} must contain a code_18 column")
@@ -96,15 +98,16 @@ class DataFetcher:
 
         with open(output_path, "w") as f:
             json.dump(data, f, indent=4)
-        print(f"Bounds saved to {output_path}")
+        logger.info("Bounds saved to %s", output_path)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     fetcher = DataFetcher()
     try:
         sample = fetcher.get_sample_polygons(n=3, exclude_artificial=True)
-        print("Succesfully sampled polygons:")
-        print(sample[["class_label", "centroid", "code_18"]])
+        logger.info("Succesfully sampled polygons:")
+        logger.info("%s", sample[["class_label", "centroid", "code_18"]])
         fetcher.save_bounds()
     except Exception as e:
-        print(f"Error: {e}")
+        logger.error("Error: %s", e)

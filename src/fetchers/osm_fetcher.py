@@ -1,11 +1,14 @@
 """Fetch polygon features from OpenStreetMap within a bounding box."""
 
+import logging
 import time
 
 import geopandas as gpd
 import pandas as pd
 import requests
 from shapely.geometry import Polygon
+
+logger = logging.getLogger(__name__)
 
 LANDUSE_VALUES = (
     "farmland",
@@ -117,7 +120,7 @@ class OSMFetcher:
 
     def _sleep_before_retry(self, reason: object, attempt: int) -> None:
         wait_time = 2**attempt
-        print(f"  Overpass transient failure ({reason}). Retrying in {wait_time}s...")
+        logger.info("Overpass transient failure (%s). Retrying in %ss", reason, wait_time)
         time.sleep(wait_time)
 
     def _tiles(self, min_lon: float, min_lat: float, max_lon: float, max_lat: float):
