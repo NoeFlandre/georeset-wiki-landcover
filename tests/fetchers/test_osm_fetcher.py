@@ -95,6 +95,17 @@ def test_fetch_polygons_tiles_large_bounds():
     assert post.call_count == 9
 
 
+def test_fetch_polygons_empty_bounds_returns_empty_geodataframe():
+    fetcher = OSMFetcher(tile_size=10)
+
+    with patch("src.fetchers.osm_fetcher.requests.post") as post:
+        gdf = fetcher.fetch_polygons(min_lon=7.0, min_lat=48.0, max_lon=7.0, max_lat=49.0)
+
+    assert gdf.empty
+    assert gdf.crs == "EPSG:4326"
+    post.assert_not_called()
+
+
 def test_fetch_polygons_retries_rate_limited_tiles():
     fetcher = OSMFetcher(tile_size=10)
 

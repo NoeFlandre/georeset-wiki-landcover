@@ -4,6 +4,7 @@ import os
 
 import geopandas as gpd
 import pytest
+from shapely.geometry import Point
 
 from src.fetchers.data_fetcher import DataFetcher
 
@@ -26,6 +27,31 @@ class TestDataFetcher:
         fetcher = DataFetcher(data_path="nonexistent/path.shp")
         with pytest.raises(FileNotFoundError):
             fetcher.load_data()
+
+    def test_load_data_raises_clear_error_when_code_column_missing(self, tmp_path):
+        data_path = tmp_path / "missing_code.geojson"
+        gdf = gpd.GeoDataFrame({"name": ["A"]}, geometry=[Point(7.0, 48.0)], crs="EPSG:4326")
+        gdf.to_file(data_path, driver="GeoJSON")
+
+        fetcher = DataFetcher(data_path=str(data_path))
+
+        with pytest.raises(ValueError, match="code_18"):
+            fetcher.load_data()
+
+    def test_load_data_reprojects_to_wgs84(self, tmp_path):
+        data_path = tmp_path / "lambert.geojson"
+        gdf = gpd.GeoDataFrame(
+            {"code_18": ["311"]},
+            geometry=[Point(1_040_000, 6_840_000)],
+            crs="EPSG:2154",
+        )
+        gdf.to_file(data_path, driver="GeoJSON")
+
+        fetcher = DataFetcher(data_path=str(data_path))
+
+        loaded = fetcher.load_data()
+
+        assert loaded.crs == "EPSG:4326"
 
     @requires_data
     def test_get_sample_polygons_returns_geodataframe(self):

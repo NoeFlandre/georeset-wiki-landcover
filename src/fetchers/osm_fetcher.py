@@ -57,6 +57,8 @@ class OSMFetcher:
         self, min_lon: float, min_lat: float, max_lon: float, max_lat: float
     ) -> gpd.GeoDataFrame:
         """Return OSM polygon ways inside bounds matching CORINE order."""
+        if min_lon >= max_lon or min_lat >= max_lat:
+            return self._empty_gdf()
         frames = [
             self._fetch_tile(west, south, east, north)
             for west, south, east, north in self._tiles(min_lon, min_lat, max_lon, max_lat)

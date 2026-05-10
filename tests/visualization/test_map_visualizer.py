@@ -35,6 +35,19 @@ class TestMapVisualizer:
         m = visualizer.plot_polygons()
         assert isinstance(m, folium.Map)
 
+    def test_plot_polygons_handles_empty_geodataframe(self):
+        """Empty geospatial inputs should still produce a usable base map."""
+        import folium
+
+        empty = gpd.GeoDataFrame([], columns=["geometry"], geometry="geometry", crs="EPSG:4326")
+        visualizer = MapVisualizer(empty)
+
+        m = visualizer.plot_polygons()
+
+        assert isinstance(m, folium.Map)
+        html = m._repr_html_()
+        assert "leaflet" in html.lower()
+
     def test_save_map_creates_html_file(self, tmp_path):
         """Should save the map as an HTML file."""
         output_path = tmp_path / "test_map.html"
@@ -90,6 +103,26 @@ class TestMapVisualizer:
         html = m._repr_html_()
         assert "CORINE polygons" in html
         assert "OSM polygons" in html
+
+    def test_plot_corine_with_osm_polygons_handles_empty_corine_layer(self):
+        import folium
+
+        empty_corine = gpd.GeoDataFrame(
+            [], columns=["code_18", "geometry"], geometry="geometry", crs="EPSG:4326"
+        )
+        osm_gdf = gpd.GeoDataFrame(
+            {
+                "osm_id": ["way/1"],
+                "geometry": [Polygon([(7.02, 48.02), (7.08, 48.02), (7.08, 48.08), (7.02, 48.08)])],
+            },
+            crs="EPSG:4326",
+        )
+        visualizer = MapVisualizer(empty_corine)
+
+        m = visualizer.plot_corine_with_osm_polygons(osm_gdf)
+
+        assert isinstance(m, folium.Map)
+        assert "OSM polygons" in m._repr_html_()
 
     def test_plot_corine_with_osm_polygons_legend_has_counts(self):
         osm_gdf = gpd.GeoDataFrame(

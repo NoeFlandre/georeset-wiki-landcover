@@ -3,6 +3,8 @@ import os
 
 import geopandas as gpd
 
+WGS84 = "EPSG:4326"
+
 
 class DataFetcher:
     """
@@ -24,6 +26,13 @@ class DataFetcher:
 
         print(f"Loading data from {self.data_path} ...")
         raw_gdf = gpd.read_file(self.data_path)
+        if "code_18" not in raw_gdf.columns:
+            raise ValueError(f"Dataset at {self.data_path} must contain a code_18 column")
+        if raw_gdf.crs is None:
+            raw_gdf = raw_gdf.set_crs(WGS84)
+        elif raw_gdf.crs != WGS84:
+            raw_gdf = raw_gdf.to_crs(WGS84)
+        raw_gdf["code_18"] = raw_gdf["code_18"].astype(str)
         self.gdf = (
             raw_gdf[~raw_gdf["code_18"].str.startswith("1")].copy()
             if exclude_artificial
