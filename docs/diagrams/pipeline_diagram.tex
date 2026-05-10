@@ -91,7 +91,7 @@
 \node[sectionlabel=filtergray, above=0.15cm of clcfilter] {Preprocessing};
 
 \node[process=filtergray, right=1.15cm of osmfilter] (filterpipe)
-  {\textbf{Wiki Spatial Filter}\\\relax Keep articles in CLC OR OSM\\\relax spatial join (within)};
+  {\textbf{Wiki Spatial Filter}\\\relax Keep articles in CLC OR OSM\\\relax spatial join (intersects)};
 
 \node[process=wikigreen, below=0.38cm of filterpipe] (summaries)
   {\textbf{Summaries}\\\relax Qwen3.6-27B-Q4\_0.gguf\\\relax temp=0.7\\\relax summary: with place name\\\relax summary\_no\_place};

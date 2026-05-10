@@ -324,6 +324,34 @@ class TestFilterArticlesStep:
         assert len(result) == 1
         assert result[0]["pageid"] == 3
 
+    def test_article_on_corine_boundary_is_kept_by_intersects_policy(self, osm_gdf):
+        corine = gpd.GeoDataFrame(
+            {
+                "code_18": ["211", "311"],
+                "geometry": [box(7.0, 48.0, 7.1, 48.1), box(7.1, 48.0, 7.2, 48.1)],
+            },
+            crs="EPSG:4326",
+        )
+        articles = [{"pageid": 12, "lat": 48.05, "lon": 7.1}]
+
+        result = filter_articles_by_polygons(articles, corine, osm_gdf.iloc[:0].copy())
+
+        assert [article["pageid"] for article in result] == [12]
+
+    def test_article_on_osm_boundary_is_kept_by_intersects_policy(self, corine_gdf):
+        osm = gpd.GeoDataFrame(
+            {
+                "osm_id": ["way/1"],
+                "geometry": [box(8.0, 48.0, 8.1, 48.1)],
+            },
+            crs="EPSG:4326",
+        )
+        articles = [{"pageid": 13, "lat": 48.05, "lon": 8.0}]
+
+        result = filter_articles_by_polygons(articles, corine_gdf.iloc[:0].copy(), osm)
+
+        assert [article["pageid"] for article in result] == [13]
+
     def test_article_in_neither_is_dropped(self, corine_gdf, osm_gdf):
         articles = [{"pageid": 4, "lat": 50.0, "lon": 10.0}]
         result = filter_articles_by_polygons(articles, corine_gdf, osm_gdf)

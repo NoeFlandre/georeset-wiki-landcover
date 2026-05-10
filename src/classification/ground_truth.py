@@ -3,6 +3,7 @@ from shapely.geometry import Point
 
 from src.classification.labels import osm_labels_from_row
 from src.contracts import ArticleMeta
+from src.spatial.policy import POINT_POLYGON_JOIN_PREDICATE
 
 
 def _articles_to_points(articles: list[ArticleMeta]) -> gpd.GeoDataFrame:
@@ -38,7 +39,12 @@ def build_corine_ground_truth(
     corine = _to_wgs84(corine_gdf).copy()
     corine = corine[~corine["code_18"].astype(str).str.startswith("1")].copy()
     corine["label"] = corine["code_18"].astype(str).str[:2]
-    joined = gpd.sjoin(points, corine[["label", "geometry"]], how="inner", predicate="intersects")
+    joined = gpd.sjoin(
+        points,
+        corine[["label", "geometry"]],
+        how="inner",
+        predicate=POINT_POLYGON_JOIN_PREDICATE,
+    )
     result = {}
     for pageid, group in joined.groupby("pageid", sort=False):
         distinct = sorted(set(group["label"].astype(str)))
@@ -65,7 +71,12 @@ def build_osm_ground_truth(
         return {}
     osm = osm.explode("labels")
     osm = osm.rename(columns={"labels": "label"})
-    joined = gpd.sjoin(points, osm[["label", "geometry"]], how="inner", predicate="intersects")
+    joined = gpd.sjoin(
+        points,
+        osm[["label", "geometry"]],
+        how="inner",
+        predicate=POINT_POLYGON_JOIN_PREDICATE,
+    )
     result = {}
     for pageid, group in joined.groupby("pageid", sort=False):
         labels = sorted(set(group["label"].astype(str)))

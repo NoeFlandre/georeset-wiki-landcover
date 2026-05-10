@@ -29,6 +29,7 @@ from src.fetchers.data_fetcher import DataFetcher
 from src.fetchers.osm_fetcher import OSMFetcher
 from src.fetchers.wiki_content_fetcher import WikiContentFetcher
 from src.fetchers.wiki_fetcher import WikiFetcher
+from src.spatial.policy import POINT_POLYGON_JOIN_PREDICATE
 from src.utils.json_io import write_csv_atomic, write_json_atomic
 from src.visualization.map_visualizer import MapVisualizer
 
@@ -46,7 +47,13 @@ def filter_articles_by_polygons(
     corine_gdf: gpd.GeoDataFrame,
     osm_gdf: gpd.GeoDataFrame,
 ) -> list[ArticleMeta]:
-    """Keep articles inside filtered CORINE OR filtered OSM. Preserves order, deduplicates by pageid."""
+    """Keep articles intersecting filtered CORINE OR filtered OSM point/polygon boundaries.
+
+    The project uses the same point-polygon predicate for filtering and
+    classification ground truth. Boundary points are retained here, then
+    downstream ground-truth builders resolve ambiguity by excluding CORINE
+    pageids with multiple distinct level-2 labels.
+    """
     if not articles:
         return []
 
@@ -80,11 +87,21 @@ def filter_articles_by_polygons(
     in_osm = set()
 
     if not corine_4326.empty:
-        joined = gpd.sjoin(points_gdf, corine_4326, how="inner", predicate="within")
+        joined = gpd.sjoin(
+            points_gdf,
+            corine_4326,
+            how="inner",
+            predicate=POINT_POLYGON_JOIN_PREDICATE,
+        )
         in_corine = set(joined["kept_pos"].tolist())
 
     if not osm_4326.empty:
-        joined = gpd.sjoin(points_gdf, osm_4326, how="inner", predicate="within")
+        joined = gpd.sjoin(
+            points_gdf,
+            osm_4326,
+            how="inner",
+            predicate=POINT_POLYGON_JOIN_PREDICATE,
+        )
         in_osm = set(joined["kept_pos"].tolist())
 
     valid_positions = in_corine | in_osm
