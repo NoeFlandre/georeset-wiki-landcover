@@ -21,7 +21,12 @@ from georeset.classification.text_sources import (
 )
 from georeset.classification.types import PredictionResult
 from georeset.config import DataPaths, ModelSettings
-from georeset.contracts import ArticleMeta, ClassificationTarget, MetricResult
+from georeset.contracts import (
+    ArticleMeta,
+    ClassificationTarget,
+    MultiLabelMetricResult,
+    SingleLabelMetricResult,
+)
 from georeset.utils.json_io import write_json_atomic
 
 logger = logging.getLogger(__name__)
@@ -147,7 +152,7 @@ def compute_metrics(
     y_true: dict[str, ClassificationTarget],
     y_pred: dict[str, ClassificationTarget],
     allowed_labels: list[str],
-) -> tuple[MetricResult, list[str]]:
+) -> tuple[SingleLabelMetricResult | MultiLabelMetricResult, list[str]]:
     """Returns (metrics_dict, labels_evaluated)."""
     eval_labels = sorted(
         {v for vals in y_true.values() for v in (vals if isinstance(vals, list) else [vals])}

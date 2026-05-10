@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Any, Literal, TypedDict
 
+from typing_extensions import NotRequired
+
 ClassificationTask = Literal["corine_level2", "osm"]
 ParseStatus = Literal["ok", "error", "ambiguous"]
 ClassificationTarget = str | list[str]
@@ -53,9 +55,43 @@ class PerLabelMetric(TypedDict):
     f1: float
 
 
-class MetricResult(TypedDict, total=False):
-    n: int
+class SingleLabelMetricResult(TypedDict):
     n_eligible: int
+    n_predicted_ok: int
+    n_parse_error: int
+    coverage: float
+    accuracy: float
+    macro_precision: float
+    macro_recall: float
+    macro_f1: float
+    per_label: dict[str, PerLabelMetric]
+    task: NotRequired[str]
+    text_source: NotRequired[str]
+    allowed_labels: NotRequired[list[str]]
+    labels_evaluated: NotRequired[list[str]]
+
+
+class MultiLabelMetricResult(TypedDict):
+    n_eligible: int
+    n_predicted_ok: int
+    n_parse_error: int
+    coverage: float
+    exact_match_accuracy: float
+    micro_precision: float
+    micro_recall: float
+    micro_f1: float
+    macro_precision: float
+    macro_recall: float
+    macro_f1: float
+    per_label: dict[str, PerLabelMetric]
+    task: NotRequired[str]
+    text_source: NotRequired[str]
+    allowed_labels: NotRequired[list[str]]
+    labels_evaluated: NotRequired[list[str]]
+
+
+class SpatialSubsetMetricResult(TypedDict, total=False):
+    n: int
     n_predicted_ok: int
     n_parse_error: int
     coverage: float
@@ -81,11 +117,6 @@ class MetricResult(TypedDict, total=False):
     delta_vs_majority_accuracy: float
     delta_vs_majority_balanced_accuracy: float
     delta_vs_majority_macro_f1: float
-    per_label: dict[str, PerLabelMetric]
-    task: str
-    text_source: str
-    allowed_labels: list[str]
-    labels_evaluated: list[str]
 
 
 class PredictionResult(TypedDict, total=False):

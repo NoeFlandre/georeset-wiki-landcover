@@ -1,4 +1,4 @@
-from georeset.contracts import MetricResult, PerLabelMetric
+from georeset.contracts import MultiLabelMetricResult, PerLabelMetric, SingleLabelMetricResult
 
 
 def _safe_div(num: float, den: float) -> float:
@@ -7,7 +7,7 @@ def _safe_div(num: float, den: float) -> float:
 
 def single_label_metrics(
     y_true: dict[str, str], y_pred: dict[str, str], labels: list[str]
-) -> MetricResult:
+) -> SingleLabelMetricResult:
     n_eligible = len(y_true)
     evaluated = {k: v for k, v in y_pred.items() if k in y_true}
     evaluated_n = len(evaluated)
@@ -52,7 +52,7 @@ def single_label_metrics(
 
 def multilabel_metrics(
     y_true: dict[str, list[str]], y_pred: dict[str, list[str]], labels: list[str]
-) -> MetricResult:
+) -> MultiLabelMetricResult:
     n_eligible = len(y_true)
     evaluated = {k: v for k, v in y_pred.items() if k in y_true}
     evaluated_n = len(evaluated)

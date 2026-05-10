@@ -15,7 +15,7 @@ import pandas as pd
 
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.classification.metrics import multilabel_metrics, single_label_metrics
-from georeset.contracts import MetricResult, PerLabelMetric
+from georeset.contracts import MultiLabelMetricResult, PerLabelMetric, SpatialSubsetMetricResult
 from georeset.utils.json_io import write_json_atomic, write_text_atomic
 
 EXPERIMENT_ID = "article_text_classification_spatial_confidence_v1"
@@ -109,16 +109,25 @@ def _weighted_from_per_label(
 
 def _single_metrics(
     records: pd.DataFrame, labels: list[str]
-) -> tuple[MetricResult, list[dict[str, Any]]]:
+) -> tuple[SpatialSubsetMetricResult, list[dict[str, Any]]]:
     y_true = dict(zip(records["pageid"], records["target"].astype(str), strict=False))
     ok_records = records[records["parse_status"] == "ok"]
     y_pred = dict(zip(ok_records["pageid"], ok_records["prediction"].astype(str), strict=False))
-    metrics = single_label_metrics(y_true, y_pred, labels)
-    metrics["n"] = metrics.pop("n_eligible")
+    base_metrics = single_label_metrics(y_true, y_pred, labels)
+    metrics: SpatialSubsetMetricResult = {
+        "n": base_metrics["n_eligible"],
+        "n_predicted_ok": base_metrics["n_predicted_ok"],
+        "n_parse_error": base_metrics["n_parse_error"],
+        "coverage": base_metrics["coverage"],
+        "accuracy": base_metrics["accuracy"],
+        "macro_precision": base_metrics["macro_precision"],
+        "macro_recall": base_metrics["macro_recall"],
+        "macro_f1": base_metrics["macro_f1"],
+    }
     metrics["balanced_accuracy"] = metrics["macro_recall"]
-    metrics["weighted_precision"] = _weighted_from_per_label(metrics["per_label"], "precision")
-    metrics["weighted_recall"] = _weighted_from_per_label(metrics["per_label"], "recall")
-    metrics["weighted_f1"] = _weighted_from_per_label(metrics["per_label"], "f1")
+    metrics["weighted_precision"] = _weighted_from_per_label(base_metrics["per_label"], "precision")
+    metrics["weighted_recall"] = _weighted_from_per_label(base_metrics["per_label"], "recall")
+    metrics["weighted_f1"] = _weighted_from_per_label(base_metrics["per_label"], "f1")
 
     majority_label = Counter(y_true.values()).most_common(1)[0][0] if y_true else None
     majority_pred = dict.fromkeys(y_true, majority_label) if majority_label else {}
@@ -140,7 +149,7 @@ def _single_metrics(
             "recall": values["recall"],
             "f1": values["f1"],
         }
-        for label, values in metrics.pop("per_label").items()
+        for label, values in base_metrics["per_label"].items()
     ]
     return metrics, per_class
 
@@ -154,15 +163,27 @@ def _label_universe(records: pd.DataFrame) -> list[str]:
     return sorted(labels)
 
 
-def _multilabel_metrics(records: pd.DataFrame, labels: list[str]) -> MetricResult:
+def _multilabel_metrics(records: pd.DataFrame, labels: list[str]) -> SpatialSubsetMetricResult:
     y_true = {row.pageid: [str(v) for v in row.target] for row in records.itertuples()}
     ok_records = records[records["parse_status"] == "ok"]
     y_pred = {
         row.pageid: [str(v) for v in row.prediction] if isinstance(row.prediction, list) else []
         for row in ok_records.itertuples()
     }
-    metrics = multilabel_metrics(y_true, y_pred, labels)
-    metrics["n"] = metrics.pop("n_eligible")
+    base_metrics: MultiLabelMetricResult = multilabel_metrics(y_true, y_pred, labels)
+    metrics: SpatialSubsetMetricResult = {
+        "n": base_metrics["n_eligible"],
+        "n_predicted_ok": base_metrics["n_predicted_ok"],
+        "n_parse_error": base_metrics["n_parse_error"],
+        "coverage": base_metrics["coverage"],
+        "exact_match_accuracy": base_metrics["exact_match_accuracy"],
+        "micro_precision": base_metrics["micro_precision"],
+        "micro_recall": base_metrics["micro_recall"],
+        "micro_f1": base_metrics["micro_f1"],
+        "macro_precision": base_metrics["macro_precision"],
+        "macro_recall": base_metrics["macro_recall"],
+        "macro_f1": base_metrics["macro_f1"],
+    }
     jaccards = []
     hamming_errors = 0
     for pageid, true_values in y_true.items():
@@ -185,7 +206,6 @@ def _multilabel_metrics(records: pd.DataFrame, labels: list[str]) -> MetricResul
     empty = multilabel_metrics(y_true, empty_pred, labels)
     metrics["majority_labelset_exact_match_accuracy"] = majority["exact_match_accuracy"]
     metrics["empty_set_exact_match_accuracy"] = empty["exact_match_accuracy"]
-    metrics.pop("per_label", None)
     return metrics
 
 

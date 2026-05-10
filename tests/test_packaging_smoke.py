@@ -1,6 +1,7 @@
 import importlib
 import re
 from pathlib import Path
+from typing import get_type_hints
 
 
 def test_dockerfile_includes_runtime_cli_directories():
@@ -89,6 +90,32 @@ def test_georeset_package_imports_and_src_compatibility_shims_work():
     assert importlib.import_module("georeset.classification.runner")
     assert importlib.import_module("src.config")
     assert importlib.import_module("src.classification.runner")
+
+
+def test_metric_contracts_are_split_by_metric_family():
+    contracts = importlib.import_module("georeset.contracts")
+    metrics_module = importlib.import_module("georeset.classification.metrics")
+    spatial_eval = importlib.import_module(
+        "scripts.analysis.evaluate_predictions_with_spatial_confidence"
+    )
+
+    assert hasattr(contracts, "SingleLabelMetricResult")
+    assert hasattr(contracts, "MultiLabelMetricResult")
+    assert hasattr(contracts, "SpatialSubsetMetricResult")
+    assert not hasattr(contracts, "MetricResult")
+
+    assert (
+        get_type_hints(metrics_module.single_label_metrics)["return"]
+        is contracts.SingleLabelMetricResult
+    )
+    assert (
+        get_type_hints(metrics_module.multilabel_metrics)["return"]
+        is contracts.MultiLabelMetricResult
+    )
+    assert (
+        get_type_hints(spatial_eval._single_metrics)["return"].__args__[0]
+        is contracts.SpatialSubsetMetricResult
+    )
 
 
 def test_classify_articles_wrapper_does_not_mutate_runner_globals():
