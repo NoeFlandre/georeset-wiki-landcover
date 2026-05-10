@@ -14,6 +14,7 @@ OUTPUT_DIR="${GEORESET_CLASSIFICATION_OUTPUT_DIR:-data/classification}"
 OUTPUT_PREFIX="${OUTPUT_DIR}/${TASK}_${TEXT_SOURCE}"
 JOB_SCRIPT="scripts/cluster/run_classification_job.sh"
 AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"
+OAR_PROPERTIES="${G5K_OAR_PROPERTIES:-gpu_mem>=32000}"
 
 case "${TASK}:${TEXT_SOURCE}" in
   *[!A-Za-z0-9_:.-]*)
@@ -66,7 +67,7 @@ SUBMIT_OUTPUT="$(
     ssh ${SITE} 'cd \"${REMOTE_PROJECT_DIR}\" && chmod +x \"${JOB_SCRIPT}\" && \
       oarsub -q production \
         -l host=1/gpu=1,walltime=20:00:00 \
-        -p \"gpu_mem>=32000\" \
+        -p \"${OAR_PROPERTIES}\" \
         -O OAR_%jobid%.out \
         -E OAR_%jobid%.err \
         \"env GEORESET_CLASSIFICATION_TASK=\\\"${TASK}\\\" \

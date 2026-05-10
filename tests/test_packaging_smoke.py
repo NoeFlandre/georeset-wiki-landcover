@@ -292,6 +292,13 @@ def test_cluster_classification_submit_avoids_sed_generated_wrappers():
     assert "env GEORESET_CLASSIFICATION_TASK=" in script
 
 
+def test_cluster_classification_submit_allows_oar_property_override():
+    script = Path("scripts/cluster/submit_classification.sh").read_text()
+
+    assert 'OAR_PROPERTIES="${G5K_OAR_PROPERTIES:-gpu_mem>=32000}"' in script
+    assert '-p \\"${OAR_PROPERTIES}\\"' in script
+
+
 def test_classification_sync_interval_defaults_to_admin_safe_value_and_supports_once():
     script = Path("scripts/cluster/sync_classification.sh").read_text()
 
