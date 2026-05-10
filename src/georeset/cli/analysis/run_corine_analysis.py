@@ -13,7 +13,7 @@ from georeset.cli.data.filter_pipeline import filter_osm_by_corine
 from georeset.config import DataPaths
 from georeset.fetchers.data_fetcher import DataFetcher
 from georeset.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES, OSMFetcher
-from georeset.utils.json_io import write_csv_atomic
+from georeset.utils.json_io import write_csv_atomic, write_geojson_atomic, write_html_map_atomic
 from georeset.visualization.map_visualizer import MapVisualizer
 
 logger = logging.getLogger(__name__)
@@ -81,8 +81,10 @@ def run(
     map_osm_metric = map_osm.to_crs("EPSG:2154")
     map_osm = map_osm[map_osm_metric.geometry.area >= 15000].copy()
 
-    MapVisualizer(corine).plot_corine_with_osm_polygons(map_osm).save(output_map_path)
-    osm.to_file(osm_polygons_path, driver="GeoJSON")
+    write_html_map_atomic(
+        output_map_path, MapVisualizer(corine).plot_corine_with_osm_polygons(map_osm)
+    )
+    write_geojson_atomic(osm_polygons_path, osm)
     write_csv_atomic(output_csv_path, distribution, index=False)
 
     logger.info("Filtered to %s OSM polygons with CORINE classes", len(osm))

@@ -73,6 +73,9 @@ def test_production_outputs_use_atomic_file_helpers():
         re.compile(r"\.write_text\("),
         re.compile(r"json\.dump\("),
         re.compile(r"\.to_csv\("),
+        re.compile(r"\.to_file\("),
+        re.compile(r"\.save\("),
+        re.compile(r"\.to_parquet\("),
     ]
     allowed_files = {Path("src/georeset/utils/json_io.py")}
 

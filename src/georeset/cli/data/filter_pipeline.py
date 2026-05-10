@@ -31,7 +31,12 @@ from georeset.fetchers.osm_fetcher import OSMFetcher
 from georeset.fetchers.wiki_content_fetcher import WikiContentFetcher
 from georeset.fetchers.wiki_fetcher import WikiFetcher
 from georeset.spatial.policy import POINT_POLYGON_JOIN_PREDICATE
-from georeset.utils.json_io import write_csv_atomic, write_json_atomic
+from georeset.utils.json_io import (
+    write_csv_atomic,
+    write_geojson_atomic,
+    write_html_map_atomic,
+    write_json_atomic,
+)
 from georeset.visualization.map_visualizer import MapVisualizer
 
 logger = logging.getLogger(__name__)
@@ -168,7 +173,10 @@ def regenerate_maps(
     osm_metric = osm_gdf.to_crs("EPSG:2154")
     osm_filtered = osm_gdf[osm_metric.geometry.area >= 15000].copy()
 
-    MapVisualizer(corine_gdf).plot_corine_with_osm_polygons(osm_filtered).save(output_map_path)
+    write_html_map_atomic(
+        output_map_path,
+        MapVisualizer(corine_gdf).plot_corine_with_osm_polygons(osm_filtered),
+    )
     logger.info("Regenerated map: %s", output_map_path)
 
 
@@ -393,7 +401,7 @@ def filter_pipeline(
             geometry="geometry",
             crs="EPSG:4326",
         )
-    osm_gdf.to_file(osm_polygons_path, driver="GeoJSON")
+    write_geojson_atomic(osm_polygons_path, osm_gdf)
 
     write_json_atomic(wiki_articles_path, filtered_articles, indent=2)
 
@@ -434,7 +442,10 @@ def filter_pipeline(
         if os.path.exists(wiki_articles_path):
             with open(wiki_articles_path) as f:
                 wiki_articles = json.load(f)
-        MapVisualizer(corine_gdf).plot_polygons_with_articles(wiki_articles).save(map_articles_path)
+        write_html_map_atomic(
+            map_articles_path,
+            MapVisualizer(corine_gdf).plot_polygons_with_articles(wiki_articles),
+        )
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

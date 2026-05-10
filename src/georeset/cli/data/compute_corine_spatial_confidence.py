@@ -21,7 +21,12 @@ from georeset.spatial.corine_confidence import (
     derive_level2_label,
     prepare_corine_gdf,
 )
-from georeset.utils.json_io import write_csv_atomic, write_json_atomic, write_text_atomic
+from georeset.utils.json_io import (
+    write_csv_atomic,
+    write_json_atomic,
+    write_parquet_atomic,
+    write_text_atomic,
+)
 
 EXPERIMENT_ID = "corine_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
@@ -179,7 +184,7 @@ def _write_outputs(
             csv_df[column] = csv_df[column].map(lambda value: json.dumps(value, sort_keys=True))
     write_csv_atomic(output_dir / "spatial_confidence.csv", csv_df, index=False)
     try:
-        confidence.to_parquet(output_dir / "spatial_confidence.parquet", index=False)
+        write_parquet_atomic(output_dir / "spatial_confidence.parquet", confidence, index=False)
         manifest["parquet_written"] = True
     except Exception as exc:
         manifest["parquet_written"] = False

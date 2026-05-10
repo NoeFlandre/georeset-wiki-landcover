@@ -1,13 +1,13 @@
 """OSM map visualizer for Corine Land Cover polygons."""
 
 import logging
-from pathlib import Path
 from typing import Any
 
 import folium
 import geopandas as gpd
 
 from georeset.config import DataPaths
+from georeset.utils.json_io import write_html_map_atomic
 
 DEFAULT_MAP_LOCATION = [48.5, 7.5]
 logger = logging.getLogger(__name__)
@@ -105,9 +105,7 @@ class MapVisualizer:
     def save_map(self, output_path: str, articles: list[dict[str, Any]] | None = None) -> None:
         """Save the map as an HTML file."""
         m = self.plot_polygons_with_articles(articles) if articles else self.plot_polygons()
-        path = Path(output_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        m.save(str(path))
+        write_html_map_atomic(output_path, m)
 
 
 if __name__ == "__main__":
