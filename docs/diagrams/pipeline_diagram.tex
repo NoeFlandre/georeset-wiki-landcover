@@ -1,4 +1,4 @@
-\documentclass[tikz,border=8pt]{standalone}
+\documentclass[tikz,border=12pt]{standalone}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, shapes.misc, arrows.meta, positioning, fit, backgrounds, calc}
 
@@ -8,182 +8,234 @@
 \definecolor{llmviolet}{RGB}{100, 50, 160}
 \definecolor{metricgold}{RGB}{180, 130, 0}
 \definecolor{filtergray}{RGB}{90, 90, 90}
+\definecolor{diagcyan}{RGB}{30, 120, 140}
 \definecolor{boxbg}{RGB}{245, 247, 252}
 \definecolor{arrowcol}{RGB}{60, 60, 80}
+\definecolor{gemmaorange}{RGB}{205, 110, 35}
 
 \tikzset{
+  nohyphen/.style={execute at begin node={\hyphenpenalty=10000\exhyphenpenalty=10000}},
   datasrc/.style={
+    nohyphen,
     rectangle, rounded corners=4pt,
-    draw=#1!70!black, fill=#1!12,
-    text width=3.0cm, align=center,
+    draw=#1!72!black, fill=#1!12,
+    text width=3.10cm, align=center,
     font=\sffamily\footnotesize,
-    inner sep=5pt, minimum height=1.0cm
+    inner sep=5pt, minimum height=1.05cm
   },
   process/.style={
+    nohyphen,
     rectangle, rounded corners=3pt,
     draw=#1!80!black, fill=#1!10,
-    text width=3.2cm, align=center,
+    text width=3.5cm, align=center,
     font=\sffamily\scriptsize,
-    inner sep=4pt, minimum height=0.85cm
+    inner sep=4.5pt, minimum height=0.95cm
+  },
+  wideprocess/.style={
+    nohyphen,
+    rectangle, rounded corners=3pt,
+    draw=#1!80!black, fill=#1!10,
+    text width=3.90cm, align=center,
+    font=\sffamily\scriptsize,
+    inner sep=4.5pt, minimum height=0.95cm
   },
   taskbox/.style={
+    nohyphen,
     rectangle, rounded corners=4pt,
     draw=#1!80!black, fill=#1!10,
-    text width=2.8cm, align=center,
+    text width=3.80cm, align=center,
     font=\sffamily\scriptsize,
-    inner sep=4pt, minimum height=0.85cm
+    inner sep=4.5pt, minimum height=0.95cm
   },
   metricbox/.style={
+    nohyphen,
     rectangle, rounded corners=4pt,
     draw=metricgold!80!black, fill=metricgold!10,
-    text width=2.6cm, align=center,
+    text width=3.80cm, align=center,
     font=\sffamily\scriptsize,
-    inner sep=4pt, minimum height=0.85cm
+    inner sep=4.5pt, minimum height=0.95cm
+  },
+  diagbox/.style={
+    nohyphen,
+    rectangle, rounded corners=4pt,
+    draw=diagcyan!80!black, fill=diagcyan!9,
+    text width=3.90cm, align=center,
+    font=\sffamily\scriptsize,
+    inner sep=4.5pt, minimum height=0.95cm
   },
   sectionlabel/.style={
     font=\sffamily\bfseries\small,
-    text=#1!60!black
+    text=#1!65!black
   },
   myarrow/.style={
     ->, >=Stealth, line width=0.8pt, color=arrowcol
   },
   myarrowdashed/.style={
-    ->, >=Stealth, line width=0.7pt, color=arrowcol, dashed
-  },
-  grouplabel/.style={
-    font=\sffamily\bfseries\scriptsize, align=center
+    ->, >=Stealth, line width=0.75pt, color=arrowcol, dashed
   },
   notebox/.style={
+    nohyphen,
     rectangle, rounded corners=2pt,
-    draw=gray!50, fill=gray!8,
-    text width=2.4cm, align=center,
-    font=\sffamily\tiny, inner sep=3pt
+    draw=gray!55, fill=gray!8,
+    text width=3.4cm, align=center,
+    font=\sffamily\tiny, inner sep=3.5pt
   }
 }
 
 \begin{document}
-\begin{tikzpicture}[node distance=0.45cm and 0.55cm]
+\begin{tikzpicture}[x=1cm,y=1cm]
 
 %% ============================================================
-%% COLUMN 1 — DATA SOURCES
+%% COLUMN 1 - DATA SOURCES (x=0)
 %% ============================================================
+\node[datasrc=clcblue] (clc) at (0,3.4)
+  {\textbf{CORINE LC 2018}\\Alsace shapefile\\code\_18 polygons};
 
-\node[datasrc=clcblue] (clc)
-  {\textbf{CORINE LC 2018}\\\relax Alt Alsace shapefile};
+\node[datasrc=osmred] (osm) at (0,0.7)
+  {\textbf{OpenStreetMap}\\Overpass API\\closed polygon ways};
 
-\node[datasrc=osmred, below=0.7cm of clc] (osm)
-  {\textbf{OpenStreetMap}\\\relax Overpass API (10\~deg x 10\~deg tiles)};
+\node[datasrc=wikigreen] (wiki) at (0,-2.0)
+  {\textbf{Wikipedia (FR)}\\Geosearch + extracts\\pageid/title/lat/lon};
 
-\node[datasrc=wikigreen, below=0.7cm of osm] (wiki)
-  {\textbf{Wikipedia (FR)}\\\relax Geosearch API (tiled 0.18 x 0.26 deg, 500 res/tile)};
+%% ============================================================
+%% COLUMN 2 - DATA PREP AND FILTERS (x=4.8)
+%% ============================================================
+\node[process=clcblue] (clcprep) at (4.8,3.4)
+  {\textbf{CORINE loader}\\WGS84 normalization\\bounds.json\\main run drops class 1xx};
 
-\node[sectionlabel=clcblue, above=0.15cm of clc] {Data Sources};
+\node[process=osmred] (osmprep) at (4.8,0.7)
+  {\textbf{OSM fetch/filter}\\10 deg tiles, retries\\landuse/natural tags\\keep CORINE-overlap polys};
 
-\node[process=filtergray, right=1.1cm of clc] (clcfilter)
-  {\textbf{CLC Filter}\\\relax Remove class 1xx (artificial)};
+\node[process=wikigreen] (wikiprep) at (4.8,-2.0)
+  {\textbf{Wiki metadata/content}\\0.18 x 0.26 deg tiles\\500/page + continuation\\extracts in batches of 50};
 
-\node[process=osmred, right=1.1cm of osm] (osmfilter)
-  {\textbf{OSM Filter}\\\relax Only landuse/natural tags\\\relax Keep CLC-overlapping polys};
+\node[wideprocess=filtergray] (cascade) at (4.8,-4.35)
+  {\textbf{filter\_pipeline cascade}\\keep articles in CORINE OR OSM\\prune contents + summaries\\audit/dry-run, maps, distributions};
 
-\node[process=wikigreen, right=1.1cm of wiki] (wikiproc)
-  {\textbf{Wiki Pipeline}\\\relax 1. Metadata fetch (Geosearch)\\\relax 2. Content fetch (batches of 50)};
+%% ============================================================
+%% COLUMN 3 - TEXTS AND TARGETS (x=9.6)
+%% ============================================================
+\node[process=clcblue] (gtcorine) at (9.6,3.4)
+  {\textbf{CORINE ground truth}\\point-polygon intersects\\exactly one level-2 label\\9 non-artificial classes};
 
-\node[sectionlabel=filtergray, above=0.15cm of clcfilter] {Preprocessing};
+\node[process=osmred] (gtosm) at (9.6,0.7)
+  {\textbf{OSM ground truth}\\point-polygon intersects\\multi-label tag set\\22 landuse/natural labels};
 
-\node[process=filtergray, right=1.15cm of osmfilter] (filterpipe)
-  {\textbf{Wiki Spatial Filter}\\\relax Keep articles in CLC OR OSM\\\relax spatial join (intersects)};
+\node[process=wikigreen] (summaries) at (9.6,-2.0)
+  {\textbf{Article summaries}\\local GGUF summarizer\\place + no\_place modes\\temp=0.7, seed=42};
 
-\node[process=wikigreen, below=0.38cm of filterpipe] (summaries)
-  {\textbf{Summaries}\\\relax Qwen3.6-27B-Q4\_0.gguf\\\relax temp=0.7\\\relax summary: with place name\\\relax summary\_no\_place};
+\node[wideprocess=wikigreen] (texts) at (9.6,-4.35)
+  {\textbf{Classification text sources}\\summary / summary\_no\_place / content\\deterministic shuffled controls\\seed-preserved reassignment};
 
-\node[sectionlabel=filtergray, above=0.15cm of filterpipe, yshift=1.65cm] {Spatial Filtering};
+%% ============================================================
+%% COLUMN 4 - EXPERIMENT RUNNER AND MODELS (x=14.4)
+%% ============================================================
+\node[taskbox=llmviolet] (grid) at (14.4,2.45)
+  {\textbf{Article-text experiment grid}\\2 tasks x 6 text sources\\CORINE single-label\\OSM multi-label};
 
-\node[process=clcblue, right=1.15cm of filterpipe, yshift=0.6cm] (gtcorine)
-  {\textbf{CORINE GT}\\\relax Point intersect CLC polygon\\\relax Single level-2 label (9 classes)};
+\node[taskbox=llmviolet] (classifier) at (14.4,0.0)
+  {\textbf{LLM classifier}\\JSON-schema chat output\\retry invalid responses\\JSON parse + regex fallback};
 
-\node[process=osmred, below=0.50cm of gtcorine] (gtosm)
-  {\textbf{OSM GT}\\\relax Point intersect OSM polygon\\\relax Multi-label (21 landuse/natural)};
+\node[taskbox=gemmaorange] (models) at (14.4,-2.45)
+  {\textbf{Classifier model runs}\\baseline: Qwen3.6-27B-Q4\_0.gguf\\current rerun: gemma-4-31B-it-Q4\_0.gguf\\same inputs; classifier only changes};
 
-\node[sectionlabel=clcblue, above=0.15cm of gtcorine] {Ground Truth};
+\node[notebox] (runmeta) at (14.4,-4.40)
+  {llama-cpp CUDA on Grid5000\\GEORESET\_MODEL\_PATH override\\temp=0, seed=42\\fingerprint policy v4 + resume};
 
-\node[taskbox=llmviolet, right=1.15cm of gtcorine] (taskcorine)
-  {\textbf{CORINE Task}\\\relax Single-label x3 text sources\\\relax summary / no\_place / content};
+%% ============================================================
+%% COLUMN 5 - OUTPUTS AND EVALUATION (x=19.2)
+%% ============================================================
+\node[metricbox] (preds) at (19.2,2.45)
+  {\textbf{Prediction artifacts}\\data/classification/*.json\\raw response + parse\_status\\ok/error/ambiguous\\prediction\_labels + metadata};
 
-\node[taskbox=llmviolet, below=0.50cm of taskcorine] (taskosm)
-  {\textbf{OSM Task}\\\relax Multi-label x3 text sources\\\relax summary / no\_place / content};
+\node[metricbox] (metrics) at (19.2,0.0)
+  {\textbf{Metrics}\\coverage + parse errors\\CORINE: acc, macro P/R/F1\\OSM: exact, micro/macro F1};
 
-\begin{scope}[on background layer]
-  \node[draw=llmviolet!70, fill=llmviolet!6, rounded corners=5pt,
-        fit=(taskcorine)(taskosm), inner sep=8pt] (llmfit) {};
-\end{scope}
+\node[metricbox] (overview) at (19.2,-2.45)
+  {\textbf{Experiment summaries}\\frozen experiment dirs\\overview.csv / .md / README\\majority baselines + shuffled deltas};
 
-\node[sectionlabel=llmviolet, above=0.15cm of llmfit.north,
-      anchor=south, align=center] {LLM Classifier\\Qwen3.6-27B-Q4\_0.gguf};
+%% ============================================================
+%% COLUMN 6 - SPATIAL CONFIDENCE DIAGNOSTICS (x=24.0)
+%% ============================================================
+\node[diagbox] (spconf) at (24.0,2.45)
+  {\textbf{CORINE spatial confidence}\\full CORINE incl. artificial\\buffers: 100/250/500/1000 m\\label shares, entropy, artificial share};
 
-\node[notebox, below=0.25cm of llmfit.south, anchor=north] (g5k)
-  {temp=0, seed=42\\JSON-schema output};
+\node[diagbox] (speval) at (24.0,0.0)
+  {\textbf{Spatial-subset reevaluation}\\frozen predictions only\\point-label purity subsets\\dominant-match subsets};
 
-\node[process=filtergray, right=1.1cm of taskcorine] (parser)
-  {\textbf{Prediction Parser}\\\relax JSON parse then regex fallback};
+\node[diagbox] (reports) at (24.0,-2.45)
+  {\textbf{Research reports}\\spatial overview tables\\subset counts, per-class metrics\\no LLM rerun};
 
-\node[metricbox, below=0.45cm of parser] (msingle)
-  {\textbf{Single-label Metrics}\\\relax Accuracy, Coverage\\\relax Macro P/R/F1\\\relax Per-class support};
-
-\node[metricbox, below=0.38cm of msingle] (mmulti)
-  {\textbf{Multi-label Metrics}\\\relax Exact-match accuracy\\\relax Micro/Macro P/R/F1\\\relax Per-label support};
-
-\node[sectionlabel=metricgold, above=0.15cm of parser] {Evaluation};
-
-\draw[myarrow] (clc) -- (clcfilter);
-\draw[myarrow] (osm) -- (osmfilter);
-\draw[myarrow] (wiki) -- (wikiproc);
-
-\draw[myarrow, color=clcblue!70] (clcfilter.south) -- (osmfilter.north);
-
-\draw[myarrow, color=clcblue!70] (clcfilter.east)
-    to[out=0,in=180] (filterpipe.160);
-\draw[myarrow, color=osmred!70] (osmfilter.east)
-    -- (filterpipe.180);
-\draw[myarrow, color=wikigreen!70] (wikiproc.east)
-    to[out=0,in=180] (filterpipe.200);
-
-\draw[myarrow, color=wikigreen!70] (filterpipe.south) -- (summaries.north);
-
-\draw[myarrow, color=clcblue!70] (filterpipe.east)
-    to[out=0,in=180] (gtcorine.west);
-\draw[myarrow, color=osmred!70] (filterpipe.east)
-    to[out=0,in=180] (gtosm.west);
-
-\coordinate (midgt) at ($(gtcorine.south)!0.5!(gtosm.north)$);
-\draw[myarrowdashed, color=wikigreen!80] (summaries.east)
-    to[out=0,in=180] (midgt)
-    to[out=0,in=180] (taskcorine.south west);
-\draw[myarrowdashed, color=wikigreen!80] (summaries.east)
-    to[out=0,in=180] (midgt)
-    to[out=0,in=180] (taskosm.north west);
-
-\draw[myarrow, color=clcblue!70] (gtcorine.east) -- (taskcorine.west);
-\draw[myarrow, color=osmred!70] (gtosm.east) -- (taskosm.west);
-
-\draw[myarrow, color=llmviolet!80] (taskcorine.east) -- (parser.west);
-\draw[myarrow, color=llmviolet!80] (taskosm.east)
-    to[out=0,in=200] (parser.south west);
-
-\draw[myarrow] (parser.south) -- (msingle.north);
-\draw[myarrow] (msingle.south) -- (mmulti.north);
-
+%% ============================================================
+%% BACKGROUND GROUPS
+%% ============================================================
 \begin{scope}[on background layer]
   \node[draw=gray!25, fill=boxbg, rounded corners=6pt,
-        fit=(clc)(osm)(wiki), inner sep=6pt] {};
+        fit=(clc)(osm)(wiki), inner sep=6pt] (bg1) {};
   \node[draw=gray!25, fill=boxbg, rounded corners=6pt,
-        fit=(clcfilter)(osmfilter)(wikiproc), inner sep=6pt] {};
+        fit=(clcprep)(osmprep)(wikiprep)(cascade), inner sep=7pt] (bg2) {};
   \node[draw=gray!25, fill=boxbg, rounded corners=6pt,
-        fit=(filterpipe)(summaries), inner sep=6pt] {};
-  \node[draw=gray!25, fill=boxbg, rounded corners=6pt,
-        fit=(gtcorine)(gtosm), inner sep=6pt] {};
-  \node[draw=gray!25, fill=boxbg, rounded corners=6pt,
-        fit=(parser)(msingle)(mmulti), inner sep=6pt] {};
+        fit=(gtcorine)(gtosm)(summaries)(texts), inner sep=7pt] (bg3) {};
+  \node[draw=llmviolet!25, fill=llmviolet!5, rounded corners=6pt,
+        fit=(grid)(classifier)(models)(runmeta), inner sep=7pt] (bg4) {};
+  \node[draw=metricgold!25, fill=metricgold!5, rounded corners=6pt,
+        fit=(preds)(metrics)(overview), inner sep=7pt] (bg5) {};
+  \node[draw=diagcyan!25, fill=diagcyan!5, rounded corners=6pt,
+        fit=(spconf)(speval)(reports), inner sep=7pt] (bg6) {};
 \end{scope}
+
+%% ============================================================
+%% SECTION LABELS (Positioned relative to backgrounds)
+%% ============================================================
+\node[sectionlabel=clcblue, above=0.15cm of bg1] {Data sources};
+\node[sectionlabel=filtergray, above=0.15cm of bg2] {Preprocessing and artifact hygiene};
+\node[sectionlabel=wikigreen, above=0.15cm of bg3] {Targets and text inputs};
+\node[sectionlabel=llmviolet, above=0.15cm of bg4] {Classification runner};
+\node[sectionlabel=metricgold, above=0.15cm of bg5] {Evaluation outputs};
+\node[sectionlabel=diagcyan, above=0.15cm of bg6] {Spatial diagnostics};
+
+%% ============================================================
+%% MAIN FLOW ARROWS
+%% ============================================================
+% Col 1 to Col 2
+\draw[myarrow] (clc) -- (clcprep);
+\draw[myarrow] (osm) -- (osmprep);
+\draw[myarrow] (wiki) -- (wikiprep);
+
+% Filter Cascade Bus (Dashed)
+\draw[myarrowdashed, color=filtergray!80] (clcprep.west) -- ++(-0.6,0) coordinate (bus_top) -- (bus_top |- cascade.west) -- (cascade.west);
+\draw[color=filtergray!80, dashed, thick] (osmprep.west) -- (osmprep.west -| bus_top);
+\draw[color=filtergray!80, dashed, thick] (wikiprep.west) -- (wikiprep.west -| bus_top);
+
+% Col 2 to Col 3
+\draw[myarrow, color=clcblue!70] (clcprep.east) -- (gtcorine.west);
+\draw[myarrow, color=osmred!70] (osmprep.east) -- (gtosm.west);
+\draw[myarrow, color=wikigreen!70] (wikiprep.east) -- (summaries.west);
+
+\draw[myarrow, color=wikigreen!70] (summaries.south) -- (texts.north);
+\draw[myarrow, color=wikigreen!70] (wikiprep.east) to[out=0,in=180] ([yshift=0.1cm]texts.west);
+\draw[myarrowdashed, color=filtergray!80] (cascade.east) -- ([yshift=-0.1cm]texts.west);
+
+% Col 3 to Col 4
+\draw[myarrow, color=clcblue!70] (gtcorine.east) to[out=0,in=180] ([yshift=0.2cm]grid.west);
+\draw[myarrow, color=osmred!70] (gtosm.east) to[out=0,in=180] (grid.west);
+\draw[myarrow, color=wikigreen!70] (texts.east) to[out=0,in=180] ([yshift=-0.2cm]grid.west);
+
+% Inside Col 4
+\draw[myarrow, color=llmviolet!80] (grid.south) -- (classifier.north);
+\draw[myarrow, color=gemmaorange!85] (models.north) -- (classifier.south);
+
+% Col 4 to Col 5
+\draw[myarrow, color=llmviolet!80] (classifier.east) to[out=0,in=180] (preds.west);
+\draw[myarrow] (preds.south) -- (metrics.north);
+\draw[myarrow] (metrics.south) -- (overview.north);
+
+% Col 5 to Col 6
+\draw[myarrow, color=metricgold!85] (preds.east) -- (spconf.west);
+\draw[myarrow, color=diagcyan!85] (spconf.south) -- (speval.north);
+\draw[myarrow, color=metricgold!85] (preds.east) to[out=0,in=180] ([yshift=0.1cm]speval.west);
+\draw[myarrow, color=diagcyan!85] (speval.south) -- (reports.north);
+\draw[myarrow, color=metricgold!85] (overview.east) -- (reports.west);
 
 \end{tikzpicture}
 \end{document}
