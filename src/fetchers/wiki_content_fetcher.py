@@ -6,6 +6,7 @@ from typing import cast
 
 import requests
 
+from src.config import DataPaths
 from src.contracts import ArticleContent, ArticleMeta
 from src.utils.json_io import write_json_atomic
 
@@ -259,4 +260,5 @@ class WikiContentFetcher:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     fetcher = WikiContentFetcher()
-    fetcher.fetch_from_file("data/wiki/wiki_articles.json", "data/wiki/article_contents.json")
+    paths = DataPaths()
+    fetcher.fetch_from_file(paths.wiki_articles, paths.article_contents)

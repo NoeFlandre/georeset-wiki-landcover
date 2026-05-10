@@ -5,6 +5,8 @@ import logging
 import folium
 import geopandas as gpd
 
+from src.config import DataPaths
+
 DEFAULT_MAP_LOCATION = [48.5, 7.5]
 logger = logging.getLogger(__name__)
 
@@ -109,8 +111,9 @@ if __name__ == "__main__":
     from src.fetchers.data_fetcher import DataFetcher
 
     logging.basicConfig(level=logging.INFO, format="%(message)s")
+    paths = DataPaths()
     logger.info("Loading Wikipedia articles...")
-    articles_path = "data/wiki/wiki_articles.json"
+    articles_path = paths.wiki_articles
     if os.path.exists(articles_path):
         with open(articles_path) as f:
             articles = json.load(f)
@@ -126,5 +129,5 @@ if __name__ == "__main__":
 
     logger.info("Generating map...")
     viz = MapVisualizer(gdf)
-    viz.save_map("data/maps/map.html", articles=articles)
-    logger.info("Map saved to data/map.html")
+    viz.save_map(paths.map_default, articles=articles)
+    logger.info("Map saved to %s", paths.map_default)

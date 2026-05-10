@@ -5,6 +5,7 @@ from typing import Any, cast
 
 import requests
 
+from src.config import DataPaths
 from src.contracts import ArticleMeta
 
 logger = logging.getLogger(__name__)
@@ -225,8 +226,9 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     fetcher = WikiFetcher()
+    paths = DataPaths()
 
-    with open("data/corine/bounds.json") as f:
+    with open(paths.corine_bounds) as f:
         bounds = json.load(f)
 
     logger.info("Fetching Wikipedia articles for Alsace region...")
@@ -245,7 +247,7 @@ if __name__ == "__main__":
     # Load OSM polygons for filtering
     import geopandas as gpd
 
-    osm_gdf = gpd.read_file("data/osm/osm_project_polygons.geojson")
+    osm_gdf = gpd.read_file(paths.osm_polygons)
 
     # Create polygon filter function for OSM
     def osm_polygon_filter(lon, lat):
@@ -270,7 +272,7 @@ if __name__ == "__main__":
 
         article["url"] = f"https://fr.wikipedia.org/wiki/{quote(article['title'])}"
 
-    output_path = "data/wiki/wiki_articles.json"
+    output_path = paths.wiki_articles
     with open(output_path, "w") as f:
         json.dump(articles, f, indent=2)
     logger.info("Saved to %s", output_path)

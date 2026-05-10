@@ -4,6 +4,8 @@ import os
 
 import geopandas as gpd
 
+from src.config import DataPaths
+
 WGS84 = "EPSG:4326"
 logger = logging.getLogger(__name__)
 
@@ -15,7 +17,8 @@ class DataFetcher:
     """
 
     def __init__(
-        self, data_path: str = "data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp"
+        self,
+        data_path: str = DataPaths().corine_polygons,
     ):
         self.data_path = data_path
         self.gdf = None
@@ -82,7 +85,7 @@ class DataFetcher:
         bounds = self.gdf.total_bounds
         return tuple(bounds)
 
-    def save_bounds(self, output_path: str = "data/corine/bounds.json"):
+    def save_bounds(self, output_path: str = DataPaths().corine_bounds):
         """
         Save the dataset bounding box to a json file
         """

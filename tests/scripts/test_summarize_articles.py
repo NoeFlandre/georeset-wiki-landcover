@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from scripts.data.summarize_articles import parse_args
+from src.config import DataPaths, ModelSettings
 from src.fetchers.article_summarizer import ArticleSummarizer
 
 
@@ -300,12 +301,12 @@ def test_parse_args_uses_grid5000_ready_defaults(monkeypatch):
 
     args = parse_args([])
 
-    assert args.input_path == "data/wiki/article_contents.json"
-    assert args.output_path == "data/wiki/article_summaries.json"
+    assert args.input_path == DataPaths().article_contents
+    assert args.output_path == DataPaths().article_summaries
     assert args.summary_mode == "place"
-    assert args.model_path == "Qwen3.6-27B-Q4_0.gguf"
-    assert args.seed == 42
-    assert args.temperature == 0.7
+    assert args.model_path == ModelSettings.from_env().model_path
+    assert args.seed == ModelSettings().seed
+    assert args.temperature == ModelSettings().summarization_temperature
 
 
 def test_parse_args_allows_environment_model_override(monkeypatch):

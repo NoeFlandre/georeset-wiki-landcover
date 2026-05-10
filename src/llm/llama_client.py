@@ -2,8 +2,10 @@
 
 from typing import Any, Protocol, cast
 
+from src.config import ModelSettings
+
 DEFAULT_REPO_ID = "unsloth/Qwen3.6-27B-GGUF"
-DEFAULT_GGUF_FILENAME = "Qwen3.6-27B-Q4_0.gguf"
+DEFAULT_GGUF_FILENAME = ModelSettings().model_path
 DEFAULT_CONTEXT_WINDOW = 8192
 
 

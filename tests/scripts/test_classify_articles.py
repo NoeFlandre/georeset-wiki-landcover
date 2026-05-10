@@ -11,6 +11,7 @@ from scripts.data.classify_articles import (
     parse_args,
     prediction_fingerprint,
 )
+from src.config import DataPaths, ModelSettings
 
 
 class TestParseArgs:
@@ -19,9 +20,16 @@ class TestParseArgs:
         args = parse_args([])
         assert args.task == "corine_level2"
         assert args.text_source == "summary"
-        assert args.model_path == "Qwen3.6-27B-Q4_0.gguf"
-        assert args.seed == 42
-        assert args.temperature == 0.0
+        assert args.wiki_articles_path == DataPaths().wiki_articles
+        assert args.article_contents_path == DataPaths().article_contents
+        assert args.article_summaries_path == DataPaths().article_summaries
+        assert args.article_summaries_no_place_path == DataPaths().article_summaries_no_place
+        assert args.osm_polygons_path == DataPaths().osm_polygons
+        assert args.corine_polygons_path == DataPaths().corine_polygons
+        assert args.output_dir == DataPaths().classification_output_dir
+        assert args.model_path == ModelSettings.from_env().model_path
+        assert args.seed == ModelSettings().seed
+        assert args.temperature == ModelSettings().classification_temperature
         assert args.limit is None
 
     def test_env_model_override(self, monkeypatch):

@@ -13,6 +13,7 @@ import pandas as pd
 from shapely import make_valid
 from shapely.geometry import Point
 
+from src.config import DataPaths
 from src.contracts import ArticleMeta
 from src.spatial.corine_confidence import (
     METRIC_CRS,
@@ -31,15 +32,14 @@ DEFAULT_RADII = [100, 250, 500, 1000]
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    data_paths = DataPaths()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--parent-experiment-dir", type=Path, default=DEFAULT_PARENT_DIR)
-    parser.add_argument(
-        "--wiki-articles-path", type=Path, default=Path("data/wiki/wiki_articles.json")
-    )
+    parser.add_argument("--wiki-articles-path", type=Path, default=Path(data_paths.wiki_articles))
     parser.add_argument(
         "--corine-polygons-path",
         type=Path,
-        default=Path("data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp"),
+        default=Path(data_paths.corine_polygons),
     )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--radii", type=int, nargs="+", default=DEFAULT_RADII)

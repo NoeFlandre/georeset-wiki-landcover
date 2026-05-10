@@ -17,6 +17,7 @@ from src.classification.text_sources import (
     base_text_source,
     shuffled_metadata,
 )
+from src.config import DataPaths, ModelSettings
 from src.contracts import ArticleMeta, ClassificationTarget, MetricResult
 from src.utils.json_io import write_json_atomic
 
@@ -49,6 +50,8 @@ def prediction_fingerprint(
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    data_paths = DataPaths()
+    model_settings = ModelSettings.from_env()
     parser = argparse.ArgumentParser(
         description="Classify Wikipedia articles into land-cover labels."
     )
@@ -58,25 +61,27 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=TEXT_SOURCE_CHOICES,
         default="summary",
     )
-    parser.add_argument("--wiki-articles-path", default="data/wiki/wiki_articles.json")
-    parser.add_argument("--article-contents-path", default="data/wiki/article_contents.json")
-    parser.add_argument("--article-summaries-path", default="data/wiki/article_summaries.json")
+    parser.add_argument("--wiki-articles-path", default=data_paths.wiki_articles)
+    parser.add_argument("--article-contents-path", default=data_paths.article_contents)
+    parser.add_argument("--article-summaries-path", default=data_paths.article_summaries)
     parser.add_argument(
         "--article-summaries-no-place-path",
-        default="data/wiki/article_summaries_no_place.json",
+        default=data_paths.article_summaries_no_place,
     )
-    parser.add_argument("--osm-polygons-path", default="data/osm/osm_project_polygons.geojson")
+    parser.add_argument("--osm-polygons-path", default=data_paths.osm_polygons)
     parser.add_argument(
         "--corine-polygons-path",
-        default="data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp",
+        default=data_paths.corine_polygons,
     )
-    parser.add_argument("--output-dir", default="data/classification")
+    parser.add_argument("--output-dir", default=data_paths.classification_output_dir)
     parser.add_argument(
         "--model-path",
-        default=os.environ.get("GEORESET_MODEL_PATH", "Qwen3.6-27B-Q4_0.gguf"),
+        default=model_settings.model_path,
     )
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument("--seed", type=int, default=model_settings.seed)
+    parser.add_argument(
+        "--temperature", type=float, default=model_settings.classification_temperature
+    )
     parser.add_argument("--retry-failed", action="store_true")
     parser.add_argument("--limit", type=int, default=None)
     return parser.parse_args(argv)

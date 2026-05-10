@@ -24,6 +24,7 @@ from shapely.geometry import Point
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from src.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
+from src.config import DataPaths, ModelSettings
 from src.contracts import ArticleMeta
 from src.fetchers.article_summarizer import ArticleSummarizer
 from src.fetchers.data_fetcher import DataFetcher
@@ -259,13 +260,13 @@ def audit_artifacts(
 
 
 def filter_pipeline(
-    wiki_articles_path: str = "data/wiki/wiki_articles.json",
-    article_contents_path: str = "data/wiki/article_contents.json",
-    article_summaries_path: str = "data/wiki/article_summaries.json",
-    osm_polygons_path: str = "data/osm/osm_project_polygons.geojson",
-    distribution_csv_path: str = "data/distribution/osm_corine_distribution.csv",
-    map_articles_path: str = "data/maps/corine_with_articles.html",
-    map_osm_path: str = "data/maps/osm_corine_polygons.html",
+    wiki_articles_path: str = DataPaths().wiki_articles,
+    article_contents_path: str = DataPaths().article_contents,
+    article_summaries_path: str = DataPaths().article_summaries,
+    osm_polygons_path: str = DataPaths().osm_polygons,
+    distribution_csv_path: str = DataPaths().distribution_csv,
+    map_articles_path: str = DataPaths().map_articles,
+    map_osm_path: str = DataPaths().map_osm,
     refetch_osm: bool = False,
     refetch_wiki: bool = False,
     fetch_content: bool = False,
@@ -299,7 +300,7 @@ def filter_pipeline(
 
     # 3. Load / refetch OSM, then filter to overlap with filtered CORINE
     if refetch_osm:
-        with open("data/corine/bounds.json") as f:
+        with open(DataPaths().corine_bounds) as f:
             bounds = json.load(f)
         osm_gdf = OSMFetcher().fetch_polygons(
             bounds["min_lon"], bounds["min_lat"], bounds["max_lon"], bounds["max_lat"]
@@ -336,7 +337,7 @@ def filter_pipeline(
     # 5. Filter wiki articles: kept if inside CORINE OR OSM
     filtered_articles = []
     if refetch_wiki:
-        with open("data/corine/bounds.json") as f:
+        with open(DataPaths().corine_bounds) as f:
             bounds = json.load(f)
         # Fetch without polygon filters; trust the post-filter
         all_articles = WikiFetcher().get_articles_in_bounds(
@@ -370,7 +371,7 @@ def filter_pipeline(
     # 9. Summarize if requested
     if summarize:
         ArticleSummarizer(
-            model_path=model_path or "Qwen3.6-27B-Q4_0.gguf",
+            model_path=model_path or ModelSettings().model_path,
             seed=seed,
             temperature=temperature,
         ).process_file(article_contents_path, article_summaries_path)
@@ -391,18 +392,17 @@ def filter_pipeline(
 
 
 def parse_args():
+    data_paths = DataPaths()
     parser = argparse.ArgumentParser(
         description="Filter pipeline to exclude artificial surfaces from all data artifacts."
     )
-    parser.add_argument("--wiki-articles-path", default="data/wiki/wiki_articles.json")
-    parser.add_argument("--article-contents-path", default="data/wiki/article_contents.json")
-    parser.add_argument("--article-summaries-path", default="data/wiki/article_summaries.json")
-    parser.add_argument("--osm-polygons-path", default="data/osm/osm_project_polygons.geojson")
-    parser.add_argument(
-        "--distribution-csv-path", default="data/distribution/osm_corine_distribution.csv"
-    )
-    parser.add_argument("--map-articles-path", default="data/maps/corine_with_articles.html")
-    parser.add_argument("--map-osm-path", default="data/maps/osm_corine_polygons.html")
+    parser.add_argument("--wiki-articles-path", default=data_paths.wiki_articles)
+    parser.add_argument("--article-contents-path", default=data_paths.article_contents)
+    parser.add_argument("--article-summaries-path", default=data_paths.article_summaries)
+    parser.add_argument("--osm-polygons-path", default=data_paths.osm_polygons)
+    parser.add_argument("--distribution-csv-path", default=data_paths.distribution_csv)
+    parser.add_argument("--map-articles-path", default=data_paths.map_articles)
+    parser.add_argument("--map-osm-path", default=data_paths.map_osm)
     parser.add_argument("--refetch-osm", action="store_true")
     parser.add_argument("--refetch-wiki", action="store_true")
     parser.add_argument("--fetch-content", action="store_true")
