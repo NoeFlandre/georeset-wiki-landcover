@@ -2,7 +2,12 @@ import json
 
 import pytest
 
-from georeset.classification.runner import compute_metrics, load_text_source, parse_args
+from georeset.classification.runner import (
+    compute_metrics,
+    load_text_source,
+    parse_args,
+    prediction_fingerprint,
+)
 from georeset.config import DataPaths, ModelSettings
 
 
@@ -20,8 +25,34 @@ def test_parse_args_uses_config_defaults(monkeypatch):
     assert args.corine_polygons_path == DataPaths().corine_polygons
     assert args.output_dir == DataPaths().classification_output_dir
     assert args.model_path == ModelSettings().model_path
+    assert args.model_repo_id is None
     assert args.seed == ModelSettings().seed
     assert args.temperature == ModelSettings().classification_temperature
+
+
+def test_parse_args_accepts_env_model_repo_id(monkeypatch):
+    monkeypatch.setenv("GEORESET_MODEL_REPO_ID", "google/gemma-4-gguf")
+
+    args = parse_args([])
+
+    assert args.model_repo_id == "google/gemma-4-gguf"
+
+
+def test_fingerprint_changes_when_model_repo_id_changes():
+    qwen = prediction_fingerprint(
+        "corine_level2", "content", "gemma.gguf", None, 42, 0.0, ["21", "31"]
+    )
+    gemma = prediction_fingerprint(
+        "corine_level2",
+        "content",
+        "gemma.gguf",
+        "google/gemma-4-gguf",
+        42,
+        0.0,
+        ["21", "31"],
+    )
+
+    assert qwen != gemma
 
 
 def test_load_text_source_loads_content_variant(tmp_path):

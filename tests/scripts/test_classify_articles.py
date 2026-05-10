@@ -37,6 +37,11 @@ class TestParseArgs:
         args = parse_args(["--task", "osm"])
         assert args.model_path == "custom.gguf"
 
+    def test_env_model_repo_id_override(self, monkeypatch):
+        monkeypatch.setenv("GEORESET_MODEL_REPO_ID", "google/gemma-4-gguf")
+        args = parse_args([])
+        assert args.model_repo_id == "google/gemma-4-gguf"
+
     def test_limit_option(self, monkeypatch):
         monkeypatch.delenv("GEORESET_MODEL_PATH", raising=False)
         args = parse_args(["--limit", "5"])
@@ -63,6 +68,21 @@ class TestFingerprint:
         fp1 = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["31", "21"])
         fp2 = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["21", "31"])
         assert fp1 == fp2
+
+    def test_fingerprint_includes_model_repo_id(self):
+        fp1 = prediction_fingerprint(
+            "corine_level2", "summary", "m.gguf", 42, 0.0, ["21"], model_repo_id=None
+        )
+        fp2 = prediction_fingerprint(
+            "corine_level2",
+            "summary",
+            "m.gguf",
+            42,
+            0.0,
+            ["21"],
+            model_repo_id="google/gemma-4-gguf",
+        )
+        assert fp1 != fp2
 
     def test_fingerprint_includes_policy_version(self, monkeypatch):
         current_fp = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["21"])

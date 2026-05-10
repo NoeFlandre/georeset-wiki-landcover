@@ -32,6 +32,29 @@ def test_classify_single_label_returns_ok_with_valid_response():
     assert kwargs["temperature"] == 0.0
 
 
+def test_metadata_records_model_repo_id_when_provided():
+    mock_client = MagicMock()
+    mock_client.complete_json.return_value = '{"labels": ["31"]}'
+    classifier = LLMClassifier(
+        model_path="gemma-4-31B-it-Q4_0.gguf",
+        seed=42,
+        temperature=0.0,
+        model_repo_id="google/gemma-4-gguf",
+        client=mock_client,
+    )
+
+    result = classifier.classify_single_label(
+        text="Une forêt dense.",
+        allowed_labels=["31"],
+        label_descriptions={},
+        task="corine_level2",
+        text_source="content",
+    )
+
+    assert result["metadata"]["model"] == "gemma-4-31B-it-Q4_0.gguf"
+    assert result["metadata"]["model_repo_id"] == "google/gemma-4-gguf"
+
+
 def test_single_label_schema_requires_exactly_one_label():
     labels_schema = SINGLE_SCHEMA["properties"]["labels"]
 

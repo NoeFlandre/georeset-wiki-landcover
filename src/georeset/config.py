@@ -23,10 +23,14 @@ class DataPaths:
 @dataclass(frozen=True)
 class ModelSettings:
     model_path: str = "Qwen3.6-27B-Q4_0.gguf"
+    model_repo_id: str | None = None
     seed: int = 42
     classification_temperature: float = 0.0
     summarization_temperature: float = 0.7
 
     @classmethod
     def from_env(cls) -> "ModelSettings":
-        return cls(model_path=os.environ.get("GEORESET_MODEL_PATH", cls.model_path))
+        return cls(
+            model_path=os.environ.get("GEORESET_MODEL_PATH", cls.model_path),
+            model_repo_id=os.environ.get("GEORESET_MODEL_REPO_ID"),
+        )

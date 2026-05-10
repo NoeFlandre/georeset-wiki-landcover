@@ -1,5 +1,6 @@
 """Shared llama-cpp chat completion client."""
 
+from pathlib import Path
 from typing import Any, Protocol, cast
 
 from georeset.config import ModelSettings
@@ -31,7 +32,7 @@ class LlamaChatClient:
         self,
         model_path: str | None,
         seed: int = 42,
-        repo_id: str = DEFAULT_REPO_ID,
+        repo_id: str | None = DEFAULT_REPO_ID,
         n_gpu_layers: int = -1,
         n_ctx: int = DEFAULT_CONTEXT_WINDOW,
     ):
@@ -46,17 +47,33 @@ class LlamaChatClient:
     def model_filename(self) -> str:
         return self.model_path if self.model_path else DEFAULT_GGUF_FILENAME
 
+    @property
+    def model_identity(self) -> dict[str, str | None]:
+        return {
+            "model": self.model_filename,
+            "model_repo_id": self.repo_id,
+        }
+
     def _get_llm(self) -> Any:
         if self._llm is None:
             import llama_cpp
 
-            self._llm = llama_cpp.Llama.from_pretrained(
-                repo_id=self.repo_id,
-                filename=self.model_filename,
-                n_gpu_layers=self.n_gpu_layers,
-                seed=self.seed,
-                n_ctx=self.n_ctx,
-            )
+            model_path = Path(self.model_filename)
+            if model_path.exists():
+                self._llm = llama_cpp.Llama(
+                    model_path=str(model_path),
+                    n_gpu_layers=self.n_gpu_layers,
+                    seed=self.seed,
+                    n_ctx=self.n_ctx,
+                )
+            else:
+                self._llm = llama_cpp.Llama.from_pretrained(
+                    repo_id=self.repo_id or DEFAULT_REPO_ID,
+                    filename=self.model_filename,
+                    n_gpu_layers=self.n_gpu_layers,
+                    seed=self.seed,
+                    n_ctx=self.n_ctx,
+                )
         return self._llm
 
     def complete_json(

@@ -14,6 +14,7 @@ cd "${REMOTE_PROJECT_DIR}"
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 export PYTHONDONTWRITEBYTECODE=1
 export GEORESET_MODEL_PATH="${GEORESET_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf}"
+export GEORESET_MODEL_REPO_ID="${GEORESET_MODEL_REPO_ID:-}"
 
 TASK="${GEORESET_CLASSIFICATION_TASK:?Set GEORESET_CLASSIFICATION_TASK}"
 TEXT_SOURCE="${GEORESET_CLASSIFICATION_TEXT_SOURCE:?Set GEORESET_CLASSIFICATION_TEXT_SOURCE}"
@@ -35,6 +36,10 @@ EXTRA_ARGS=()
 if [ -n "${GEORESET_EXTRA_ARGS:-}" ]; then
   read -r -a EXTRA_ARGS <<< "${GEORESET_EXTRA_ARGS}"
 fi
+MODEL_REPO_ARGS=()
+if [ -n "${GEORESET_MODEL_REPO_ID:-}" ]; then
+  MODEL_REPO_ARGS=(--model-repo-id "${GEORESET_MODEL_REPO_ID}")
+fi
 
 uv sync --group dev --group llm
 
@@ -42,5 +47,6 @@ uv run georeset-classify-articles \
   --task "${TASK}" \
   --text-source "${TEXT_SOURCE}" \
   --model-path "${GEORESET_MODEL_PATH}" \
+  "${MODEL_REPO_ARGS[@]}" \
   --temperature "${GEORESET_CLASSIFICATION_TEMPERATURE:-0.0}" \
   "${EXTRA_ARGS[@]}"

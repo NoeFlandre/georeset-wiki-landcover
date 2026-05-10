@@ -17,12 +17,13 @@ def prediction_fingerprint(
     seed: int,
     temperature: float,
     allowed_labels: list[str],
+    model_repo_id: str | None = None,
 ) -> str:
     previous_version = _runner.CLASSIFICATION_POLICY_VERSION
     _runner.CLASSIFICATION_POLICY_VERSION = CLASSIFICATION_POLICY_VERSION
     try:
         return _runner.prediction_fingerprint(
-            task, text_source, model_path, seed, temperature, allowed_labels
+            task, text_source, model_path, model_repo_id, seed, temperature, allowed_labels
         )
     finally:
         _runner.CLASSIFICATION_POLICY_VERSION = previous_version
@@ -44,9 +45,14 @@ def main(argv: list[str] | None = None) -> None:
     """Run the classifier CLI."""
 
     def classifier_factory(
-        model_path: str | None, seed: int, temperature: float
+        model_path: str | None, model_repo_id: str | None, seed: int, temperature: float
     ) -> _runner.Classifier:
-        return LLMClassifier(model_path=model_path, seed=seed, temperature=temperature)
+        return LLMClassifier(
+            model_path=model_path,
+            model_repo_id=model_repo_id,
+            seed=seed,
+            temperature=temperature,
+        )
 
     _runner.main(argv, classifier_factory=classifier_factory)
 

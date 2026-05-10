@@ -56,12 +56,20 @@ class Classifier(Protocol):
     ) -> PredictionResult: ...
 
 
-ClassifierFactory = Callable[[str | None, int, float], Classifier]
+ClassifierFactory = Callable[[str | None, str | None, int, float], Classifier]
 
 
-def default_classifier_factory(model_path: str | None, seed: int, temperature: float) -> Classifier:
+def default_classifier_factory(
+    model_path: str | None, model_repo_id: str | None, seed: int, temperature: float
+) -> Classifier:
     return cast(
-        Classifier, LLMClassifier(model_path=model_path, seed=seed, temperature=temperature)
+        Classifier,
+        LLMClassifier(
+            model_path=model_path,
+            model_repo_id=model_repo_id,
+            seed=seed,
+            temperature=temperature,
+        ),
     )
 
 
@@ -69,6 +77,7 @@ def prediction_fingerprint(
     task: str,
     text_source: str,
     model_path: str,
+    model_repo_id: str | None,
     seed: int,
     temperature: float,
     allowed_labels: list[str],
@@ -77,6 +86,7 @@ def prediction_fingerprint(
         "task": task,
         "text_source": text_source,
         "model": model_path,
+        "model_repo_id": model_repo_id,
         "seed": seed,
         "temperature": temperature,
         "allowed_labels": sorted(allowed_labels),
@@ -113,6 +123,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--model-path",
         default=model_settings.model_path,
+    )
+    parser.add_argument(
+        "--model-repo-id",
+        default=model_settings.model_repo_id,
+        help="Optional Hugging Face repo_id for llama_cpp.Llama.from_pretrained.",
     )
     parser.add_argument("--seed", type=int, default=model_settings.seed)
     parser.add_argument(
@@ -232,12 +247,15 @@ def main(
         args.task,
         args.text_source,
         args.model_path,
+        args.model_repo_id,
         args.seed,
         args.temperature,
         allowed_labels,
     )
 
-    classifier = classifier_factory(args.model_path, args.seed, args.temperature)
+    classifier = classifier_factory(
+        args.model_path, args.model_repo_id, args.seed, args.temperature
+    )
 
     for pageid in eligible:
         record = existing.get(pageid)

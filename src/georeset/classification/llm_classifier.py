@@ -51,12 +51,16 @@ class LLMClassifier:
         model_path: str | None,
         seed: int = 42,
         temperature: float = 0.0,
+        model_repo_id: str | None = None,
         client: JsonChatClient | None = None,
     ):
         self.model_path = model_path
+        self.model_repo_id = model_repo_id
         self.seed = seed
         self.temperature = temperature
-        self._client = client or LlamaChatClient(model_path=model_path, seed=seed)
+        self._client = client or LlamaChatClient(
+            model_path=model_path, seed=seed, repo_id=model_repo_id
+        )
 
     def _get_llm(self) -> Any:
         if not isinstance(self._client, LlamaChatClient):
@@ -100,6 +104,7 @@ class LLMClassifier:
             "task": task,
             "text_source": text_source,
             "model": self.model_path if self.model_path else DEFAULT_GGUF_FILENAME,
+            "model_repo_id": self.model_repo_id,
             "seed": self.seed,
             "temperature": self.temperature,
             "prompt": prompt,
