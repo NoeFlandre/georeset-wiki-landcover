@@ -33,6 +33,7 @@ writing visual checks.
     module that converts external inference exceptions into structured
     `parse_status="error"` records with metadata.
   - `records.py`: checkpoint record shape and resumability skip policy.
+  - `runner.py`: reusable classification orchestration for CLI and tests.
   - `task_setup.py`: task-specific data loading, ground-truth construction, and
     label-description setup.
   - `text_sources.py`: primary and shuffled text-source policy.
