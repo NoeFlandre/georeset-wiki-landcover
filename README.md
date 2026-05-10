@@ -87,7 +87,7 @@ https://www.datagrandest.fr/geonetwork/srv/api/records/c0ccbf45-2620-4bde-93f8-8
 Install dependencies with `uv`:
 
 ```bash
-uv sync --all-groups
+uv sync --group dev
 hf sync hf://buckets/NoeFlandre/georeset ./data
 ```
 
@@ -164,8 +164,8 @@ The standard summary job writes `data/wiki/article_summaries.json`:
 bash scripts/cluster/submit_summarization.sh
 ```
 
-The remote job installs `uv` if needed, syncs the project with the `llm`
-dependency group (`uv sync --all-groups --group llm`) for CUDA
+The remote job installs `uv` if needed, syncs the project with the `dev` and
+`llm` dependency groups (`uv sync --group dev --group llm`) for CUDA
 `llama-cpp-python`, and runs:
 
 ```bash

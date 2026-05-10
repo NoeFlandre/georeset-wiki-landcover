@@ -14,12 +14,12 @@ RUN apt-get update \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 COPY pyproject.toml uv.lock README.md ./
-RUN uv sync --frozen --all-groups --no-install-project
+RUN uv sync --frozen --group dev --no-install-project
 
 COPY LICENSE ./
 COPY src ./src
 COPY scripts ./scripts
 COPY tests ./tests
-RUN uv sync --frozen --all-groups
+RUN uv sync --frozen --group dev
 
 CMD ["uv", "run", "python", "-c", "print('GeoReset container ready. Mount ./data at /app/data and run a documented module command.')"]

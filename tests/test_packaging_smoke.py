@@ -8,7 +8,16 @@ def test_dockerfile_includes_runtime_cli_directories():
     assert "COPY src ./src" in dockerfile
     assert "COPY scripts ./scripts" in dockerfile
     assert "COPY tests ./tests" in dockerfile
-    assert "uv sync --frozen --all-groups" in dockerfile
+    assert "uv sync --frozen --group dev --no-install-project" in dockerfile
+    assert "uv sync --frozen --group dev" in dockerfile
+    assert "uv sync --frozen --all-groups" not in dockerfile
+
+
+def test_ci_uses_dev_dependency_group_without_llm_group():
+    workflow = Path(".github/workflows/ci.yml").read_text()
+
+    assert "uv sync --group dev" in workflow
+    assert "uv sync --all-groups" not in workflow
 
 
 def test_llm_dependency_group_declares_manual_cluster_runtime_deps():
@@ -90,5 +99,6 @@ def test_classification_job_passes_extra_args_as_array():
 def test_classification_job_uses_llm_dependency_group_not_manual_pip_install():
     script = Path("scripts/cluster/run_classification_job.sh").read_text()
 
-    assert "uv sync --all-groups --group llm" in script
+    assert "uv sync --group dev --group llm" in script
+    assert "uv sync --all-groups" not in script
     assert "uv pip install --no-cache-dir huggingface_hub llama-cpp-python" not in script
