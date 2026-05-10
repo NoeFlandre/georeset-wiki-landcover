@@ -36,6 +36,12 @@ def test_dev_dependency_group_includes_pre_commit():
     assert '"pre-commit' in pyproject
 
 
+def test_direct_runtime_imports_are_declared_project_dependencies():
+    pyproject = Path("pyproject.toml").read_text()
+
+    assert '"typing-extensions' in pyproject
+
+
 def test_pre_commit_scopes_match_ci_quality_commands():
     config = Path(".pre-commit-config.yaml").read_text()
 
