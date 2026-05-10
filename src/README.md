@@ -1,8 +1,8 @@
 # Source Code Overview
 
-`src/georeset/` contains the GeoReset Python package. The package is organized around
-small modules for fetching geospatial/text data, analyzing polygon overlap, and
-writing visual checks.
+`src/georeset/` contains the installable GeoReset Python package. The wheel
+packages this tree only; top-level `scripts/` files are repository wrappers, not
+the primary package API.
 
 ## Packages
 
@@ -43,17 +43,37 @@ writing visual checks.
   - `map_visualizer.py`: writes Folium maps for CORINE polygons, Wikipedia
     article points, and OSM polygon overlays.
 
+- `georeset.spatial`
+  - `corine_confidence.py`: computes CORINE level-2 buffer purity around
+    article coordinates in EPSG:2154. It uses the full CORINE dataset, including
+    artificial classes, for spatial-confidence diagnostics.
+
+- `georeset.utils`
+  - `json_io.py`: atomic writers for JSON, text, CSV, GeoJSON, Folium HTML maps,
+    and optional parquet outputs. Pipeline artifact writes should go through
+    these helpers instead of direct `open(..., "w")`, `to_file`, `save`, or
+    `to_parquet` calls.
+
 - `georeset.cli`
   - `dev/snapshot.py`: prints a quick CORINE dataset snapshot.
   - `analysis/run_corine_analysis.py`: runs OSM/CORINE distribution and
     map generation.
+  - `analysis/summarize_classification_experiment.py`: regenerates overview
+    tables and README files for classification experiment folders.
+  - `analysis/evaluate_predictions_with_spatial_confidence.py`: reevaluates
+    frozen classification predictions on CORINE spatial-confidence subsets.
+  - `data/classify_articles.py`: packaged article-text classification CLI.
+  - `data/compute_corine_spatial_confidence.py`: packaged CLI for the
+    `corine_spatial_confidence_v1` diagnostics.
+  - `data/filter_pipeline.py`: filters/refetches project data artifacts and
+    regenerates OSM/CORINE distribution outputs.
   - `data/summarize_articles.py`: summarizes fetched article content with an LLM.
     It supports `--summary-mode place` for normal summaries and
     `--summary-mode no_place` for summaries that suppress the described place
     name. It uses llama-cpp-python schema-constrained JSON generation and
     persists only public summaries, never private thinking fields.
-  - Top-level `scripts/` modules are repository wrappers around these packaged
-    CLI modules for backwards-compatible `python -m scripts...` usage.
+  - Top-level `scripts/` modules are thin repository wrappers around these
+    packaged CLI modules for backwards-compatible `python -m scripts...` usage.
 
 ## Data Contract
 
@@ -80,6 +100,10 @@ uv run python -m georeset.fetchers.wiki_content_fetcher
 uv run python -m georeset.visualization.map_visualizer
 uv run georeset-run-corine-analysis
 uv run georeset-summarize-articles
+uv run georeset-classify-articles --help
+uv run georeset-compute-corine-spatial-confidence --help
+uv run georeset-evaluate-spatial-confidence --help
+uv run georeset-summarize-classification-experiment --help
 ```
 
 Use `PYTHONDONTWRITEBYTECODE=1` while developing if you want to avoid local

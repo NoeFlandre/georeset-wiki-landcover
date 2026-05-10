@@ -2,8 +2,9 @@
 
 # GeoReset
 
-GeoReset experiments with whether text descriptions near land-cover polygons can
-help an LLM infer the correct CORINE land-cover class.
+GeoReset experiments with whether geolocated Wikipedia text can help an LLM
+infer land-cover labels, evaluated against CORINE level-2 classes and
+project-scoped OSM land-cover tags.
 
 - Project site: https://geo-reset.sylvainlobry.com/
 - Code repository: https://github.com/NoeFlandre/georeset
@@ -38,11 +39,13 @@ git ls-files data build
 
 ```bash
 git rm -r --cached data build
-git add .gitignore README.md src scripts tests pyproject.toml uv.lock LICENSE Dockerfile .dockerignore
+git add .gitignore README.md docs src scripts tests pyproject.toml uv.lock LICENSE Dockerfile .dockerignore .github
 ```
 
 ## Repository Layout
 
+- `src/georeset/`: installable Python package. The wheel packages only this
+  tree.
 - `src/georeset/fetchers/data_fetcher.py`: loads CORINE shapefiles and exposes bounds,
   class labels, centroids, and samples.
 - `src/georeset/fetchers/wiki_fetcher.py`: fetches French Wikipedia geosearch metadata
@@ -56,16 +59,19 @@ git add .gitignore README.md src scripts tests pyproject.toml uv.lock LICENSE Do
   distributions inside OSM polygons.
 - `src/georeset/analysis/distribution_summary.py`: summarizes distribution outputs.
 - `src/georeset/visualization/map_visualizer.py`: writes Folium map visualizations.
-- `scripts/analysis/run_corine_analysis.py`: runs the OSM/CORINE distribution and
-  map generation workflow.
-- `scripts/dev/snapshot.py`: prints a quick CORINE dataset snapshot.
-- `scripts/data/summarize_articles.py`: summarizes fetched article content with
-  a local LLM backend.
+- `src/georeset/cli/`: packaged CLI implementations exposed through
+  `[project.scripts]` entry points such as `georeset-classify-articles`,
+  `georeset-summarize-articles`, and `georeset-run-corine-analysis`.
+- `scripts/`: thin repository-compatible wrappers around `georeset.cli.*` plus
+  Grid5000 shell launchers. Prefer the `georeset-*` entry points in new docs and
+  automation.
 - `src/georeset/classification/`: label utilities, ground-truth builders, LLM
   classifier, and metrics for CORINE level-2 and OSM tag classification.
+- `src/georeset/spatial/corine_confidence.py`: CORINE buffer-purity diagnostics
+  in EPSG:2154 for spatial-confidence experiments.
 - `scripts/cluster/submit_summarization.sh`: syncs the minimal repository
-  state to Grid5000/Nancy, submits the summarization OAR job, and continuously
-  syncs the resumable output back.
+  state to Grid5000/Nancy and submits summarization OAR jobs. Auto-sync is
+  disabled by default; use one-shot syncs to avoid repeated SSH polling.
 
 ## Data Artifacts
 
@@ -78,6 +84,8 @@ These files are expected under `data/` after syncing the bucket:
 - `data/distribution/osm_corine_distribution.csv`: CORINE class area/share
   distribution inside OSM polygons.
 - `data/maps/`: generated HTML visualizations.
+- `data/classification/`: local working classification predictions and metrics.
+- `data/experiments/`: frozen experiment folders and derived analysis tables.
 
 The source CORINE data was downloaded from:
 https://www.datagrandest.fr/geonetwork/srv/api/records/c0ccbf45-2620-4bde-93f8-869558e51d7e?language=fre
@@ -89,6 +97,13 @@ Install dependencies with `uv`:
 ```bash
 uv sync --group dev
 hf sync hf://buckets/NoeFlandre/georeset ./data
+```
+
+The default development and CI environment uses the `dev` group only. LLM/GPU
+workflows additionally need the optional `llm` group:
+
+```bash
+uv sync --group dev --group llm
 ```
 
 Run tests:
@@ -113,6 +128,10 @@ PYTHONDONTWRITEBYTECODE=1 uv run pytest tests/fetchers/test_wiki_content_fetcher
 ```
 
 ## Pipeline Commands
+
+Installable commands are exposed as `georeset-*` entry points. The top-level
+`scripts/` modules are kept as thin repository wrappers for backwards
+compatibility, but they are not part of the installed wheel.
 
 Print a quick dataset snapshot:
 
@@ -148,6 +167,18 @@ CORINE + OSM map:
 PYTHONDONTWRITEBYTECODE=1 uv run georeset-run-corine-analysis
 hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```
+
+Run the full filter pipeline with existing local OSM/Wikipedia inputs:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-filter-pipeline --dry-run
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-filter-pipeline
+```
+
+Use `--refetch-osm` or `--refetch-wiki` only when you explicitly want fresh
+network fetches. The pipeline validates required inputs before write/prune
+steps, prunes both summary variants, and writes JSON/CSV/GeoJSON/HTML/parquet
+artifacts through atomic temp-file replacement helpers.
 
 ## Grid5000 Article Summarization
 
@@ -187,8 +218,16 @@ uv run georeset-summarize-articles \
 Optional environment overrides:
 
 ```bash
-G5K_SITE=nancy G5K_REMOTE_DIR=georeset GEORESET_MODEL_PATH=Qwen3.6-27B-Q4_0.gguf \
+G5K_SITE=nancy G5K_REMOTE_DIR=georeset G5K_REMOTE_HOME=/home/nflandre \
+GEORESET_MODEL_PATH=Qwen3.6-27B-Q4_0.gguf \
   bash scripts/cluster/submit_summarization.sh
+```
+
+Sync a finished summary job with one SSH polling pass:
+
+```bash
+GEORESET_SUMMARY_OUTPUT=data/wiki/article_summaries.json \
+SYNC_ONCE=1 bash scripts/cluster/sync_summaries.sh
 ```
 
 ## Article-Text Land-Cover Classification
@@ -248,8 +287,9 @@ bash scripts/cluster/submit_classification.sh
 ```
 
 Grid5000 shuffled-control runs use the same launcher with a shuffled text
-source. Auto-sync is disabled by default to avoid repeated SSH polling; sync
-finished jobs with one-shot syncs only:
+source. Classification jobs request one GPU for 20 hours by default in
+`scripts/cluster/run_classification_job.sh`. Auto-sync is disabled by default to
+avoid repeated SSH polling; sync finished jobs with one-shot syncs only:
 
 ```bash
 GEORESET_CLASSIFICATION_TASK=corine_level2 \
@@ -262,16 +302,36 @@ SYNC_ONCE=1 bash scripts/cluster/sync_classification.sh
 ```
 
 To freeze the shuffled-control batch after all six shuffled outputs are synced
-locally:
+locally, or to regenerate overview tables for any experiment directory:
 
 ```bash
-mkdir -p data/experiments/article_text_classification_shuffled_control_v1
-cp data/classification/*_shuffled_predictions.json \
-  data/classification/*_shuffled_metrics.json \
-  data/experiments/article_text_classification_shuffled_control_v1/
 PYTHONDONTWRITEBYTECODE=1 uv run georeset-summarize-classification-experiment \
-  --experiment-dir data/experiments/article_text_classification_shuffled_control_v1 \
-  --title "Article-Text Classification Shuffled Control v1"
+  --experiment-dir data/experiments/article_text_classification_e2e_with_shuffled_control_v1 \
+  --title "Article-Text Classification E2E with Shuffled Control v1"
+```
+
+## CORINE Spatial Confidence And Spatial-Subset Evaluation
+
+The spatial-confidence experiment does not rerun the LLM. It derives CORINE
+level-2 point labels from the full CORINE dataset, validates them against frozen
+CORINE prediction targets where available, computes area-weighted buffer purity
+at 100 m, 250 m, 500 m, and 1000 m in EPSG:2154, and keeps artificial classes as
+ambiguity evidence.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-compute-corine-spatial-confidence \
+  --parent-experiment-dir data/experiments/article_text_classification_e2e_with_shuffled_control_v1 \
+  --output-dir data/experiments/corine_spatial_confidence_v1
+```
+
+Reevaluate the frozen parent predictions on spatially reliable subsets without
+changing prompts, summaries, model outputs, or temperature:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-evaluate-spatial-confidence \
+  --parent-experiment-dir data/experiments/article_text_classification_e2e_with_shuffled_control_v1 \
+  --spatial-confidence-path data/experiments/corine_spatial_confidence_v1/spatial_confidence.csv \
+  --output-dir data/experiments/article_text_classification_spatial_confidence_v1
 ```
 
 ## Docker
@@ -313,6 +373,11 @@ docker run --rm -v "$PWD/data:/app/data" georeset uv run python -m georeset.fetc
 hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```
 
+The regular Docker image syncs the `dev` dependency group, not the optional
+`llm` group, so it is suitable for tests and non-LLM pipeline commands. GPU LLM
+workloads should use Grid5000 scripts or an environment created with
+`uv sync --group dev --group llm`.
+
 ## OSM Scope
 
 OSM fetching is intentionally restricted to project-relevant land-cover tags.
@@ -345,7 +410,7 @@ Code push:
 
 ```bash
 git status --short
-git add .gitignore README.md Dockerfile .dockerignore src tests pyproject.toml uv.lock LICENSE
+git add .gitignore README.md docs Dockerfile .dockerignore src scripts tests pyproject.toml uv.lock LICENSE .github
 git commit -m "Describe code change"
 git push origin main
 ```

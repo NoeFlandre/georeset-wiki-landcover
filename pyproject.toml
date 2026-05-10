@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "georeset"
 version = "0.1.0"
-description = "Add your description here"
+description = "Geolocated Wikipedia text experiments for CORINE and OSM land-cover classification"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
