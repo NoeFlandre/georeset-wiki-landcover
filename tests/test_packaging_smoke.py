@@ -259,6 +259,8 @@ def test_cluster_classification_submit_avoids_sed_generated_wrappers():
 def test_classification_sync_interval_defaults_to_admin_safe_value_and_supports_once():
     script = Path("scripts/cluster/sync_classification.sh").read_text()
 
+    assert 'OUTPUT_DIR="${GEORESET_CLASSIFICATION_OUTPUT_DIR:-data/classification}"' in script
+    assert 'OUTPUT_PREFIX="${OUTPUT_DIR}/${TASK}_${TEXT_SOURCE}"' in script
     assert 'INTERVAL_SECONDS="${SYNC_INTERVAL_SECONDS:-300}"' in script
     assert 'SYNC_ONCE="${SYNC_ONCE:-0}"' in script
     assert 'if [ "${SYNC_ONCE}" = "1" ]; then' in script

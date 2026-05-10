@@ -10,7 +10,8 @@ REMOTE_PROJECT_DIR="${G5K_REMOTE_PROJECT_DIR:-${REMOTE_HOME}/${REMOTE_DIR}}"
 REMOTE_ACCESS_DIR="${SITE}/${REMOTE_DIR}"
 TASK="${GEORESET_CLASSIFICATION_TASK:?Set GEORESET_CLASSIFICATION_TASK}"
 TEXT_SOURCE="${GEORESET_CLASSIFICATION_TEXT_SOURCE:?Set GEORESET_CLASSIFICATION_TEXT_SOURCE}"
-OUTPUT_PREFIX="data/classification/${TASK}_${TEXT_SOURCE}"
+OUTPUT_DIR="${GEORESET_CLASSIFICATION_OUTPUT_DIR:-data/classification}"
+OUTPUT_PREFIX="${OUTPUT_DIR}/${TASK}_${TEXT_SOURCE}"
 JOB_SCRIPT="scripts/cluster/run_classification_job.sh"
 AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"
 
@@ -51,12 +52,13 @@ rsync -az \
   data/corine \
   "${ACCESS_HOST}:${REMOTE_ACCESS_DIR}/data/"
 
-ssh -o BatchMode=yes "${ACCESS_HOST}" "mkdir -p ${REMOTE_ACCESS_DIR}/data/classification"
+ssh -o BatchMode=yes "${ACCESS_HOST}" "mkdir -p ${REMOTE_ACCESS_DIR}/${OUTPUT_DIR}"
+mkdir -p "${OUTPUT_DIR}"
 
 echo "Syncing existing classification outputs to Grid5000 for resumable retry"
 rsync -az \
-  data/classification/ \
-  "${ACCESS_HOST}:${REMOTE_ACCESS_DIR}/data/classification/"
+  "${OUTPUT_DIR}/" \
+  "${ACCESS_HOST}:${REMOTE_ACCESS_DIR}/${OUTPUT_DIR}/"
 
 echo "Submitting OAR job"
 SUBMIT_OUTPUT="$(
@@ -69,6 +71,7 @@ SUBMIT_OUTPUT="$(
       GEORESET_MODEL_REPO_ID=\"${GEORESET_MODEL_REPO_ID:-}\" \
       GEORESET_CLASSIFICATION_TEMPERATURE=\"${GEORESET_CLASSIFICATION_TEMPERATURE:-0.0}\" \
       GEORESET_EXTRA_ARGS=\"${GEORESET_EXTRA_ARGS:-}\" \
+      GEORESET_CLASSIFICATION_OUTPUT_DIR=\"${OUTPUT_DIR}\" \
       G5K_REMOTE_DIR=\"${REMOTE_DIR}\" \
       G5K_REMOTE_PROJECT_DIR=\"${REMOTE_PROJECT_DIR}\" \
       oarsub -S ./\"${JOB_SCRIPT}\"'
@@ -86,7 +89,7 @@ echo "Watch status: ssh -o BatchMode=yes ${ACCESS_HOST} \"ssh ${SITE} 'oarstat -
 echo "Watch stderr: ssh -o BatchMode=yes ${ACCESS_HOST} \"ssh ${SITE} 'tail -f ${REMOTE_PROJECT_DIR}/OAR_${JOB_ID}.err'\""
 if [ "${AUTO_SYNC}" != "1" ]; then
   echo "Auto-sync disabled to avoid repeated SSH polling. Run sync_classification.sh manually when needed."
-  echo "Manual sync: GEORESET_CLASSIFICATION_TASK=${TASK} GEORESET_CLASSIFICATION_TEXT_SOURCE=${TEXT_SOURCE} SYNC_ONCE=1 bash scripts/cluster/sync_classification.sh"
+  echo "Manual sync: GEORESET_CLASSIFICATION_TASK=${TASK} GEORESET_CLASSIFICATION_TEXT_SOURCE=${TEXT_SOURCE} GEORESET_CLASSIFICATION_OUTPUT_DIR=${OUTPUT_DIR} SYNC_ONCE=1 bash scripts/cluster/sync_classification.sh"
   exit 0
 fi
 
@@ -94,6 +97,7 @@ echo "Syncing ${OUTPUT_PREFIX}_predictions.json and _metrics.json; press Ctrl+C 
 
 GEORESET_CLASSIFICATION_TASK="${TASK}" \
 GEORESET_CLASSIFICATION_TEXT_SOURCE="${TEXT_SOURCE}" \
+GEORESET_CLASSIFICATION_OUTPUT_DIR="${OUTPUT_DIR}" \
 G5K_ACCESS_HOST="${ACCESS_HOST}" \
 G5K_SITE="${SITE}" \
 G5K_REMOTE_DIR="${REMOTE_DIR}" \
