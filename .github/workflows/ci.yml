@@ -49,5 +49,5 @@ jobs:
 
       - name: Run tests
         env:
-          PYTHONPATH: .
-        run: uv run pytest --cov=src --cov-report=term-missing
+          PYTHONPATH: "src:."
+        run: uv run pytest -q

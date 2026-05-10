@@ -22,6 +22,13 @@ def test_ci_uses_dev_dependency_group_without_llm_group():
     assert "uv sync --all-groups" not in workflow
 
 
+def test_ci_coverage_scope_matches_pytest_addopts():
+    workflow = Path(".github/workflows/ci.yml").read_text()
+
+    assert "--cov=src" not in workflow
+    assert "uv run pytest -q" in workflow
+
+
 def test_llm_dependency_group_declares_manual_cluster_runtime_deps():
     pyproject = Path("pyproject.toml").read_text()
 
