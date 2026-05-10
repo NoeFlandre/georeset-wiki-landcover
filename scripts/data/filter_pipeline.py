@@ -31,6 +31,7 @@ from src.fetchers.data_fetcher import DataFetcher
 from src.fetchers.osm_fetcher import OSMFetcher
 from src.fetchers.wiki_content_fetcher import WikiContentFetcher
 from src.fetchers.wiki_fetcher import WikiFetcher
+from src.utils.json_io import write_csv_atomic, write_json_atomic
 from src.visualization.map_visualizer import MapVisualizer
 
 
@@ -128,8 +129,7 @@ def _prune_json_file(path: str, valid_keys: set[str]) -> None:
     with open(path) as f:
         data = json.load(f)
     filtered = {k: v for k, v in data.items() if str(k) in valid_keys}
-    with open(path, "w") as f:
-        json.dump(filtered, f, indent=2)
+    write_json_atomic(path, filtered, indent=2)
 
 
 def regenerate_maps(
@@ -166,8 +166,7 @@ def regenerate_distribution(
         else pd.DataFrame(columns=["osm_id", "class_label", "area", "share"])
     )
 
-    os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
-    distribution.to_csv(output_csv_path, index=False)
+    write_csv_atomic(output_csv_path, distribution, index=False)
     print(f"  Regenerated distribution: {output_csv_path}")
 
 
@@ -344,14 +343,12 @@ def filter_pipeline(
             bounds["min_lon"], bounds["min_lat"], bounds["max_lon"], bounds["max_lat"]
         )
         filtered_articles = filter_articles_by_polygons(all_articles, corine_gdf, osm_gdf)
-        with open(wiki_articles_path, "w") as f:
-            json.dump(filtered_articles, f, indent=2)
+        write_json_atomic(wiki_articles_path, filtered_articles, indent=2)
     elif os.path.exists(wiki_articles_path):
         with open(wiki_articles_path) as f:
             articles = json.load(f)
         filtered_articles = filter_articles_by_polygons(articles, corine_gdf, osm_gdf)
-        with open(wiki_articles_path, "w") as f:
-            json.dump(filtered_articles, f, indent=2)
+        write_json_atomic(wiki_articles_path, filtered_articles, indent=2)
 
     valid_pageids = {str(a["pageid"]) for a in filtered_articles}
 

@@ -7,6 +7,7 @@ import requests
 
 from src.config import DataPaths
 from src.contracts import ArticleMeta
+from src.utils.json_io import write_json_atomic
 
 logger = logging.getLogger(__name__)
 
@@ -273,6 +274,5 @@ if __name__ == "__main__":
         article["url"] = f"https://fr.wikipedia.org/wiki/{quote(article['title'])}"
 
     output_path = paths.wiki_articles
-    with open(output_path, "w") as f:
-        json.dump(articles, f, indent=2)
+    write_json_atomic(output_path, articles, indent=2)
     logger.info("Saved to %s", output_path)

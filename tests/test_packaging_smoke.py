@@ -1,4 +1,5 @@
 import importlib
+import re
 from pathlib import Path
 
 
@@ -41,6 +42,26 @@ def test_pre_commit_scopes_match_ci_quality_commands():
     assert "entry: uv run ruff format --check ." in config
     assert "entry: uv run mypy src scripts" in config
     assert "pass_filenames: false" in config
+
+
+def test_production_outputs_use_atomic_file_helpers():
+    forbidden_patterns = [
+        re.compile(r"with open\([^\\n]+,\\s*[\"']w"),
+        re.compile(r"\.write_text\("),
+        re.compile(r"json\.dump\("),
+        re.compile(r"\.to_csv\("),
+    ]
+    allowed_files = {Path("src/utils/json_io.py")}
+
+    for root in [Path("src"), Path("scripts")]:
+        for path in root.rglob("*.py"):
+            if path in allowed_files:
+                continue
+            text = path.read_text(encoding="utf-8")
+            for pattern in forbidden_patterns:
+                assert not pattern.search(text), (
+                    f"{path} still has direct write pattern {pattern.pattern}"
+                )
 
 
 def test_documented_cli_modules_are_importable():

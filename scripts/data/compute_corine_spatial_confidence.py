@@ -21,6 +21,7 @@ from src.spatial.corine_confidence import (
     derive_level2_label,
     prepare_corine_gdf,
 )
+from src.utils.json_io import write_csv_atomic, write_json_atomic, write_text_atomic
 
 EXPERIMENT_ID = "corine_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
@@ -176,15 +177,16 @@ def _write_outputs(
     for column in csv_df.columns:
         if column.startswith("label_shares_"):
             csv_df[column] = csv_df[column].map(lambda value: json.dumps(value, sort_keys=True))
-    csv_df.to_csv(output_dir / "spatial_confidence.csv", index=False)
+    write_csv_atomic(output_dir / "spatial_confidence.csv", csv_df, index=False)
     try:
         confidence.to_parquet(output_dir / "spatial_confidence.parquet", index=False)
         manifest["parquet_written"] = True
     except Exception as exc:
         manifest["parquet_written"] = False
         manifest["parquet_error"] = str(exc)
-    (output_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    (output_dir / "summary.md").write_text(
+    write_json_atomic(output_dir / "manifest.json", manifest, indent=2)
+    write_text_atomic(
+        output_dir / "summary.md",
         "\n".join(
             [
                 "# CORINE Spatial Confidence v1",
@@ -196,7 +198,6 @@ def _write_outputs(
             ]
         )
         + "\n",
-        encoding="utf-8",
     )
 
 

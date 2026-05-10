@@ -1,10 +1,10 @@
-import json
 import logging
 import os
 
 import geopandas as gpd
 
 from src.config import DataPaths
+from src.utils.json_io import write_json_atomic
 
 WGS84 = "EPSG:4326"
 logger = logging.getLogger(__name__)
@@ -97,10 +97,7 @@ class DataFetcher:
             "max_lat": bounds[3],
         }
 
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-        with open(output_path, "w") as f:
-            json.dump(data, f, indent=4)
+        write_json_atomic(output_path, data, indent=4)
         logger.info("Bounds saved to %s", output_path)
 
 

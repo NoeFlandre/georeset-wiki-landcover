@@ -14,6 +14,7 @@ from scripts.data.filter_pipeline import filter_osm_by_corine
 from src.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
 from src.fetchers.data_fetcher import DataFetcher
 from src.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES, OSMFetcher
+from src.utils.json_io import write_csv_atomic
 from src.visualization.map_visualizer import MapVisualizer
 
 
@@ -63,7 +64,7 @@ def run(
 
     MapVisualizer(corine).plot_corine_with_osm_polygons(map_osm).save(output_map_path)
     osm.to_file(output_osm_path, driver="GeoJSON")
-    distribution.to_csv(output_csv_path, index=False)
+    write_csv_atomic(output_csv_path, distribution, index=False)
 
     print(f"Filtered to {len(osm)} OSM polygons with CORINE classes")
     print(f"Saved map to {output_map_path}")

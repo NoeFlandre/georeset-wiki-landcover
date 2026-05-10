@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import io
 import json
 from collections import Counter
 from datetime import datetime, timezone
@@ -15,6 +16,7 @@ import pandas as pd
 from src.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from src.classification.metrics import multilabel_metrics, single_label_metrics
 from src.contracts import MetricResult, PerLabelMetric
+from src.utils.json_io import write_json_atomic, write_text_atomic
 
 EXPERIMENT_ID = "article_text_classification_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
@@ -192,20 +194,20 @@ def _subset_mask(spatial: pd.DataFrame, subset_name: str) -> pd.Series:
 
 
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
     if not rows:
-        path.write_text("", encoding="utf-8")
+        write_text_atomic(path, "")
         return
     fieldnames = sorted({key for row in rows for key in row})
-    with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(rows)
+    write_text_atomic(path, output.getvalue())
 
 
 def _write_md(path: Path, title: str, rows: list[dict[str, Any]]) -> None:
     if not rows:
-        path.write_text(f"# {title}\n\nNo rows.\n", encoding="utf-8")
+        write_text_atomic(path, f"# {title}\n\nNo rows.\n")
         return
     columns = sorted({key for row in rows for key in row})
     lines = [
@@ -216,7 +218,7 @@ def _write_md(path: Path, title: str, rows: list[dict[str, Any]]) -> None:
     ]
     for row in rows:
         lines.append("| " + " | ".join(str(row.get(column, "")) for column in columns) + " |")
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_text_atomic(path, "\n".join(lines) + "\n")
 
 
 def _primary_score(row: dict[str, Any]) -> tuple[str, float]:
@@ -395,7 +397,7 @@ def evaluate(parent_dir: Path, spatial_path: Path, output_dir: Path) -> None:
         ],
         "osm_spatial_join_coverage": osm_coverage,
     }
-    (output_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    write_json_atomic(output_dir / "manifest.json", manifest, indent=2)
     _write_summary(output_dir / "summary.md", overview_rows, osm_coverage)
 
 
@@ -446,7 +448,7 @@ def _write_summary(path: Path, rows: list[dict[str, Any]], osm_coverage: dict[st
             f"{_beats(row, 'balanced_accuracy', 'majority_balanced_accuracy')} | "
             f"{_beats(row, 'macro_f1', 'majority_macro_f1')} |"
         )
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_text_atomic(path, "\n".join(lines) + "\n")
 
 
 def main(argv: list[str] | None = None) -> None:

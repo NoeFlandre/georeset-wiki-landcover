@@ -2,10 +2,13 @@
 
 import argparse
 import csv
+import io
 import json
 from collections import Counter
 from pathlib import Path
 from typing import Any, cast
+
+from src.utils.json_io import write_text_atomic
 
 FIELDNAMES = [
     "run",
@@ -173,11 +176,11 @@ def collect_metric_rows(experiment_dir: Path) -> list[dict[str, Any]]:
 
 
 def write_overview_csv(rows: list[dict[str, Any]], output_path: Path) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
-        writer.writeheader()
-        writer.writerows(rows)
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=FIELDNAMES)
+    writer.writeheader()
+    writer.writerows(rows)
+    write_text_atomic(output_path, output.getvalue())
 
 
 def _format_cell(value: Any) -> str:
@@ -227,7 +230,7 @@ def write_overview_markdown(rows: list[dict[str, Any]], output_path: Path) -> No
             )
             + " |"
         )
-    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_text_atomic(output_path, "\n".join(lines) + "\n")
 
 
 def write_readme(
@@ -340,7 +343,7 @@ def write_readme(
             "- For OSM, the majority baseline remains strict exact-match accuracy for the most common true label-set.",
         ]
     )
-    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_text_atomic(output_path, "\n".join(lines) + "\n")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

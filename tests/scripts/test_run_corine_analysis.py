@@ -75,7 +75,7 @@ class TestRunCorineAnalysisWithFilteredCorine:
             patch("src.fetchers.data_fetcher.DataFetcher.load_data") as mock_load,
             patch("geopandas.read_file") as mock_read,
             patch("geopandas.GeoDataFrame.to_file") as _mock_to_file,
-            patch("pandas.DataFrame.to_csv") as _mock_to_csv,
+            patch("scripts.analysis.run_corine_analysis.write_csv_atomic") as _mock_write_csv,
             patch("folium.Map.save") as _mock_map_save,
         ):
             mock_load.return_value = corine_gdf
