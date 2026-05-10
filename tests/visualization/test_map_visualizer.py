@@ -55,6 +55,15 @@ class TestMapVisualizer:
         visualizer.save_map(str(output_path))
         assert output_path.exists()
 
+    def test_save_map_creates_missing_parent_directories(self, tmp_path):
+        """Map saving should own parent directory creation."""
+        output_path = tmp_path / "nested" / "maps" / "test_map.html"
+        visualizer = MapVisualizer(self.gdf)
+
+        visualizer.save_map(str(output_path))
+
+        assert output_path.exists()
+
     def test_plot_polygons_adds_polygon_layers(self):
         """Should add GeoJson polygon layers to the map."""
         visualizer = MapVisualizer(self.gdf)
