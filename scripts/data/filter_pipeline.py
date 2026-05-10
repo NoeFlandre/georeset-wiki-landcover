@@ -6,9 +6,11 @@ This script cascades the artificial surfaces exclusion across all data files:
 3. Filter wiki_articles.json (remove articles outside filtered CORINE OR filtered OSM)
 4. Prune article_contents.json to filtered wiki_articles pageids
 5. Prune article_summaries.json to filtered article_contents keys
-6. Regenerate distribution and both maps
+6. Prune both summary variants to final article content keys
+7. Regenerate distribution and both maps
 
-Supports --refetch-osm, --refetch-wiki, --fetch-content, --summarize, --audit-only.
+Supports --refetch-osm, --refetch-wiki, --fetch-content, --summarize,
+--audit-only, and --dry-run.
 """
 
 import argparse
@@ -128,6 +130,14 @@ def _prune_json_file(path: str, valid_keys: set[str]) -> None:
     write_json_atomic(path, filtered, indent=2)
 
 
+def _validate_inputs_before_write(wiki_articles_path: str, refetch_wiki: bool) -> None:
+    if not refetch_wiki and not os.path.exists(wiki_articles_path):
+        raise FileNotFoundError(
+            f"wiki articles file missing: {wiki_articles_path}. "
+            "Use --refetch-wiki or provide an existing wiki_articles.json before filtering."
+        )
+
+
 def regenerate_maps(
     corine_gdf: gpd.GeoDataFrame, osm_gdf: gpd.GeoDataFrame, output_map_path: str
 ) -> None:
@@ -172,6 +182,7 @@ def audit_artifacts(
     wiki_articles_path: str,
     article_contents_path: str,
     article_summaries_path: str,
+    article_summaries_no_place_path: str,
     distribution_csv_path: str,
     map_articles_path: str,
     map_osm_path: str,
@@ -226,14 +237,20 @@ def audit_artifacts(
             violations.append(f"article_contents has stale keys: {stray_contents}")
 
     # 6. article_summaries keys ⊆ article_contents keys
-    if os.path.exists(article_contents_path) and os.path.exists(article_summaries_path):
+    summary_paths = [
+        ("article_summaries", article_summaries_path),
+        ("article_summaries_no_place", article_summaries_no_place_path),
+    ]
+    for name, summary_path in summary_paths:
+        if not os.path.exists(article_contents_path) or not os.path.exists(summary_path):
+            continue
         with open(article_contents_path) as f:
             contents = json.load(f)
-        with open(article_summaries_path) as f:
+        with open(summary_path) as f:
             summaries = json.load(f)
         stray_summaries = set(summaries.keys()) - set(contents.keys())
         if stray_summaries:
-            violations.append(f"article_summaries has stale keys: {stray_summaries}")
+            violations.append(f"{name} has stale keys: {stray_summaries}")
 
     # 7. Distribution exists and has no artificial class labels
     if not os.path.exists(distribution_csv_path):
@@ -258,6 +275,7 @@ def filter_pipeline(
     wiki_articles_path: str = DataPaths().wiki_articles,
     article_contents_path: str = DataPaths().article_contents,
     article_summaries_path: str = DataPaths().article_summaries,
+    article_summaries_no_place_path: str = DataPaths().article_summaries_no_place,
     osm_polygons_path: str = DataPaths().osm_polygons,
     distribution_csv_path: str = DataPaths().distribution_csv,
     map_articles_path: str = DataPaths().map_articles,
@@ -270,8 +288,11 @@ def filter_pipeline(
     seed: int = 42,
     temperature: float = 0.7,
     audit_only: bool = False,
+    dry_run: bool = False,
 ) -> None:
     """Orchestrate the full non-artificial CORINE cascade."""
+    _validate_inputs_before_write(wiki_articles_path, refetch_wiki)
+
     # 1. Load filtered CORINE only (no full_corine)
     corine_gdf = DataFetcher().load_data(exclude_artificial=True)
 
@@ -283,6 +304,7 @@ def filter_pipeline(
             wiki_articles_path,
             article_contents_path,
             article_summaries_path,
+            article_summaries_no_place_path,
             distribution_csv_path,
             map_articles_path,
             map_osm_path,
@@ -309,7 +331,31 @@ def filter_pipeline(
 
     osm_gdf = filter_osm_by_corine(osm_gdf, corine_gdf)
 
-    # 4. WRITE FILTERED OSM (handle empty case safely)
+    # 4. Filter wiki articles: kept if inside CORINE OR OSM
+    filtered_articles = []
+    if refetch_wiki:
+        with open(DataPaths().corine_bounds) as f:
+            bounds = json.load(f)
+        # Fetch without polygon filters; trust the post-filter
+        all_articles = WikiFetcher().get_articles_in_bounds(
+            bounds["min_lon"], bounds["min_lat"], bounds["max_lon"], bounds["max_lat"]
+        )
+        filtered_articles = filter_articles_by_polygons(all_articles, corine_gdf, osm_gdf)
+    elif os.path.exists(wiki_articles_path):
+        with open(wiki_articles_path) as f:
+            articles = json.load(f)
+        filtered_articles = filter_articles_by_polygons(articles, corine_gdf, osm_gdf)
+
+    if dry_run:
+        print(
+            "Dry run: "
+            f"would write {len(osm_gdf)} OSM polygons and "
+            f"{len(filtered_articles)} filtered wiki articles; "
+            "no files changed."
+        )
+        return
+
+    # 5. WRITE FILTERED OSM (handle empty case safely)
     os.makedirs(os.path.dirname(osm_polygons_path), exist_ok=True)
     if osm_gdf.empty:
         osm_gdf = gpd.GeoDataFrame(
@@ -329,22 +375,7 @@ def filter_pipeline(
         )
     osm_gdf.to_file(osm_polygons_path, driver="GeoJSON")
 
-    # 5. Filter wiki articles: kept if inside CORINE OR OSM
-    filtered_articles = []
-    if refetch_wiki:
-        with open(DataPaths().corine_bounds) as f:
-            bounds = json.load(f)
-        # Fetch without polygon filters; trust the post-filter
-        all_articles = WikiFetcher().get_articles_in_bounds(
-            bounds["min_lon"], bounds["min_lat"], bounds["max_lon"], bounds["max_lat"]
-        )
-        filtered_articles = filter_articles_by_polygons(all_articles, corine_gdf, osm_gdf)
-        write_json_atomic(wiki_articles_path, filtered_articles, indent=2)
-    elif os.path.exists(wiki_articles_path):
-        with open(wiki_articles_path) as f:
-            articles = json.load(f)
-        filtered_articles = filter_articles_by_polygons(articles, corine_gdf, osm_gdf)
-        write_json_atomic(wiki_articles_path, filtered_articles, indent=2)
+    write_json_atomic(wiki_articles_path, filtered_articles, indent=2)
 
     valid_pageids = {str(a["pageid"]) for a in filtered_articles}
 
@@ -359,7 +390,9 @@ def filter_pipeline(
     if os.path.exists(article_contents_path):
         with open(article_contents_path) as f:
             contents = json.load(f)
-        _prune_json_file(article_summaries_path, set(contents.keys()))
+        content_keys = set(contents.keys())
+        _prune_json_file(article_summaries_path, content_keys)
+        _prune_json_file(article_summaries_no_place_path, content_keys)
 
     # 9. Summarize if requested
     if summarize:
@@ -392,6 +425,9 @@ def parse_args():
     parser.add_argument("--wiki-articles-path", default=data_paths.wiki_articles)
     parser.add_argument("--article-contents-path", default=data_paths.article_contents)
     parser.add_argument("--article-summaries-path", default=data_paths.article_summaries)
+    parser.add_argument(
+        "--article-summaries-no-place-path", default=data_paths.article_summaries_no_place
+    )
     parser.add_argument("--osm-polygons-path", default=data_paths.osm_polygons)
     parser.add_argument("--distribution-csv-path", default=data_paths.distribution_csv)
     parser.add_argument("--map-articles-path", default=data_paths.map_articles)
@@ -404,6 +440,7 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--temperature", type=float, default=0.7)
     parser.add_argument("--audit-only", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()
 
 
@@ -413,6 +450,7 @@ if __name__ == "__main__":
         wiki_articles_path=args.wiki_articles_path,
         article_contents_path=args.article_contents_path,
         article_summaries_path=args.article_summaries_path,
+        article_summaries_no_place_path=args.article_summaries_no_place_path,
         osm_polygons_path=args.osm_polygons_path,
         distribution_csv_path=args.distribution_csv_path,
         map_articles_path=args.map_articles_path,
@@ -425,4 +463,5 @@ if __name__ == "__main__":
         seed=args.seed,
         temperature=args.temperature,
         audit_only=args.audit_only,
+        dry_run=args.dry_run,
     )
