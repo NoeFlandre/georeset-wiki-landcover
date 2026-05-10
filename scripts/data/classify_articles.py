@@ -1,7 +1,5 @@
 """CLI wrapper for article text classification."""
 
-from typing import Any, cast
-
 from src.classification import runner as _runner
 from src.classification.llm_classifier import LLMClassifier
 from src.classification.text_sources import apply_shuffled_text_control
@@ -43,9 +41,14 @@ __all__ = [
 
 
 def main(argv: list[str] | None = None) -> None:
-    """Run the classifier CLI, preserving monkeypatch compatibility for tests."""
-    cast(Any, _runner).LLMClassifier = LLMClassifier
-    _runner.main(argv)
+    """Run the classifier CLI."""
+
+    def classifier_factory(
+        model_path: str | None, seed: int, temperature: float
+    ) -> _runner.Classifier:
+        return LLMClassifier(model_path=model_path, seed=seed, temperature=temperature)
+
+    _runner.main(argv, classifier_factory=classifier_factory)
 
 
 if __name__ == "__main__":

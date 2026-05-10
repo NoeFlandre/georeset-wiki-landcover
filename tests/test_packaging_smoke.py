@@ -75,6 +75,13 @@ def test_documented_cli_modules_are_importable():
         assert importlib.import_module(module_name)
 
 
+def test_classify_articles_wrapper_does_not_mutate_runner_globals():
+    wrapper = Path("scripts/data/classify_articles.py").read_text(encoding="utf-8")
+
+    assert "_runner).LLMClassifier" not in wrapper
+    assert "_runner.LLMClassifier =" not in wrapper
+
+
 def test_python_scripts_do_not_mutate_sys_path_for_imports():
     for path in Path("scripts").rglob("*.py"):
         text = path.read_text(encoding="utf-8")

@@ -5,6 +5,8 @@ import hashlib
 import json
 import logging
 import os
+from collections.abc import Callable
+from typing import Protocol
 
 from src.classification.llm_classifier import LLMClassifier
 from src.classification.metrics import multilabel_metrics, single_label_metrics
@@ -17,6 +19,7 @@ from src.classification.text_sources import (
     base_text_source,
     shuffled_metadata,
 )
+from src.classification.types import PredictionResult
 from src.config import DataPaths, ModelSettings
 from src.contracts import ArticleMeta, ClassificationTarget, MetricResult
 from src.utils.json_io import write_json_atomic
@@ -27,6 +30,32 @@ logging.basicConfig(
 )
 
 CLASSIFICATION_POLICY_VERSION = 4
+
+
+class Classifier(Protocol):
+    def classify_single_label(
+        self,
+        text: str,
+        allowed_labels: list[str],
+        label_descriptions: dict[str, str],
+        task: str,
+        text_source: str,
+    ) -> PredictionResult: ...
+
+    def classify_multilabel(
+        self,
+        text: str,
+        allowed_labels: list[str],
+        task: str,
+        text_source: str,
+    ) -> PredictionResult: ...
+
+
+ClassifierFactory = Callable[[str | None, int, float], Classifier]
+
+
+def default_classifier_factory(model_path: str | None, seed: int, temperature: float) -> Classifier:
+    return LLMClassifier(model_path=model_path, seed=seed, temperature=temperature)
 
 
 def prediction_fingerprint(
@@ -147,7 +176,11 @@ def compute_metrics(
     return metrics, eval_labels
 
 
-def main(argv: list[str] | None = None) -> None:
+def main(
+    argv: list[str] | None = None,
+    *,
+    classifier_factory: ClassifierFactory = default_classifier_factory,
+) -> None:
     args = parse_args(argv)
     os.makedirs(args.output_dir, exist_ok=True)
     out_pred = os.path.join(args.output_dir, f"{args.task}_{args.text_source}_predictions.json")
@@ -196,9 +229,7 @@ def main(argv: list[str] | None = None) -> None:
         allowed_labels,
     )
 
-    classifier = LLMClassifier(
-        model_path=args.model_path, seed=args.seed, temperature=args.temperature
-    )
+    classifier = classifier_factory(args.model_path, args.seed, args.temperature)
 
     for pageid in eligible:
         record = existing.get(pageid)
