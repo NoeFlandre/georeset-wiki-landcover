@@ -1,5 +1,0 @@
-__init__
-data_fetcher
-map_visualizer
-snapshot
-wiki_fetcher
