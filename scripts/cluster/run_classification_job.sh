@@ -36,8 +36,7 @@ if [ -n "${GEORESET_EXTRA_ARGS:-}" ]; then
   read -r -a EXTRA_ARGS <<< "${GEORESET_EXTRA_ARGS}"
 fi
 
-uv sync --all-groups
-uv pip install --no-cache-dir huggingface_hub llama-cpp-python
+uv sync --all-groups --group llm
 
 uv run python -m scripts.data.classify_articles \
   --task "${TASK}" \

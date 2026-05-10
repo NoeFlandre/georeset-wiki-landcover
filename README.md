@@ -164,7 +164,9 @@ The standard summary job writes `data/wiki/article_summaries.json`:
 bash scripts/cluster/submit_summarization.sh
 ```
 
-The remote job uses CUDA llama-cpp-python, installs `uv` if needed, and runs:
+The remote job installs `uv` if needed, syncs the project with the `llm`
+dependency group (`uv sync --all-groups --group llm`) for CUDA
+`llama-cpp-python`, and runs:
 
 ```bash
 uv run python -m scripts.data.summarize_articles \

@@ -26,8 +26,7 @@ fi
 export CMAKE_ARGS="-DGGML_CUDA=on"
 export FORCE_CMAKE=1
 
-uv sync --all-groups
-uv pip install --no-cache-dir huggingface_hub llama-cpp-python
+uv sync --all-groups --group llm
 
 uv run python -m scripts.data.summarize_articles \
   --input-path data/wiki/article_contents.json \

@@ -11,6 +11,14 @@ def test_dockerfile_includes_runtime_cli_directories():
     assert "uv sync --frozen --all-groups" in dockerfile
 
 
+def test_llm_dependency_group_declares_manual_cluster_runtime_deps():
+    pyproject = Path("pyproject.toml").read_text()
+
+    assert "llm = [" in pyproject
+    assert '"huggingface-hub' in pyproject
+    assert '"llama-cpp-python' in pyproject
+
+
 def test_documented_cli_modules_are_importable():
     for module_name in [
         "scripts.data.classify_articles",
@@ -62,3 +70,10 @@ def test_classification_job_passes_extra_args_as_array():
     assert "EXTRA_ARGS=()" in script
     assert 'read -r -a EXTRA_ARGS <<< "${GEORESET_EXTRA_ARGS}"' in script
     assert '"${EXTRA_ARGS[@]}"' in script
+
+
+def test_classification_job_uses_llm_dependency_group_not_manual_pip_install():
+    script = Path("scripts/cluster/run_classification_job.sh").read_text()
+
+    assert "uv sync --all-groups --group llm" in script
+    assert "uv pip install --no-cache-dir huggingface_hub llama-cpp-python" not in script
