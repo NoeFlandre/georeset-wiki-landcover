@@ -98,11 +98,42 @@ def test_documented_cli_modules_are_importable():
         assert importlib.import_module(module_name)
 
 
-def test_georeset_package_imports_and_src_compatibility_shims_work():
+def test_georeset_package_imports_work_without_src_compatibility_shims():
     assert importlib.import_module("georeset.config")
     assert importlib.import_module("georeset.classification.runner")
-    assert importlib.import_module("src.config")
-    assert importlib.import_module("src.classification.runner")
+
+    obsolete_shims = [
+        Path("src/__init__.py"),
+        Path("src/config.py"),
+        Path("src/contracts.py"),
+        Path("src/analysis/__init__.py"),
+        Path("src/classification/__init__.py"),
+        Path("src/fetchers/__init__.py"),
+        Path("src/llm/__init__.py"),
+        Path("src/spatial/__init__.py"),
+        Path("src/utils/__init__.py"),
+        Path("src/visualization/__init__.py"),
+    ]
+    assert not any(path.exists() for path in obsolete_shims)
+
+
+def test_new_code_does_not_import_historical_src_namespace():
+    forbidden = re.compile(r"\b(from src\.|import src\.|src\.)")
+    allowed_files = {Path("tests/test_packaging_smoke.py")}
+
+    for root in [Path("src/georeset"), Path("scripts"), Path("tests")]:
+        for path in root.rglob("*.py"):
+            if path in allowed_files:
+                continue
+            text = path.read_text(encoding="utf-8")
+            assert not forbidden.search(text), f"{path} imports historical src namespace"
+
+
+def test_ruff_first_party_namespace_is_georeset_not_src():
+    pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+
+    assert 'known-first-party = ["georeset", "scripts"]' in pyproject
+    assert 'known-first-party = ["src", "scripts"]' not in pyproject
 
 
 def test_metric_contracts_are_split_by_metric_family():

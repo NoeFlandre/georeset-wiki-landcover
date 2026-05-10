@@ -55,7 +55,7 @@ lint.ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["src", "scripts"]
+known-first-party = ["georeset", "scripts"]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -158,6 +158,7 @@ def compute_metrics(
         {v for vals in y_true.values() for v in (vals if isinstance(vals, list) else [vals])}
         | {v for vals in y_pred.values() for v in (vals if isinstance(vals, list) else [vals])}
     )
+    metrics: SingleLabelMetricResult | MultiLabelMetricResult
     if task == "corine_level2":
         metrics = single_label_metrics(
             {key: str(value) for key, value in y_true.items()},

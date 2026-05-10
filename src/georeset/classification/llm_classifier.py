@@ -1,5 +1,5 @@
 import json
-from typing import Any, cast
+from typing import Any
 
 from georeset.classification.prediction_parser import normalize_prediction_response
 from georeset.classification.types import PredictionResult
@@ -108,14 +108,11 @@ class LLMClassifier:
         }
 
     def _call_llm(self, user_prompt: str, schema: dict[str, Any]) -> str:
-        return cast(
-            str,
-            self._client.complete_json(
-                system_prompt=SYSTEM_PROMPT,
-                user_prompt=user_prompt,
-                schema=schema,
-                temperature=self.temperature,
-            ),
+        return self._client.complete_json(
+            system_prompt=SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            schema=schema,
+            temperature=self.temperature,
         )
 
     def _build_retry_prompt(

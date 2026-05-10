@@ -1,8 +1,6 @@
 """CLI wrapper for article text classification."""
 
-from typing import cast
-
-from georeset.classification import runner as _runner
+import georeset.classification.runner as _runner
 from georeset.classification.llm_classifier import LLMClassifier
 from georeset.classification.text_sources import apply_shuffled_text_control
 
@@ -23,11 +21,8 @@ def prediction_fingerprint(
     previous_version = _runner.CLASSIFICATION_POLICY_VERSION
     _runner.CLASSIFICATION_POLICY_VERSION = CLASSIFICATION_POLICY_VERSION
     try:
-        return cast(
-            str,
-            _runner.prediction_fingerprint(
-                task, text_source, model_path, seed, temperature, allowed_labels
-            ),
+        return _runner.prediction_fingerprint(
+            task, text_source, model_path, seed, temperature, allowed_labels
         )
     finally:
         _runner.CLASSIFICATION_POLICY_VERSION = previous_version
