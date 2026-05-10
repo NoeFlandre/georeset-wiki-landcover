@@ -1,6 +1,7 @@
 """Fetch OSM polygons for CORINE bounds and compare class distributions."""
 
 import json
+import logging
 import os
 
 import geopandas as gpd
@@ -13,6 +14,8 @@ from georeset.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES, OSMFet
 from georeset.utils.json_io import write_csv_atomic
 from georeset.visualization.map_visualizer import MapVisualizer
 from scripts.data.filter_pipeline import filter_osm_by_corine
+
+logger = logging.getLogger(__name__)
 
 
 def run(
@@ -64,10 +67,11 @@ def run(
     osm.to_file(osm_polygons_path, driver="GeoJSON")
     write_csv_atomic(output_csv_path, distribution, index=False)
 
-    print(f"Filtered to {len(osm)} OSM polygons with CORINE classes")
-    print(f"Saved map to {output_map_path}")
-    print(f"Saved distribution to {output_csv_path}")
+    logger.info("Filtered to %s OSM polygons with CORINE classes", len(osm))
+    logger.info("Saved map to %s", output_map_path)
+    logger.info("Saved distribution to %s", output_csv_path)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     run()

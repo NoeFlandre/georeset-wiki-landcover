@@ -4,11 +4,14 @@ import argparse
 import csv
 import io
 import json
+import logging
 from collections import Counter
 from pathlib import Path
 from typing import Any, cast
 
 from georeset.utils.json_io import write_text_atomic
+
+logger = logging.getLogger(__name__)
 
 FIELDNAMES = [
     "run",
@@ -371,8 +374,11 @@ def main(argv: list[str] | None = None) -> None:
     write_overview_csv(rows, csv_output)
     write_overview_markdown(rows, markdown_output)
     write_readme(rows, readme_output, title=args.title)
-    print(f"Wrote {len(rows)} rows to {csv_output}, {markdown_output}, and {readme_output}")
+    logger.info(
+        "Wrote %s rows to %s, %s, and %s", len(rows), csv_output, markdown_output, readme_output
+    )
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

@@ -15,6 +15,7 @@ Supports --refetch-osm, --refetch-wiki, --fetch-content, --summarize,
 
 import argparse
 import json
+import logging
 import os
 
 import geopandas as gpd
@@ -32,6 +33,8 @@ from georeset.fetchers.wiki_fetcher import WikiFetcher
 from georeset.spatial.policy import POINT_POLYGON_JOIN_PREDICATE
 from georeset.utils.json_io import write_csv_atomic, write_json_atomic
 from georeset.visualization.map_visualizer import MapVisualizer
+
+logger = logging.getLogger(__name__)
 
 
 def _to_wgs84(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -166,7 +169,7 @@ def regenerate_maps(
     osm_filtered = osm_gdf[osm_metric.geometry.area >= 15000].copy()
 
     MapVisualizer(corine_gdf).plot_corine_with_osm_polygons(osm_filtered).save(output_map_path)
-    print(f"  Regenerated map: {output_map_path}")
+    logger.info("Regenerated map: %s", output_map_path)
 
 
 def regenerate_distribution(
@@ -190,7 +193,7 @@ def regenerate_distribution(
     )
 
     write_csv_atomic(output_csv_path, distribution, index=False)
-    print(f"  Regenerated distribution: {output_csv_path}")
+    logger.info("Regenerated distribution: %s", output_csv_path)
 
 
 def audit_artifacts(
@@ -327,9 +330,9 @@ def filter_pipeline(
             map_osm_path,
         )
         if violations:
-            print("\n".join(violations))
+            logger.error("%s", "\n".join(violations))
             raise SystemExit(1)
-        print("Audit passed")
+        logger.info("Audit passed")
         return
 
     # 3. Load / refetch OSM, then filter to overlap with filtered CORINE
@@ -364,7 +367,7 @@ def filter_pipeline(
         filtered_articles = filter_articles_by_polygons(articles, corine_gdf, osm_gdf)
 
     if dry_run:
-        print(
+        logger.info(
             "Dry run: "
             f"would write {len(osm_gdf)} OSM polygons and "
             f"{len(filtered_articles)} filtered wiki articles; "
@@ -462,6 +465,7 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     args = parse_args()
     filter_pipeline(
         wiki_articles_path=args.wiki_articles_path,

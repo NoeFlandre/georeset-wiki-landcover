@@ -132,6 +132,28 @@ def test_python_scripts_do_not_mutate_sys_path_for_imports():
         assert "sys.path.append" not in text
 
 
+def test_reusable_script_functions_do_not_print():
+    reusable_scripts = [
+        Path("scripts/analysis/run_corine_analysis.py"),
+        Path("scripts/data/filter_pipeline.py"),
+        Path("scripts/analysis/summarize_classification_experiment.py"),
+    ]
+    for path in reusable_scripts:
+        tree = __import__("ast").parse(path.read_text(encoding="utf-8"))
+        for node in tree.body:
+            if not isinstance(node, __import__("ast").FunctionDef):
+                continue
+            if node.name in {"main"}:
+                continue
+            calls_print = any(
+                isinstance(child, __import__("ast").Call)
+                and isinstance(child.func, __import__("ast").Name)
+                and child.func.id == "print"
+                for child in __import__("ast").walk(node)
+            )
+            assert not calls_print, f"{path}:{node.name} prints inside reusable function"
+
+
 def test_cluster_classification_submit_does_not_autosync_by_default():
     script = Path("scripts/cluster/submit_classification.sh").read_text()
 
