@@ -6,13 +6,13 @@ import os
 import geopandas as gpd
 import pandas as pd
 
+from georeset.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
+from georeset.config import DataPaths
+from georeset.fetchers.data_fetcher import DataFetcher
+from georeset.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES, OSMFetcher
+from georeset.utils.json_io import write_csv_atomic
+from georeset.visualization.map_visualizer import MapVisualizer
 from scripts.data.filter_pipeline import filter_osm_by_corine
-from src.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
-from src.config import DataPaths
-from src.fetchers.data_fetcher import DataFetcher
-from src.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES, OSMFetcher
-from src.utils.json_io import write_csv_atomic
-from src.visualization.map_visualizer import MapVisualizer
 
 
 def run(

@@ -47,9 +47,9 @@ def test_pre_commit_scopes_match_ci_quality_commands():
 def test_mypy_has_strict_overrides_for_typed_core_modules():
     pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
 
-    assert 'module = ["src.utils.*", "src.config", "src.contracts"]' in pyproject
-    assert 'module = ["src.classification.*"]' in pyproject
-    assert 'module = ["src.fetchers.*", "src.visualization.*", "scripts.*"]' in pyproject
+    assert 'module = ["georeset.utils.*", "georeset.config", "georeset.contracts"]' in pyproject
+    assert 'module = ["georeset.classification.*"]' in pyproject
+    assert 'module = ["georeset.fetchers.*", "georeset.visualization.*", "scripts.*"]' in pyproject
     assert "strict = true" in pyproject
 
 
@@ -60,7 +60,7 @@ def test_production_outputs_use_atomic_file_helpers():
         re.compile(r"json\.dump\("),
         re.compile(r"\.to_csv\("),
     ]
-    allowed_files = {Path("src/utils/json_io.py")}
+    allowed_files = {Path("src/georeset/utils/json_io.py")}
 
     for root in [Path("src"), Path("scripts")]:
         for path in root.rglob("*.py"):
@@ -82,6 +82,13 @@ def test_documented_cli_modules_are_importable():
         "scripts.analysis.summarize_classification_experiment",
     ]:
         assert importlib.import_module(module_name)
+
+
+def test_georeset_package_imports_and_src_compatibility_shims_work():
+    assert importlib.import_module("georeset.config")
+    assert importlib.import_module("georeset.classification.runner")
+    assert importlib.import_module("src.config")
+    assert importlib.import_module("src.classification.runner")
 
 
 def test_classify_articles_wrapper_does_not_mutate_runner_globals():

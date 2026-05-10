@@ -1,7 +1,7 @@
 import geopandas as gpd
 from shapely.geometry import box
 
-from src.classification.ground_truth import build_corine_ground_truth, build_osm_ground_truth
+from georeset.classification.ground_truth import build_corine_ground_truth, build_osm_ground_truth
 
 
 def test_build_corine_ground_truth_uses_level2_label():

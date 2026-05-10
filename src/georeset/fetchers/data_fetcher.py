@@ -2,10 +2,9 @@ import logging
 import os
 
 import geopandas as gpd
-from numpy.typing import NDArray
 
-from src.config import DataPaths
-from src.utils.json_io import write_json_atomic
+from georeset.config import DataPaths
+from georeset.utils.json_io import write_json_atomic
 
 WGS84 = "EPSG:4326"
 logger = logging.getLogger(__name__)
@@ -86,7 +85,7 @@ class DataFetcher:
         if self.gdf is None:
             raise RuntimeError("Dataset could not be loaded")
 
-        bounds: NDArray = self.gdf.total_bounds
+        bounds = self.gdf.total_bounds
         return tuple(float(value) for value in bounds)
 
     def save_bounds(self, output_path: str = DataPaths().corine_bounds) -> None:

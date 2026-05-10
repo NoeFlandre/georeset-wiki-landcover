@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from src.llm.llama_client import DEFAULT_GGUF_FILENAME, DEFAULT_REPO_ID, LlamaChatClient
+from georeset.llm.llama_client import DEFAULT_GGUF_FILENAME, DEFAULT_REPO_ID, LlamaChatClient
 
 
 def test_llama_chat_client_lazy_loads_shared_runtime_config():

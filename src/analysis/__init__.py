@@ -1,7 +1,6 @@
-from src.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
-from src.analysis.distribution_summary import class_count_summary
+"""Compatibility shim for ``src.analysis``."""
 
-__all__ = [
-    "corine_distribution_in_osm_polygons",
-    "class_count_summary",
-]
+import georeset.analysis as _impl
+from georeset.analysis import *  # noqa: F403
+
+__path__ = _impl.__path__

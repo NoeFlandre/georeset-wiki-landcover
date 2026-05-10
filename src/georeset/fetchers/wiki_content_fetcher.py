@@ -6,9 +6,9 @@ from typing import cast
 
 import requests
 
-from src.config import DataPaths
-from src.contracts import ArticleContent, ArticleMeta
-from src.utils.json_io import write_json_atomic
+from georeset.config import DataPaths
+from georeset.contracts import ArticleContent, ArticleMeta
+from georeset.utils.json_io import write_json_atomic
 
 logger = logging.getLogger(__name__)
 

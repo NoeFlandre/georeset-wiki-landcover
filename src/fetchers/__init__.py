@@ -1,12 +1,6 @@
-from src.fetchers.data_fetcher import DataFetcher
-from src.fetchers.osm_fetcher import OSMFetcher
-from src.fetchers.wiki_content_fetcher import WikiContentFetcher
-from src.fetchers.wiki_fetcher import WikiFetcher, WikiFetchError
+"""Compatibility shim for ``src.fetchers``."""
 
-__all__ = [
-    "DataFetcher",
-    "OSMFetcher",
-    "WikiFetcher",
-    "WikiFetchError",
-    "WikiContentFetcher",
-]
+import georeset.fetchers as _impl
+from georeset.fetchers import *  # noqa: F403
+
+__path__ = _impl.__path__

@@ -43,25 +43,25 @@ git add .gitignore README.md src scripts tests pyproject.toml uv.lock LICENSE Do
 
 ## Repository Layout
 
-- `src/fetchers/data_fetcher.py`: loads CORINE shapefiles and exposes bounds,
+- `src/georeset/fetchers/data_fetcher.py`: loads CORINE shapefiles and exposes bounds,
   class labels, centroids, and samples.
-- `src/fetchers/wiki_fetcher.py`: fetches French Wikipedia geosearch metadata
+- `src/georeset/fetchers/wiki_fetcher.py`: fetches French Wikipedia geosearch metadata
   inside the CORINE bounds and project polygon filters.
-- `src/fetchers/wiki_content_fetcher.py`: fetches full Wikipedia extracts from
+- `src/georeset/fetchers/wiki_content_fetcher.py`: fetches full Wikipedia extracts from
   page IDs. It sanitizes existing output, skips already-fetched entries, writes
   checkpoints after each batch, and can be stopped/resumed at any time.
-- `src/fetchers/osm_fetcher.py`: fetches project-relevant OSM land-cover
+- `src/georeset/fetchers/osm_fetcher.py`: fetches project-relevant OSM land-cover
   polygons from Overpass.
-- `src/analysis/corine_polygon_stats.py`: computes CORINE class area/share
+- `src/georeset/analysis/corine_polygon_stats.py`: computes CORINE class area/share
   distributions inside OSM polygons.
-- `src/analysis/distribution_summary.py`: summarizes distribution outputs.
-- `src/visualization/map_visualizer.py`: writes Folium map visualizations.
+- `src/georeset/analysis/distribution_summary.py`: summarizes distribution outputs.
+- `src/georeset/visualization/map_visualizer.py`: writes Folium map visualizations.
 - `scripts/analysis/run_corine_analysis.py`: runs the OSM/CORINE distribution and
   map generation workflow.
 - `scripts/dev/snapshot.py`: prints a quick CORINE dataset snapshot.
 - `scripts/data/summarize_articles.py`: summarizes fetched article content with
   a local LLM backend.
-- `src/classification/`: label utilities, ground-truth builders, LLM
+- `src/georeset/classification/`: label utilities, ground-truth builders, LLM
   classifier, and metrics for CORINE level-2 and OSM tag classification.
 - `scripts/cluster/submit_summarization.sh`: syncs the minimal repository
   state to Grid5000/Nancy, submits the summarization OAR job, and continuously
@@ -123,7 +123,7 @@ PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.dev.snapshot
 Fetch Wikipedia article metadata:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m src.fetchers.wiki_fetcher
+PYTHONDONTWRITEBYTECODE=1 uv run python -m georeset.fetchers.wiki_fetcher
 ```
 
 Fetch full Wikipedia article content. This command is resumable: stop it with
@@ -131,14 +131,14 @@ Fetch full Wikipedia article content. This command is resumable: stop it with
 `data/wiki/article_contents.json`.
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m src.fetchers.wiki_content_fetcher
+PYTHONDONTWRITEBYTECODE=1 uv run python -m georeset.fetchers.wiki_content_fetcher
 hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```
 
 Regenerate the CORINE + Wikipedia article map:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m src.visualization.map_visualizer
+PYTHONDONTWRITEBYTECODE=1 uv run python -m georeset.visualization.map_visualizer
 ```
 
 Fetch/use OSM polygons, compute CORINE distributions, and generate the separate
@@ -308,7 +308,7 @@ Run a pipeline command in Docker:
 
 ```bash
 hf sync hf://buckets/NoeFlandre/georeset ./data
-docker run --rm -v "$PWD/data:/app/data" georeset uv run python -m src.fetchers.wiki_content_fetcher
+docker run --rm -v "$PWD/data:/app/data" georeset uv run python -m georeset.fetchers.wiki_content_fetcher
 hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```
 

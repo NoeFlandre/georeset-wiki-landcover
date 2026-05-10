@@ -1,12 +1,12 @@
 # Source Code Overview
 
-`src/` contains the GeoReset Python package. The package is organized around
+`src/georeset/` contains the GeoReset Python package. The package is organized around
 small modules for fetching geospatial/text data, analyzing polygon overlap, and
 writing visual checks.
 
 ## Packages
 
-- `src.fetchers`
+- `georeset.fetchers`
   - `data_fetcher.py`: loads CORINE data from `data/corine/`, converts to WGS84,
     maps CORINE codes to labels, and exposes bounds/sampling helpers.
   - `wiki_fetcher.py`: fetches French Wikipedia geosearch metadata for the
@@ -17,12 +17,12 @@ writing visual checks.
   - `osm_fetcher.py`: fetches OSM land-cover polygons from Overpass using the
     project tag allowlist.
 
-- `src.analysis`
+- `georeset.analysis`
   - `corine_polygon_stats.py`: computes CORINE class area/share distributions
     inside OSM polygons.
   - `distribution_summary.py`: summarizes distribution CSV outputs.
 
-- `src.classification`
+- `georeset.classification`
   - `labels.py`: CORINE level-2 and OSM label allowlists.
   - `ground_truth.py`: spatial joins that build CORINE single-label and OSM
     multi-label ground truth.
@@ -39,7 +39,7 @@ writing visual checks.
   - `text_sources.py`: primary and shuffled text-source policy.
   - `types.py`: shared typed contracts for prediction results and records.
 
-- `src.visualization`
+- `georeset.visualization`
   - `map_visualizer.py`: writes Folium maps for CORINE polygons, Wikipedia
     article points, and OSM polygon overlays.
 
@@ -73,9 +73,9 @@ hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store
 
 ```bash
 uv run python -m scripts.dev.snapshot
-uv run python -m src.fetchers.wiki_fetcher
-uv run python -m src.fetchers.wiki_content_fetcher
-uv run python -m src.visualization.map_visualizer
+uv run python -m georeset.fetchers.wiki_fetcher
+uv run python -m georeset.fetchers.wiki_content_fetcher
+uv run python -m georeset.visualization.map_visualizer
 uv run python -m scripts.analysis.run_corine_analysis
 uv run python -m scripts.data.summarize_articles
 ```
@@ -85,7 +85,7 @@ Use `PYTHONDONTWRITEBYTECODE=1` while developing if you want to avoid local
 
 ## Quality Checks
 
-The test suite enforces focused coverage for `src.classification` with
+The test suite enforces focused coverage for `georeset.classification` with
 `pytest-cov` and a 95% fail-under threshold. Run the full local gate before
 committing:
 

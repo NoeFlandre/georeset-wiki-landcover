@@ -4,7 +4,7 @@ import geopandas as gpd
 import pytest
 from shapely.geometry import Point, box
 
-from src.spatial.corine_confidence import (
+from georeset.spatial.corine_confidence import (
     compute_article_spatial_confidence,
     compute_buffer_label_shares,
     compute_normalized_entropy,

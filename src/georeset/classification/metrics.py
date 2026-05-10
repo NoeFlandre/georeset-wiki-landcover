@@ -1,4 +1,4 @@
-from src.contracts import MetricResult, PerLabelMetric
+from georeset.contracts import MetricResult, PerLabelMetric
 
 
 def _safe_div(num: float, den: float) -> float:

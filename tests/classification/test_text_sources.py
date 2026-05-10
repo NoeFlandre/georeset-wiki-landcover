@@ -1,4 +1,4 @@
-from src.classification.text_sources import (
+from georeset.classification.text_sources import (
     SHUFFLED_TEXT_SOURCES,
     TEXT_SOURCE_CHOICES,
     apply_shuffled_text_control,

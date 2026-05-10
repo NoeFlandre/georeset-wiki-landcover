@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from src.config import DataPaths, ModelSettings
+from georeset.config import DataPaths, ModelSettings
 
 
 def test_data_paths_preserve_existing_defaults():

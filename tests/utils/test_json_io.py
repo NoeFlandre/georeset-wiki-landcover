@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import pytest
 
-from src.utils.json_io import write_csv_atomic, write_json_atomic, write_text_atomic
+from georeset.utils.json_io import write_csv_atomic, write_json_atomic, write_text_atomic
 
 
 def test_write_json_atomic_writes_complete_json(tmp_path):

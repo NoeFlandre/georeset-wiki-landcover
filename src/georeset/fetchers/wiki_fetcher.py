@@ -5,9 +5,9 @@ from typing import Any, cast
 
 import requests
 
-from src.config import DataPaths
-from src.contracts import ArticleMeta
-from src.utils.json_io import write_json_atomic
+from georeset.config import DataPaths
+from georeset.contracts import ArticleMeta
+from georeset.utils.json_io import write_json_atomic
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class WikiFetchError(RuntimeError):
 
 
 class WikiFetcher:
-    def __init__(self):
+    def __init__(self) -> None:
         self.api_url = "https://fr.wikipedia.org/w/api.php"
         self.headers = {
             "User-Agent": "GeoResetPipeline/1.0 (https://geo-reset.sylvainlobry.com/; research@sylvainlobry.com) python-requests/2.33.1"
@@ -223,7 +223,7 @@ class WikiFetcher:
 if __name__ == "__main__":
     import json
 
-    from src.fetchers.data_fetcher import DataFetcher
+    from georeset.fetchers.data_fetcher import DataFetcher
 
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     fetcher = WikiFetcher()
@@ -239,7 +239,7 @@ if __name__ == "__main__":
     gdf = data_fetcher.load_data(exclude_artificial=True)
 
     # Create polygon filter function for CORINE
-    def polygon_filter(lon, lat):
+    def polygon_filter(lon: float, lat: float) -> bool:
         from shapely.geometry import Point
 
         point = Point(lon, lat)
@@ -251,7 +251,7 @@ if __name__ == "__main__":
     osm_gdf = gpd.read_file(paths.osm_polygons)
 
     # Create polygon filter function for OSM
-    def osm_polygon_filter(lon, lat):
+    def osm_polygon_filter(lon: float, lat: float) -> bool:
         from shapely.geometry import Point
 
         point = Point(lon, lat)

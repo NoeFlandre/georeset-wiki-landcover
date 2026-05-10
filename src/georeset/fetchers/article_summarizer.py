@@ -5,9 +5,9 @@ import logging
 import os
 from typing import Any, cast
 
-from src.contracts import ArticleContent, SummaryRecord
-from src.llm.llama_client import DEFAULT_GGUF_FILENAME, JsonChatClient, LlamaChatClient
-from src.utils.json_io import write_json_atomic
+from georeset.contracts import ArticleContent, SummaryRecord
+from georeset.llm.llama_client import DEFAULT_GGUF_FILENAME, JsonChatClient, LlamaChatClient
+from georeset.utils.json_io import write_json_atomic
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class ArticleSummarizer:
         temperature: float = 0.7,
         summary_mode: str = "place",
         client: JsonChatClient | None = None,
-    ):
+    ) -> None:
         if summary_mode not in self.SUMMARY_MODES:
             raise ValueError(f"summary_mode must be one of {self.SUMMARY_MODES}")
         self.model_path = model_path
@@ -50,7 +50,7 @@ class ArticleSummarizer:
         self.summary_mode = summary_mode
         self._client = client or LlamaChatClient(model_path=model_path, seed=seed)
 
-    def _get_llm(self):
+    def _get_llm(self) -> Any:
         """Lazy initialization of LLM (GPU-accelerated)."""
         if not isinstance(self._client, LlamaChatClient):
             raise TypeError("_get_llm is only available for the default LlamaChatClient")

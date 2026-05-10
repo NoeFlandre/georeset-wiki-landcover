@@ -2,7 +2,7 @@
 
 from typing import Any, Protocol, cast
 
-from src.config import ModelSettings
+from georeset.config import ModelSettings
 
 DEFAULT_REPO_ID = "unsloth/Qwen3.6-27B-GGUF"
 DEFAULT_GGUF_FILENAME = ModelSettings().model_path

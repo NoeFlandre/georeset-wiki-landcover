@@ -1,4 +1,4 @@
-from src.classification.records import build_prediction_record, should_skip_record
+from georeset.classification.records import build_prediction_record, should_skip_record
 
 
 def test_should_skip_record_requires_ok_and_matching_fingerprint_by_default():

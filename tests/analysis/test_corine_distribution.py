@@ -4,7 +4,7 @@ import geopandas as gpd
 import pytest
 from shapely.geometry import box
 
-from src.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
+from georeset.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
 
 
 def test_distribution_reports_area_share_per_osm_polygon():

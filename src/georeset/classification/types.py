@@ -1,10 +1,10 @@
 """Classification type aliases.
 
-The canonical JSON-facing contracts live in :mod:`src.contracts`; this module
+The canonical JSON-facing contracts live in :mod:`georeset.contracts`; this module
 keeps the existing classification import path stable.
 """
 
-from src.contracts import (
+from georeset.contracts import (
     ClassificationTarget,
     ClassificationTask,
     ParseStatus,

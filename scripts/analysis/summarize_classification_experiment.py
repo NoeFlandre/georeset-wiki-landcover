@@ -8,7 +8,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, cast
 
-from src.utils.json_io import write_text_atomic
+from georeset.utils.json_io import write_text_atomic
 
 FIELDNAMES = [
     "run",

@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from src.classification.types import ClassificationTarget, PredictionRecord, PredictionResult
+from georeset.classification.types import ClassificationTarget, PredictionRecord, PredictionResult
 
 
 def should_skip_record(record: dict[str, Any] | None, fingerprint: str, retry_failed: bool) -> bool:

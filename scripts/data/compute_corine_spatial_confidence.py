@@ -13,15 +13,15 @@ import pandas as pd
 from shapely import make_valid
 from shapely.geometry import Point
 
-from src.config import DataPaths
-from src.contracts import ArticleMeta
-from src.spatial.corine_confidence import (
+from georeset.config import DataPaths
+from georeset.contracts import ArticleMeta
+from georeset.spatial.corine_confidence import (
     METRIC_CRS,
     compute_article_spatial_confidence,
     derive_level2_label,
     prepare_corine_gdf,
 )
-from src.utils.json_io import write_csv_atomic, write_json_atomic, write_text_atomic
+from georeset.utils.json_io import write_csv_atomic, write_json_atomic, write_text_atomic
 
 EXPERIMENT_ID = "corine_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"

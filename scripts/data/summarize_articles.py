@@ -3,8 +3,8 @@
 import argparse
 import logging
 
-from src.config import DataPaths, ModelSettings
-from src.fetchers.article_summarizer import ArticleSummarizer
+from georeset.config import DataPaths, ModelSettings
+from georeset.fetchers.article_summarizer import ArticleSummarizer
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(

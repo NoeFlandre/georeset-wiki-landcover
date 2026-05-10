@@ -72,7 +72,7 @@ class TestRunCorineAnalysisWithFilteredCorine:
         corine_gdf = mock_corine_gdf.copy()
 
         with (
-            patch("src.fetchers.data_fetcher.DataFetcher.load_data") as mock_load,
+            patch("georeset.fetchers.data_fetcher.DataFetcher.load_data") as mock_load,
             patch("geopandas.read_file") as mock_read,
             patch("geopandas.GeoDataFrame.to_file") as _mock_to_file,
             patch("scripts.analysis.run_corine_analysis.write_csv_atomic") as _mock_write_csv,
@@ -139,7 +139,7 @@ class TestRunCorineAnalysisWithFilteredCorine:
             written["osm"] = gdf.copy()
 
         with (
-            patch("src.fetchers.data_fetcher.DataFetcher.load_data") as mock_load,
+            patch("georeset.fetchers.data_fetcher.DataFetcher.load_data") as mock_load,
             patch("geopandas.read_file", return_value=osm),
             patch("geopandas.GeoDataFrame.to_file", new=capture_to_file),
             patch("folium.Map.save"),
@@ -169,7 +169,9 @@ class TestRunCorineAnalysisWithFilteredCorine:
         fetched = mock_osm_gdf.copy()
 
         with (
-            patch("src.fetchers.data_fetcher.DataFetcher.load_data", return_value=mock_corine_gdf),
+            patch(
+                "georeset.fetchers.data_fetcher.DataFetcher.load_data", return_value=mock_corine_gdf
+            ),
             patch("scripts.analysis.run_corine_analysis.OSMFetcher") as mock_fetcher_cls,
             patch("geopandas.read_file") as mock_read_file,
             patch("geopandas.GeoDataFrame.to_file"),
@@ -201,7 +203,9 @@ class TestRunCorineAnalysisWithFilteredCorine:
         dist_path = tmp_path / "distribution" / "osm_corine_distribution.csv"
 
         with (
-            patch("src.fetchers.data_fetcher.DataFetcher.load_data", return_value=mock_corine_gdf),
+            patch(
+                "georeset.fetchers.data_fetcher.DataFetcher.load_data", return_value=mock_corine_gdf
+            ),
             patch("geopandas.read_file", return_value=mock_osm_gdf) as mock_read_file,
             patch("scripts.analysis.run_corine_analysis.OSMFetcher") as mock_fetcher_cls,
             patch("geopandas.GeoDataFrame.to_file"),

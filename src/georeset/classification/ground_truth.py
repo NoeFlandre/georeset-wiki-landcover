@@ -1,9 +1,9 @@
 import geopandas as gpd
 from shapely.geometry import Point
 
-from src.classification.labels import osm_labels_from_row
-from src.contracts import ArticleMeta
-from src.spatial.policy import POINT_POLYGON_JOIN_PREDICATE
+from georeset.classification.labels import osm_labels_from_row
+from georeset.contracts import ArticleMeta
+from georeset.spatial.policy import POINT_POLYGON_JOIN_PREDICATE
 
 
 def _articles_to_points(articles: list[ArticleMeta]) -> gpd.GeoDataFrame:

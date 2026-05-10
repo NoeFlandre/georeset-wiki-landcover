@@ -3,7 +3,7 @@ from typing import Any
 
 import geopandas as gpd
 
-from src.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES
+from georeset.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES
 
 CORINE_LEVEL2_DESCRIPTIONS = {
     "21": "Arable land",

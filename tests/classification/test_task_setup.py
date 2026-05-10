@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 import geopandas as gpd
 from shapely.geometry import box
 
-from src.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
-from src.classification.task_setup import ClassificationTaskSetup, load_task_setup
+from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
+from georeset.classification.task_setup import ClassificationTaskSetup, load_task_setup
 
 
 def test_load_corine_task_setup_builds_target_labels_and_descriptions():
@@ -16,7 +16,7 @@ def test_load_corine_task_setup_builds_target_labels_and_descriptions():
     fetcher = MagicMock()
     fetcher.load_data.return_value = corine
 
-    with patch("src.classification.task_setup.DataFetcher", return_value=fetcher):
+    with patch("georeset.classification.task_setup.DataFetcher", return_value=fetcher):
         setup = load_task_setup(
             task="corine_level2",
             articles=articles,

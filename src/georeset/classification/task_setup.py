@@ -5,15 +5,15 @@ from typing import cast
 
 import geopandas as gpd
 
-from src.classification.ground_truth import build_corine_ground_truth, build_osm_ground_truth
-from src.classification.labels import (
+from georeset.classification.ground_truth import build_corine_ground_truth, build_osm_ground_truth
+from georeset.classification.labels import (
     CORINE_LEVEL2_DESCRIPTIONS,
     corine_level2_labels,
     osm_allowed_labels,
 )
-from src.classification.types import ClassificationTarget
-from src.contracts import ArticleMeta
-from src.fetchers.data_fetcher import DataFetcher
+from georeset.classification.types import ClassificationTarget
+from georeset.contracts import ArticleMeta
+from georeset.fetchers.data_fetcher import DataFetcher
 
 
 @dataclass(frozen=True)

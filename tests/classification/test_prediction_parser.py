@@ -1,4 +1,4 @@
-from src.classification.prediction_parser import (
+from georeset.classification.prediction_parser import (
     extract_allowed_labels,
     normalize_prediction_response,
 )

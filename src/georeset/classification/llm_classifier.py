@@ -1,9 +1,9 @@
 import json
-from typing import Any
+from typing import Any, cast
 
-from src.classification.prediction_parser import normalize_prediction_response
-from src.classification.types import PredictionResult
-from src.llm.llama_client import DEFAULT_GGUF_FILENAME, JsonChatClient, LlamaChatClient
+from georeset.classification.prediction_parser import normalize_prediction_response
+from georeset.classification.types import PredictionResult
+from georeset.llm.llama_client import DEFAULT_GGUF_FILENAME, JsonChatClient, LlamaChatClient
 
 SINGLE_SCHEMA = {
     "type": "object",
@@ -108,11 +108,14 @@ class LLMClassifier:
         }
 
     def _call_llm(self, user_prompt: str, schema: dict[str, Any]) -> str:
-        return self._client.complete_json(
-            system_prompt=SYSTEM_PROMPT,
-            user_prompt=user_prompt,
-            schema=schema,
-            temperature=self.temperature,
+        return cast(
+            str,
+            self._client.complete_json(
+                system_prompt=SYSTEM_PROMPT,
+                user_prompt=user_prompt,
+                schema=schema,
+                temperature=self.temperature,
+            ),
         )
 
     def _build_retry_prompt(

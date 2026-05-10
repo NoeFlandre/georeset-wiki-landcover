@@ -13,10 +13,10 @@ from typing import Any, Literal, cast
 
 import pandas as pd
 
-from src.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
-from src.classification.metrics import multilabel_metrics, single_label_metrics
-from src.contracts import MetricResult, PerLabelMetric
-from src.utils.json_io import write_json_atomic, write_text_atomic
+from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
+from georeset.classification.metrics import multilabel_metrics, single_label_metrics
+from georeset.contracts import MetricResult, PerLabelMetric
+from georeset.utils.json_io import write_json_atomic, write_text_atomic
 
 EXPERIMENT_ID = "article_text_classification_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
@@ -142,7 +142,7 @@ def _single_metrics(
         }
         for label, values in metrics.pop("per_label").items()
     ]
-    return metrics, cast(list[dict[str, Any]], per_class)
+    return metrics, per_class
 
 
 def _label_universe(records: pd.DataFrame) -> list[str]:

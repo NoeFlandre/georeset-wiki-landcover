@@ -1,11 +1,12 @@
 """OSM map visualizer for Corine Land Cover polygons."""
 
 import logging
+from typing import Any
 
 import folium
 import geopandas as gpd
 
-from src.config import DataPaths
+from georeset.config import DataPaths
 
 DEFAULT_MAP_LOCATION = [48.5, 7.5]
 logger = logging.getLogger(__name__)
@@ -36,7 +37,9 @@ class MapVisualizer:
 
         return m
 
-    def plot_polygons_with_articles(self, articles: list, zoom_start: int = 8) -> folium.Map:
+    def plot_polygons_with_articles(
+        self, articles: list[dict[str, Any]], zoom_start: int = 8
+    ) -> folium.Map:
         """Plot polygons and Wikipedia article locations as dots."""
         m = self._map_for_bounds(zoom_start)
 
@@ -98,7 +101,7 @@ class MapVisualizer:
 
         return m
 
-    def save_map(self, output_path: str, articles: list | None = None) -> None:
+    def save_map(self, output_path: str, articles: list[dict[str, Any]] | None = None) -> None:
         """Save the map as an HTML file."""
         m = self.plot_polygons_with_articles(articles) if articles else self.plot_polygons()
         m.save(output_path)
@@ -108,7 +111,7 @@ if __name__ == "__main__":
     import json
     import os
 
-    from src.fetchers.data_fetcher import DataFetcher
+    from georeset.fetchers.data_fetcher import DataFetcher
 
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     paths = DataPaths()

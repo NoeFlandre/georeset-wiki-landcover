@@ -5,13 +5,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from georeset.config import DataPaths, ModelSettings
 from scripts.data import classify_articles
 from scripts.data.classify_articles import (
     apply_shuffled_text_control,
     parse_args,
     prediction_fingerprint,
 )
-from src.config import DataPaths, ModelSettings
 
 
 class TestParseArgs:

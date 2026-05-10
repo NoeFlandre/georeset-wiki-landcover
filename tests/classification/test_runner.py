@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from src.classification.runner import compute_metrics, load_text_source, parse_args
-from src.config import DataPaths, ModelSettings
+from georeset.classification.runner import compute_metrics, load_text_source, parse_args
+from georeset.config import DataPaths, ModelSettings
 
 
 def test_parse_args_uses_config_defaults(monkeypatch):

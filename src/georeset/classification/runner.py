@@ -6,23 +6,23 @@ import json
 import logging
 import os
 from collections.abc import Callable
-from typing import Protocol
+from typing import Protocol, cast
 
-from src.classification.llm_classifier import LLMClassifier
-from src.classification.metrics import multilabel_metrics, single_label_metrics
-from src.classification.records import build_prediction_record, should_skip_record
-from src.classification.task_setup import load_task_setup
-from src.classification.text_sources import (
+from georeset.classification.llm_classifier import LLMClassifier
+from georeset.classification.metrics import multilabel_metrics, single_label_metrics
+from georeset.classification.records import build_prediction_record, should_skip_record
+from georeset.classification.task_setup import load_task_setup
+from georeset.classification.text_sources import (
     SHUFFLED_TEXT_SOURCES,
     TEXT_SOURCE_CHOICES,
     apply_shuffled_text_control,
     base_text_source,
     shuffled_metadata,
 )
-from src.classification.types import PredictionResult
-from src.config import DataPaths, ModelSettings
-from src.contracts import ArticleMeta, ClassificationTarget, MetricResult
-from src.utils.json_io import write_json_atomic
+from georeset.classification.types import PredictionResult
+from georeset.config import DataPaths, ModelSettings
+from georeset.contracts import ArticleMeta, ClassificationTarget, MetricResult
+from georeset.utils.json_io import write_json_atomic
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -55,7 +55,9 @@ ClassifierFactory = Callable[[str | None, int, float], Classifier]
 
 
 def default_classifier_factory(model_path: str | None, seed: int, temperature: float) -> Classifier:
-    return LLMClassifier(model_path=model_path, seed=seed, temperature=temperature)
+    return cast(
+        Classifier, LLMClassifier(model_path=model_path, seed=seed, temperature=temperature)
+    )
 
 
 def prediction_fingerprint(

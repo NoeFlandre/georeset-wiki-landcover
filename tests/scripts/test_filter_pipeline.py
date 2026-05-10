@@ -240,7 +240,7 @@ class TestFilterCorineStep:
 
     def test_exclude_artificial_surface_polygons(self):
         """Artificial surface polygons (code starting with 1) should be excluded."""
-        from src.fetchers.data_fetcher import DataFetcher
+        from georeset.fetchers.data_fetcher import DataFetcher
 
         fetcher = DataFetcher()
         gdf = fetcher.load_data(exclude_artificial=True)

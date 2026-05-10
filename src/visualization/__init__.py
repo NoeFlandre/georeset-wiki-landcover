@@ -1,3 +1,6 @@
-from src.visualization.map_visualizer import MapVisualizer
+"""Compatibility shim for ``src.visualization``."""
 
-__all__ = ["MapVisualizer"]
+import georeset.visualization as _impl
+from georeset.visualization import *  # noqa: F403
+
+__path__ = _impl.__path__

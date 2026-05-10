@@ -1,6 +1,6 @@
 """Quick snapshot of the Corine Land Cover dataset for Alsace."""
 
-from src.fetchers.data_fetcher import DataFetcher
+from georeset.fetchers.data_fetcher import DataFetcher
 
 
 def snapshot(n_samples: int = 10) -> None:

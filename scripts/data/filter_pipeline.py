@@ -21,17 +21,17 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
 
-from src.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
-from src.config import DataPaths, ModelSettings
-from src.contracts import ArticleMeta
-from src.fetchers.article_summarizer import ArticleSummarizer
-from src.fetchers.data_fetcher import DataFetcher
-from src.fetchers.osm_fetcher import OSMFetcher
-from src.fetchers.wiki_content_fetcher import WikiContentFetcher
-from src.fetchers.wiki_fetcher import WikiFetcher
-from src.spatial.policy import POINT_POLYGON_JOIN_PREDICATE
-from src.utils.json_io import write_csv_atomic, write_json_atomic
-from src.visualization.map_visualizer import MapVisualizer
+from georeset.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
+from georeset.config import DataPaths, ModelSettings
+from georeset.contracts import ArticleMeta
+from georeset.fetchers.article_summarizer import ArticleSummarizer
+from georeset.fetchers.data_fetcher import DataFetcher
+from georeset.fetchers.osm_fetcher import OSMFetcher
+from georeset.fetchers.wiki_content_fetcher import WikiContentFetcher
+from georeset.fetchers.wiki_fetcher import WikiFetcher
+from georeset.spatial.policy import POINT_POLYGON_JOIN_PREDICATE
+from georeset.utils.json_io import write_csv_atomic, write_json_atomic
+from georeset.visualization.map_visualizer import MapVisualizer
 
 
 def _to_wgs84(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
