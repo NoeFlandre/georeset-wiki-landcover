@@ -84,7 +84,8 @@ class TestRunCorineAnalysisWithFilteredCorine:
             run(
                 output_map_path=str(map_path),
                 output_csv_path=str(dist_path),
-                output_osm_path=str(osm_path),
+                osm_polygons_path=str(osm_path),
+                refetch_osm=False,
             )
 
             # Verify exclude_artificial=True was passed
@@ -148,10 +149,72 @@ class TestRunCorineAnalysisWithFilteredCorine:
             run(
                 output_map_path=str(map_path),
                 output_csv_path=str(dist_path),
-                output_osm_path=str(osm_path),
+                osm_polygons_path=str(osm_path),
+                refetch_osm=False,
                 chunk_size=1,
             )
 
         # 'mixed' overlaps artificial 112 AND natural 311 in raw; but filtered CORINE
         # only has 311, so 'mixed' should be kept as it overlaps filtered CORINE.
         assert written["osm"]["osm_id"].tolist() == ["mixed", "natural"]
+
+    def test_run_fetches_osm_when_refetch_requested(self, mock_corine_gdf, mock_osm_gdf, tmp_path):
+        bounds_path = tmp_path / "bounds.json"
+        bounds_path.write_text(
+            json.dumps({"min_lon": 7.0, "min_lat": 48.0, "max_lon": 8.0, "max_lat": 49.0})
+        )
+        osm_path = tmp_path / "osm" / "osm_project_polygons.geojson"
+        map_path = tmp_path / "maps" / "osm_corine_polygons.html"
+        dist_path = tmp_path / "distribution" / "osm_corine_distribution.csv"
+        fetched = mock_osm_gdf.copy()
+
+        with (
+            patch("src.fetchers.data_fetcher.DataFetcher.load_data", return_value=mock_corine_gdf),
+            patch("scripts.analysis.run_corine_analysis.OSMFetcher") as mock_fetcher_cls,
+            patch("geopandas.read_file") as mock_read_file,
+            patch("geopandas.GeoDataFrame.to_file"),
+            patch("scripts.analysis.run_corine_analysis.write_csv_atomic"),
+            patch("folium.Map.save"),
+        ):
+            mock_fetcher_cls.return_value.fetch_polygons.return_value = fetched
+
+            run(
+                output_map_path=str(map_path),
+                output_csv_path=str(dist_path),
+                osm_polygons_path=str(osm_path),
+                corine_bounds_path=str(bounds_path),
+                refetch_osm=True,
+            )
+
+        mock_fetcher_cls.return_value.fetch_polygons.assert_called_once_with(7.0, 48.0, 8.0, 49.0)
+        mock_read_file.assert_not_called()
+
+    def test_run_loads_existing_osm_when_refetch_not_requested(
+        self, mock_corine_gdf, mock_osm_gdf, tmp_path
+    ):
+        bounds_path = tmp_path / "bounds.json"
+        bounds_path.write_text(
+            json.dumps({"min_lon": 7.0, "min_lat": 48.0, "max_lon": 8.0, "max_lat": 49.0})
+        )
+        osm_path = tmp_path / "osm" / "osm_project_polygons.geojson"
+        map_path = tmp_path / "maps" / "osm_corine_polygons.html"
+        dist_path = tmp_path / "distribution" / "osm_corine_distribution.csv"
+
+        with (
+            patch("src.fetchers.data_fetcher.DataFetcher.load_data", return_value=mock_corine_gdf),
+            patch("geopandas.read_file", return_value=mock_osm_gdf) as mock_read_file,
+            patch("scripts.analysis.run_corine_analysis.OSMFetcher") as mock_fetcher_cls,
+            patch("geopandas.GeoDataFrame.to_file"),
+            patch("scripts.analysis.run_corine_analysis.write_csv_atomic"),
+            patch("folium.Map.save"),
+        ):
+            run(
+                output_map_path=str(map_path),
+                output_csv_path=str(dist_path),
+                osm_polygons_path=str(osm_path),
+                corine_bounds_path=str(bounds_path),
+                refetch_osm=False,
+            )
+
+        mock_read_file.assert_called_once_with(str(osm_path))
+        mock_fetcher_cls.return_value.fetch_polygons.assert_not_called()
