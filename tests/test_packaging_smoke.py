@@ -104,6 +104,40 @@ def test_documented_cli_modules_are_importable():
         assert importlib.import_module(module_name)
 
 
+def test_major_codebase_subfolders_have_local_readmes():
+    expected_readmes = [
+        Path("src/README.md"),
+        Path("src/georeset/analysis/README.md"),
+        Path("src/georeset/classification/README.md"),
+        Path("src/georeset/cli/README.md"),
+        Path("src/georeset/cli/analysis/README.md"),
+        Path("src/georeset/cli/data/README.md"),
+        Path("src/georeset/cli/dev/README.md"),
+        Path("src/georeset/fetchers/README.md"),
+        Path("src/georeset/llm/README.md"),
+        Path("src/georeset/spatial/README.md"),
+        Path("src/georeset/utils/README.md"),
+        Path("src/georeset/visualization/README.md"),
+        Path("scripts/README.md"),
+        Path("scripts/analysis/README.md"),
+        Path("scripts/cluster/README.md"),
+        Path("scripts/data/README.md"),
+        Path("scripts/dev/README.md"),
+        Path("tests/README.md"),
+        Path("tests/analysis/README.md"),
+        Path("tests/classification/README.md"),
+        Path("tests/fetchers/README.md"),
+        Path("tests/scripts/README.md"),
+        Path("tests/spatial/README.md"),
+        Path("tests/utils/README.md"),
+        Path("tests/visualization/README.md"),
+    ]
+
+    for path in expected_readmes:
+        assert path.exists(), f"Missing local documentation: {path}"
+        assert len(path.read_text(encoding="utf-8").strip().splitlines()) >= 5
+
+
 def test_repo_scripts_are_thin_wrappers_over_packaged_cli_modules():
     wrapper_paths = [
         Path("scripts/data/classify_articles.py"),
