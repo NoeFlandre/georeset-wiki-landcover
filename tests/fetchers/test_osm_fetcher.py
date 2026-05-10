@@ -2,9 +2,11 @@
 
 from unittest.mock import patch
 
+import pytest
+import requests
 from shapely.geometry import Polygon
 
-from src.fetchers.osm_fetcher import OSMFetcher
+from src.fetchers.osm_fetcher import OSMFetcher, OSMFetchError
 
 
 def test_fetch_polygons_uses_corine_bounds_in_overpass_order():
@@ -124,3 +126,74 @@ def test_fetch_polygons_retries_rate_limited_tiles():
     assert gdf.empty
     assert post.call_count == 2
     sleep.assert_called_once()
+
+
+def test_fetch_polygons_retries_transient_server_errors():
+    fetcher = OSMFetcher(tile_size=10, retries=2)
+
+    class Response:
+        def __init__(self, status_code, payload):
+            self.status_code = status_code
+            self._payload = payload
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise requests.HTTPError("http error")
+
+        def json(self):
+            return self._payload
+
+    with (
+        patch("src.fetchers.osm_fetcher.time.sleep") as sleep,
+        patch("src.fetchers.osm_fetcher.requests.post") as post,
+    ):
+        post.side_effect = [
+            Response(503, {}),
+            Response(200, {"elements": []}),
+        ]
+
+        gdf = fetcher.fetch_polygons(min_lon=7.0, min_lat=48.0, max_lon=8.0, max_lat=49.0)
+
+    assert gdf.empty
+    assert post.call_count == 2
+    sleep.assert_called_once()
+
+
+def test_fetch_polygons_raises_after_transient_retries_are_exhausted():
+    fetcher = OSMFetcher(tile_size=10, retries=2)
+
+    with (
+        patch("src.fetchers.osm_fetcher.time.sleep"),
+        patch("src.fetchers.osm_fetcher.requests.post") as post,
+    ):
+        post.side_effect = requests.Timeout("timeout")
+
+        with pytest.raises(OSMFetchError):
+            fetcher.fetch_polygons(min_lon=7.0, min_lat=48.0, max_lon=8.0, max_lat=49.0)
+
+    assert post.call_count == 2
+
+
+def test_fetch_polygons_does_not_retry_non_transient_client_errors():
+    fetcher = OSMFetcher(tile_size=10, retries=3)
+
+    class Response:
+        status_code = 400
+
+        def raise_for_status(self):
+            raise requests.HTTPError("bad request")
+
+        def json(self):
+            return {"elements": []}
+
+    with (
+        patch("src.fetchers.osm_fetcher.time.sleep") as sleep,
+        patch("src.fetchers.osm_fetcher.requests.post") as post,
+    ):
+        post.return_value = Response()
+
+        with pytest.raises(OSMFetchError):
+            fetcher.fetch_polygons(min_lon=7.0, min_lat=48.0, max_lon=8.0, max_lat=49.0)
+
+    assert post.call_count == 1
+    sleep.assert_not_called()

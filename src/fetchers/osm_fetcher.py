@@ -35,6 +35,10 @@ NATURAL_VALUES = (
 )
 
 
+class OSMFetchError(RuntimeError):
+    """Raised when an Overpass API request cannot be completed."""
+
+
 class OSMFetcher:
     """Fetch closed OSM ways from Overpass as polygons."""
 
@@ -69,21 +73,50 @@ class OSMFetcher:
     def _fetch_tile(
         self, min_lon: float, min_lat: float, max_lon: float, max_lat: float
     ) -> gpd.GeoDataFrame:
+        last_error: Exception | None = None
+
         for attempt in range(self.retries):
-            response = requests.post(
-                self.api_url,
-                data={"data": self._query(min_lon, min_lat, max_lon, max_lat)},
-                headers=self.headers,
-                timeout=180,
-            )
-            if response.status_code == 429 and attempt < self.retries - 1:
-                time.sleep(2**attempt)
-                continue
+            try:
+                response = requests.post(
+                    self.api_url,
+                    data={"data": self._query(min_lon, min_lat, max_lon, max_lat)},
+                    headers=self.headers,
+                    timeout=180,
+                )
+                if self._is_transient_status(response.status_code):
+                    last_error = requests.HTTPError(
+                        f"Transient Overpass HTTP status {response.status_code}"
+                    )
+                    if attempt < self.retries - 1:
+                        self._sleep_before_retry(response.status_code, attempt)
+                        continue
+                    break
 
-            response.raise_for_status()
-            return self._elements_to_gdf(response.json().get("elements", []))
+                response.raise_for_status()
+                return self._elements_to_gdf(response.json().get("elements", []))
+            except requests.HTTPError as exc:
+                raise OSMFetchError(
+                    "Overpass request failed with non-transient HTTP error"
+                ) from exc
+            except (requests.RequestException, ValueError) as exc:
+                last_error = exc
+                if attempt < self.retries - 1:
+                    self._sleep_before_retry(type(exc).__name__, attempt)
+                    continue
 
-        return self._empty_gdf()
+        raise OSMFetchError(
+            f"Failed to fetch OSM tile after {self.retries} retries"
+        ) from last_error
+
+    def _is_transient_status(self, status_code: int) -> bool:
+        if not isinstance(status_code, int):
+            return False
+        return status_code == 429 or 500 <= status_code < 600
+
+    def _sleep_before_retry(self, reason: object, attempt: int) -> None:
+        wait_time = 2**attempt
+        print(f"  Overpass transient failure ({reason}). Retrying in {wait_time}s...")
+        time.sleep(wait_time)
 
     def _tiles(self, min_lon: float, min_lat: float, max_lon: float, max_lat: float):
         south = min_lat

@@ -32,20 +32,8 @@ class WikiFetcher:
             "gslimit": 500,
             "format": "json",
         }
-        for attempt in range(retries):
-            try:
-                response = requests.get(
-                    self.api_url, params=params, headers=self.headers, timeout=10
-                )
-                response.raise_for_status()
-                time.sleep(0.1)
-                data = cast(dict[str, Any], response.json())
-                return cast(list[ArticleMeta], data.get("query", {}).get("geosearch", []))
-            except (requests.RequestException, ValueError):
-                if attempt < retries - 1:
-                    time.sleep(1)
-                continue
-        return []
+        data = self._request_json(params, retries, timeout=10)
+        return cast(list[ArticleMeta], data.get("query", {}).get("geosearch", []))
 
     def get_articles_in_bbox(
         self, north: float, west: float, south: float, east: float, retries: int = 3

@@ -3,6 +3,7 @@
 from unittest.mock import patch
 
 import pytest
+import requests
 
 from src.fetchers.wiki_fetcher import WikiFetcher, WikiFetchError
 
@@ -73,6 +74,16 @@ class TestWikiFetcher:
 
         with pytest.raises(WikiFetchError):
             self.fetcher.get_articles_in_bbox(north=49.0, west=7.0, south=48.0, east=8.0, retries=2)
+
+        assert mock_get.call_count == 2
+
+    @patch("requests.get")
+    def test_get_nearby_articles_raises_when_all_retries_fail(self, mock_get):
+        """Nearby article fetches should use the same fail-fast policy as bbox fetches."""
+        mock_get.side_effect = requests.RequestException("network down")
+
+        with pytest.raises(WikiFetchError):
+            self.fetcher.get_nearby_articles(lat=48.5, lon=7.5, retries=2)
 
         assert mock_get.call_count == 2
 
