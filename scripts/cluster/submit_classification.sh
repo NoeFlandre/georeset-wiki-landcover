@@ -64,17 +64,21 @@ echo "Submitting OAR job"
 SUBMIT_OUTPUT="$(
   ssh -o BatchMode=yes "${ACCESS_HOST}" "
     ssh ${SITE} 'cd \"${REMOTE_PROJECT_DIR}\" && chmod +x \"${JOB_SCRIPT}\" && \
-    env \
-      GEORESET_CLASSIFICATION_TASK=\"${TASK}\" \
-      GEORESET_CLASSIFICATION_TEXT_SOURCE=\"${TEXT_SOURCE}\" \
-      GEORESET_MODEL_PATH=\"${GEORESET_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf}\" \
-      GEORESET_MODEL_REPO_ID=\"${GEORESET_MODEL_REPO_ID:-}\" \
-      GEORESET_CLASSIFICATION_TEMPERATURE=\"${GEORESET_CLASSIFICATION_TEMPERATURE:-0.0}\" \
-      GEORESET_EXTRA_ARGS=\"${GEORESET_EXTRA_ARGS:-}\" \
-      GEORESET_CLASSIFICATION_OUTPUT_DIR=\"${OUTPUT_DIR}\" \
-      G5K_REMOTE_DIR=\"${REMOTE_DIR}\" \
-      G5K_REMOTE_PROJECT_DIR=\"${REMOTE_PROJECT_DIR}\" \
-      oarsub -S ./\"${JOB_SCRIPT}\"'
+      oarsub -q production \
+        -l host=1/gpu=1,walltime=20:00:00 \
+        -p \"gpu_mem>=32000\" \
+        -O OAR_%jobid%.out \
+        -E OAR_%jobid%.err \
+        \"env GEORESET_CLASSIFICATION_TASK=\\\"${TASK}\\\" \
+        GEORESET_CLASSIFICATION_TEXT_SOURCE=\\\"${TEXT_SOURCE}\\\" \
+        GEORESET_MODEL_PATH=\\\"${GEORESET_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf}\\\" \
+        GEORESET_MODEL_REPO_ID=\\\"${GEORESET_MODEL_REPO_ID:-}\\\" \
+        GEORESET_CLASSIFICATION_TEMPERATURE=\\\"${GEORESET_CLASSIFICATION_TEMPERATURE:-0.0}\\\" \
+        GEORESET_EXTRA_ARGS=\\\"${GEORESET_EXTRA_ARGS:-}\\\" \
+        GEORESET_CLASSIFICATION_OUTPUT_DIR=\\\"${OUTPUT_DIR}\\\" \
+        G5K_REMOTE_DIR=\\\"${REMOTE_DIR}\\\" \
+        G5K_REMOTE_PROJECT_DIR=\\\"${REMOTE_PROJECT_DIR}\\\" \
+        bash ./\\\"${JOB_SCRIPT}\\\"\"'
   ")"
 echo "${SUBMIT_OUTPUT}"
 
