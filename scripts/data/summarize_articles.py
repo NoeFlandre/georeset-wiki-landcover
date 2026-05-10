@@ -2,11 +2,6 @@
 
 import argparse
 import logging
-import os
-import sys
-
-# Ensure src is in path if running as a script
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from src.config import DataPaths, ModelSettings
 from src.fetchers.article_summarizer import ArticleSummarizer

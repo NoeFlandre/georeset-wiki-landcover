@@ -75,6 +75,13 @@ def test_documented_cli_modules_are_importable():
         assert importlib.import_module(module_name)
 
 
+def test_python_scripts_do_not_mutate_sys_path_for_imports():
+    for path in Path("scripts").rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        assert "sys.path.insert" not in text
+        assert "sys.path.append" not in text
+
+
 def test_cluster_classification_submit_does_not_autosync_by_default():
     script = Path("scripts/cluster/submit_classification.sh").read_text()
 

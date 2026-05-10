@@ -14,14 +14,10 @@ Supports --refetch-osm, --refetch-wiki, --fetch-content, --summarize, --audit-on
 import argparse
 import json
 import os
-import sys
 
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
-
-# Ensure src is in path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from src.analysis.corine_polygon_stats import corine_distribution_in_osm_polygons
 from src.config import DataPaths, ModelSettings
