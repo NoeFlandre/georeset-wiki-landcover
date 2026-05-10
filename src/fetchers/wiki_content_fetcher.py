@@ -43,13 +43,11 @@ class WikiContentFetcher:
 
         # Find pids that returned empty or missing content
         fetched_pids = set(results.keys())
-        empty_pids = [pid for pid in (str(p) for p in pageids) if pid not in fetched_pids]
+        empty_pids = [pid for pid in pageids if pid not in fetched_pids]
 
         # Fall back to individual requests for empty ones (1 retry max)
         if empty_pids:
-            individual_results = self._individual_fetch(
-                [int(pid) for pid in empty_pids], max_retries=1
-            )
+            individual_results = self._individual_fetch(empty_pids, max_retries=1)
             results.update(individual_results)
 
         return results

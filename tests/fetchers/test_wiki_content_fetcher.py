@@ -148,6 +148,33 @@ class TestWikiContentFetcher:
         params = call_args[1]["params"]
         assert "exintro" not in params
 
+    def test_get_articles_content_does_not_fallback_when_batch_content_is_valid(self):
+        """Valid batch content should not be treated as missing due to pageid type mismatch."""
+        with (
+            patch.object(
+                self.fetcher,
+                "_batch_fetch",
+                return_value={
+                    100: {
+                        "title": "A",
+                        "content": "Content A",
+                        "url": "https://fr.wikipedia.org/wiki/A",
+                    }
+                },
+            ),
+            patch.object(self.fetcher, "_individual_fetch") as individual_fetch,
+        ):
+            result = self.fetcher.get_articles_content([100])
+
+        individual_fetch.assert_not_called()
+        assert result == {
+            100: {
+                "title": "A",
+                "content": "Content A",
+                "url": "https://fr.wikipedia.org/wiki/A",
+            }
+        }
+
     @patch("requests.get")
     def test_fetch_from_file_drops_articles_with_empty_content(self, mock_get):
         """Should not include articles where content is empty or whitespace only."""
