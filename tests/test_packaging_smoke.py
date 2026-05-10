@@ -119,6 +119,10 @@ def test_cluster_scripts_do_not_hardcode_personal_home_path():
         Path("scripts/cluster/run_classification_job.sh"),
         Path("scripts/cluster/submit_classification.sh"),
         Path("scripts/cluster/sync_classification.sh"),
+        Path("scripts/cluster/run_summarization_job.sh"),
+        Path("scripts/cluster/run_summarization_no_place.sh"),
+        Path("scripts/cluster/submit_summarization.sh"),
+        Path("scripts/cluster/sync_summaries.sh"),
     ]:
         assert "/home/nflandre" not in path.read_text()
 

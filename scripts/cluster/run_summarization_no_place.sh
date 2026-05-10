@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 #OAR -q besteffort
 #OAR -l host=1/gpu=1,walltime=10:00:00
-#OAR -O /home/nflandre/georeset/OAR_%jobid%.out
-#OAR -E /home/nflandre/georeset/OAR_%jobid%.err
+#OAR -O OAR_%jobid%.out
+#OAR -E OAR_%jobid%.err
 
 set -euo pipefail
 
-cd /home/nflandre/georeset
+REMOTE_DIR="${G5K_REMOTE_DIR:-georeset}"
+REMOTE_PROJECT_DIR="${G5K_REMOTE_PROJECT_DIR:-${HOME}/${REMOTE_DIR}}"
+cd "${REMOTE_PROJECT_DIR}"
 
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 export PYTHONDONTWRITEBYTECODE=1
@@ -25,6 +27,8 @@ fi
 
 export CMAKE_ARGS="-DGGML_CUDA=on"
 export FORCE_CMAKE=1
+export UV_PROJECT_ENVIRONMENT="${REMOTE_PROJECT_DIR}/.venv_${OAR_JOB_ID}"
+export VIRTUAL_ENV="${UV_PROJECT_ENVIRONMENT}"
 
 uv sync --group dev --group llm
 
