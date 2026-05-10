@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from scripts.analysis.evaluate_predictions_with_spatial_confidence import main
+from georeset.cli.analysis.evaluate_predictions_with_spatial_confidence import main
 
 
 def _write_prediction(path: Path, records: dict[str, dict[str, object]]) -> None:

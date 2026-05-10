@@ -43,15 +43,17 @@ writing visual checks.
   - `map_visualizer.py`: writes Folium maps for CORINE polygons, Wikipedia
     article points, and OSM polygon overlays.
 
-- top-level `scripts`
-  - `scripts/dev/snapshot.py`: prints a quick CORINE dataset snapshot.
-  - `scripts/analysis/run_corine_analysis.py`: runs OSM/CORINE distribution and
+- `georeset.cli`
+  - `dev/snapshot.py`: prints a quick CORINE dataset snapshot.
+  - `analysis/run_corine_analysis.py`: runs OSM/CORINE distribution and
     map generation.
-  - `scripts/data/summarize_articles.py`: summarizes fetched article content with an LLM.
+  - `data/summarize_articles.py`: summarizes fetched article content with an LLM.
     It supports `--summary-mode place` for normal summaries and
     `--summary-mode no_place` for summaries that suppress the described place
     name. It uses llama-cpp-python schema-constrained JSON generation and
     persists only public summaries, never private thinking fields.
+  - Top-level `scripts/` modules are repository wrappers around these packaged
+    CLI modules for backwards-compatible `python -m scripts...` usage.
 
 ## Data Contract
 
@@ -72,12 +74,12 @@ hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store
 ## Common Entry Points
 
 ```bash
-uv run python -m scripts.dev.snapshot
+uv run georeset-snapshot
 uv run python -m georeset.fetchers.wiki_fetcher
 uv run python -m georeset.fetchers.wiki_content_fetcher
 uv run python -m georeset.visualization.map_visualizer
-uv run python -m scripts.analysis.run_corine_analysis
-uv run python -m scripts.data.summarize_articles
+uv run georeset-run-corine-analysis
+uv run georeset-summarize-articles
 ```
 
 Use `PYTHONDONTWRITEBYTECODE=1` while developing if you want to avoid local

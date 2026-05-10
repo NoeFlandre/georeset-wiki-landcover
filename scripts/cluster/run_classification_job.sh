@@ -38,7 +38,7 @@ fi
 
 uv sync --group dev --group llm
 
-uv run python -m scripts.data.classify_articles \
+uv run georeset-classify-articles \
   --task "${TASK}" \
   --text-source "${TEXT_SOURCE}" \
   --model-path "${GEORESET_MODEL_PATH}" \

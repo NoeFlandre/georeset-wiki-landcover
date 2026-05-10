@@ -89,13 +89,51 @@ def test_production_outputs_use_atomic_file_helpers():
 
 def test_documented_cli_modules_are_importable():
     for module_name in [
-        "scripts.data.classify_articles",
-        "scripts.data.compute_corine_spatial_confidence",
-        "scripts.data.summarize_articles",
-        "scripts.analysis.evaluate_predictions_with_spatial_confidence",
-        "scripts.analysis.summarize_classification_experiment",
+        "georeset.cli.data.classify_articles",
+        "georeset.cli.data.compute_corine_spatial_confidence",
+        "georeset.cli.data.filter_pipeline",
+        "georeset.cli.data.summarize_articles",
+        "georeset.cli.analysis.evaluate_predictions_with_spatial_confidence",
+        "georeset.cli.analysis.run_corine_analysis",
+        "georeset.cli.analysis.summarize_classification_experiment",
+        "georeset.cli.dev.snapshot",
     ]:
         assert importlib.import_module(module_name)
+
+
+def test_repo_scripts_are_thin_wrappers_over_packaged_cli_modules():
+    wrapper_paths = [
+        Path("scripts/data/classify_articles.py"),
+        Path("scripts/data/compute_corine_spatial_confidence.py"),
+        Path("scripts/data/filter_pipeline.py"),
+        Path("scripts/data/summarize_articles.py"),
+        Path("scripts/analysis/evaluate_predictions_with_spatial_confidence.py"),
+        Path("scripts/analysis/run_corine_analysis.py"),
+        Path("scripts/analysis/summarize_classification_experiment.py"),
+        Path("scripts/dev/snapshot.py"),
+    ]
+    for path in wrapper_paths:
+        text = path.read_text(encoding="utf-8")
+        assert len(text.splitlines()) <= 12
+        assert "from georeset.cli." in text
+        assert "if __name__" in text
+
+
+def test_packaged_cli_entry_points_are_declared():
+    pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+
+    assert "[project.scripts]" in pyproject
+    for command in [
+        "georeset-classify-articles",
+        "georeset-compute-corine-spatial-confidence",
+        "georeset-filter-pipeline",
+        "georeset-run-corine-analysis",
+        "georeset-snapshot",
+        "georeset-summarize-articles",
+        "georeset-summarize-classification-experiment",
+        "georeset-evaluate-spatial-confidence",
+    ]:
+        assert command in pyproject
 
 
 def test_georeset_package_imports_work_without_src_compatibility_shims():
@@ -140,7 +178,7 @@ def test_metric_contracts_are_split_by_metric_family():
     contracts = importlib.import_module("georeset.contracts")
     metrics_module = importlib.import_module("georeset.classification.metrics")
     spatial_eval = importlib.import_module(
-        "scripts.analysis.evaluate_predictions_with_spatial_confidence"
+        "georeset.cli.analysis.evaluate_predictions_with_spatial_confidence"
     )
 
     assert hasattr(contracts, "SingleLabelMetricResult")

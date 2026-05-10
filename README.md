@@ -117,7 +117,7 @@ PYTHONDONTWRITEBYTECODE=1 uv run pytest tests/fetchers/test_wiki_content_fetcher
 Print a quick dataset snapshot:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.dev.snapshot
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-snapshot
 ```
 
 Fetch Wikipedia article metadata:
@@ -145,7 +145,7 @@ Fetch/use OSM polygons, compute CORINE distributions, and generate the separate
 CORINE + OSM map:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.analysis.run_corine_analysis
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-run-corine-analysis
 hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```
 
@@ -169,7 +169,7 @@ The remote job installs `uv` if needed, syncs the project with the `dev` and
 `llama-cpp-python`, and runs:
 
 ```bash
-uv run python -m scripts.data.summarize_articles \
+uv run georeset-summarize-articles \
   --input-path data/wiki/article_contents.json \
   --output-path data/wiki/article_summaries.json \
   --summary-mode place
@@ -178,7 +178,7 @@ uv run python -m scripts.data.summarize_articles \
 The no-place job writes `data/wiki/article_summaries_no_place.json`:
 
 ```bash
-uv run python -m scripts.data.summarize_articles \
+uv run georeset-summarize-articles \
   --input-path data/wiki/article_contents.json \
   --output-path data/wiki/article_summaries_no_place.json \
   --summary-mode no_place
@@ -198,34 +198,34 @@ Six primary classification runs are supported: 2 tasks (CORINE level-2 single-la
 Local runs:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task corine_level2 --text-source summary
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task corine_level2 --text-source summary_no_place
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task corine_level2 --text-source content
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task osm --text-source summary
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task osm --text-source summary_no_place
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task osm --text-source content
 ```
 
 Shuffled-control local runs:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task corine_level2 --text-source summary_shuffled
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task corine_level2 --text-source summary_no_place_shuffled
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task corine_level2 --text-source content_shuffled
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task osm --text-source summary_shuffled
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task osm --text-source summary_no_place_shuffled
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.data.classify_articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task osm --text-source content_shuffled
 ```
 
@@ -269,16 +269,17 @@ mkdir -p data/experiments/article_text_classification_shuffled_control_v1
 cp data/classification/*_shuffled_predictions.json \
   data/classification/*_shuffled_metrics.json \
   data/experiments/article_text_classification_shuffled_control_v1/
-PYTHONDONTWRITEBYTECODE=1 uv run python -m scripts.analysis.summarize_classification_experiment \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-summarize-classification-experiment \
   --experiment-dir data/experiments/article_text_classification_shuffled_control_v1 \
   --title "Article-Text Classification Shuffled Control v1"
 ```
 
 ## Docker
 
-The Docker image contains code, top-level `scripts/` CLIs, tests, and Python
-dependencies. It intentionally does not bake in `data/`; mount local synced
-data at `/app/data`.
+The Docker image contains the installable `georeset` package, packaged CLI
+entry points, thin top-level `scripts/` wrappers for repository compatibility,
+tests, and Python dependencies. It intentionally does not bake in `data/`;
+mount local synced data at `/app/data`.
 
 Build the image:
 
@@ -298,10 +299,10 @@ Run tests in Docker:
 docker run --rm -v "$PWD/data:/app/data" georeset uv run pytest tests/fetchers/test_wiki_content_fetcher.py -q
 ```
 
-Run a script-based smoke test in Docker:
+Run a packaged CLI smoke test in Docker:
 
 ```bash
-docker run --rm -v "$PWD/data:/app/data" georeset uv run python -m scripts.dev.snapshot
+docker run --rm -v "$PWD/data:/app/data" georeset uv run georeset-snapshot
 ```
 
 Run a pipeline command in Docker:

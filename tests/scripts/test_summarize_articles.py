@@ -7,9 +7,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from georeset.cli.data.summarize_articles import parse_args
 from georeset.config import DataPaths, ModelSettings
 from georeset.fetchers.article_summarizer import ArticleSummarizer
-from scripts.data.summarize_articles import parse_args
 
 
 class TestArticleSummarizer:

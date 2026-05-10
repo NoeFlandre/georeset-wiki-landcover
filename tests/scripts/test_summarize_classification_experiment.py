@@ -1,7 +1,7 @@
 import csv
 import json
 
-from scripts.analysis.summarize_classification_experiment import (
+from georeset.cli.analysis.summarize_classification_experiment import (
     collect_metric_rows,
     majority_baseline_score,
     write_overview_csv,

@@ -5,13 +5,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from georeset.config import DataPaths, ModelSettings
-from scripts.data import classify_articles
-from scripts.data.classify_articles import (
+from georeset.cli.data import classify_articles
+from georeset.cli.data.classify_articles import (
     apply_shuffled_text_control,
     parse_args,
     prediction_fingerprint,
 )
+from georeset.config import DataPaths, ModelSettings
 
 
 class TestParseArgs:
@@ -99,7 +99,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from scripts.data.classify_articles import load_text_source
+            from georeset.cli.data.classify_articles import load_text_source
 
             result = load_text_source("summary", contents_path, summaries_path, no_place_path)
             assert result["100"] == "Strasbourg est une ville."
@@ -112,7 +112,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from scripts.data.classify_articles import load_text_source
+            from georeset.cli.data.classify_articles import load_text_source
 
             result = load_text_source(
                 "summary_shuffled", contents_path, summaries_path, no_place_path
@@ -127,7 +127,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from scripts.data.classify_articles import load_text_source
+            from georeset.cli.data.classify_articles import load_text_source
 
             result = load_text_source(
                 "summary_no_place", contents_path, summaries_path, no_place_path
@@ -142,7 +142,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from scripts.data.classify_articles import load_text_source
+            from georeset.cli.data.classify_articles import load_text_source
 
             result = load_text_source(
                 "summary_no_place_shuffled", contents_path, summaries_path, no_place_path
@@ -157,7 +157,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from scripts.data.classify_articles import load_text_source
+            from georeset.cli.data.classify_articles import load_text_source
 
             result = load_text_source("content", contents_path, summaries_path, no_place_path)
             assert result["100"] == "Full content"
@@ -170,7 +170,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from scripts.data.classify_articles import load_text_source
+            from georeset.cli.data.classify_articles import load_text_source
 
             result = load_text_source(
                 "content_shuffled", contents_path, summaries_path, no_place_path
@@ -185,7 +185,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from scripts.data.classify_articles import load_text_source
+            from georeset.cli.data.classify_articles import load_text_source
 
             with pytest.raises(ValueError, match="Unknown text source"):
                 load_text_source("unknown", contents_path, summaries_path, no_place_path)
@@ -298,9 +298,11 @@ class TestPredictionRecordShape:
                     "resolved_from_retry": True,
                 },
             }
-            from scripts.data.classify_articles import main
+            from georeset.cli.data.classify_articles import main
 
-            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
+            with patch(
+                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+            ):
                 main(
                     [
                         "--task",
@@ -406,9 +408,11 @@ class TestResumability:
                     },
                     f,
                 )
-            from scripts.data.classify_articles import main
+            from georeset.cli.data.classify_articles import main
 
-            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
+            with patch(
+                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+            ):
                 main(
                     [
                         "--task",
@@ -489,9 +493,11 @@ class TestResumability:
                     },
                     f,
                 )
-            from scripts.data.classify_articles import main
+            from georeset.cli.data.classify_articles import main
 
-            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
+            with patch(
+                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+            ):
                 main(
                     [
                         "--task",
@@ -547,9 +553,11 @@ class TestOSMRunner:
                     "fingerprint": fp,
                 },
             }
-            from scripts.data.classify_articles import main
+            from georeset.cli.data.classify_articles import main
 
-            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
+            with patch(
+                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+            ):
                 main(
                     [
                         "--task",
@@ -611,9 +619,11 @@ class TestMetricsOutput:
                     "fingerprint": fp,
                 },
             }
-            from scripts.data.classify_articles import main
+            from georeset.cli.data.classify_articles import main
 
-            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
+            with patch(
+                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+            ):
                 main(
                     [
                         "--task",
@@ -726,9 +736,11 @@ class TestLimit:
                     "fingerprint": fp,
                 },
             }
-            from scripts.data.classify_articles import main
+            from georeset.cli.data.classify_articles import main
 
-            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
+            with patch(
+                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+            ):
                 main(
                     [
                         "--task",
@@ -816,9 +828,11 @@ class TestShuffledRunner:
                     "allowed_labels": ["31"],
                 },
             }
-            from scripts.data.classify_articles import main
+            from georeset.cli.data.classify_articles import main
 
-            with patch("scripts.data.classify_articles.LLMClassifier", return_value=classifier):
+            with patch(
+                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+            ):
                 main(
                     [
                         "--task",

@@ -7,7 +7,7 @@ import geopandas as gpd
 import pytest
 from shapely.geometry import box
 
-from scripts.data.filter_pipeline import (
+from georeset.cli.data.filter_pipeline import (
     filter_articles_by_polygons,
     filter_osm_by_corine,
     filter_pipeline,

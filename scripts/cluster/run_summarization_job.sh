@@ -33,7 +33,7 @@ export VIRTUAL_ENV="${UV_PROJECT_ENVIRONMENT}"
 
 uv sync --group dev --group llm
 
-uv run python -m scripts.data.summarize_articles \
+uv run georeset-summarize-articles \
   --input-path data/wiki/article_contents.json \
   --output-path data/wiki/article_summaries.json \
   --summary-mode place \
