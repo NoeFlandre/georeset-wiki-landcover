@@ -4,6 +4,9 @@ set -uo pipefail
 ACCESS_HOST="${G5K_ACCESS_HOST:-nflandre@access.grid5000.fr}"
 SITE="${G5K_SITE:-nancy}"
 REMOTE_DIR="${G5K_REMOTE_DIR:-georeset}"
+REMOTE_USER="${G5K_REMOTE_USER:-${ACCESS_HOST%@*}}"
+REMOTE_HOME="${G5K_REMOTE_HOME:-/home/${REMOTE_USER}}"
+REMOTE_PROJECT_DIR="${G5K_REMOTE_PROJECT_DIR:-${REMOTE_HOME}/${REMOTE_DIR}}"
 TASK="${GEORESET_CLASSIFICATION_TASK:?Set GEORESET_CLASSIFICATION_TASK}"
 TEXT_SOURCE="${GEORESET_CLASSIFICATION_TEXT_SOURCE:?Set GEORESET_CLASSIFICATION_TEXT_SOURCE}"
 OUTPUT_PREFIX="data/classification/${TASK}_${TEXT_SOURCE}"
@@ -16,7 +19,7 @@ echo "Syncing ${OUTPUT_PREFIX}_predictions.json and _metrics.json from ${SITE} e
 
 while true; do
   for suffix in predictions metrics; do
-    remote_path="/home/nflandre/${REMOTE_DIR}/${OUTPUT_PREFIX}_${suffix}.json"
+    remote_path="${REMOTE_PROJECT_DIR}/${OUTPUT_PREFIX}_${suffix}.json"
     local_path="${OUTPUT_PREFIX}_${suffix}.json"
     tmp_path="${local_path}.tmp"
     if ssh -o BatchMode=yes "${ACCESS_HOST}" "ssh ${SITE} 'test -s ${remote_path}'"; then

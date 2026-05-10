@@ -30,9 +30,35 @@ def test_cluster_classification_submit_does_not_autosync_by_default():
     assert "Auto-sync disabled to avoid repeated SSH polling" in script
 
 
+def test_cluster_classification_submit_avoids_sed_generated_wrappers():
+    script = Path("scripts/cluster/submit_classification.sh").read_text()
+
+    assert "sed -i" not in script
+    assert "wrapper_${TASK}_${TEXT_SOURCE}.sh" not in script
+    assert "G5K_REMOTE_HOME" in script
+    assert "G5K_REMOTE_PROJECT_DIR" in script
+
+
 def test_classification_sync_interval_defaults_to_admin_safe_value_and_supports_once():
     script = Path("scripts/cluster/sync_classification.sh").read_text()
 
     assert 'INTERVAL_SECONDS="${SYNC_INTERVAL_SECONDS:-300}"' in script
     assert 'SYNC_ONCE="${SYNC_ONCE:-0}"' in script
     assert 'if [ "${SYNC_ONCE}" = "1" ]; then' in script
+
+
+def test_cluster_scripts_do_not_hardcode_personal_home_path():
+    for path in [
+        Path("scripts/cluster/run_classification_job.sh"),
+        Path("scripts/cluster/submit_classification.sh"),
+        Path("scripts/cluster/sync_classification.sh"),
+    ]:
+        assert "/home/nflandre" not in path.read_text()
+
+
+def test_classification_job_passes_extra_args_as_array():
+    script = Path("scripts/cluster/run_classification_job.sh").read_text()
+
+    assert "EXTRA_ARGS=()" in script
+    assert 'read -r -a EXTRA_ARGS <<< "${GEORESET_EXTRA_ARGS}"' in script
+    assert '"${EXTRA_ARGS[@]}"' in script
