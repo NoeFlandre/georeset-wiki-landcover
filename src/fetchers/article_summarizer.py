@@ -6,6 +6,7 @@ import os
 from typing import Any, cast
 
 from src.contracts import ArticleContent, SummaryRecord
+from src.llm.llama_client import DEFAULT_GGUF_FILENAME, JsonChatClient, LlamaChatClient
 from src.utils.json_io import write_json_atomic
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ class ArticleSummarizer:
         seed: int = 42,
         temperature: float = 0.7,
         summary_mode: str = "place",
+        client: JsonChatClient | None = None,
     ):
         if summary_mode not in self.SUMMARY_MODES:
             raise ValueError(f"summary_mode must be one of {self.SUMMARY_MODES}")
@@ -46,21 +48,24 @@ class ArticleSummarizer:
         self.seed = seed
         self.temperature = temperature
         self.summary_mode = summary_mode
-        self._llm = None
+        self._client = client or LlamaChatClient(model_path=model_path, seed=seed)
 
     def _get_llm(self):
         """Lazy initialization of LLM (GPU-accelerated)."""
-        if self._llm is None:
-            import llama_cpp
+        if not isinstance(self._client, LlamaChatClient):
+            raise TypeError("_get_llm is only available for the default LlamaChatClient")
+        return self._client._get_llm()
 
-            self._llm = llama_cpp.Llama.from_pretrained(
-                repo_id="unsloth/Qwen3.6-27B-GGUF",
-                filename=self.model_path if self.model_path else "Qwen3.6-27B-Q4_0.gguf",
-                n_gpu_layers=-1,
-                seed=self.seed,
-                n_ctx=8192,
-            )
-        return self._llm
+    @property
+    def _llm(self) -> Any | None:
+        if isinstance(self._client, LlamaChatClient):
+            return self._client._llm
+        return None
+
+    @_llm.setter
+    def _llm(self, value: Any) -> None:
+        if isinstance(self._client, LlamaChatClient):
+            self._client._llm = value
 
     def summarize(self, article: ArticleContent) -> SummaryRecord:
         """
@@ -92,7 +97,7 @@ class ArticleSummarizer:
         result["summary"] = self._generate_summary(prompt, system_prompt)
 
         result["metadata"] = {
-            "model": self.model_path,
+            "model": self.model_path if self.model_path else DEFAULT_GGUF_FILENAME,
             "seed": self.seed,
             "temperature": self.temperature,
             "summary_mode": self.summary_mode,
@@ -103,18 +108,13 @@ class ArticleSummarizer:
 
     def _generate_summary(self, prompt: str, system_prompt: str) -> str:
         """Call the LLM with structured JSON output."""
-        llm = self._get_llm()
-        response = llm.create_chat_completion(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt},
-            ],
+        raw_content = self._client.complete_json(
+            system_prompt=system_prompt,
+            user_prompt=prompt,
+            schema=self.SUMMARY_SCHEMA,
             temperature=self.temperature,
-            seed=self.seed,
             max_tokens=256,
-            response_format={"type": "json_object", "schema": self.SUMMARY_SCHEMA},
         )
-        raw_content = response["choices"][0]["message"]["content"]
         return self._summary_from_response(raw_content)
 
     def _summary_from_response(self, raw_content: str) -> str:

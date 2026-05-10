@@ -1,8 +1,9 @@
 import json
-from typing import Any, cast
+from typing import Any
 
 from src.classification.prediction_parser import normalize_prediction_response
 from src.classification.types import PredictionResult
+from src.llm.llama_client import DEFAULT_GGUF_FILENAME, JsonChatClient, LlamaChatClient
 
 SINGLE_SCHEMA = {
     "type": "object",
@@ -45,24 +46,33 @@ class LLMClassifier:
     Lower-level pure helpers should not catch broad exceptions.
     """
 
-    def __init__(self, model_path: str | None, seed: int = 42, temperature: float = 0.0):
+    def __init__(
+        self,
+        model_path: str | None,
+        seed: int = 42,
+        temperature: float = 0.0,
+        client: JsonChatClient | None = None,
+    ):
         self.model_path = model_path
         self.seed = seed
         self.temperature = temperature
-        self._llm = None
+        self._client = client or LlamaChatClient(model_path=model_path, seed=seed)
 
     def _get_llm(self):
-        if self._llm is None:
-            import llama_cpp
+        if not isinstance(self._client, LlamaChatClient):
+            raise TypeError("_get_llm is only available for the default LlamaChatClient")
+        return self._client._get_llm()
 
-            self._llm = llama_cpp.Llama.from_pretrained(
-                repo_id="unsloth/Qwen3.6-27B-GGUF",
-                filename=self.model_path if self.model_path else "Qwen3.6-27B-Q4_0.gguf",
-                n_gpu_layers=-1,
-                seed=self.seed,
-                n_ctx=8192,
-            )
-        return self._llm
+    @property
+    def _llm(self) -> Any | None:
+        if isinstance(self._client, LlamaChatClient):
+            return self._client._llm
+        return None
+
+    @_llm.setter
+    def _llm(self, value: Any) -> None:
+        if isinstance(self._client, LlamaChatClient):
+            self._client._llm = value
 
     def _build_user_prompt(
         self,
@@ -89,7 +99,7 @@ class LLMClassifier:
         return {
             "task": task,
             "text_source": text_source,
-            "model": self.model_path if self.model_path else "Qwen3.6-27B-Q4_0.gguf",
+            "model": self.model_path if self.model_path else DEFAULT_GGUF_FILENAME,
             "seed": self.seed,
             "temperature": self.temperature,
             "prompt": prompt,
@@ -98,17 +108,12 @@ class LLMClassifier:
         }
 
     def _call_llm(self, user_prompt: str, schema: dict[str, Any]) -> str:
-        llm = self._get_llm()
-        response = llm.create_chat_completion(
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
+        return self._client.complete_json(
+            system_prompt=SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            schema=schema,
             temperature=self.temperature,
-            seed=self.seed,
-            response_format={"type": "json_object", "schema": schema},
         )
-        return cast(str, response["choices"][0]["message"]["content"])
 
     def _build_retry_prompt(
         self,

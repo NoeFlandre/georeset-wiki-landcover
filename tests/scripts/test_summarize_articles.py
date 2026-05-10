@@ -83,22 +83,18 @@ class TestArticleSummarizer:
 
     def test_generate_summary_uses_llama_cpp_json_schema_mode(self):
         """Should constrain llama.cpp output to the summary schema."""
-        summarizer = ArticleSummarizer(model_path=None, seed=123, temperature=0.5)
-        mock_llm = MagicMock()
-        mock_llm.create_chat_completion.return_value = {
-            "choices": [{"message": {"content": '{"summary": "Une ville française."}'}}]
-        }
-        summarizer._llm = mock_llm
+        mock_client = MagicMock()
+        mock_client.complete_json.return_value = '{"summary": "Une ville française."}'
+        summarizer = ArticleSummarizer(
+            model_path=None, seed=123, temperature=0.5, client=mock_client
+        )
 
         assert summarizer._generate_summary("Prompt", "System prompt") == "Une ville française."
 
-        _, kwargs = mock_llm.create_chat_completion.call_args
-        assert kwargs["response_format"] == {
-            "type": "json_object",
-            "schema": ArticleSummarizer.SUMMARY_SCHEMA,
-        }
+        _, kwargs = mock_client.complete_json.call_args
+        assert kwargs["schema"] == ArticleSummarizer.SUMMARY_SCHEMA
         assert kwargs["max_tokens"] == 256
-        assert "thinking" not in json.dumps(kwargs["response_format"])
+        assert "thinking" not in json.dumps(kwargs["schema"])
 
     def test_generate_summary_rejects_thinking_polluted_response(self):
         """Should fail loudly if the backend does not honor structured output."""

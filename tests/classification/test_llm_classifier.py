@@ -4,12 +4,11 @@ from src.classification.llm_classifier import MULTI_SCHEMA, SINGLE_SCHEMA, LLMCl
 
 
 def test_classify_single_label_returns_ok_with_valid_response():
-    classifier = LLMClassifier(model_path="model.gguf", seed=123, temperature=0.0)
-    mock_llm = MagicMock()
-    mock_llm.create_chat_completion.return_value = {
-        "choices": [{"message": {"content": '{"labels": ["31"]}'}}]
-    }
-    classifier._llm = mock_llm
+    mock_client = MagicMock()
+    mock_client.complete_json.return_value = '{"labels": ["31"]}'
+    classifier = LLMClassifier(
+        model_path="model.gguf", seed=123, temperature=0.0, client=mock_client
+    )
 
     result = classifier.classify_single_label(
         text="Une forêt dense.",
@@ -28,8 +27,8 @@ def test_classify_single_label_returns_ok_with_valid_response():
     assert result["metadata"]["temperature"] == 0.0
     assert result["metadata"]["task"] == "corine_level2"
     assert result["metadata"]["text_source"] == "summary"
-    _, kwargs = mock_llm.create_chat_completion.call_args
-    assert kwargs["response_format"]["type"] == "json_object"
+    _, kwargs = mock_client.complete_json.call_args
+    assert kwargs["schema"] == SINGLE_SCHEMA
     assert kwargs["temperature"] == 0.0
 
 
