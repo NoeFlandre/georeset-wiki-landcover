@@ -7,15 +7,20 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.0
+  - repo: local
     hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
-    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check .
+        language: system
+        pass_filenames: false
+      - id: ruff-format-check
+        name: ruff format check
+        entry: uv run ruff format --check .
+        language: system
+        pass_filenames: false
       - id: mypy
-        additional_dependencies: [types-requests]
+        name: mypy
+        entry: uv run mypy src scripts
+        language: system
+        pass_filenames: false

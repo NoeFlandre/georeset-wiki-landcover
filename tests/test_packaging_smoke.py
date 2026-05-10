@@ -19,6 +19,21 @@ def test_llm_dependency_group_declares_manual_cluster_runtime_deps():
     assert '"llama-cpp-python' in pyproject
 
 
+def test_dev_dependency_group_includes_pre_commit():
+    pyproject = Path("pyproject.toml").read_text()
+
+    assert '"pre-commit' in pyproject
+
+
+def test_pre_commit_scopes_match_ci_quality_commands():
+    config = Path(".pre-commit-config.yaml").read_text()
+
+    assert "entry: uv run ruff check ." in config
+    assert "entry: uv run ruff format --check ." in config
+    assert "entry: uv run mypy src scripts" in config
+    assert "pass_filenames: false" in config
+
+
 def test_documented_cli_modules_are_importable():
     for module_name in [
         "scripts.data.classify_articles",
