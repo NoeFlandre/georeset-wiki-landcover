@@ -1,0 +1,54 @@
+# Experiment Reports
+
+This directory contains human-readable reports for GeoReset experiments. Reports
+are grouped chronologically so the research path is clear as new experiments are
+added.
+
+## Reading Order
+
+1. [`001_qwen_e2e_shuffled_control/analysis.md`](001_qwen_e2e_shuffled_control/analysis.md)
+   - First full article-text classification batch with Qwen.
+   - Covers CORINE level-2 and OSM classification across summaries, no-place
+     summaries, raw content, and shuffled controls.
+2. [`002_corine_spatial_confidence/README.md`](002_corine_spatial_confidence/README.md)
+   - Defines CORINE spatial-confidence diagnostics.
+   - Explains buffer purity, EPSG:2154 area calculations, and why full CORINE
+     including artificial classes is used.
+3. [`003_qwen_spatial_confidence_reevaluation/analysis.md`](003_qwen_spatial_confidence_reevaluation/analysis.md)
+   - Re-evaluates the Qwen predictions on spatially reliable subsets without
+     rerunning the LLM.
+   - Adds majority baselines, shuffled deltas by subset, and class-distribution
+     diagnostics.
+4. [`004_gemma4_model_rerun_and_comparison/analysis.md`](004_gemma4_model_rerun_and_comparison/analysis.md)
+   - Repeats the same protocol with Gemma 4 31B IT Q4_0.
+   - Compares Gemma against Qwen under the non-spatial and spatial-confidence
+     evaluations.
+
+## Data Artifact Map
+
+The reports cite artifacts under `data/experiments/`:
+
+- `article_text_classification_e2e_v1/`
+- `article_text_classification_e2e_with_shuffled_control_v1/`
+- `article_text_classification_shuffled_control_v1/`
+- `corine_spatial_confidence_v1/`
+- `article_text_classification_spatial_confidence_v1/`
+- `article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/`
+- `article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0/`
+- `model_comparison_qwen_vs_gemma4_31b_it_q4_0/`
+
+Working classifier checkpoints live separately under `data/classification/runs/`.
+Those are useful for resumability, but the stable research outputs are the
+frozen experiment directories above.
+
+## Naming Convention
+
+Use a numeric prefix for future report folders:
+
+```text
+005_short_experiment_name/
+  analysis.md
+```
+
+Keep generated data in `data/experiments/<experiment_id>/` and keep narrative
+analysis in `docs/experiments/<number>_<short_name>/`.

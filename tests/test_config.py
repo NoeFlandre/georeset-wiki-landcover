@@ -17,7 +17,7 @@ def test_data_paths_preserve_existing_defaults():
         paths.corine_polygons == "data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp"
     )
     assert paths.corine_bounds == "data/corine/bounds.json"
-    assert paths.classification_output_dir == "data/classification"
+    assert paths.classification_output_dir == "data/classification/runs/default"
     assert paths.distribution_csv == "data/distribution/osm_corine_distribution.csv"
     assert paths.map_articles == "data/maps/corine_with_articles.html"
     assert paths.map_osm == "data/maps/osm_corine_polygons.html"

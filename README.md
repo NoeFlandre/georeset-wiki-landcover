@@ -84,7 +84,8 @@ These files are expected under `data/` after syncing the bucket:
 - `data/distribution/osm_corine_distribution.csv`: CORINE class area/share
   distribution inside OSM polygons.
 - `data/maps/`: generated HTML visualizations.
-- `data/classification/`: local working classification predictions and metrics.
+- `data/classification/`: resumable working classification outputs, organized
+  by run under `data/classification/runs/`.
 - `data/experiments/`: frozen experiment folders and derived analysis tables.
 
 The source CORINE data was downloaded from:
@@ -268,9 +269,13 @@ PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
   --task osm --text-source content_shuffled
 ```
 
-Outputs:
-- `data/classification/{task}_{text_source}_predictions.json`: per-article predictions with raw LLM response, parsed `prediction`, a normalized `prediction_labels` list, and full metadata including fingerprint.
-- `data/classification/{task}_{text_source}_metrics.json`: aggregate metrics (n_eligible, n_predicted_ok, n_parse_error, coverage, accuracy/F1 scores, task, text_source, allowed_labels, labels_evaluated).
+Outputs default to `data/classification/runs/default/`:
+- `data/classification/runs/default/{task}_{text_source}_predictions.json`: per-article predictions with raw LLM response, parsed `prediction`, a normalized `prediction_labels` list, and full metadata including fingerprint.
+- `data/classification/runs/default/{task}_{text_source}_metrics.json`: aggregate metrics (n_eligible, n_predicted_ok, n_parse_error, coverage, accuracy/F1 scores, task, text_source, allowed_labels, labels_evaluated).
+
+Use `--output-dir` or `GEORESET_CLASSIFICATION_OUTPUT_DIR` to give important
+runs stable names, for example `data/classification/runs/qwen3_6_27b_q4_0/`
+or `data/classification/runs/gemma4_31b_it_q4_0/`.
 
 Resumability: articles with matching fingerprint and `parse_status=="ok"` are skipped; parse errors and ambiguous predictions are re-run. A classification policy version bump in the fingerprint invalidates old caches automatically. Use `--limit N` for smoke testing.
 

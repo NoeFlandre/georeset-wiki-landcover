@@ -13,13 +13,17 @@ the Hugging Face bucket instead of Git.
 
 ## Experiments
 
-- [`experiments/article_text_classification_e2e_with_shuffled_control_v1_analysis.md`](experiments/article_text_classification_e2e_with_shuffled_control_v1_analysis.md):
+- [`experiments/README.md`](experiments/README.md): chronological index of
+  experiment reports and their `data/experiments/` artifacts.
+- [`experiments/001_qwen_e2e_shuffled_control/analysis.md`](experiments/001_qwen_e2e_shuffled_control/analysis.md):
   verified analysis of the first frozen classification batch with shuffled
   controls.
-- [`experiments/corine_spatial_confidence_v1.md`](experiments/corine_spatial_confidence_v1.md):
+- [`experiments/002_corine_spatial_confidence/README.md`](experiments/002_corine_spatial_confidence/README.md):
   method note for CORINE buffer-purity diagnostics.
-- [`experiments/article_text_classification_spatial_confidence_v1_analysis.md`](experiments/article_text_classification_spatial_confidence_v1_analysis.md):
+- [`experiments/003_qwen_spatial_confidence_reevaluation/analysis.md`](experiments/003_qwen_spatial_confidence_reevaluation/analysis.md):
   verified analysis of spatial-confidence subset reevaluation.
+- [`experiments/004_gemma4_model_rerun_and_comparison/analysis.md`](experiments/004_gemma4_model_rerun_and_comparison/analysis.md):
+  verified Gemma rerun and Qwen-vs-Gemma comparison.
 
 ## Diagrams
 

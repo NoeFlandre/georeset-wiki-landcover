@@ -13,7 +13,7 @@ class DataPaths:
     osm_polygons: str = "data/osm/osm_project_polygons.geojson"
     corine_polygons: str = "data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp"
     corine_bounds: str = "data/corine/bounds.json"
-    classification_output_dir: str = "data/classification"
+    classification_output_dir: str = "data/classification/runs/default"
     distribution_csv: str = "data/distribution/osm_corine_distribution.csv"
     map_articles: str = "data/maps/corine_with_articles.html"
     map_osm: str = "data/maps/osm_corine_polygons.html"

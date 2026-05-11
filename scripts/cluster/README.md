@@ -22,6 +22,11 @@ Useful environment variables:
 - `GEORESET_EXTRA_ARGS`
 - `G5K_ACCESS_HOST`, `G5K_SITE`, `G5K_REMOTE_DIR`, `G5K_REMOTE_PROJECT_DIR`
 
+By default, classification outputs go to
+`data/classification/runs/default/`. For named experiments, set
+`GEORESET_CLASSIFICATION_OUTPUT_DIR`, for example
+`data/classification/runs/gemma4_31b_it_q4_0`.
+
 ## Summarization
 
 - `submit_summarization.sh`: submits the place-summary job.
