@@ -94,23 +94,25 @@ The strongest class is `22` permanent crops, followed by useful but imperfect si
 
 ## 7. OSM Shows Signal Versus Shuffled, but Exact Match Remains Hard
 
-For OSM, the strict primary metric is exact-match accuracy over the full multi-label set. All aligned OSM runs are below the most-frequent-label-set baseline of `0.207`:
+For OSM, the strict primary metric is exact-match accuracy over the full multi-label set. All aligned OSM runs are below the most-frequent-label-set baseline of `0.207`. Because exact match is harsh for multi-label prediction, this section also reports mean per-article Jaccard similarity between the true and predicted label sets:
 
-| Text source | Exact match | Majority label-set baseline | Delta vs majority | Micro-F1 | Macro-F1 |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| summary | 0.145 | 0.207 | -0.062 | 0.161 | 0.112 |
-| summary no place | 0.164 | 0.207 | -0.044 | 0.188 | 0.122 |
-| content | 0.164 | 0.207 | -0.044 | 0.197 | 0.158 |
+| Text source | Exact match | Majority label-set baseline | Delta vs majority | Jaccard | Majority Jaccard baseline | Jaccard delta vs majority | Micro-F1 | Macro-F1 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| summary | 0.145 | 0.207 | -0.062 | 0.155 | 0.211 | -0.056 | 0.161 | 0.112 |
+| summary no place | 0.164 | 0.207 | -0.044 | 0.180 | 0.211 | -0.031 | 0.188 | 0.122 |
+| content | 0.164 | 0.207 | -0.044 | 0.190 | 0.211 | -0.021 | 0.197 | 0.158 |
+
+The Jaccard majority baseline is computed by always predicting the most frequent OSM label set, `["grass"]`, then averaging per-article Jaccard against the true label set. The aligned runs still do not beat that baseline, but the gap is smaller under Jaccard than under exact match, especially for raw content.
 
 However, aligned OSM text still beats shuffled text:
 
-| Text source | Exact match | Shuffled exact match | Delta | Macro-F1 | Shuffled macro-F1 | Macro-F1 delta |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| summary | 0.145 | 0.076 | +0.069 | 0.112 | 0.039 | +0.073 |
-| summary no place | 0.164 | 0.080 | +0.084 | 0.122 | 0.045 | +0.077 |
-| content | 0.164 | 0.058 | +0.105 | 0.158 | 0.046 | +0.112 |
+| Text source | Exact match | Shuffled exact match | Delta | Jaccard | Shuffled Jaccard | Jaccard delta | Macro-F1 | Shuffled macro-F1 | Macro-F1 delta |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| summary | 0.145 | 0.076 | +0.069 | 0.155 | 0.082 | +0.073 | 0.112 | 0.039 | +0.073 |
+| summary no place | 0.164 | 0.080 | +0.084 | 0.180 | 0.090 | +0.090 | 0.122 | 0.045 | +0.077 |
+| content | 0.164 | 0.058 | +0.105 | 0.190 | 0.077 | +0.113 | 0.158 | 0.046 | +0.112 |
 
-The OSM result is therefore mixed: exact-match performance is not yet above a simple label-set majority baseline, but aligned text has clear signal relative to shuffled text. Exact match is also a harsh metric for a multi-label task, so micro-F1, macro-F1, and per-label behavior should be read alongside it.
+The OSM result is therefore mixed: exact-match and Jaccard performance are not yet above a simple label-set majority baseline, but aligned text has clear signal relative to shuffled text under exact match, Jaccard, and macro-F1. Exact match is also a harsh metric for a multi-label task, so Jaccard, micro-F1, macro-F1, and per-label behavior should be read alongside it.
 
 ## 8. OSM Per-Label Behavior Shows Salient Natural Features
 
