@@ -6,6 +6,10 @@ added.
 
 ## Reading Order
 
+Start with [`000_experiment_summary.md`](000_experiment_summary.md) for a
+short, plain-language overview of the full experiment path, methods, results,
+and next steps.
+
 1. [`001_qwen_e2e_shuffled_control/analysis.md`](001_qwen_e2e_shuffled_control/analysis.md)
    - First full article-text classification batch with Qwen.
    - Covers CORINE level-2 and OSM classification across summaries, no-place
