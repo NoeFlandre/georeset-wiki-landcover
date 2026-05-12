@@ -87,8 +87,17 @@ def test_prompt_demands_no_place_output(fake_good_response: str) -> None:
     summarizer.summarize(ARTICLE)
 
     system_prompt, user_prompt = client.calls[0]
-    assert "ne doit mentionner ni la source ni le titre de l'article" in user_prompt
-    assert "Titre à ne jamais mentionner: La-Sainte_Marie" in user_prompt
+    assert "assistant d'extraction d'indices d'occupation du sol" in system_prompt
+    assert "Ta tâche n'est pas de résumer l'article en général" in system_prompt
+    assert "Titre de l'article à ne jamais mentionner ni utiliser comme indice" in user_prompt
+    assert "Titre à ne jamais mentionner:" not in user_prompt
+    assert "Texte de l'article:" in user_prompt
+    assert "Résumé de l'article:" not in user_prompt
+    assert "N'utilise pas le titre comme preuve." in user_prompt
+    assert "Ne mentionne jamais le titre, le nom du lieu décrit" in user_prompt
+    assert "Ignore les informations non pertinentes: histoire, dates, monuments" in user_prompt
+    assert "Reformule les preuves en français clair" in user_prompt
+    assert "Retourne exactement cet objet JSON" in user_prompt
     assert "landuse_evidence_summary" in user_prompt
     assert "evidence_sentences_no_place" in user_prompt
     assert "no relevant evidence" not in system_prompt.lower()

@@ -150,9 +150,14 @@ class LandUseEvidenceSummarizer:
 
         user_prompt = self._user_prompt(article, content)
         system_prompt = (
-            "Tu es un assistant qui extrait des informations de terrain à partir d'articles Wikipedia. "
-            "Réponds uniquement avec un objet JSON qui respecte strictement le schéma fourni. "
-            "N'inclus aucun raisonnement, balise <think> ni Markdown."
+            "Tu es un assistant d'extraction d'indices d'occupation du sol à partir "
+            "d'articles Wikipédia en français.\n\n"
+            "Ta tâche n'est pas de résumer l'article en général, mais d'extraire uniquement "
+            "les informations utiles pour décrire l'occupation du sol, l'usage foncier, "
+            "le paysage, la végétation, l'agriculture, l'eau, les zones humides, le relief, "
+            "la géologie, les habitats ou l'écologie.\n\n"
+            "Réponds uniquement avec un objet JSON valide respectant le schéma fourni. "
+            "N'ajoute aucun Markdown, aucune explication, aucun champ supplémentaire."
         )
 
         payload = self._parse_payload(self._generate_landuse_evidence(user_prompt, system_prompt))
@@ -314,26 +319,53 @@ class LandUseEvidenceSummarizer:
     @staticmethod
     def _user_prompt(article: ArticleContent, content: str) -> str:
         title = str(article.get("title", ""))
-        title_forbidden = f"\nTitre à ne jamais mentionner: {title}\n" if title else "\n"
+        title_forbidden = (
+            f"Titre de l'article à ne jamais mentionner ni utiliser comme indice:\n{title}\n\n"
+            if title
+            else ""
+        )
         return (
-            "Extrais un objet JSON strictement validé avec ces champs: "
-            "landuse_evidence_summary, landcover_relevance, evidence_types, "
-            "evidence_sentences_no_place, uncertainty.\n"
-            "- landuse_evidence_summary: résumé court (1-3 phrases) uniquement des indices "
-            "d'occupation du sol et d'usage foncier, sans mentionner la source.\n"
-            "- landcover_relevance: none, low, medium, high.\n"
-            "- evidence_types: choix parmi forest, agriculture, vineyard, pasture, water, "
-            "wetland, shrubland, bare_ground, urban_or_artificial, relief_or_geology, "
-            "habitat_or_ecology.\n"
-            "- evidence_sentences_no_place: liste des phrases factuelles sans nom de lieu.\n"
-            "- uncertainty: low, medium, high.\n"
-            "Si l'article ne mentionne pas de preuve utile sur l'usage du sol, \"landcover_relevance\"="
-            "none, evidence_types=[], evidence_sentences_no_place=[], et un bref résumé indiquant l'absence de preuves.\n"
-            "Si une information n'est pas présente, ne pas l'inventer; utiliser une langue claire en français.\n"
-            "Le texte ne doit pas mentionner ni la source ni le titre de l'article "
-            "(ne doit mentionner ni la source ni le titre de l'article).\n"
             f"{title_forbidden}"
-            f"Résumé de l'article:\n{content}"
+            f"Texte de l'article:\n{content}\n\n"
+            "Extrais les indices utiles pour l'occupation du sol et l'usage foncier.\n\n"
+            "Contraintes:\n"
+            "- N'utilise pas le titre comme preuve.\n"
+            "- Ne mentionne jamais le titre, le nom du lieu décrit, ses variantes évidentes, "
+            "ni des coordonnées.\n"
+            "- Ignore les informations non pertinentes: histoire, dates, monuments, bâtiments, "
+            "population, administration, tourisme, transport, biographies, culture, politique, "
+            "étymologie.\n"
+            "- Ne déduis rien qui n'est pas explicitement présent dans le texte.\n"
+            "- Reformule les preuves en français clair, sans copier de longues phrases "
+            "textuellement.\n\n"
+            "Types d'indices autorisés pour evidence_types:\n"
+            "forest, agriculture, vineyard, pasture, water, "
+            "wetland, shrubland, bare_ground, urban_or_artificial, relief_or_geology, "
+            "habitat_or_ecology.\n\n"
+            "Définitions de landcover_relevance:\n"
+            "- none: aucune information utile sur l'occupation du sol ou le paysage.\n"
+            "- low: indice faible, indirect ou très général.\n"
+            "- medium: plusieurs indices utiles mais incomplets.\n"
+            "- high: indices clairs et directement utiles pour classifier le paysage ou "
+            "l'usage du sol.\n\n"
+            "Retourne exactement cet objet JSON:\n"
+            "{\n"
+            '  "landuse_evidence_summary": "1 à 3 phrases courtes, sans nom de lieu, '
+            'résumant uniquement les indices utiles d\'occupation du sol.",\n'
+            '  "landcover_relevance": "none|low|medium|high",\n'
+            '  "evidence_types": ["liste de types parmi les types autorisés"],\n'
+            '  "evidence_sentences_no_place": ["phrases factuelles reformulées, sans nom de lieu"],\n'
+            '  "uncertainty": "low|medium|high"\n'
+            "}\n\n"
+            "Si aucune preuve utile n'est présente, retourne:\n"
+            "{\n"
+            '  "landuse_evidence_summary": "Aucune preuve utile sur l\'occupation du sol ou '
+            'le paysage n\'est présente dans le texte.",\n'
+            '  "landcover_relevance": "none",\n'
+            '  "evidence_types": [],\n'
+            '  "evidence_sentences_no_place": [],\n'
+            '  "uncertainty": "high"\n'
+            "}"
         )
 
     @staticmethod
