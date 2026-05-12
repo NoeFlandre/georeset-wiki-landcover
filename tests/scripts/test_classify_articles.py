@@ -370,6 +370,74 @@ class TestPredictionRecordShape:
             assert "system_prompt" in rec["metadata"]
             assert "error" in rec
 
+    def test_duplicate_wiki_pageids_keep_first_article_title(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            (
+                summaries_path,
+                contents_path,
+                no_place_path,
+                wiki_path,
+                corine_shp,
+                output_dir,
+            ) = _corine_temp_setup(tmpdir)
+            with open(wiki_path, "w") as f:
+                json.dump(
+                    [
+                        {"pageid": 100, "lat": 0.5, "lon": 0.5, "title": "First title"},
+                        {"pageid": 100, "lat": 0.5, "lon": 0.5, "title": "Duplicate title"},
+                    ],
+                    f,
+                )
+            classifier = MagicMock()
+            classifier.classify_single_label.return_value = {
+                "prediction": "31",
+                "parse_status": "ok",
+                "error": None,
+                "raw_response": '{"label":"31"}',
+                "metadata": {
+                    "task": "corine_level2",
+                    "text_source": "summary",
+                    "model": "m.gguf",
+                    "seed": 42,
+                    "temperature": 0.0,
+                    "prompt": "...",
+                    "system_prompt": "...",
+                    "allowed_labels": ["31"],
+                },
+            }
+            from georeset.cli.data.classify_articles import main
+
+            with patch(
+                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+            ):
+                main(
+                    [
+                        "--task",
+                        "corine_level2",
+                        "--text-source",
+                        "summary",
+                        "--wiki-articles-path",
+                        wiki_path,
+                        "--article-contents-path",
+                        contents_path,
+                        "--article-summaries-path",
+                        summaries_path,
+                        "--article-summaries-no-place-path",
+                        no_place_path,
+                        "--corine-polygons-path",
+                        corine_shp,
+                        "--output-dir",
+                        output_dir,
+                        "--model-path",
+                        "m.gguf",
+                    ]
+                )
+
+            pred_path = os.path.join(output_dir, "corine_level2_summary_predictions.json")
+            with open(pred_path) as f:
+                records = json.load(f)
+            assert records["100"]["title"] == "First title"
+
 
 class TestResumability:
     def test_skips_existing_ok_with_matching_fingerprint(self):

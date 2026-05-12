@@ -31,6 +31,7 @@ from georeset.fetchers.osm_fetcher import OSMFetcher
 from georeset.fetchers.wiki_content_fetcher import WikiContentFetcher
 from georeset.fetchers.wiki_fetcher import WikiFetcher
 from georeset.spatial.policy import POINT_POLYGON_JOIN_PREDICATE
+from georeset.utils.articles import index_articles_by_pageid
 from georeset.utils.json_io import (
     write_csv_atomic,
     write_geojson_atomic,
@@ -65,20 +66,15 @@ def filter_articles_by_polygons(
     if not articles:
         return []
 
-    seen_pageids: set[str] = set()
     kept_articles: list[ArticleMeta] = []
     points: list[Point] = []
     kept_positions: list[int] = []
 
-    for article in articles:
-        pid = str(article.get("pageid", ""))
-        if pid in seen_pageids:
-            continue
+    for article in index_articles_by_pageid(articles).values():
         lat = article.get("lat")
         lon = article.get("lon")
         if not isinstance(lat, (int, float)) or not isinstance(lon, (int, float)):
             continue
-        seen_pageids.add(pid)
         kept_positions.append(len(kept_articles))
         kept_articles.append(article)
         points.append(Point(lon, lat))

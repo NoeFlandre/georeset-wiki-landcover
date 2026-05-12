@@ -27,6 +27,7 @@ from georeset.contracts import (
     MultiLabelMetricResult,
     SingleLabelMetricResult,
 )
+from georeset.utils.articles import index_articles_by_pageid
 from georeset.utils.json_io import write_json_atomic
 
 logger = logging.getLogger(__name__)
@@ -211,6 +212,7 @@ def main(
 
     with open(args.wiki_articles_path) as f:
         articles: list[ArticleMeta] = json.load(f)
+    articles_by_pageid = index_articles_by_pageid(articles)
 
     text_records = load_text_source(
         args.text_source,
@@ -261,7 +263,7 @@ def main(
         record = existing.get(pageid)
         if should_skip_record(record, fp_current, retry_failed=args.retry_failed):
             continue
-        article = next((a for a in articles if str(a.get("pageid")) == pageid), None)
+        article = articles_by_pageid.get(pageid)
         title = article.get("title", pageid) if article else pageid
         text = text_records[pageid]
         if args.task == "corine_level2":
