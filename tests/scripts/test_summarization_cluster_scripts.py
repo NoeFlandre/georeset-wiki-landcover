@@ -71,7 +71,9 @@ def test_submit_landuse_evidence_script_uses_safe_default_sync_path():
         in script
     )
     assert 'AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"' in script
-    assert "oarsub -q production -l host=1/gpu=1,walltime=2:00:00" in script
+    assert 'WALLTIME="${G5K_LANDUSE_EVIDENCE_WALLTIME:-20:00:00}"' in script
+    assert "oarsub -q production -l host=1/gpu=1,walltime=${WALLTIME}" in script
+    assert "walltime=2:00:00" not in script
     assert 'OAR_PROPERTIES="${G5K_OAR_PROPERTIES:-${OAR_PROPERTIES:-gpu_mem>=32000}}"' in script
     assert '-p \\"${OAR_PROPERTIES}\\"' in script
     assert '-O OAR_%jobid%.out -E OAR_%jobid%.err \\"env' in script

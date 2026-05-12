@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #OAR -q production
-#OAR -l host=1/gpu=1,walltime=2:00:00
+#OAR -l host=1/gpu=1,walltime=20:00:00
 #OAR -p gpu_mem>=32000
 #OAR -O OAR_%jobid%.out
 #OAR -E OAR_%jobid%.err
@@ -61,4 +61,3 @@ uv run georeset-summarize-landuse-evidence \
   "${MODEL_REPO_ARGS[@]}" \
   --seed "${GEORESET_LANDUSE_EVIDENCE_SEED}" \
   --temperature "${GEORESET_LANDUSE_EVIDENCE_TEMPERATURE}"
-

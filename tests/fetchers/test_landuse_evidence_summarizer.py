@@ -7,6 +7,7 @@ import pytest
 
 from georeset.config import DataPaths
 from georeset.fetchers.landuse_evidence_summarizer import (
+    EVIDENCE_TYPES,
     LANDUSE_EVIDENCE_PROMPT_VERSION,
     LandUseEvidenceSummarizer,
 )
@@ -32,7 +33,7 @@ class _FakeClient:
 def fake_good_response() -> str:
     return json.dumps(
         {
-            "landuse_evidence_summary": "L'article mentionne une zone boisée et des vignes. ",
+            "landuse_evidence_summary": "Une zone boisée et des vignes sont mentionnées. ",
             "landcover_relevance": "medium",
             "evidence_types": ["forest", "vineyard"],
             "evidence_sentences_no_place": [
@@ -50,7 +51,13 @@ def _build_summarizer(response: str) -> tuple[LandUseEvidenceSummarizer, _FakeCl
 
 
 def test_schema_and_prompt_have_fixed_version() -> None:
-    assert LANDUSE_EVIDENCE_PROMPT_VERSION == 1
+    assert LANDUSE_EVIDENCE_PROMPT_VERSION == 2
+    assert (
+        LandUseEvidenceSummarizer.EVIDENCE_SCHEMA["properties"]["evidence_types"]["items"][
+            "enum"
+        ]
+        == list(EVIDENCE_TYPES)
+    )
 
 
 def test_summarize_adds_required_evidence_fields_and_counts(fake_good_response: str) -> None:
@@ -58,9 +65,7 @@ def test_summarize_adds_required_evidence_fields_and_counts(fake_good_response: 
 
     result = summarizer.summarize(ARTICLE)
 
-    assert (
-        result["landuse_evidence_summary"] == "L'article mentionne une zone boisée et des vignes."
-    )
+    assert result["landuse_evidence_summary"] == "Une zone boisée et des vignes sont mentionnées."
     assert result["landcover_relevance"] == "medium"
     assert result["evidence_types"] == ["forest", "vineyard"]
     assert result["evidence_sentences_no_place"] == [
@@ -96,8 +101,10 @@ def test_prompt_demands_no_place_output(fake_good_response: str) -> None:
     assert "N'utilise pas le titre comme preuve." in user_prompt
     assert "Ne mentionne jamais le titre, le nom du lieu décrit" in user_prompt
     assert "Ignore les informations non pertinentes: histoire, dates, monuments" in user_prompt
+    assert "Ne déduis rien qui n'est pas explicitement présent" in user_prompt
     assert "Reformule les preuves en français clair" in user_prompt
     assert "Retourne exactement cet objet JSON" in user_prompt
+    assert "ne doit mentionner ni la source ni le titre" not in user_prompt
     assert "landuse_evidence_summary" in user_prompt
     assert "evidence_sentences_no_place" in user_prompt
     assert "no relevant evidence" not in system_prompt.lower()

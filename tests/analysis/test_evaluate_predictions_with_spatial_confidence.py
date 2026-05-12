@@ -189,6 +189,73 @@ def test_spatial_subset_evaluation_recomputes_metrics_and_preserves_parent(tmp_p
     )
 
 
+def test_spatial_subset_evaluation_accepts_experiment_id_overrides_without_changing_metrics(
+    tmp_path,
+):
+    parent_dir = tmp_path / "parent"
+    default_output_dir = tmp_path / "out_default"
+    custom_output_dir = tmp_path / "out_custom"
+    spatial_path = tmp_path / "spatial.csv"
+
+    _make_parent(parent_dir)
+    _write_spatial(spatial_path)
+
+    main(
+        [
+            "--parent-experiment-dir",
+            str(parent_dir),
+            "--spatial-confidence-path",
+            str(spatial_path),
+            "--output-dir",
+            str(default_output_dir),
+        ]
+    )
+    main(
+        [
+            "--parent-experiment-dir",
+            str(parent_dir),
+            "--spatial-confidence-path",
+            str(spatial_path),
+            "--output-dir",
+            str(custom_output_dir),
+            "--experiment-id",
+            "custom_spatial_eval",
+            "--parent-experiment-id",
+            "custom_parent",
+            "--spatial-confidence-experiment-id",
+            "custom_spatial_confidence",
+        ]
+    )
+
+    default_manifest = json.loads(
+        (default_output_dir / "manifest.json").read_text(encoding="utf-8")
+    )
+    custom_manifest = json.loads((custom_output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert default_manifest["experiment_id"] == "article_text_classification_spatial_confidence_v1"
+    assert (
+        default_manifest["parent_experiment_id"]
+        == "article_text_classification_e2e_with_shuffled_control_v1"
+    )
+    assert default_manifest["spatial_confidence_experiment_id"] == "corine_spatial_confidence_v1"
+    assert custom_manifest["experiment_id"] == "custom_spatial_eval"
+    assert custom_manifest["parent_experiment_id"] == "custom_parent"
+    assert custom_manifest["spatial_confidence_experiment_id"] == "custom_spatial_confidence"
+
+    summary = (custom_output_dir / "summary.md").read_text(encoding="utf-8")
+    assert "custom_spatial_eval" in summary
+    assert "custom_parent" in summary
+    assert "custom_spatial_confidence" in summary
+
+    assert (
+        (default_output_dir / "overview_spatial_subsets.csv").read_text(encoding="utf-8")
+        == (custom_output_dir / "overview_spatial_subsets.csv").read_text(encoding="utf-8")
+    )
+    assert (
+        (default_output_dir / "shuffled_delta_spatial_subsets.csv").read_text(encoding="utf-8")
+        == (custom_output_dir / "shuffled_delta_spatial_subsets.csv").read_text(encoding="utf-8")
+    )
+
+
 def test_spatial_subset_evaluation_treats_non_ok_predictions_as_parse_errors(tmp_path):
     parent_dir = tmp_path / "parent"
     output_dir = tmp_path / "out"

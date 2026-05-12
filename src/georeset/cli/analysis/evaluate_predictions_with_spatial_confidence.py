@@ -53,6 +53,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--parent-experiment-dir", type=Path, default=DEFAULT_PARENT_DIR)
     parser.add_argument("--spatial-confidence-path", type=Path, default=DEFAULT_SPATIAL_PATH)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--experiment-id", default=EXPERIMENT_ID)
+    parser.add_argument("--parent-experiment-id", default=PARENT_EXPERIMENT_ID)
+    parser.add_argument("--spatial-confidence-experiment-id", default=SPATIAL_EXPERIMENT_ID)
     return parser.parse_args(argv)
 
 
@@ -255,7 +258,15 @@ def _class_distribution(records: pd.DataFrame, task: str) -> list[dict[str, Any]
     return rows
 
 
-def evaluate(parent_dir: Path, spatial_path: Path, output_dir: Path) -> None:
+def evaluate(
+    parent_dir: Path,
+    spatial_path: Path,
+    output_dir: Path,
+    *,
+    experiment_id: str = EXPERIMENT_ID,
+    parent_experiment_id: str = PARENT_EXPERIMENT_ID,
+    spatial_confidence_experiment_id: str = SPATIAL_EXPERIMENT_ID,
+) -> None:
     spatial = load_spatial_confidence(spatial_path)
     prediction_frames = [
         _records_frame(path) for path in sorted(parent_dir.glob("*_predictions.json"))
@@ -386,9 +397,9 @@ def evaluate(parent_dir: Path, spatial_path: Path, output_dir: Path) -> None:
             _write_md(output_dir / f"{stem}.md", title, rows)
 
     manifest = {
-        "experiment_id": EXPERIMENT_ID,
-        "parent_experiment_id": PARENT_EXPERIMENT_ID,
-        "spatial_confidence_experiment_id": SPATIAL_EXPERIMENT_ID,
+        "experiment_id": experiment_id,
+        "parent_experiment_id": parent_experiment_id,
+        "spatial_confidence_experiment_id": spatial_confidence_experiment_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "no_llm_rerun": True,
         "subset_definitions": list(SUBSET_DEFINITIONS),
@@ -411,7 +422,14 @@ def evaluate(parent_dir: Path, spatial_path: Path, output_dir: Path) -> None:
         "osm_spatial_join_coverage": osm_coverage,
     }
     write_json_atomic(output_dir / "manifest.json", manifest, indent=2)
-    _write_summary(output_dir / "summary.md", overview_rows, osm_coverage)
+    _write_summary(
+        output_dir / "summary.md",
+        overview_rows,
+        osm_coverage,
+        experiment_id=experiment_id,
+        parent_experiment_id=parent_experiment_id,
+        spatial_confidence_experiment_id=spatial_confidence_experiment_id,
+    )
 
 
 def _beats(row: dict[str, Any], metric: str, baseline: str) -> str:
@@ -422,16 +440,25 @@ def _beats(row: dict[str, Any], metric: str, baseline: str) -> str:
     return "yes" if value > base else "no"
 
 
-def _write_summary(path: Path, rows: list[dict[str, Any]], osm_coverage: dict[str, int]) -> None:
+def _write_summary(
+    path: Path,
+    rows: list[dict[str, Any]],
+    osm_coverage: dict[str, int],
+    *,
+    experiment_id: str,
+    parent_experiment_id: str,
+    spatial_confidence_experiment_id: str,
+) -> None:
     corine_rows = [row for row in rows if row["task"] == "corine_level2"]
     lines = [
-        "# Article-Text Classification Spatial Confidence v1",
+        f"# {experiment_id}",
         "",
         "This experiment reevaluates frozen predictions on CORINE spatial-confidence subsets. No LLM was rerun.",
         "",
         "## Previous Baseline/Shuffled Experiment",
         "",
-        f"- parent experiment: `{PARENT_EXPERIMENT_ID}`",
+        f"- parent experiment: `{parent_experiment_id}`",
+        f"- spatial-confidence experiment: `{spatial_confidence_experiment_id}`",
         "- parent predictions are treated as frozen inputs and are not modified.",
         "- aligned and shuffled text runs are compared again only after spatial-confidence filtering.",
         "",
@@ -466,7 +493,14 @@ def _write_summary(path: Path, rows: list[dict[str, Any]], osm_coverage: dict[st
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
-    evaluate(args.parent_experiment_dir, args.spatial_confidence_path, args.output_dir)
+    evaluate(
+        args.parent_experiment_dir,
+        args.spatial_confidence_path,
+        args.output_dir,
+        experiment_id=args.experiment_id,
+        parent_experiment_id=args.parent_experiment_id,
+        spatial_confidence_experiment_id=args.spatial_confidence_experiment_id,
+    )
 
 
 if __name__ == "__main__":

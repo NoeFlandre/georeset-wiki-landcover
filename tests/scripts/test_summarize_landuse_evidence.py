@@ -120,7 +120,19 @@ def test_main_invokes_landuse_summarizer_with_expected_args(monkeypatch, tmp_pat
     assert summarizer.process_calls == [(str(summary_path), str(output_path))]
 
 
-def test_process_file_resumes_valid_and_regenerates_malformed_records(tmp_path):
+def test_process_file_writes_empty_output_for_empty_input(tmp_path):
+    input_path = tmp_path / "article_contents.json"
+    output_path = tmp_path / "article_landuse_evidence_summaries.json"
+    input_path.write_text("{}", encoding="utf-8")
+
+    summarizer = LandUseEvidenceSummarizer(model_path="Qwen3.6-27B-Q4_0.gguf", client=None)
+
+    summarizer.process_file(str(input_path), str(output_path))
+
+    assert json.loads(output_path.read_text(encoding="utf-8")) == {}
+
+
+def test_process_file_regenerates_old_prompt_version_and_malformed_records(tmp_path):
     input_path = tmp_path / "article_contents.json"
     output_path = tmp_path / "article_landuse_evidence_summaries.json"
     input_path.write_text(
@@ -141,7 +153,7 @@ def test_process_file_resumes_valid_and_regenerates_malformed_records(tmp_path):
         encoding="utf-8",
     )
 
-    valid_record = {
+    old_prompt_record = {
         "title": "Nice",
         "content": "La commune est près d'une rivière et de vignobles.",
         "url": "https://fr.wikipedia.org/wiki/Nice",
@@ -178,7 +190,8 @@ def test_process_file_resumes_valid_and_regenerates_malformed_records(tmp_path):
     }
     output_path.write_text(
         json.dumps(
-            {"1": valid_record, "2": malformed_record, "3": {"stale": "entry"}}, ensure_ascii=False
+            {"1": old_prompt_record, "2": malformed_record, "3": {"stale": "entry"}},
+            ensure_ascii=False,
         ),
         encoding="utf-8",
     )
@@ -193,7 +206,7 @@ def test_process_file_resumes_valid_and_regenerates_malformed_records(tmp_path):
 
     result = json.loads(output_path.read_text(encoding="utf-8"))
     assert set(result) == {"1", "2"}
-    assert result["1"]["landuse_evidence_summary"] == valid_record["landuse_evidence_summary"]
+    assert result["1"]["landuse_evidence_summary"] == "One zone de culture et d'eau est mentionnée."
     assert result["2"]["landuse_evidence_summary"] == "One zone de culture et d'eau est mentionnée."
     assert result["2"]["landuse_evidence_summary_char_count"] == len(
         result["2"]["landuse_evidence_summary"]

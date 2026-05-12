@@ -15,7 +15,7 @@ from georeset.utils.json_io import read_json_file, write_json_atomic
 
 logger = logging.getLogger(__name__)
 
-LANDUSE_EVIDENCE_PROMPT_VERSION = 1
+LANDUSE_EVIDENCE_PROMPT_VERSION = 2
 EVIDENCE_TYPES = (
     "forest",
     "agriculture",
@@ -45,7 +45,10 @@ class LandUseEvidenceSummarizer:
                 "type": "string",
                 "enum": ["none", "low", "medium", "high"],
             },
-            "evidence_types": {"type": "array", "items": {"type": "string"}},
+            "evidence_types": {
+                "type": "array",
+                "items": {"type": "string", "enum": list(EVIDENCE_TYPES)},
+            },
             "evidence_sentences_no_place": {
                 "type": "array",
                 "items": {"type": "string"},
@@ -478,7 +481,7 @@ class LandUseEvidenceSummarizer:
 
         logger.info("Processing %s of %s articles...", len(to_process), len(articles))
 
-        if existing and not to_process:
+        if not to_process:
             write_json_atomic(output_path, existing, indent=2, ensure_ascii=False)
 
         for i, (pageid, article) in enumerate(to_process.items(), 1):

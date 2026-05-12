@@ -11,6 +11,7 @@ REMOTE_ACCESS_DIR="${SITE}/${REMOTE_DIR}"
 OUTPUT_PATH="${GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH:-data/wiki/article_landuse_evidence_summaries.json}"
 JOB_SCRIPT="scripts/cluster/run_landuse_evidence_summarization_job.sh"
 OAR_PROPERTIES="${G5K_OAR_PROPERTIES:-${OAR_PROPERTIES:-gpu_mem>=32000}}"
+WALLTIME="${G5K_LANDUSE_EVIDENCE_WALLTIME:-20:00:00}"
 AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"
 
 mkdir -p data/wiki
@@ -44,7 +45,7 @@ echo "Submitting OAR job"
 SUBMIT_OUTPUT="$(
   ssh -o BatchMode=yes "${ACCESS_HOST}" "
     ssh ${SITE} 'cd \"${REMOTE_PROJECT_DIR}\" && chmod +x \"${JOB_SCRIPT}\" && \
-      oarsub -q production -l host=1/gpu=1,walltime=2:00:00 -p \"${OAR_PROPERTIES}\" -O OAR_%jobid%.out -E OAR_%jobid%.err \"env \
+      oarsub -q production -l host=1/gpu=1,walltime=${WALLTIME} -p \"${OAR_PROPERTIES}\" -O OAR_%jobid%.out -E OAR_%jobid%.err \"env \
         GEORESET_MODEL_PATH=\\\"${GEORESET_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf}\\\" \
         GEORESET_MODEL_REPO_ID=\\\"${GEORESET_MODEL_REPO_ID:-}\\\" \
         GEORESET_LANDUSE_EVIDENCE_INPUT_PATH=\\\"${GEORESET_LANDUSE_EVIDENCE_INPUT_PATH:-data/wiki/article_contents.json}\\\" \
