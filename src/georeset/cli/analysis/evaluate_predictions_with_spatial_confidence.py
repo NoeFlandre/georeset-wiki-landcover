@@ -16,7 +16,12 @@ import pandas as pd
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.classification.metrics import multilabel_metrics, single_label_metrics
 from georeset.contracts import MultiLabelMetricResult, PerLabelMetric, SpatialSubsetMetricResult
-from georeset.utils.json_io import write_json_atomic, write_markdown_table_atomic, write_text_atomic
+from georeset.utils.json_io import (
+    read_json_file,
+    write_json_atomic,
+    write_markdown_table_atomic,
+    write_text_atomic,
+)
 
 EXPERIMENT_ID = "article_text_classification_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
@@ -51,8 +56,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as f:
-        return cast(dict[str, Any], json.load(f))
+    return cast(dict[str, Any], read_json_file(path))
 
 
 def _prediction_identity(path: Path) -> tuple[str, str]:

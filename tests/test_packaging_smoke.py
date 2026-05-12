@@ -68,6 +68,19 @@ def test_classification_runner_file_reads_use_read_json_file_helper():
     assert "read_json_file(" in text
 
 
+def test_experiment_cli_modules_use_read_json_file_helper():
+    modules = [
+        Path("src/georeset/cli/data/compute_corine_spatial_confidence.py"),
+        Path("src/georeset/cli/analysis/summarize_classification_experiment.py"),
+        Path("src/georeset/cli/analysis/evaluate_predictions_with_spatial_confidence.py"),
+    ]
+
+    for path in modules:
+        text = path.read_text(encoding="utf-8")
+        assert "json.load(" not in text, f"{path} must use read_json_file() instead of json.load()"
+        assert "read_json_file(" in text, f"{path} must import and use read_json_file()"
+
+
 def test_pre_commit_scopes_match_ci_quality_commands():
     config = Path(".pre-commit-config.yaml").read_text()
 

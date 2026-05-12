@@ -22,6 +22,7 @@ from georeset.spatial.corine_confidence import (
     prepare_corine_gdf,
 )
 from georeset.utils.json_io import (
+    read_json_file,
     write_csv_atomic,
     write_json_atomic,
     write_parquet_atomic,
@@ -53,8 +54,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def _load_json(path: Path) -> Any:
-    with path.open(encoding="utf-8") as f:
-        return json.load(f)
+    return read_json_file(path)
 
 
 def _prediction_files(parent_dir: Path) -> list[Path]:

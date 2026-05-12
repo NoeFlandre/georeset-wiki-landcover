@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, cast
 
-from georeset.utils.json_io import write_markdown_table_atomic, write_text_atomic
+from georeset.utils.json_io import read_json_file, write_markdown_table_atomic, write_text_atomic
 
 logger = logging.getLogger(__name__)
 
@@ -51,8 +51,7 @@ TEXT_SOURCE_ORDER = {
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as f:
-        return cast(dict[str, Any], json.load(f))
+    return cast(dict[str, Any], read_json_file(path))
 
 
 def _run_sort_key(row: dict[str, Any]) -> tuple[str, int, str]:
