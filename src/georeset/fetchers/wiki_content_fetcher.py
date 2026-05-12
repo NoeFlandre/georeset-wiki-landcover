@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import time
@@ -8,7 +7,7 @@ import requests
 
 from georeset.config import DataPaths
 from georeset.contracts import ArticleContent, ArticleMeta
-from georeset.utils.json_io import write_json_atomic
+from georeset.utils.json_io import read_json_file, write_json_atomic
 
 logger = logging.getLogger(__name__)
 
@@ -209,11 +208,9 @@ class WikiContentFetcher:
         """
         existing = {}
         if os.path.exists(output_path):
-            with open(output_path) as f:
-                existing = json.load(f)
+            existing = read_json_file(output_path)
 
-        with open(input_path) as f:
-            articles = json.load(f)
+        articles = cast(list[ArticleMeta], read_json_file(input_path))
 
         pageids = self._unique_pageids(articles)
         input_pageids = {str(pid) for pid in pageids}

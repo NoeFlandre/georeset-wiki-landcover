@@ -49,6 +49,18 @@ def test_direct_runtime_imports_are_declared_project_dependencies():
     assert '"typing-extensions' in pyproject
 
 
+def test_fetcher_file_reads_use_read_json_file_helper():
+    modules = [
+        Path("src/georeset/fetchers/article_summarizer.py"),
+        Path("src/georeset/fetchers/wiki_content_fetcher.py"),
+    ]
+
+    for path in modules:
+        text = path.read_text(encoding="utf-8")
+        assert "json.load(" not in text, f"{path} must use read_json_file() instead of json.load()"
+        assert "read_json_file(" in text
+
+
 def test_pre_commit_scopes_match_ci_quality_commands():
     config = Path(".pre-commit-config.yaml").read_text()
 

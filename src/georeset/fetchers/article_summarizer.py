@@ -7,7 +7,7 @@ from typing import Any, cast
 
 from georeset.contracts import ArticleContent, SummaryRecord
 from georeset.llm.llama_client import DEFAULT_GGUF_FILENAME, JsonChatClient, LlamaChatClient
-from georeset.utils.json_io import write_json_atomic
+from georeset.utils.json_io import read_json_file, write_json_atomic
 
 logger = logging.getLogger(__name__)
 
@@ -183,11 +183,12 @@ class ArticleSummarizer:
         """
         existing: dict[str, SummaryRecord] = {}
         if os.path.exists(output_path):
-            with open(output_path) as f:
-                existing = cast(dict[str, SummaryRecord], self._remove_private_fields(json.load(f)))
+            existing = cast(
+                dict[str, SummaryRecord],
+                self._remove_private_fields(read_json_file(output_path)),
+            )
 
-        with open(input_path) as f:
-            articles = cast(dict[str, ArticleContent], json.load(f))
+        articles = cast(dict[str, ArticleContent], read_json_file(input_path))
 
         valid_keys = {str(k) for k in articles}
         existing = {k: v for k, v in existing.items() if str(k) in valid_keys}
