@@ -45,6 +45,7 @@ class SummaryMetadata(TypedDict, total=False):
     summary_mode: str
     prompt_version: int
     summary_no_place: bool
+    attempt_count: int
 
 
 class SummaryRecord(ArticleContent, total=False):

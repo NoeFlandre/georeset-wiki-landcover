@@ -79,12 +79,16 @@ class LandUseEvidenceSummarizer:
         model_repo_id: str | None = None,
         seed: int = 42,
         temperature: float = 0.0,
+        max_attempts: int = 2,
         client: JsonChatClient | None = None,
     ) -> None:
         self.model_path = model_path or DEFAULT_GGUF_FILENAME
         self.model_repo_id = model_repo_id
         self.seed = seed
         self.temperature = temperature
+        if max_attempts < 1:
+            raise ValueError("max_attempts must be at least 1")
+        self.max_attempts = max_attempts
         self._client = client or LlamaChatClient(
             model_path=self.model_path,
             seed=seed,
@@ -162,9 +166,26 @@ class LandUseEvidenceSummarizer:
             "Réponds uniquement avec un objet JSON valide respectant le schéma fourni. "
             "N'ajoute aucun Markdown, aucune explication, aucun champ supplémentaire."
         )
-
-        payload = self._parse_payload(self._generate_landuse_evidence(user_prompt, system_prompt))
-        payload = self._validate_no_place(payload, article)
+        last_error: ValueError | None = None
+        payload: dict[str, Any]
+        successful_user_prompt = user_prompt
+        attempt_count = 0
+        for attempt in range(1, self.max_attempts + 1):
+            attempt_count = attempt
+            current_user_prompt = self._retry_user_prompt(user_prompt) if attempt > 1 else user_prompt
+            try:
+                successful_user_prompt = current_user_prompt
+                payload = self._parse_payload(
+                    self._generate_landuse_evidence(current_user_prompt, system_prompt)
+                )
+                payload = self._validate_no_place(payload, article)
+                break
+            except ValueError as exc:
+                last_error = exc
+                if attempt >= self.max_attempts:
+                    raise
+        else:
+            raise ValueError("Failed to parse valid land-use evidence JSON") from last_error
 
         result["landuse_evidence_summary"] = payload["landuse_evidence_summary"]
         result["landcover_relevance"] = payload["landcover_relevance"]
@@ -182,8 +203,9 @@ class LandUseEvidenceSummarizer:
             "evidence_mode": "landuse_evidence",
             "prompt_version": LANDUSE_EVIDENCE_PROMPT_VERSION,
             "summary_no_place": True,
-            "prompt": user_prompt,
+            "prompt": successful_user_prompt,
             "system_prompt": system_prompt,
+            "attempt_count": attempt_count,
         }
         return result
 
@@ -369,6 +391,15 @@ class LandUseEvidenceSummarizer:
             '  "evidence_sentences_no_place": [],\n'
             '  "uncertainty": "high"\n'
             "}"
+        )
+
+    @staticmethod
+    def _retry_user_prompt(user_prompt: str) -> str:
+        return (
+            f"{user_prompt}\n\n"
+            "Correction: ta réponse doit être uniquement un JSON valide conforme au schéma "
+            "ci-dessus (clés attendues uniquement), sans Markdown ni explication, et ne doit "
+            "en aucun cas réintroduire le nom du lieu/article. Réponds strictement en JSON."
         )
 
     @staticmethod

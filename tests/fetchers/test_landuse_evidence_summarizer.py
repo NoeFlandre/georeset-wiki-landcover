@@ -20,13 +20,19 @@ ARTICLE = {
 
 
 class _FakeClient:
-    def __init__(self, response: str):
-        self.response = response
+    def __init__(self, response: str | list[str]):
+        if isinstance(response, str):
+            self.responses = [response]
+        else:
+            self.responses = list(response)
         self.calls: list[tuple[str, str]] = []
+        self.call_index = 0
 
     def complete_json(self, **kwargs: Any) -> str:
         self.calls.append((kwargs["system_prompt"], kwargs["user_prompt"]))
-        return self.response
+        response = self.responses[min(self.call_index, len(self.responses) - 1)]
+        self.call_index += 1
+        return response
 
 
 @pytest.fixture()
@@ -82,6 +88,7 @@ def test_summarize_adds_required_evidence_fields_and_counts(fake_good_response: 
     assert metadata["evidence_mode"] == "landuse_evidence"
     assert metadata["prompt_version"] == LANDUSE_EVIDENCE_PROMPT_VERSION
     assert metadata["summary_no_place"] is True
+    assert metadata["attempt_count"] == 1
     assert "prompt" in metadata
     assert "system_prompt" in metadata
 
@@ -115,6 +122,47 @@ def test_parse_rejects_malformed_json(fake_good_response: str) -> None:
 
     with pytest.raises(ValueError, match="valid land-use evidence JSON"):
         summarizer.summarize(ARTICLE)
+
+
+def test_invalid_max_attempts_is_rejected() -> None:
+    with pytest.raises(ValueError, match="max_attempts must be at least 1"):
+        LandUseEvidenceSummarizer(model_path="test_model.gguf", max_attempts=0)
+
+
+def test_retry_retried_once_after_malformed_json(fake_good_response: str) -> None:
+    responses = ["{not json", fake_good_response]
+    client = _FakeClient(responses)
+    summarizer = LandUseEvidenceSummarizer(model_path="test_model.gguf", client=client)
+
+    result = summarizer.summarize(ARTICLE)
+
+    assert result["landuse_evidence_summary"] == "Une zone boisée et des vignes sont mentionnées."
+    assert result["metadata"]["attempt_count"] == 2
+    assert result["metadata"]["prompt"] == client.calls[1][1]
+    assert "Correction" in result["metadata"]["prompt"]
+    assert len(client.calls) == 2
+
+
+def test_retry_fails_after_max_attempts() -> None:
+    responses = [
+        "{not json",
+        json.dumps(
+            {
+                "landuse_evidence_summary": "L'article évoque des vignes.",
+                "landcover_relevance": "unknown",
+                "evidence_types": ["forest"],
+                "evidence_sentences_no_place": ["Des vignes sont mentionnées."],
+                "uncertainty": "low",
+            }
+        ),
+    ]
+    client = _FakeClient(responses)
+    summarizer = LandUseEvidenceSummarizer(model_path="test_model.gguf", client=client)
+
+    with pytest.raises(ValueError, match="invalid landcover_relevance"):
+        summarizer.summarize(ARTICLE)
+
+    assert len(client.calls) == 2
 
 
 def test_parse_rejects_missing_fields(fake_good_response: str) -> None:
@@ -356,6 +404,7 @@ def test_process_file_skips_current_records_regenerates_malformed_or_stale(tmp_p
 
     result = json.loads(output_path.read_text(encoding="utf-8"))
     assert set(result) == {"1", "2", "4"}
+    assert len(client.calls) == 2
     assert result["1"]["landuse_evidence_summary"] == valid_record["landuse_evidence_summary"]
     assert (
         result["2"]["landuse_evidence_summary"]
@@ -365,6 +414,7 @@ def test_process_file_skips_current_records_regenerates_malformed_or_stale(tmp_p
         result["4"]["landuse_evidence_summary"]
         == "L'article mentionne une zone boisée et des vignes."
     )
+    assert result["4"]["metadata"]["attempt_count"] == 1
 
 
 def test_process_file_default_output_path_matches_data_paths() -> None:
