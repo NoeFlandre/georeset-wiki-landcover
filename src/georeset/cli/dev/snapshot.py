@@ -5,32 +5,41 @@ import argparse
 from georeset.fetchers.data_fetcher import DataFetcher
 
 
-def snapshot(n_samples: int = 10) -> None:
+def snapshot(n_samples: int = 10) -> str:
     fetcher = DataFetcher()
     gdf = fetcher.load_data(exclude_artificial=True)
 
-    print("=== Dataset Snapshot ===")
-    print(f"Total polygons: {len(gdf)}")
-    print(f"Bounds: {fetcher.get_bounds()}")
-    print(f"Columns: {list(gdf.columns)}")
-
-    # Class distribution at level 1
-    gdf["level1"] = gdf["code_18"].str[:1]
-    print("\n--- Level 1 Class Distribution ---")
-    print(gdf["level1"].value_counts())
+    report_parts: list[str] = []
+    report_parts.extend(
+        [
+            "=== Dataset Snapshot ===",
+            f"Total polygons: {len(gdf)}",
+            f"Bounds: {fetcher.get_bounds()}",
+            f"Columns: {list(gdf.columns)}",
+            "",
+            "--- Level 1 Class Distribution ---",
+            f"{gdf['code_18'].str[:1].value_counts()}",
+        ]
+    )
 
     # Distribution of polygon counts by number of classes (based on unique code_18 values per polygon)
     class_counts = gdf.groupby("ID")["code_18"].nunique()
-    print("\n--- Polygons by Number of Unique Classes ---")
-    print(class_counts.value_counts().sort_index())
-
+    report_parts.extend(
+        [
+            "",
+            "--- Polygons by Number of Unique Classes ---",
+            f"{class_counts.value_counts().sort_index()}",
+            "",
+            "--- Sample Polygons ---",
+        ]
+    )
     # Sample polygons
-    print("\n--- Sample Polygons ---")
     sample = fetcher.get_sample_polygons(n=n_samples, level=2, exclude_artificial=True)
     for _, row in sample.iterrows():
-        print(
+        report_parts.append(
             f"  Class: {row['class_label']}, Code: {row['code_18']}, Centroid: ({row['centroid'].y:.4f}, {row['centroid'].x:.4f})"
         )
+    return "\n".join(report_parts)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -41,7 +50,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
-    snapshot(n_samples=args.n_samples)
+    print(snapshot(n_samples=args.n_samples))
 
 
 if __name__ == "__main__":
