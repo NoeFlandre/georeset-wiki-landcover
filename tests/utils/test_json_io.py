@@ -11,6 +11,7 @@ from georeset.utils.json_io import (
     write_geojson_atomic,
     write_html_map_atomic,
     write_json_atomic,
+    write_markdown_table_atomic,
     write_parquet_atomic,
     write_text_atomic,
 )
@@ -79,6 +80,26 @@ def test_write_csv_atomic_writes_dataframe_via_atomic_text_helper(tmp_path):
     write_csv_atomic(output_path, frame, index=False)
 
     assert output_path.read_text(encoding="utf-8") == "label,score\n31,0.5\n"
+    assert not list(output_path.parent.glob("*.tmp"))
+
+
+def test_write_markdown_table_atomic_escapes_cells_and_preserves_column_order(tmp_path):
+    output_path = tmp_path / "nested" / "overview.md"
+
+    write_markdown_table_atomic(
+        output_path,
+        title="Overview",
+        rows=[{"label": "forest | water", "note": "line one\nline two"}],
+        columns=["label", "note"],
+    )
+
+    assert output_path.read_text(encoding="utf-8") == (
+        "# Overview\n"
+        "\n"
+        "| label | note |\n"
+        "| --- | --- |\n"
+        "| forest \\| water | line one<br>line two |\n"
+    )
     assert not list(output_path.parent.glob("*.tmp"))
 
 

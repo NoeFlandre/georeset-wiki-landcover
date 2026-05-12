@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, cast
 
-from georeset.utils.json_io import write_text_atomic
+from georeset.utils.json_io import write_markdown_table_atomic, write_text_atomic
 
 logger = logging.getLogger(__name__)
 
@@ -197,43 +197,59 @@ def _format_code_list(values: list[str]) -> str:
 
 
 def write_overview_markdown(rows: list[dict[str, Any]], output_path: Path) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    lines = [
-        "# Classification Experiment Overview",
-        "",
-        "| run | n eligible | n predicted ok | parse errors | coverage | primary score | majority baseline | delta vs majority | majority target share | majority macro recall baseline | delta macro recall vs majority | accuracy | exact match accuracy | macro precision | macro recall | macro F1 | micro precision | micro recall | micro F1 | labels |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    columns = [
+        "run",
+        "n eligible",
+        "n predicted ok",
+        "parse errors",
+        "coverage",
+        "primary score",
+        "majority baseline",
+        "delta vs majority",
+        "majority target share",
+        "majority macro recall baseline",
+        "delta macro recall vs majority",
+        "accuracy",
+        "exact match accuracy",
+        "macro precision",
+        "macro recall",
+        "macro F1",
+        "micro precision",
+        "micro recall",
+        "micro F1",
+        "labels",
     ]
-    for row in rows:
-        lines.append(
-            "| "
-            + " | ".join(
-                [
-                    _format_cell(row["run"]),
-                    _format_cell(row["n_eligible"]),
-                    _format_cell(row["n_predicted_ok"]),
-                    _format_cell(row["n_parse_error"]),
-                    _format_cell(row["coverage"]),
-                    _format_cell(row["primary_score"]),
-                    _format_cell(row["majority_baseline_score"]),
-                    _format_cell(row["delta_vs_majority"]),
-                    _format_cell(row["majority_target_share"]),
-                    _format_cell(row["majority_macro_recall_baseline"]),
-                    _format_cell(row["delta_macro_recall_vs_majority"]),
-                    _format_cell(row["accuracy"]),
-                    _format_cell(row["exact_match_accuracy"]),
-                    _format_cell(row["macro_precision"]),
-                    _format_cell(row["macro_recall"]),
-                    _format_cell(row["macro_f1"]),
-                    _format_cell(row["micro_precision"]),
-                    _format_cell(row["micro_recall"]),
-                    _format_cell(row["micro_f1"]),
-                    _format_cell(row["n_labels_evaluated"]),
-                ]
-            )
-            + " |"
-        )
-    write_text_atomic(output_path, "\n".join(lines) + "\n")
+    markdown_rows = [
+        {
+            "run": _format_cell(row["run"]),
+            "n eligible": _format_cell(row["n_eligible"]),
+            "n predicted ok": _format_cell(row["n_predicted_ok"]),
+            "parse errors": _format_cell(row["n_parse_error"]),
+            "coverage": _format_cell(row["coverage"]),
+            "primary score": _format_cell(row["primary_score"]),
+            "majority baseline": _format_cell(row["majority_baseline_score"]),
+            "delta vs majority": _format_cell(row["delta_vs_majority"]),
+            "majority target share": _format_cell(row["majority_target_share"]),
+            "majority macro recall baseline": _format_cell(row["majority_macro_recall_baseline"]),
+            "delta macro recall vs majority": _format_cell(row["delta_macro_recall_vs_majority"]),
+            "accuracy": _format_cell(row["accuracy"]),
+            "exact match accuracy": _format_cell(row["exact_match_accuracy"]),
+            "macro precision": _format_cell(row["macro_precision"]),
+            "macro recall": _format_cell(row["macro_recall"]),
+            "macro F1": _format_cell(row["macro_f1"]),
+            "micro precision": _format_cell(row["micro_precision"]),
+            "micro recall": _format_cell(row["micro_recall"]),
+            "micro F1": _format_cell(row["micro_f1"]),
+            "labels": _format_cell(row["n_labels_evaluated"]),
+        }
+        for row in rows
+    ]
+    write_markdown_table_atomic(
+        output_path,
+        title="Classification Experiment Overview",
+        rows=markdown_rows,
+        columns=columns,
+    )
 
 
 def write_readme(

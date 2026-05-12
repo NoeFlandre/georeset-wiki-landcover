@@ -16,7 +16,7 @@ import pandas as pd
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.classification.metrics import multilabel_metrics, single_label_metrics
 from georeset.contracts import MultiLabelMetricResult, PerLabelMetric, SpatialSubsetMetricResult
-from georeset.utils.json_io import write_json_atomic, write_text_atomic
+from georeset.utils.json_io import write_json_atomic, write_markdown_table_atomic, write_text_atomic
 
 EXPERIMENT_ID = "article_text_classification_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
@@ -226,19 +226,7 @@ def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
 
 
 def _write_md(path: Path, title: str, rows: list[dict[str, Any]]) -> None:
-    if not rows:
-        write_text_atomic(path, f"# {title}\n\nNo rows.\n")
-        return
-    columns = sorted({key for row in rows for key in row})
-    lines = [
-        f"# {title}",
-        "",
-        "| " + " | ".join(columns) + " |",
-        "| " + " | ".join(["---"] * len(columns)) + " |",
-    ]
-    for row in rows:
-        lines.append("| " + " | ".join(str(row.get(column, "")) for column in columns) + " |")
-    write_text_atomic(path, "\n".join(lines) + "\n")
+    write_markdown_table_atomic(path, title=title, rows=rows)
 
 
 def _primary_score(row: dict[str, Any]) -> tuple[str, float]:

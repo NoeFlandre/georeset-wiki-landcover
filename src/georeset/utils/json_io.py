@@ -67,6 +67,43 @@ def write_csv_atomic(
     write_text_atomic(path, frame.to_csv(**to_csv_kwargs))
 
 
+def _markdown_cell(value: Any) -> str:
+    return (
+        str(value)
+        .replace("|", "\\|")
+        .replace("\r\n", "\n")
+        .replace("\r", "\n")
+        .replace("\n", "<br>")
+    )
+
+
+def write_markdown_table_atomic(
+    path: str | os.PathLike[str],
+    *,
+    title: str,
+    rows: list[dict[str, Any]],
+    columns: list[str] | None = None,
+) -> None:
+    """Write a simple Markdown table through atomic text replacement."""
+    if columns is None:
+        columns = sorted({key for row in rows for key in row})
+    lines = [f"# {title}", ""]
+    if not rows:
+        lines.append("No rows.")
+    else:
+        lines.extend(
+            [
+                "| " + " | ".join(_markdown_cell(column) for column in columns) + " |",
+                "| " + " | ".join(["---"] * len(columns)) + " |",
+            ]
+        )
+        for row in rows:
+            lines.append(
+                "| " + " | ".join(_markdown_cell(row.get(column, "")) for column in columns) + " |"
+            )
+    write_text_atomic(path, "\n".join(lines) + "\n")
+
+
 def _write_path_atomic(
     path: str | os.PathLike[str],
     *,
