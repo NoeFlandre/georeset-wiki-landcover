@@ -7,7 +7,7 @@ import folium
 import geopandas as gpd
 
 from georeset.config import DataPaths
-from georeset.utils.json_io import write_html_map_atomic
+from georeset.utils.json_io import read_json_file, write_html_map_atomic
 
 DEFAULT_MAP_LOCATION = [48.5, 7.5]
 logger = logging.getLogger(__name__)
@@ -109,7 +109,6 @@ class MapVisualizer:
 
 
 if __name__ == "__main__":
-    import json
     import os
 
     from georeset.fetchers.data_fetcher import DataFetcher
@@ -119,8 +118,7 @@ if __name__ == "__main__":
     logger.info("Loading Wikipedia articles...")
     articles_path = paths.wiki_articles
     if os.path.exists(articles_path):
-        with open(articles_path) as f:
-            articles = json.load(f)
+        articles = read_json_file(articles_path)
         logger.info("Loaded %s articles.", len(articles))
     else:
         articles = []

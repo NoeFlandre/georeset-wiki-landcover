@@ -1,7 +1,6 @@
 """Fetch OSM polygons for CORINE bounds and compare class distributions."""
 
 import argparse
-import json
 import logging
 import os
 
@@ -13,7 +12,12 @@ from georeset.cli.data.filter_pipeline import filter_osm_by_corine
 from georeset.config import DataPaths
 from georeset.fetchers.data_fetcher import DataFetcher
 from georeset.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES, OSMFetcher
-from georeset.utils.json_io import write_csv_atomic, write_geojson_atomic, write_html_map_atomic
+from georeset.utils.json_io import (
+    read_json_file,
+    write_csv_atomic,
+    write_geojson_atomic,
+    write_html_map_atomic,
+)
 from georeset.visualization.map_visualizer import MapVisualizer
 
 logger = logging.getLogger(__name__)
@@ -47,8 +51,7 @@ def run(
     fetcher = DataFetcher()
     corine = fetcher.load_data(exclude_artificial=True)
     if refetch_osm:
-        with open(corine_bounds_path) as f:
-            bounds = json.load(f)
+        bounds = read_json_file(corine_bounds_path)
         osm = OSMFetcher().fetch_polygons(
             bounds["min_lon"],
             bounds["min_lat"],

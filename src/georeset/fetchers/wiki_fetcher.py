@@ -7,7 +7,7 @@ import requests
 
 from georeset.config import DataPaths
 from georeset.contracts import ArticleMeta
-from georeset.utils.json_io import write_json_atomic
+from georeset.utils.json_io import read_json_file, write_json_atomic
 
 logger = logging.getLogger(__name__)
 
@@ -221,16 +221,13 @@ class WikiFetcher:
 
 
 if __name__ == "__main__":
-    import json
-
     from georeset.fetchers.data_fetcher import DataFetcher
 
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     fetcher = WikiFetcher()
     paths = DataPaths()
 
-    with open(paths.corine_bounds) as f:
-        bounds = json.load(f)
+    bounds = read_json_file(paths.corine_bounds)
 
     logger.info("Fetching Wikipedia articles for Alsace region...")
 
