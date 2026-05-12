@@ -61,6 +61,13 @@ def test_fetcher_file_reads_use_read_json_file_helper():
         assert "read_json_file(" in text
 
 
+def test_classification_runner_file_reads_use_read_json_file_helper():
+    path = Path("src/georeset/classification/runner.py")
+    text = path.read_text(encoding="utf-8")
+    assert "json.load(" not in text, f"{path} must use read_json_file() instead of json.load()"
+    assert "read_json_file(" in text
+
+
 def test_pre_commit_scopes_match_ci_quality_commands():
     config = Path(".pre-commit-config.yaml").read_text()
 

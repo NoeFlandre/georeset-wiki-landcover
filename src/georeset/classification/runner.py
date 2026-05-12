@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from collections.abc import Callable
-from typing import Protocol, cast
+from typing import Any, Protocol, cast
 
 from georeset.classification.llm_classifier import LLMClassifier
 from georeset.classification.metrics import multilabel_metrics, single_label_metrics
@@ -19,7 +19,7 @@ from georeset.classification.text_sources import (
     base_text_source,
     shuffled_metadata,
 )
-from georeset.classification.types import PredictionResult
+from georeset.classification.types import PredictionRecord, PredictionResult
 from georeset.config import DataPaths, ModelSettings
 from georeset.contracts import (
     ArticleMeta,
@@ -28,7 +28,7 @@ from georeset.contracts import (
     SingleLabelMetricResult,
 )
 from georeset.utils.articles import index_articles_by_pageid
-from georeset.utils.json_io import write_json_atomic
+from georeset.utils.json_io import read_json_file, write_json_atomic
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -147,16 +147,13 @@ def load_text_source(
 ) -> dict[str, str]:
     text_source = base_text_source(text_source)
     if text_source == "summary":
-        with open(article_summaries_path) as f:
-            data = json.load(f)
+        data = read_json_file(article_summaries_path)
         return {k: v["summary"] for k, v in data.items()}
     elif text_source == "summary_no_place":
-        with open(article_summaries_no_place_path) as f:
-            data = json.load(f)
+        data = read_json_file(article_summaries_no_place_path)
         return {k: v["summary"] for k, v in data.items()}
     elif text_source == "content":
-        with open(article_contents_path) as f:
-            data = json.load(f)
+        data = read_json_file(article_contents_path)
         return {k: v.get("content", "") for k, v in data.items()}
     else:
         raise ValueError(f"Unknown text source: {text_source}")
@@ -210,8 +207,7 @@ def main(
     out_pred = os.path.join(args.output_dir, f"{args.task}_{args.text_source}_predictions.json")
     out_metrics = os.path.join(args.output_dir, f"{args.task}_{args.text_source}_metrics.json")
 
-    with open(args.wiki_articles_path) as f:
-        articles: list[ArticleMeta] = json.load(f)
+    articles = cast(list[ArticleMeta], read_json_file(args.wiki_articles_path))
     articles_by_pageid = index_articles_by_pageid(articles)
 
     text_records = load_text_source(
@@ -240,10 +236,9 @@ def main(
             text_records, eligible, seed=args.seed
         )
 
-    existing = {}
+    existing: dict[str, PredictionRecord] = {}
     if os.path.exists(out_pred):
-        with open(out_pred) as f:
-            existing = json.load(f)
+        existing = cast(dict[str, PredictionRecord], read_json_file(out_pred))
 
     fp_current = prediction_fingerprint(
         args.task,
@@ -260,8 +255,8 @@ def main(
     )
 
     for pageid in eligible:
-        record = existing.get(pageid)
-        if should_skip_record(record, fp_current, retry_failed=args.retry_failed):
+        previous_record = cast(dict[str, Any] | None, existing.get(pageid))
+        if should_skip_record(previous_record, fp_current, retry_failed=args.retry_failed):
             continue
         article = articles_by_pageid.get(pageid)
         title = article.get("title", pageid) if article else pageid
@@ -284,7 +279,7 @@ def main(
         extra_metadata = None
         if shuffled_source_pageids:
             extra_metadata = shuffled_metadata(args.text_source, shuffled_source_pageids[pageid])
-        record = build_prediction_record(
+        prediction_record = build_prediction_record(
             pageid=pageid,
             title=title,
             target=target[pageid],
@@ -292,13 +287,13 @@ def main(
             fingerprint=fp_current,
             extra_metadata=extra_metadata,
         )
-        existing[pageid] = record
+        existing[pageid] = prediction_record
         write_json_atomic(out_pred, existing, indent=2, ensure_ascii=False)
         status = result.get("parse_status", "error")
         logger.info(f"[{len(existing)}/{len(eligible)}] {pageid} ({title}): {status}")
 
-    y_pred = {
-        k: v["prediction"]
+    y_pred: dict[str, ClassificationTarget] = {
+        k: cast(ClassificationTarget, v["prediction"])
         for k, v in existing.items()
         if k in eligible and v.get("parse_status") == "ok"
     }
