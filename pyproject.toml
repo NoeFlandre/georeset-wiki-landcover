@@ -44,6 +44,7 @@ georeset-filter-pipeline = "georeset.cli.data.filter_pipeline:main"
 georeset-run-corine-analysis = "georeset.cli.analysis.run_corine_analysis:main"
 georeset-snapshot = "georeset.cli.dev.snapshot:main"
 georeset-summarize-articles = "georeset.cli.data.summarize_articles:main"
+georeset-summarize-landuse-evidence = "georeset.cli.data.summarize_landuse_evidence:main"
 georeset-summarize-classification-experiment = "georeset.cli.analysis.summarize_classification_experiment:main"
 georeset-evaluate-spatial-confidence = "georeset.cli.analysis.evaluate_predictions_with_spatial_confidence:main"
 

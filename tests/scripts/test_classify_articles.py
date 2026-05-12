@@ -8,6 +8,7 @@ import pytest
 from georeset.cli.data import classify_articles
 from georeset.cli.data.classify_articles import (
     apply_shuffled_text_control,
+    load_text_source,
     parse_args,
     prediction_fingerprint,
 )
@@ -168,6 +169,56 @@ class TestSourceLoading:
                 "summary_no_place_shuffled", contents_path, summaries_path, no_place_path
             )
             assert result["100"] == "No place summary here."
+
+    def test_loads_landuse_evidence_summary_source(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            landuse_path = os.path.join(tmpdir, "landuse.json")
+            contents_path = os.path.join(tmpdir, "contents.json")
+            summaries_path = os.path.join(tmpdir, "summaries.json")
+            no_place_path = os.path.join(tmpdir, "no_place.json")
+
+            with open(contents_path, "w") as f:
+                json.dump({"100": {"content": "Full content"}}, f)
+            with open(summaries_path, "w") as f:
+                json.dump({"100": {"summary": "Summary"}}, f)
+            with open(no_place_path, "w") as f:
+                json.dump({"100": {"summary": "No place"}}, f)
+            with open(landuse_path, "w") as f:
+                json.dump({"100": {"landuse_evidence_summary": "Zones agricoles."}}, f)
+
+            result = load_text_source(
+                "landuse_evidence_summary",
+                contents_path,
+                summaries_path,
+                no_place_path,
+                landuse_path,
+            )
+            assert result["100"] == "Zones agricoles."
+
+    def test_loads_base_landuse_evidence_summary_for_shuffled_variant(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            landuse_path = os.path.join(tmpdir, "landuse.json")
+            contents_path = os.path.join(tmpdir, "contents.json")
+            summaries_path = os.path.join(tmpdir, "summaries.json")
+            no_place_path = os.path.join(tmpdir, "no_place.json")
+
+            with open(contents_path, "w") as f:
+                json.dump({"100": {"content": "Full content"}}, f)
+            with open(summaries_path, "w") as f:
+                json.dump({"100": {"summary": "Summary"}}, f)
+            with open(no_place_path, "w") as f:
+                json.dump({"100": {"summary": "No place"}}, f)
+            with open(landuse_path, "w") as f:
+                json.dump({"100": {"landuse_evidence_summary": "Zones agricoles."}}, f)
+
+            result = load_text_source(
+                "landuse_evidence_summary_shuffled",
+                contents_path,
+                summaries_path,
+                no_place_path,
+                landuse_path,
+            )
+            assert result["100"] == "Zones agricoles."
 
     def test_loads_content_field_from_content_variant(self):
         with tempfile.TemporaryDirectory() as tmpdir:

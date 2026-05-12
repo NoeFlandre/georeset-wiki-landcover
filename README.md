@@ -61,7 +61,8 @@ git add .gitignore README.md docs src scripts tests pyproject.toml uv.lock LICEN
 - `src/georeset/visualization/map_visualizer.py`: writes Folium map visualizations.
 - `src/georeset/cli/`: packaged CLI implementations exposed through
   `[project.scripts]` entry points such as `georeset-classify-articles`,
-  `georeset-summarize-articles`, and `georeset-run-corine-analysis`.
+  `georeset-summarize-articles`, `georeset-summarize-landuse-evidence`,
+  and `georeset-run-corine-analysis`.
 - `scripts/`: thin repository-compatible wrappers around `georeset.cli.*` plus
   Grid5000 shell launchers. Prefer the `georeset-*` entry points in new docs and
   automation.
@@ -72,6 +73,8 @@ git add .gitignore README.md docs src scripts tests pyproject.toml uv.lock LICEN
 - `scripts/cluster/submit_summarization.sh`: syncs the minimal repository
   state to Grid5000/Nancy and submits summarization OAR jobs. Auto-sync is
   disabled by default; use one-shot syncs to avoid repeated SSH polling.
+- `scripts/cluster/submit_landuse_evidence_summarization.sh`: submits land-use
+  evidence summary OAR jobs with no-place policy and configurable seed/temperature.
 
 ## Data Artifacts
 
@@ -216,12 +219,34 @@ uv run georeset-summarize-articles \
   --summary-mode no_place
 ```
 
+Land-use evidence summaries are generated through a dedicated extractor and write
+`data/wiki/article_landuse_evidence_summaries.json`:
+
+```bash
+bash scripts/cluster/submit_landuse_evidence_summarization.sh
+```
+
+or locally:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-summarize-landuse-evidence \
+  --input-path data/wiki/article_contents.json \
+  --output-path data/wiki/article_landuse_evidence_summaries.json \
+  --seed 42 \
+  --temperature 0.0
+```
+
 Optional environment overrides:
 
 ```bash
 G5K_SITE=nancy G5K_REMOTE_DIR=georeset G5K_REMOTE_HOME=/home/nflandre \
 GEORESET_MODEL_PATH=Qwen3.6-27B-Q4_0.gguf \
   bash scripts/cluster/submit_summarization.sh
+
+G5K_SITE=nancy G5K_REMOTE_DIR=georeset G5K_REMOTE_HOME=/home/nflandre \
+GEORESET_MODEL_PATH=Qwen3.6-27B-Q4_0.gguf \
+GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH=data/wiki/article_landuse_evidence_summaries.json \
+  bash scripts/cluster/submit_landuse_evidence_summarization.sh
 ```
 
 Sync a finished summary job with one SSH polling pass:

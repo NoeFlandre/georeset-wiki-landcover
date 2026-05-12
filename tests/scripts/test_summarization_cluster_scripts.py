@@ -48,3 +48,43 @@ def test_sync_summaries_uses_parameterized_remote_paths_and_once_mode():
     assert 'SYNC_ONCE="${SYNC_ONCE:-0}"' in script
     assert 'if [ "${SYNC_ONCE}" = "1" ]; then' in script
     assert "/home/nflandre" not in script
+
+
+def test_run_landuse_evidence_job_uses_landuse_output_and_cli():
+    script = Path("scripts/cluster/run_landuse_evidence_summarization_job.sh").read_text()
+
+    assert "GEORESET_LANDUSE_EVIDENCE_INPUT_PATH" in script
+    assert "GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH" in script
+    assert "GEORESET_LANDUSE_EVIDENCE_SEED" in script
+    assert "GEORESET_LANDUSE_EVIDENCE_TEMPERATURE" in script
+    assert "uv run georeset-summarize-landuse-evidence" in script
+    assert '--input-path "${GEORESET_LANDUSE_EVIDENCE_INPUT_PATH}"' in script
+    assert '--output-path "${GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH}"' in script
+    assert "data/wiki/article_landuse_evidence_summaries.json" in script
+
+
+def test_submit_landuse_evidence_script_uses_safe_default_sync_path():
+    script = Path("scripts/cluster/submit_landuse_evidence_summarization.sh").read_text()
+
+    assert (
+        'OUTPUT_PATH="${GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH:-data/wiki/article_landuse_evidence_summaries.json}"'
+        in script
+    )
+    assert 'AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"' in script
+    assert "oarsub -q production -l host=1/gpu=1,walltime=2:00:00" in script
+    assert 'OAR_PROPERTIES="${G5K_OAR_PROPERTIES:-${OAR_PROPERTIES:-gpu_mem>=32000}}"' in script
+    assert '-p \\"${OAR_PROPERTIES}\\"' in script
+    assert '-O OAR_%jobid%.out -E OAR_%jobid%.err \\"env' in script
+    assert "GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH=" in script
+    assert "${OUTPUT_PATH}" in script
+    assert "GEORESET_LANDUSE_EVIDENCE_TEMPERATURE=" in script
+    assert "bash ./" in script
+    assert "${JOB_SCRIPT}" in script
+    assert "-S bash ./" not in script
+    assert "GEORESET_CLASSIFICATION_TASK=" not in script
+    assert "GEORESET_MODEL_PATH=" in script
+    assert 'if [ "${AUTO_SYNC}" != "1" ]; then' in script
+    assert "Auto-sync disabled to avoid repeated SSH polling" in script
+    assert "Manual sync: GEORESET_SUMMARY_OUTPUT=${OUTPUT_PATH}" in script
+    assert "GEORESET_LANDUSE_EVIDENCE_INPUT_PATH" in script
+    assert "GEORESET_LANDUSE_EVIDENCE_TEMPERATURE" in script

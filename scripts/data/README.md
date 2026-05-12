@@ -7,6 +7,8 @@ CLIs.
 
 - `filter_pipeline.py` wraps `georeset.cli.data.filter_pipeline`.
 - `summarize_articles.py` wraps `georeset.cli.data.summarize_articles`.
+- `summarize_landuse_evidence.py` wraps
+  `georeset.cli.data.summarize_landuse_evidence`.
 - `classify_articles.py` wraps `georeset.cli.data.classify_articles`.
 - `compute_corine_spatial_confidence.py` wraps
   `georeset.cli.data.compute_corine_spatial_confidence`.

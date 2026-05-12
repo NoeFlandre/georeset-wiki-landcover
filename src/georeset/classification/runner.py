@@ -115,6 +115,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--article-summaries-no-place-path",
         default=data_paths.article_summaries_no_place,
     )
+    parser.add_argument(
+        "--article-landuse-evidence-summaries-path",
+        default=data_paths.article_landuse_evidence_summaries,
+    )
     parser.add_argument("--osm-polygons-path", default=data_paths.osm_polygons)
     parser.add_argument(
         "--corine-polygons-path",
@@ -144,6 +148,7 @@ def load_text_source(
     article_contents_path: str,
     article_summaries_path: str,
     article_summaries_no_place_path: str,
+    article_landuse_evidence_summaries_path: str | None = None,
 ) -> dict[str, str]:
     text_source = base_text_source(text_source)
     if text_source == "summary":
@@ -155,6 +160,11 @@ def load_text_source(
     elif text_source == "content":
         data = read_json_file(article_contents_path)
         return {k: v.get("content", "") for k, v in data.items()}
+    elif text_source == "landuse_evidence_summary":
+        if article_landuse_evidence_summaries_path is None:
+            raise ValueError("landuse evidence summaries path is required")
+        data = read_json_file(article_landuse_evidence_summaries_path)
+        return {k: v["landuse_evidence_summary"] for k, v in data.items()}
     else:
         raise ValueError(f"Unknown text source: {text_source}")
 
@@ -215,6 +225,7 @@ def main(
         args.article_contents_path,
         args.article_summaries_path,
         args.article_summaries_no_place_path,
+        args.article_landuse_evidence_summaries_path,
     )
 
     task_setup = load_task_setup(

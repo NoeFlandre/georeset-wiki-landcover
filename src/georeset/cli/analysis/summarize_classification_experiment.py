@@ -47,6 +47,8 @@ TEXT_SOURCE_ORDER = {
     "summary_no_place_shuffled": 3,
     "content": 4,
     "content_shuffled": 5,
+    "landuse_evidence_summary": 6,
+    "landuse_evidence_summary_shuffled": 7,
 }
 
 
@@ -288,6 +290,8 @@ def write_readme(
         "- `summary`: generated with `summary_mode=place`",
         "- `summary_no_place`: generated with `summary_mode=no_place`",
         "- `content`: raw Wikipedia article content",
+        "- `landuse_evidence_summary`: extracted no-place land-use evidence summaries",
+        "- `landuse_evidence_summary_shuffled`: shuffled control using land-use evidence summaries",
     ]
     if has_shuffled_controls:
         lines.append(

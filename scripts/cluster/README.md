@@ -32,7 +32,11 @@ By default, classification outputs go to
 - `submit_summarization.sh`: submits the place-summary job.
 - `run_summarization_job.sh`: remote place-summary job.
 - `run_summarization_no_place.sh`: remote no-place summary job.
+- `run_landuse_evidence_summarization_job.sh`: remote land-use evidence
+  summary job.
 - `sync_summaries.sh`: one-shot or interval sync of summary JSON.
+- `submit_landuse_evidence_summarization.sh`: remote land-use evidence summary
+  job submitter (manual sync by default).
 
 ## SSH Discipline
 

@@ -6,12 +6,17 @@ SHUFFLED_TEXT_SOURCES = {
     "summary_shuffled": "summary",
     "summary_no_place_shuffled": "summary_no_place",
     "content_shuffled": "content",
+    "landuse_evidence_summary_shuffled": "landuse_evidence_summary",
 }
 TEXT_SOURCE_CHOICES = [
     "summary",
     "summary_no_place",
+    "landuse_evidence_summary",
     "content",
-    *SHUFFLED_TEXT_SOURCES,
+    "summary_shuffled",
+    "summary_no_place_shuffled",
+    "landuse_evidence_summary_shuffled",
+    "content_shuffled",
 ]
 
 

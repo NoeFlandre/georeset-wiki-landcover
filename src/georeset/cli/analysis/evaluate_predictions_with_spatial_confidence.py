@@ -44,6 +44,7 @@ TEXT_PAIRS = {
     "summary": "summary_shuffled",
     "summary_no_place": "summary_no_place_shuffled",
     "content": "content_shuffled",
+    "landuse_evidence_summary": "landuse_evidence_summary_shuffled",
 }
 
 

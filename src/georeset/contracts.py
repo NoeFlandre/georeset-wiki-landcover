@@ -36,15 +36,26 @@ class ArticleContent(ArticleMeta, total=False):
 
 class SummaryMetadata(TypedDict, total=False):
     model: str
+    model_repo_id: str | None
     seed: int
     temperature: float
+    evidence_mode: str
     prompt: str
     system_prompt: str
     summary_mode: str
+    prompt_version: int
+    summary_no_place: bool
 
 
 class SummaryRecord(ArticleContent, total=False):
     summary: str
+    landuse_evidence_summary: str
+    landcover_relevance: str
+    evidence_types: list[str]
+    evidence_sentences_no_place: list[str]
+    uncertainty: str
+    landuse_evidence_summary_char_count: int
+    evidence_sentences_count: int
     metadata: SummaryMetadata
 
 

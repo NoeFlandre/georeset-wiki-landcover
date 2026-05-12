@@ -10,6 +10,7 @@ from georeset.classification.text_sources import (
 def test_base_text_source_maps_shuffled_variants_to_real_inputs():
     assert base_text_source("summary_shuffled") == "summary"
     assert base_text_source("summary_no_place_shuffled") == "summary_no_place"
+    assert base_text_source("landuse_evidence_summary_shuffled") == "landuse_evidence_summary"
     assert base_text_source("content_shuffled") == "content"
     assert base_text_source("summary") == "summary"
 
@@ -18,12 +19,15 @@ def test_text_source_choices_include_primary_and_shuffled_sources():
     assert TEXT_SOURCE_CHOICES == [
         "summary",
         "summary_no_place",
+        "landuse_evidence_summary",
         "content",
         "summary_shuffled",
         "summary_no_place_shuffled",
+        "landuse_evidence_summary_shuffled",
         "content_shuffled",
     ]
     assert SHUFFLED_TEXT_SOURCES["content_shuffled"] == "content"
+    assert SHUFFLED_TEXT_SOURCES["landuse_evidence_summary_shuffled"] == "landuse_evidence_summary"
 
 
 def test_apply_shuffled_text_control_is_deterministic_without_fixed_points():

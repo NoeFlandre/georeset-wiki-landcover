@@ -21,6 +21,9 @@ def test_parse_args_uses_config_defaults(monkeypatch):
     assert args.article_contents_path == DataPaths().article_contents
     assert args.article_summaries_path == DataPaths().article_summaries
     assert args.article_summaries_no_place_path == DataPaths().article_summaries_no_place
+    assert args.article_landuse_evidence_summaries_path == (
+        DataPaths().article_landuse_evidence_summaries
+    )
     assert args.osm_polygons_path == DataPaths().osm_polygons
     assert args.corine_polygons_path == DataPaths().corine_polygons
     assert args.output_dir == DataPaths().classification_output_dir
@@ -68,6 +71,7 @@ def test_load_text_source_loads_content_variant(tmp_path):
         str(contents_path),
         str(summaries_path),
         str(no_place_path),
+        str(tmp_path / "evidence.json"),
     )
 
     assert result == {"100": "Full text"}
@@ -75,7 +79,34 @@ def test_load_text_source_loads_content_variant(tmp_path):
 
 def test_load_text_source_rejects_unknown_variant(tmp_path):
     with pytest.raises(ValueError, match="Unknown text source"):
-        load_text_source("unknown", "contents.json", "summaries.json", "no_place.json")
+        load_text_source(
+            "unknown",
+            "contents.json",
+            "summaries.json",
+            "no_place.json",
+            "evidence.json",
+        )
+
+
+def test_load_text_source_loads_landuse_evidence_summary(tmp_path):
+    summaries_path = tmp_path / "summaries.json"
+    contents_path = tmp_path / "contents.json"
+    no_place_path = tmp_path / "no_place.json"
+    landuse_path = tmp_path / "landuse.json"
+    contents_path.write_text(json.dumps({"100": {"content": "Full text"}}))
+    summaries_path.write_text(json.dumps({}))
+    no_place_path.write_text(json.dumps({}))
+    landuse_path.write_text(json.dumps({"100": {"landuse_evidence_summary": "Land-use summary"}}))
+
+    result = load_text_source(
+        "landuse_evidence_summary",
+        str(contents_path),
+        str(summaries_path),
+        str(no_place_path),
+        str(landuse_path),
+    )
+
+    assert result == {"100": "Land-use summary"}
 
 
 def test_compute_multilabel_metrics_records_labels_evaluated():
