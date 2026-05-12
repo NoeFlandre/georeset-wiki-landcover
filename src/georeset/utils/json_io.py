@@ -46,6 +46,13 @@ def write_text_atomic(
         raise
 
 
+def read_json_file(path: str | os.PathLike[str], *, encoding: str = "utf-8") -> Any:
+    """Read and parse a JSON file."""
+
+    with open(path, encoding=encoding) as file:
+        return json.load(file)
+
+
 def write_json_atomic(
     path: str | os.PathLike[str],
     data: Any,

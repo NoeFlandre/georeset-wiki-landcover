@@ -7,6 +7,7 @@ import pytest
 from shapely.geometry import Point
 
 from georeset.utils.json_io import (
+    read_json_file,
     write_csv_atomic,
     write_geojson_atomic,
     write_html_map_atomic,
@@ -165,3 +166,22 @@ def test_write_parquet_atomic_preserves_existing_file_when_replace_fails(tmp_pat
 
     assert output_path.read_bytes() == b"old parquet"
     assert not list(tmp_path.glob("*.tmp*"))
+
+
+def test_read_json_file_reads_from_pathlike_with_utf8(tmp_path):
+    nested = tmp_path / "nested"
+    path = nested / "records.json"
+    nested.mkdir()
+    path.write_text('{"résumé": ["value", 42]}', encoding="utf-8")
+
+    payload = read_json_file(path)
+
+    assert payload == {"résumé": ["value", 42]}
+
+
+def test_read_json_file_propagates_json_decode_error(tmp_path):
+    bad_path = tmp_path / "broken.json"
+    bad_path.write_text('{"broken": true', encoding="utf-8")
+
+    with pytest.raises(json.JSONDecodeError):
+        read_json_file(bad_path)

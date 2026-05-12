@@ -14,7 +14,6 @@ Supports --refetch-osm, --refetch-wiki, --fetch-content, --summarize,
 """
 
 import argparse
-import json
 import logging
 import os
 
@@ -33,6 +32,7 @@ from georeset.fetchers.wiki_fetcher import WikiFetcher
 from georeset.spatial.policy import POINT_POLYGON_JOIN_PREDICATE
 from georeset.utils.articles import index_articles_by_pageid
 from georeset.utils.json_io import (
+    read_json_file,
     write_csv_atomic,
     write_geojson_atomic,
     write_html_map_atomic,
@@ -145,8 +145,7 @@ def _distribution_in_chunks(
 def _prune_json_file(path: str, valid_keys: set[str]) -> None:
     if not os.path.exists(path):
         return
-    with open(path) as f:
-        data = json.load(f)
+    data = read_json_file(path)
     filtered = {k: v for k, v in data.items() if str(k) in valid_keys}
     write_json_atomic(path, filtered, indent=2)
 
@@ -238,8 +237,7 @@ def audit_artifacts(
 
     # 4. Every article is in CORINE or OSM (set-diff logic)
     if os.path.exists(wiki_articles_path):
-        with open(wiki_articles_path) as f:
-            articles = json.load(f)
+        articles = read_json_file(wiki_articles_path)
         valid_ids = {
             str(a["pageid"])
             for a in filter_articles_by_polygons(articles, corine_gdf, osm_filtered)
@@ -251,10 +249,8 @@ def audit_artifacts(
 
     # 5. article_contents keys ⊆ wiki_articles pageids
     if os.path.exists(wiki_articles_path) and os.path.exists(article_contents_path):
-        with open(wiki_articles_path) as f:
-            wiki = json.load(f)
-        with open(article_contents_path) as f:
-            contents = json.load(f)
+        wiki = read_json_file(wiki_articles_path)
+        contents = read_json_file(article_contents_path)
         wiki_pageids = {str(a["pageid"]) for a in wiki}
         stray_contents = set(contents.keys()) - wiki_pageids
         if stray_contents:
@@ -268,10 +264,8 @@ def audit_artifacts(
     for name, summary_path in summary_paths:
         if not os.path.exists(article_contents_path) or not os.path.exists(summary_path):
             continue
-        with open(article_contents_path) as f:
-            contents = json.load(f)
-        with open(summary_path) as f:
-            summaries = json.load(f)
+        contents = read_json_file(article_contents_path)
+        summaries = read_json_file(summary_path)
         stray_summaries = set(summaries.keys()) - set(contents.keys())
         if stray_summaries:
             violations.append(f"{name} has stale keys: {stray_summaries}")
@@ -341,8 +335,7 @@ def filter_pipeline(
 
     # 3. Load / refetch OSM, then filter to overlap with filtered CORINE
     if refetch_osm:
-        with open(DataPaths().corine_bounds) as f:
-            bounds = json.load(f)
+        bounds = read_json_file(DataPaths().corine_bounds)
         osm_gdf = OSMFetcher().fetch_polygons(
             bounds["min_lon"], bounds["min_lat"], bounds["max_lon"], bounds["max_lat"]
         )
@@ -358,16 +351,14 @@ def filter_pipeline(
     # 4. Filter wiki articles: kept if inside CORINE OR OSM
     filtered_articles = []
     if refetch_wiki:
-        with open(DataPaths().corine_bounds) as f:
-            bounds = json.load(f)
+        bounds = read_json_file(DataPaths().corine_bounds)
         # Fetch without polygon filters; trust the post-filter
         all_articles = WikiFetcher().get_articles_in_bounds(
             bounds["min_lon"], bounds["min_lat"], bounds["max_lon"], bounds["max_lat"]
         )
         filtered_articles = filter_articles_by_polygons(all_articles, corine_gdf, osm_gdf)
     elif os.path.exists(wiki_articles_path):
-        with open(wiki_articles_path) as f:
-            articles = json.load(f)
+        articles = read_json_file(wiki_articles_path)
         filtered_articles = filter_articles_by_polygons(articles, corine_gdf, osm_gdf)
 
     if dry_run:
@@ -412,8 +403,7 @@ def filter_pipeline(
 
     # 8. Prune article_summaries.json to final article_contents.json keys
     if os.path.exists(article_contents_path):
-        with open(article_contents_path) as f:
-            contents = json.load(f)
+        contents = read_json_file(article_contents_path)
         content_keys = set(contents.keys())
         _prune_json_file(article_summaries_path, content_keys)
         _prune_json_file(article_summaries_no_place_path, content_keys)
@@ -436,8 +426,7 @@ def filter_pipeline(
         os.makedirs(os.path.dirname(map_articles_path), exist_ok=True)
         wiki_articles = []
         if os.path.exists(wiki_articles_path):
-            with open(wiki_articles_path) as f:
-                wiki_articles = json.load(f)
+            wiki_articles = read_json_file(wiki_articles_path)
         write_html_map_atomic(
             map_articles_path,
             MapVisualizer(corine_gdf).plot_polygons_with_articles(wiki_articles),
