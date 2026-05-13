@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 
@@ -13,9 +13,9 @@ from georeset.analysis.evaluation_metrics import (
     compute_multilabel_subset_metrics,
     compute_single_label_subset_metrics,
 )
+from georeset.analysis.prediction_loading import load_prediction_records
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.utils.json_io import (
-    read_json_file,
     write_dict_rows_csv_atomic,
     write_dict_rows_markdown_atomic,
     write_json_atomic,
@@ -56,36 +56,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--parent-experiment-id", default=PARENT_EXPERIMENT_ID)
     parser.add_argument("--spatial-confidence-experiment-id", default=SPATIAL_EXPERIMENT_ID)
     return parser.parse_args(argv)
-
-
-def _load_json(path: Path) -> dict[str, Any]:
-    return cast(dict[str, Any], read_json_file(path))
-
-
-def _prediction_identity(path: Path) -> tuple[str, str]:
-    stem = path.name.removesuffix("_predictions.json")
-    if stem.startswith("corine_level2_"):
-        return "corine_level2", stem.removeprefix("corine_level2_")
-    if stem.startswith("osm_"):
-        return "osm", stem.removeprefix("osm_")
-    raise ValueError(f"Unknown prediction file name: {path.name}")
-
-
-def _records_frame(path: Path) -> pd.DataFrame:
-    task, text_source = _prediction_identity(path)
-    rows = []
-    for pageid, record in _load_json(path).items():
-        rows.append(
-            {
-                "pageid": str(pageid),
-                "task": task,
-                "text_source": text_source,
-                "target": record.get("target"),
-                "prediction": record.get("prediction"),
-                "parse_status": record.get("parse_status"),
-            }
-        )
-    return pd.DataFrame(rows)
 
 
 def load_spatial_confidence(path: Path) -> pd.DataFrame:
@@ -150,9 +120,7 @@ def evaluate(
     spatial_confidence_experiment_id: str = SPATIAL_EXPERIMENT_ID,
 ) -> None:
     spatial = load_spatial_confidence(spatial_path)
-    prediction_frames = [
-        _records_frame(path) for path in sorted(parent_dir.glob("*_predictions.json"))
-    ]
+    prediction_frames = [load_prediction_records(parent_dir)]
     all_records = pd.concat(prediction_frames, ignore_index=True)
     joined = all_records.merge(spatial, on="pageid", how="left", indicator=True)
     joined_with_spatial = joined[joined["_merge"] == "both"].copy()

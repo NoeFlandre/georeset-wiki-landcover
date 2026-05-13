@@ -6,13 +6,17 @@ import argparse
 from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 
 from georeset.analysis.evaluation_metrics import (
     compute_multilabel_subset_metrics,
     compute_single_label_subset_metrics,
+)
+from georeset.analysis.prediction_loading import (
+    infer_model_for_records,
+    load_prediction_records,
 )
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.utils.json_io import (
@@ -86,51 +90,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _load_json(path: Path) -> dict[str, Any]:
-    return cast(dict[str, Any], read_json_file(path))
-
-
 def _safe_div(num: float, den: float) -> float:
     return num / den if den else 0.0
 
 
-def _prediction_identity(path: Path) -> tuple[str, str]:
-    stem = path.name.removesuffix("_predictions.json")
-    if stem.startswith("corine_level2_"):
-        return "corine_level2", stem.removeprefix("corine_level2_")
-    if stem.startswith("osm_"):
-        return "osm", stem.removeprefix("osm_")
-    raise ValueError(f"Unknown prediction file name: {path.name}")
-
-
-def load_prediction_records(experiment_dir: Path) -> pd.DataFrame:
-    rows: list[dict[str, Any]] = []
-    for path in sorted(experiment_dir.glob("*_predictions.json")):
-        task, text_source = _prediction_identity(path)
-        predictions = _load_json(path)
-        for pageid, payload in predictions.items():
-            if not isinstance(payload, dict):
-                continue
-            row = {
-                "pageid": str(payload.get("pageid", pageid)),
-                "task": task,
-                "text_source": text_source,
-                "target": payload.get("target"),
-                "prediction": payload.get("prediction"),
-                "parse_status": payload.get("parse_status"),
-                "metadata": payload.get("metadata", {}),
-            }
-            target = payload.get("target")
-            if isinstance(target, list):
-                row["target"] = [str(v) for v in target]
-            elif target is not None:
-                row["target"] = str(target)
-            rows.append(row)
-    return pd.DataFrame(rows)
-
-
 def load_evidence_metadata(path: Path) -> pd.DataFrame:
-    raw = _load_json(path)
+    raw = read_json_file(path)
     records: list[dict[str, Any]] = []
     for pageid_key, payload in raw.items():
         if not isinstance(payload, dict):
@@ -239,15 +204,6 @@ def define_evidence_type_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
     }
 
 
-def _infer_model(records: pd.DataFrame, parent_dir: Path) -> str:
-    for metadata in records["metadata"]:
-        if isinstance(metadata, dict) and isinstance(metadata.get("model"), str):
-            return str(metadata["model"])
-    if "__gemma4_31b_it_q4_0" in str(parent_dir):
-        return "gemma-4-31B-it-Q4_0.gguf"
-    return "Qwen3.6-27B-Q4_0.gguf"
-
-
 def _metric_name(task: str) -> str:
     return "balanced_accuracy" if task == "corine_level2" else "exact_match_accuracy"
 
@@ -348,12 +304,12 @@ def evaluate(
 
     all_records: list[pd.DataFrame] = []
     for parent_dir in parent_dirs:
-        records = load_prediction_records(parent_dir)
+        records = load_prediction_records(parent_dir, normalize_targets=True)
         if records.empty:
             continue
         records = join_metadata_with_evidence(records, evidence)
         records = records.merge(spatial, on="pageid", how="left")
-        records["model"] = _infer_model(records, parent_dir)
+        records["model"] = infer_model_for_records(records, parent_dir, metadata_keys=("model",))
         records["source_parent_experiment_dir"] = str(parent_dir)
         all_records.append(records)
 

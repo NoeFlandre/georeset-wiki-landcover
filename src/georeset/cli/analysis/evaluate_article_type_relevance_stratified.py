@@ -6,7 +6,7 @@ import argparse
 from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 
@@ -15,6 +15,7 @@ from georeset.analysis.evaluation_metrics import (
     compute_multilabel_subset_metrics,
     compute_single_label_subset_metrics,
 )
+from georeset.analysis.prediction_loading import infer_model_from_metadata, load_prediction_records
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.utils.json_io import (
     read_json_file,
@@ -104,59 +105,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _load_json(path: Path) -> dict[str, Any]:
-    return cast(dict[str, Any], read_json_file(path))
-
-
-def _prediction_identity(path: Path) -> tuple[str, str]:
-    stem = path.name.removesuffix("_predictions.json")
-    if stem.startswith("corine_level2_"):
-        return "corine_level2", stem.removeprefix("corine_level2_")
-    if stem.startswith("osm_"):
-        return "osm", stem.removeprefix("osm_")
-    raise ValueError(f"Unknown prediction file name: {path.name}")
-
-
-def load_prediction_records(parent_dir: Path) -> pd.DataFrame:
-    rows: list[dict[str, Any]] = []
-    for path in sorted(parent_dir.glob("*_predictions.json")):
-        task, text_source = _prediction_identity(path)
-        if text_source not in TEXT_SOURCES:
-            continue
-        for pageid, payload in _load_json(path).items():
-            if not isinstance(payload, dict):
-                continue
-            rows.append(
-                {
-                    "pageid": str(payload.get("pageid", pageid)),
-                    "task": task,
-                    "text_source": text_source,
-                    "target": payload.get("target"),
-                    "prediction": payload.get("prediction"),
-                    "parse_status": payload.get("parse_status"),
-                    "metadata": payload.get("metadata", {}),
-                    "source_parent_experiment_dir": str(parent_dir),
-                }
-            )
-    return pd.DataFrame(rows)
-
-
-def _infer_model(metadata: dict[str, Any], parent_dir: Path) -> str:
-    for key in ["model", "model_repo_id"]:
-        value = metadata.get(key)
-        if isinstance(value, str) and value:
-            return value
-    if "gemma4_31b_it_q4_0" in str(parent_dir):
-        return "gemma-4-31B-it-Q4_0.gguf"
-    return "Qwen3.6-27B-Q4_0.gguf"
-
-
 def _metric_name(task: str) -> str:
     return "balanced_accuracy" if task == "corine_level2" else "exact_match_accuracy"
 
 
 def load_article_type_metadata(path: Path) -> pd.DataFrame:
-    raw = _load_json(path)
+    raw = read_json_file(path)
     rows: list[dict[str, Any]] = []
     for pageid_key, payload in raw.items():
         if not isinstance(payload, dict):
@@ -189,7 +143,7 @@ def load_article_type_metadata(path: Path) -> pd.DataFrame:
 
 
 def load_evidence_metadata(path: Path) -> pd.DataFrame:
-    records = _load_json(path)
+    records = read_json_file(path)
     rows: list[dict[str, Any]] = []
     for pageid_key, payload in records.items():
         if not isinstance(payload, dict):
@@ -473,13 +427,18 @@ def evaluate(
 
     frames: list[pd.DataFrame] = []
     for parent_dir in parent_dirs:
-        records = load_prediction_records(parent_dir)
+        records = load_prediction_records(
+            parent_dir,
+            text_sources=TEXT_SOURCES,
+            include_source_dir=True,
+        )
         if records.empty:
             continue
-        source_dir = parent_dir
         records["model"] = records["metadata"].apply(
-            lambda value, source_dir=source_dir: _infer_model(
-                value if isinstance(value, dict) else {}, source_dir
+            lambda value, parent_dir=parent_dir: infer_model_from_metadata(
+                value if isinstance(value, Mapping) else {},
+                parent_dir,
+                metadata_keys=("model", "model_repo_id"),
             )
         )
         frames.append(records)

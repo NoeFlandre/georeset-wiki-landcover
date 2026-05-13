@@ -82,16 +82,33 @@ def test_classification_runner_file_reads_use_read_json_file_helper():
 
 
 def test_experiment_cli_modules_use_read_json_file_helper():
-    modules = [
+    experiment_cli_modules = [
         Path("src/georeset/cli/data/compute_corine_spatial_confidence.py"),
         Path("src/georeset/cli/analysis/summarize_classification_experiment.py"),
         Path("src/georeset/cli/analysis/evaluate_predictions_with_spatial_confidence.py"),
     ]
 
-    for path in modules:
+    for path in experiment_cli_modules:
         text = path.read_text(encoding="utf-8")
         assert "json.load(" not in text, f"{path} must use read_json_file() instead of json.load()"
+
+    direct_json_modules = [
+        Path("src/georeset/cli/data/compute_corine_spatial_confidence.py"),
+        Path("src/georeset/cli/analysis/summarize_classification_experiment.py"),
+        Path("src/georeset/analysis/prediction_loading.py"),
+    ]
+    for path in direct_json_modules:
+        text = path.read_text(encoding="utf-8")
         assert "read_json_file(" in text, f"{path} must import and use read_json_file()"
+
+    spatial_predictions_module = Path("src/georeset/cli/analysis/evaluate_predictions_with_spatial_confidence.py")
+    spatial_text = spatial_predictions_module.read_text(encoding="utf-8")
+    assert (
+        "from georeset.analysis.prediction_loading import load_prediction_records" in spatial_text
+    ), f"{spatial_predictions_module} must use load_prediction_records from georeset.analysis.prediction_loading"
+    assert (
+        "load_prediction_records(" in spatial_text
+    ), f"{spatial_predictions_module} must invoke load_prediction_records()"
 
 
 def test_pre_commit_scopes_match_ci_quality_commands():
