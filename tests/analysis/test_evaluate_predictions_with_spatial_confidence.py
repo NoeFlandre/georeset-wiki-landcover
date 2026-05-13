@@ -1,10 +1,74 @@
 import csv
 import json
+import warnings
 from pathlib import Path
 
 import pandas as pd
 
-from georeset.cli.analysis.evaluate_predictions_with_spatial_confidence import main
+from georeset.cli.analysis.evaluate_predictions_with_spatial_confidence import (
+    _subset_mask,
+    main,
+)
+
+
+def test_subset_mask_returns_bool_and_preserves_index():
+    spatial = pd.DataFrame(
+        {
+            "point_label_share_250m": [0.9, 0.1],
+            "point_label_share_500m": [0.95, 0.75],
+            "dominant_matches_point_label_250m": [True, False],
+            "dominant_matches_point_label_500m": [True, None],
+        },
+        index=pd.Index(["page-a", "page-b"], name="pageid"),
+    )
+
+    mask = _subset_mask(spatial, "point_label_share_250m_ge_0.8")
+
+    assert mask.dtype == bool
+    assert list(mask.index) == ["page-a", "page-b"]
+
+
+def test_subset_mask_converts_object_values_without_future_warning():
+    spatial = pd.DataFrame(
+        {
+            "point_label_share_250m": [0.5, 0.5],
+            "point_label_share_500m": [0.5, 0.5],
+            "dominant_matches_point_label_250m": [True, None],
+        },
+        index=pd.Index(["page-a", "page-b"]),
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        mask = _subset_mask(spatial, "dominant_matches_point_label_250m")
+
+    assert mask.tolist() == [True, False]
+    assert mask.dtype == bool
+
+
+def test_subset_mask_preserves_subset_semantics_for_all_and_numeric_and_dominant_filters():
+    spatial = pd.DataFrame(
+        {
+            "point_label_share_250m": [0.75, 0.81, None, 0.95],
+            "point_label_share_500m": [0.95, 0.79, 0.85, None],
+            "dominant_matches_point_label_250m": [True, False, None, True],
+            "dominant_matches_point_label_500m": [True, True, False, None],
+        },
+    )
+
+    all_mask = _subset_mask(spatial, "all_available_spatial_confidence")
+    share_250_mask = _subset_mask(spatial, "point_label_share_250m_ge_0.8")
+    share_500_mask = _subset_mask(spatial, "point_label_share_500m_ge_0.8")
+    dominant_250_mask = _subset_mask(spatial, "dominant_matches_point_label_250m")
+    dominant_500_mask = _subset_mask(spatial, "dominant_matches_point_label_500m")
+
+    assert all_mask.tolist() == [True, True, True, True]
+    assert share_250_mask.tolist() == [False, True, False, True]
+    assert share_500_mask.tolist() == [True, False, True, False]
+    assert dominant_250_mask.tolist() == [True, False, False, True]
+    assert dominant_500_mask.tolist() == [True, True, False, False]
+    assert share_250_mask.dtype == bool
+    assert dominant_500_mask.dtype == bool
 
 
 def _write_prediction(path: Path, records: dict[str, dict[str, object]]) -> None:

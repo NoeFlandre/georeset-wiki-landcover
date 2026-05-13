@@ -115,7 +115,9 @@ def _label_universe(records: pd.DataFrame) -> list[str]:
 
 
 def _subset_mask(spatial: pd.DataFrame, subset_name: str) -> pd.Series:
-    return SUBSET_DEFINITIONS[subset_name](spatial).fillna(False)
+    return (
+        SUBSET_DEFINITIONS[subset_name](spatial).astype("boolean").fillna(False).astype(bool)
+    )
 
 
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
