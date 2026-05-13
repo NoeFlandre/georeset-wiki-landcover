@@ -15,6 +15,7 @@ export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 export PYTHONDONTWRITEBYTECODE=1
 export GEORESET_MODEL_PATH="${GEORESET_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf}"
 export GEORESET_MODEL_REPO_ID="${GEORESET_MODEL_REPO_ID:-}"
+export GEORESET_CLASSIFICATION_OUTPUT_DIR="${GEORESET_CLASSIFICATION_OUTPUT_DIR:-data/classification/runs/default}"
 
 TASK="${GEORESET_CLASSIFICATION_TASK:?Set GEORESET_CLASSIFICATION_TASK}"
 TEXT_SOURCE="${GEORESET_CLASSIFICATION_TEXT_SOURCE:?Set GEORESET_CLASSIFICATION_TEXT_SOURCE}"
@@ -45,6 +46,7 @@ uv sync --group dev --group llm
 
 uv run georeset-classify-articles \
   --task "${TASK}" \
+  --output-dir "${GEORESET_CLASSIFICATION_OUTPUT_DIR}" \
   --text-source "${TEXT_SOURCE}" \
   --model-path "${GEORESET_MODEL_PATH}" \
   "${MODEL_REPO_ARGS[@]}" \
