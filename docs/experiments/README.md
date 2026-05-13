@@ -45,6 +45,11 @@ and next steps.
      rules using evidence metadata, spatial confidence, and article type metadata.
    - Adds quality-bin and recommended-use partitions and recomputes subset metrics
      for CORINE and OSM.
+9. `009_evidence_card_text_source/analysis.md`
+   - Planned next report for deterministic evidence-card text sources.
+   - Tests whether structured metadata cards improve over the previous
+     land-use evidence summary and whether cards help raw content on high-quality
+     subsets.
 
 ## Data Artifact Map
 
@@ -66,6 +71,8 @@ The reports cite artifacts under `data/experiments/`:
 - `article_text_classification_relevance_stratified_v1/`
 - `article_text_classification_article_type_relevance_stratified_v1/`
 - `article_text_supervision_quality_score_v1/`
+- `article_text_evidence_card_v1__qwen3_6_27b_q4_0/`
+- `evidence_card_comparison_v1/`
 
 Working classifier checkpoints live separately under `data/classification/runs/`.
 Those are useful for resumability, but the stable research outputs are the

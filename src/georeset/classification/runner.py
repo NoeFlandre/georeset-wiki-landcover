@@ -119,6 +119,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--article-landuse-evidence-summaries-path",
         default=data_paths.article_landuse_evidence_summaries,
     )
+    parser.add_argument("--article-evidence-cards-path", default=data_paths.article_evidence_cards)
     parser.add_argument("--osm-polygons-path", default=data_paths.osm_polygons)
     parser.add_argument(
         "--corine-polygons-path",
@@ -149,6 +150,7 @@ def load_text_source(
     article_summaries_path: str,
     article_summaries_no_place_path: str,
     article_landuse_evidence_summaries_path: str | None = None,
+    article_evidence_cards_path: str | None = None,
 ) -> dict[str, str]:
     text_source = base_text_source(text_source)
     if text_source == "summary":
@@ -165,6 +167,16 @@ def load_text_source(
             raise ValueError("landuse evidence summaries path is required")
         data = read_json_file(article_landuse_evidence_summaries_path)
         return {k: v["landuse_evidence_summary"] for k, v in data.items()}
+    elif text_source == "evidence_card":
+        if article_evidence_cards_path is None:
+            raise ValueError("evidence cards path is required")
+        data = read_json_file(article_evidence_cards_path)
+        return {k: v["evidence_card"] for k, v in data.items()}
+    elif text_source == "content_with_evidence_card":
+        if article_evidence_cards_path is None:
+            raise ValueError("evidence cards path is required")
+        data = read_json_file(article_evidence_cards_path)
+        return {k: v["content_with_evidence_card"] for k, v in data.items()}
     else:
         raise ValueError(f"Unknown text source: {text_source}")
 
@@ -226,6 +238,7 @@ def main(
         args.article_summaries_path,
         args.article_summaries_no_place_path,
         args.article_landuse_evidence_summaries_path,
+        args.article_evidence_cards_path,
     )
 
     task_setup = load_task_setup(

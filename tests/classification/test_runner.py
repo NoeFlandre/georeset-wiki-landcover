@@ -24,6 +24,7 @@ def test_parse_args_uses_config_defaults(monkeypatch):
     assert args.article_landuse_evidence_summaries_path == (
         DataPaths().article_landuse_evidence_summaries
     )
+    assert args.article_evidence_cards_path == DataPaths().article_evidence_cards
     assert args.osm_polygons_path == DataPaths().osm_polygons
     assert args.corine_polygons_path == DataPaths().corine_polygons
     assert args.output_dir == DataPaths().classification_output_dir
@@ -107,6 +108,57 @@ def test_load_text_source_loads_landuse_evidence_summary(tmp_path):
     )
 
     assert result == {"100": "Land-use summary"}
+
+
+def test_load_text_source_loads_evidence_card_variants(tmp_path):
+    summaries_path = tmp_path / "summaries.json"
+    contents_path = tmp_path / "contents.json"
+    no_place_path = tmp_path / "no_place.json"
+    landuse_path = tmp_path / "landuse.json"
+    evidence_cards_path = tmp_path / "cards.json"
+    contents_path.write_text(json.dumps({"100": {"content": "Full text"}}))
+    summaries_path.write_text(json.dumps({}))
+    no_place_path.write_text(json.dumps({}))
+    landuse_path.write_text(json.dumps({}))
+    evidence_cards_path.write_text(
+        json.dumps(
+            {
+                "100": {
+                    "evidence_card": "Card only",
+                    "content_with_evidence_card": "Card plus content",
+                }
+            }
+        )
+    )
+
+    card = load_text_source(
+        "evidence_card",
+        str(contents_path),
+        str(summaries_path),
+        str(no_place_path),
+        str(landuse_path),
+        str(evidence_cards_path),
+    )
+    shuffled_card = load_text_source(
+        "evidence_card_shuffled",
+        str(contents_path),
+        str(summaries_path),
+        str(no_place_path),
+        str(landuse_path),
+        str(evidence_cards_path),
+    )
+    content_with_card = load_text_source(
+        "content_with_evidence_card",
+        str(contents_path),
+        str(summaries_path),
+        str(no_place_path),
+        str(landuse_path),
+        str(evidence_cards_path),
+    )
+
+    assert card == {"100": "Card only"}
+    assert shuffled_card == {"100": "Card only"}
+    assert content_with_card == {"100": "Card plus content"}
 
 
 def test_compute_multilabel_metrics_records_labels_evaluated():

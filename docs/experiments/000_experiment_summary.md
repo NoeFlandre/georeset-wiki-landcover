@@ -214,3 +214,12 @@ At this point, the strongest result is that geolocated Wikipedia text contains
 real land-cover signal when both the spatial label and the article relevance are
 credible. The bottleneck is no longer only the classifier model; it is the
 quality of the supervision and the relevance of the text.
+
+The next planned experiment is `article_text_evidence_card_v1`. It does not
+generate another LLM summary. Instead, it deterministically turns existing
+evidence metadata, article-type metadata, CORINE spatial confidence, and quality
+scores into a compact French evidence card, then tests two new classifier inputs:
+the card alone and the card prepended to raw article content. The key comparison
+will be whether the card improves over the previous `landuse_evidence_summary`,
+and whether `content_with_evidence_card` can match or improve raw content without
+destroying the raw article signal.

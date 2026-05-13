@@ -17,6 +17,11 @@ and produce derived tables, summaries, or reevaluations.
   - Joins frozen classification predictions to a CORINE spatial-confidence
     table.
   - Recomputes metrics on fixed spatial subsets without rerunning the LLM.
+- `evaluate_evidence_card_experiment.py`
+  - Compares deterministic evidence-card classification outputs against the
+    previous Qwen summary/content and land-use evidence-summary baselines.
+  - Recomputes quality/spatial subset metrics and shuffled deltas without
+    rerunning summarization or mutating frozen parent experiments.
 
 ## Output Discipline
 

@@ -11,6 +11,7 @@ class DataPaths:
     article_summaries: str = "data/wiki/article_summaries.json"
     article_summaries_no_place: str = "data/wiki/article_summaries_no_place.json"
     article_landuse_evidence_summaries: str = "data/wiki/article_landuse_evidence_summaries.json"
+    article_evidence_cards: str = "data/wiki/article_evidence_cards.json"
     osm_polygons: str = "data/osm/osm_project_polygons.geojson"
     corine_polygons: str = "data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp"
     corine_bounds: str = "data/corine/bounds.json"

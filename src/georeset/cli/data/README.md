@@ -13,6 +13,9 @@ experiments.
   `--summary-mode no_place`.
 - `summarize_landuse_evidence.py`: extracts no-place, one- to three-sentence
   land-use evidence summaries and stores `landuse_evidence_summary` artifacts.
+- `build_evidence_cards.py`: builds deterministic no-LLM evidence-card text
+  sources from existing evidence, article-type, spatial-confidence, and quality
+  metadata.
 - `classify_articles.py`: runs article-text classification for CORINE or OSM,
   including shuffled controls and checkpoint-based resumability.
 - `compute_corine_spatial_confidence.py`: computes CORINE buffer-purity
