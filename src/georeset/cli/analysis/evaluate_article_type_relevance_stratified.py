@@ -11,6 +11,7 @@ from typing import Any
 import pandas as pd
 
 from georeset.analysis.article_type_classifier import ARTICLE_TYPE_PREFERENCE
+from georeset.analysis.article_type_metadata_loading import load_article_type_metadata
 from georeset.analysis.evaluation_metrics import (
     compute_multilabel_subset_metrics,
     compute_single_label_subset_metrics,
@@ -20,7 +21,6 @@ from georeset.analysis.prediction_loading import infer_model_from_metadata, load
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.utils.json_io import (
-    read_json_file,
     write_dict_rows_csv_atomic,
     write_dict_rows_markdown_atomic,
     write_json_atomic,
@@ -109,39 +109,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def _metric_name(task: str) -> str:
     return "balanced_accuracy" if task == "corine_level2" else "exact_match_accuracy"
-
-
-def load_article_type_metadata(path: Path) -> pd.DataFrame:
-    raw = read_json_file(path)
-    rows: list[dict[str, Any]] = []
-    for pageid_key, payload in raw.items():
-        if not isinstance(payload, dict):
-            continue
-        rows.append(
-            {
-                "pageid": str(payload.get("pageid", pageid_key)),
-                "title": str(payload.get("title", "")),
-                "primary_article_type": payload.get("primary_article_type", "other_or_unclear"),
-                "candidate_article_types": payload.get("candidate_article_types", ["other_or_unclear"]),
-                "matched_categories": payload.get("matched_categories", []),
-                "matched_rules": payload.get("matched_rules", []),
-                "all_categories_count": int(payload.get("all_categories_count", 0) or 0),
-                "has_categories": bool(payload.get("has_categories", False)),
-            }
-        )
-    df = pd.DataFrame(rows)
-    if df.empty:
-        return df
-    df["candidate_article_types"] = df["candidate_article_types"].apply(
-        lambda value: value if isinstance(value, list) else ["other_or_unclear"]
-    )
-    df["matched_categories"] = df["matched_categories"].apply(
-        lambda value: value if isinstance(value, list) else []
-    )
-    df["matched_rules"] = df["matched_rules"].apply(
-        lambda value: value if isinstance(value, list) else []
-    )
-    return df
 
 
 def define_relevance_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:

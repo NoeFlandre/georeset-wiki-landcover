@@ -11,6 +11,7 @@ from typing import Any
 
 import pandas as pd
 
+from georeset.analysis.article_type_metadata_loading import load_article_type_metadata
 from georeset.analysis.evaluation_metrics import (
     compute_multilabel_subset_metrics,
     compute_single_label_subset_metrics,
@@ -340,57 +341,6 @@ def load_wiki_articles(path: Path) -> pd.DataFrame:
     if not records:
         return pd.DataFrame(columns=["pageid", "title", "lat", "lon"])
     return pd.DataFrame(records)
-
-
-def load_article_type_metadata(path: Path) -> pd.DataFrame:
-    if not path.exists():
-        return pd.DataFrame(
-            columns=["pageid", "title", "primary_article_type", "candidate_article_types"]
-        )
-    if path.suffix.lower() == ".json":
-        raw = read_json_file(path)
-        if not isinstance(raw, dict):
-            return pd.DataFrame(
-                columns=["pageid", "title", "primary_article_type", "candidate_article_types"]
-            )
-        records = []
-        for pageid_key, payload in raw.items():
-            if not isinstance(payload, dict):
-                continue
-            records.append(
-                {
-                    "pageid": str(payload.get("pageid", pageid_key)),
-                    "title": payload.get("title", ""),
-                    "primary_article_type": payload.get("primary_article_type", "other_or_unclear"),
-                    "candidate_article_types": _normalize_list_value(
-                        payload.get("candidate_article_types", ["other_or_unclear"])
-                    ),
-                }
-            )
-        if records:
-            return pd.DataFrame(records)
-        return pd.DataFrame(
-            columns=["pageid", "title", "primary_article_type", "candidate_article_types"]
-        )
-
-    if path.suffix.lower() == ".csv":
-        df = pd.read_csv(path, dtype=str)
-        if df.empty:
-            return pd.DataFrame(
-                columns=["pageid", "title", "primary_article_type", "candidate_article_types"]
-            )
-        rows: list[dict[str, Any]] = []
-        for _, row in df.iterrows():
-            rows.append(
-                {
-                    "pageid": str(row.get("pageid", "")),
-                    "title": row.get("title", ""),
-                    "primary_article_type": row.get("primary_article_type", "other_or_unclear"),
-                    "candidate_article_types": _normalize_list_value(row.get("candidate_article_types")),
-                }
-            )
-        return pd.DataFrame(rows)
-    return pd.DataFrame(columns=["pageid", "title", "primary_article_type", "candidate_article_types"])
 
 
 def _quality_mask_map(frame: pd.DataFrame) -> dict[str, pd.Series]:
