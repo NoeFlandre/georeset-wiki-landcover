@@ -15,6 +15,7 @@ from georeset.analysis.evaluation_metrics import (
     compute_multilabel_subset_metrics,
     compute_single_label_subset_metrics,
 )
+from georeset.analysis.evidence_metadata_loading import load_evidence_metadata
 from georeset.analysis.prediction_loading import (
     infer_model_for_records,
     load_prediction_records,
@@ -338,56 +339,6 @@ def load_wiki_articles(path: Path) -> pd.DataFrame:
         )
     if not records:
         return pd.DataFrame(columns=["pageid", "title", "lat", "lon"])
-    return pd.DataFrame(records)
-
-
-def load_evidence_metadata(path: Path) -> pd.DataFrame:
-    raw = read_json_file(path)
-    if not isinstance(raw, dict):
-        return pd.DataFrame(
-            columns=[
-                "pageid",
-                "landcover_relevance",
-                "uncertainty",
-                "evidence_types",
-                "evidence_sentences_count",
-                "landuse_evidence_summary_char_count",
-            ]
-        )
-    records: list[dict[str, Any]] = []
-    for pageid_key, payload in raw.items():
-        if not isinstance(payload, dict):
-            continue
-        pageid = str(payload.get("pageid", pageid_key))
-        raw_evidence_count = pd.to_numeric(
-            payload.get("evidence_sentences_count"), errors="coerce"
-        )
-        raw_char_count = pd.to_numeric(
-            payload.get("landuse_evidence_summary_char_count"), errors="coerce"
-        )
-        evidence_count = 0 if pd.isna(raw_evidence_count) else int(raw_evidence_count)
-        char_count = 0 if pd.isna(raw_char_count) else int(raw_char_count)
-        records.append(
-            {
-                "pageid": pageid,
-                "landcover_relevance": payload.get("landcover_relevance"),
-                "uncertainty": payload.get("uncertainty"),
-                "evidence_types": _normalize_list_value(payload.get("evidence_types")),
-                "evidence_sentences_count": evidence_count,
-                "landuse_evidence_summary_char_count": char_count,
-            }
-        )
-    if not records:
-        return pd.DataFrame(
-            columns=[
-                "pageid",
-                "landcover_relevance",
-                "uncertainty",
-                "evidence_types",
-                "evidence_sentences_count",
-                "landuse_evidence_summary_char_count",
-            ]
-        )
     return pd.DataFrame(records)
 
 

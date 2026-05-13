@@ -15,6 +15,7 @@ from georeset.analysis.evaluation_metrics import (
     compute_multilabel_subset_metrics,
     compute_single_label_subset_metrics,
 )
+from georeset.analysis.evidence_metadata_loading import load_evidence_metadata
 from georeset.analysis.prediction_loading import infer_model_from_metadata, load_prediction_records
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
@@ -141,24 +142,6 @@ def load_article_type_metadata(path: Path) -> pd.DataFrame:
         lambda value: value if isinstance(value, list) else []
     )
     return df
-
-
-def load_evidence_metadata(path: Path) -> pd.DataFrame:
-    records = read_json_file(path)
-    rows: list[dict[str, Any]] = []
-    for pageid_key, payload in records.items():
-        if not isinstance(payload, dict):
-            continue
-        rows.append(
-            {
-                "pageid": str(payload.get("pageid", pageid_key)),
-                "landcover_relevance": payload.get("landcover_relevance"),
-                "uncertainty": payload.get("uncertainty"),
-                "evidence_types": payload.get("evidence_types", []),
-                "evidence_sentences_count": int(payload.get("evidence_sentences_count", 0) or 0),
-            }
-        )
-    return pd.DataFrame(rows)
 
 
 def define_relevance_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
