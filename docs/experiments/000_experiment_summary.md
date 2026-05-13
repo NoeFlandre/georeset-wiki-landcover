@@ -185,6 +185,20 @@ inside the large `other_or_unclear` bucket still produced strong aligned-vs-
 shuffled deltas. This means the evidence extractor finds useful land-cover
 signal even when category metadata is missing or too vague.
 
+We then added a deterministic supervision-quality pass (`008_supervision_quality_score`)
+that assigns each article a numeric score and quality bin from five terms:
+evidence relevance, spatial consistency, evidence density, article-type prior, and
+uncertainty penalty. This is an analysis-only scoring step; no LLM rerun is done.
+
+The same frozen predictions were then re-profiled by quality and recommended-use
+subsets:
+
+- `quality_low`, `quality_medium`, `quality_high`, and `quality_very_high`
+- `exclude`, `use_for_training`, `use_for_evaluation_only`, and `inspect_manually`
+
+Conservative precedence makes `exclude` override other suggestions when the score is
+low or when relevance is `none`/uncertainty is `high`.
+
 ## What to do next
 
 The next useful step is not to replace raw content with an even shorter summary.

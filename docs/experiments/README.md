@@ -40,6 +40,11 @@ and next steps.
    - Tests whether category-derived article type explains where classification
      works, and how article type interacts with land-cover relevance and CORINE
      spatial confidence.
+8. [`008_supervision_quality_score/analysis.md`](008_supervision_quality_score/analysis.md)
+   - Re-scores the frozen Qwen and Gemma predictions with deterministic quality
+     rules using evidence metadata, spatial confidence, and article type metadata.
+   - Adds quality-bin and recommended-use partitions and recomputes subset metrics
+     for CORINE and OSM.
 
 ## Data Artifact Map
 
@@ -60,6 +65,7 @@ The reports cite artifacts under `data/experiments/`:
 - `landuse_evidence_comparison_v1/`
 - `article_text_classification_relevance_stratified_v1/`
 - `article_text_classification_article_type_relevance_stratified_v1/`
+- `article_text_supervision_quality_score_v1/`
 
 Working classifier checkpoints live separately under `data/classification/runs/`.
 Those are useful for resumability, but the stable research outputs are the
