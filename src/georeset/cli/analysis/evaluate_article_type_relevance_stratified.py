@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import csv
-import io
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, cast
@@ -19,8 +18,9 @@ from georeset.analysis.evaluation_metrics import (
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.utils.json_io import (
     read_json_file,
+    write_dict_rows_csv_atomic,
+    write_dict_rows_markdown_atomic,
     write_json_atomic,
-    write_markdown_table_atomic,
     write_text_atomic,
 )
 
@@ -62,6 +62,16 @@ RELEVANCE_SUBSET_LABELS = [
     "relevance_high",
     "relevance_low_medium_high",
     "relevance_medium_high",
+]
+ARTICLE_TYPE_ASSIGNMENT_COLUMNS = [
+    "pageid",
+    "title",
+    "primary_article_type",
+    "candidate_article_types",
+    "matched_categories",
+    "matched_rules",
+    "all_categories_count",
+    "has_categories",
 ]
 
 
@@ -245,27 +255,6 @@ def define_article_type_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
     return subsets
 
 
-def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
-    if not rows:
-        write_text_atomic(path, "")
-        return
-    fieldnames = list(rows[0].keys())
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=fieldnames)
-    writer.writeheader()
-    writer.writerows(rows)
-    write_text_atomic(path, output.getvalue())
-
-
-def _write_md(path: Path, title: str, rows: list[dict[str, Any]]) -> None:
-    write_markdown_table_atomic(
-        path,
-        title=title,
-        rows=rows,
-        columns=sorted({key for row in rows for key in row}) if rows else [],
-    )
-
-
 def _label_universe(records: pd.DataFrame, task: str) -> list[str]:
     labels: set[str] = set()
     for values in records["target"]:
@@ -334,7 +323,7 @@ def _subset_by_mask(records: pd.DataFrame, mask: pd.Series) -> pd.DataFrame:
     return records.loc[mask.reindex(records.index, fill_value=False)]
 
 
-def _row_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
+def _row_sort_key(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
     return (
         str(row.get("model", "")),
         str(row.get("task", "")),
@@ -387,16 +376,6 @@ def _build_delta_rows(
 def _build_article_type_assignment_outputs(df: pd.DataFrame) -> list[dict[str, Any]]:
     if df.empty:
         return []
-    assignment_columns = [
-        "pageid",
-        "title",
-        "primary_article_type",
-        "candidate_article_types",
-        "matched_categories",
-        "matched_rules",
-        "all_categories_count",
-        "has_categories",
-    ]
     return [
         {
             "pageid": row["pageid"],
@@ -408,7 +387,7 @@ def _build_article_type_assignment_outputs(df: pd.DataFrame) -> list[dict[str, A
             "all_categories_count": row.get("all_categories_count", 0),
             "has_categories": row.get("has_categories", False),
         }
-        for _, row in df[[c for c in assignment_columns if c in df.columns]].iterrows()
+        for _, row in df[[c for c in ARTICLE_TYPE_ASSIGNMENT_COLUMNS if c in df.columns]].iterrows()
     ]
 
 
@@ -751,44 +730,72 @@ def evaluate(
     assignments_output = _build_article_type_assignment_outputs(article_types if not article_types.empty else merged)
     audit_sample = _build_audit_sample(article_types if not article_types.empty else merged)
 
-    _write_csv(output_dir / "article_type_assignments.csv", assignments_output)
-    _write_csv(output_dir / "article_type_assignment_audit_sample.csv", audit_sample)
-    _write_md(output_dir / "article_type_assignments.md", "Article Type Assignments", assignments_output)
-    _write_md(
-        output_dir / "article_type_assignment_audit_sample.md",
-        "Article Type Assignment Audit Sample",
+    write_dict_rows_csv_atomic(
+        output_dir / "article_type_assignments.csv",
+        assignments_output,
+        columns=ARTICLE_TYPE_ASSIGNMENT_COLUMNS,
+    )
+    write_dict_rows_csv_atomic(
+        output_dir / "article_type_assignment_audit_sample.csv",
         audit_sample,
+        columns=ARTICLE_TYPE_ASSIGNMENT_COLUMNS,
+    )
+    write_dict_rows_markdown_atomic(
+        output_dir / "article_type_assignments.md",
+        title="Article Type Assignments",
+        rows=assignments_output,
+        columns=ARTICLE_TYPE_ASSIGNMENT_COLUMNS,
+    )
+    write_dict_rows_markdown_atomic(
+        output_dir / "article_type_assignment_audit_sample.md",
+        title="Article Type Assignment Audit Sample",
+        rows=audit_sample,
+        columns=ARTICLE_TYPE_ASSIGNMENT_COLUMNS,
     )
 
     sorted_overview_rows = sorted(overview_rows, key=_row_sort_key)
-    _write_csv(output_dir / "overview_by_article_type.csv", sorted_overview_rows)
-    _write_csv(output_dir / "overview_by_article_type_relevance_spatial.csv", sorted(article_type_relevance_spatial, key=_row_sort_key))
-    _write_csv(output_dir / "majority_baselines_by_article_type.csv", sorted(majority_rows, key=_row_sort_key))
-    _write_csv(output_dir / "per_class_corine_by_article_type.csv", sorted(per_class_rows, key=_row_sort_key))
-
-    _write_md(output_dir / "overview_by_article_type.md", "Overview by Article-Type Subset", sorted_overview_rows)
-    _write_md(
-        output_dir / "overview_by_article_type_relevance_spatial.md",
-        "Article-Type x Relevance x Spatial Overview",
+    write_dict_rows_csv_atomic(output_dir / "overview_by_article_type.csv", sorted_overview_rows)
+    write_dict_rows_csv_atomic(
+        output_dir / "overview_by_article_type_relevance_spatial.csv",
         sorted(article_type_relevance_spatial, key=_row_sort_key),
     )
-    _write_md(
-        output_dir / "majority_baselines_by_article_type.md",
-        "Majority Baselines by Article-Type Subset",
-        sorted(majority_rows, key=_row_sort_key),
+    write_dict_rows_csv_atomic(
+        output_dir / "majority_baselines_by_article_type.csv", sorted(majority_rows, key=_row_sort_key)
     )
-    _write_md(
+    write_dict_rows_csv_atomic(
+        output_dir / "per_class_corine_by_article_type.csv", sorted(per_class_rows, key=_row_sort_key)
+    )
+
+    write_dict_rows_markdown_atomic(
+        output_dir / "overview_by_article_type.md",
+        title="Overview by Article-Type Subset",
+        rows=sorted_overview_rows,
+    )
+    write_dict_rows_markdown_atomic(
+        output_dir / "overview_by_article_type_relevance_spatial.md",
+        title="Article-Type x Relevance x Spatial Overview",
+        rows=sorted(article_type_relevance_spatial, key=_row_sort_key),
+    )
+    write_dict_rows_markdown_atomic(
+        output_dir / "majority_baselines_by_article_type.md",
+        title="Majority Baselines by Article-Type Subset",
+        rows=sorted(majority_rows, key=_row_sort_key),
+    )
+    write_dict_rows_markdown_atomic(
         output_dir / "per_class_corine_by_article_type.md",
-        "Per-Class CORINE by Article-Type",
-        sorted(per_class_rows, key=_row_sort_key),
+        title="Per-Class CORINE by Article-Type",
+        rows=sorted(per_class_rows, key=_row_sort_key),
     )
 
     delta_rows = _build_delta_rows(sorted_overview_rows)
-    _write_csv(output_dir / "shuffled_delta_by_article_type.csv", sorted(delta_rows, key=_row_sort_key))
-    _write_md(
-        output_dir / "shuffled_delta_by_article_type.md",
-        "Shuffled Delta by Article-Type Subset",
+    write_dict_rows_csv_atomic(
+        output_dir / "shuffled_delta_by_article_type.csv",
         sorted(delta_rows, key=_row_sort_key),
+    )
+    write_dict_rows_markdown_atomic(
+        output_dir / "shuffled_delta_by_article_type.md",
+        title="Shuffled Delta by Article-Type Subset",
+        rows=sorted(delta_rows, key=_row_sort_key),
     )
 
     # Distribution by article type and source/task
@@ -807,11 +814,11 @@ def evaluate(
                         "count": int(count),
                     }
                 )
-    _write_csv(output_dir / "article_type_distribution.csv", distribution_rows)
-    _write_md(
+    write_dict_rows_csv_atomic(output_dir / "article_type_distribution.csv", distribution_rows)
+    write_dict_rows_markdown_atomic(
         output_dir / "article_type_distribution.md",
-        "Article Type Distribution",
-        sorted(
+        title="Article Type Distribution",
+        rows=sorted(
             distribution_rows,
             key=lambda row: (
                 str(row["task"]),
@@ -819,7 +826,7 @@ def evaluate(
                 str(row["model"]),
                 str(row["primary_article_type"]),
             ),
-        ),
+            ),
     )
 
     write_json_atomic(

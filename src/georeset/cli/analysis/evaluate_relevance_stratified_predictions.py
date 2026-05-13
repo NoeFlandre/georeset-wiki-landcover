@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import csv
-import io
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, cast
@@ -18,8 +17,9 @@ from georeset.analysis.evaluation_metrics import (
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.utils.json_io import (
     read_json_file,
+    write_dict_rows_csv_atomic,
+    write_dict_rows_markdown_atomic,
     write_json_atomic,
-    write_markdown_table_atomic,
     write_text_atomic,
 )
 
@@ -92,27 +92,6 @@ def _load_json(path: Path) -> dict[str, Any]:
 
 def _safe_div(num: float, den: float) -> float:
     return num / den if den else 0.0
-
-
-def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
-    if not rows:
-        write_text_atomic(path, "")
-        return
-    fieldnames = sorted({key for row in rows for key in row})
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=fieldnames)
-    writer.writeheader()
-    writer.writerows(rows)
-    write_text_atomic(path, output.getvalue())
-
-
-def _write_md(path: Path, title: str, rows: list[dict[str, Any]]) -> None:
-    write_markdown_table_atomic(
-        path,
-        title=title,
-        rows=rows,
-        columns=sorted({key for row in rows for key in row}) if rows else [],
-    )
 
 
 def _prediction_identity(path: Path) -> tuple[str, str]:
@@ -346,7 +325,7 @@ def _compute_model_comparison(rows: list[dict[str, Any]]) -> list[dict[str, Any]
     return output
 
 
-def _row_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
+def _row_sort_key(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
     return (
         str(row.get("model", "")),
         str(row.get("task", "")),
@@ -612,27 +591,76 @@ def evaluate(
     shuffled_rows = _compute_shuffled_deltas(overview_rows)
     comparison_rows = _compute_model_comparison(overview_rows)
 
-    _write_csv(output_dir / "overview_by_relevance.csv", sorted(overview_rows, key=_row_sort_key))
-    _write_csv(output_dir / "overview_by_relevance_and_spatial_confidence.csv", sorted(overview_spatial_rows, key=_row_sort_key))
-    _write_csv(output_dir / "overview_by_evidence_type.csv", sorted(evidence_rows, key=_row_sort_key))
-    _write_csv(output_dir / "shuffled_delta_by_relevance.csv", sorted(shuffled_rows, key=_row_sort_key))
-    _write_csv(output_dir / "majority_baselines_by_relevance.csv", sorted(majority_rows, key=_row_sort_key))
-    _write_csv(output_dir / "per_class_corine_by_relevance.csv", sorted(per_class_rows, key=_row_sort_key))
-    _write_csv(output_dir / "model_comparison_by_relevance.csv", sorted(comparison_rows, key=_row_sort_key))
-    _write_csv(output_dir / "evidence_metadata_distribution.csv", sorted(distribution_rows, key=_row_sort_key))
-
-    _write_md(output_dir / "overview_by_relevance.md", "Relevance Subset Metrics", sorted(overview_rows, key=_row_sort_key))
-    _write_md(
-        output_dir / "overview_by_relevance_and_spatial_confidence.md",
-        "Relevance + Spatial Confidence Metrics",
+    write_dict_rows_csv_atomic(
+        output_dir / "overview_by_relevance.csv", sorted(overview_rows, key=_row_sort_key)
+    )
+    write_dict_rows_csv_atomic(
+        output_dir / "overview_by_relevance_and_spatial_confidence.csv",
         sorted(overview_spatial_rows, key=_row_sort_key),
     )
-    _write_md(output_dir / "overview_by_evidence_type.md", "Evidence-Type Metrics", sorted(evidence_rows, key=_row_sort_key))
-    _write_md(output_dir / "shuffled_delta_by_relevance.md", "Shuffled Deltas by Relevance", sorted(shuffled_rows, key=_row_sort_key))
-    _write_md(output_dir / "majority_baselines_by_relevance.md", "Majority Baselines by Relevance", sorted(majority_rows, key=_row_sort_key))
-    _write_md(output_dir / "per_class_corine_by_relevance.md", "Per-Class CORINE Metrics", sorted(per_class_rows, key=_row_sort_key))
-    _write_md(output_dir / "model_comparison_by_relevance.md", "Model Comparison by Relevance", sorted(comparison_rows, key=_row_sort_key))
-    _write_md(output_dir / "evidence_metadata_distribution.md", "Evidence Metadata Distribution", sorted(distribution_rows, key=_row_sort_key))
+    write_dict_rows_csv_atomic(
+        output_dir / "overview_by_evidence_type.csv",
+        sorted(evidence_rows, key=_row_sort_key),
+    )
+    write_dict_rows_csv_atomic(
+        output_dir / "shuffled_delta_by_relevance.csv",
+        sorted(shuffled_rows, key=_row_sort_key),
+    )
+    write_dict_rows_csv_atomic(
+        output_dir / "majority_baselines_by_relevance.csv", sorted(majority_rows, key=_row_sort_key)
+    )
+    write_dict_rows_csv_atomic(
+        output_dir / "per_class_corine_by_relevance.csv", sorted(per_class_rows, key=_row_sort_key)
+    )
+    write_dict_rows_csv_atomic(
+        output_dir / "model_comparison_by_relevance.csv",
+        sorted(comparison_rows, key=_row_sort_key),
+    )
+    write_dict_rows_csv_atomic(
+        output_dir / "evidence_metadata_distribution.csv",
+        sorted(distribution_rows, key=_row_sort_key),
+    )
+
+    write_dict_rows_markdown_atomic(
+        output_dir / "overview_by_relevance.md",
+        title="Relevance Subset Metrics",
+        rows=sorted(overview_rows, key=_row_sort_key),
+    )
+    write_dict_rows_markdown_atomic(
+        output_dir / "overview_by_relevance_and_spatial_confidence.md",
+        title="Relevance + Spatial Confidence Metrics",
+        rows=sorted(overview_spatial_rows, key=_row_sort_key),
+    )
+    write_dict_rows_markdown_atomic(
+        output_dir / "overview_by_evidence_type.md",
+        title="Evidence-Type Metrics",
+        rows=sorted(evidence_rows, key=_row_sort_key),
+    )
+    write_dict_rows_markdown_atomic(
+        output_dir / "shuffled_delta_by_relevance.md",
+        title="Shuffled Deltas by Relevance",
+        rows=sorted(shuffled_rows, key=_row_sort_key),
+    )
+    write_dict_rows_markdown_atomic(
+        output_dir / "majority_baselines_by_relevance.md",
+        title="Majority Baselines by Relevance",
+        rows=sorted(majority_rows, key=_row_sort_key),
+    )
+    write_dict_rows_markdown_atomic(
+        output_dir / "per_class_corine_by_relevance.md",
+        title="Per-Class CORINE Metrics",
+        rows=sorted(per_class_rows, key=_row_sort_key),
+    )
+    write_dict_rows_markdown_atomic(
+        output_dir / "model_comparison_by_relevance.md",
+        title="Model Comparison by Relevance",
+        rows=sorted(comparison_rows, key=_row_sort_key),
+    )
+    write_dict_rows_markdown_atomic(
+        output_dir / "evidence_metadata_distribution.md",
+        title="Evidence Metadata Distribution",
+        rows=sorted(distribution_rows, key=_row_sort_key),
+    )
 
     _write_summary(output_dir, overview_rows, shuffled_rows, comparison_rows)
     write_json_atomic(

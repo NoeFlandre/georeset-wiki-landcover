@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 import os
 import tempfile
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -88,7 +91,7 @@ def write_markdown_table_atomic(
     path: str | os.PathLike[str],
     *,
     title: str,
-    rows: list[dict[str, Any]],
+    rows: Sequence[Mapping[str, Any]],
     columns: list[str] | None = None,
 ) -> None:
     """Write a simple Markdown table through atomic text replacement."""
@@ -109,6 +112,53 @@ def write_markdown_table_atomic(
                 "| " + " | ".join(_markdown_cell(row.get(column, "")) for column in columns) + " |"
             )
     write_text_atomic(path, "\n".join(lines) + "\n")
+
+
+def resolve_table_columns(
+    rows: Sequence[Mapping[str, Any]],
+    columns: Sequence[str] | None = None,
+) -> list[str]:
+    """Resolve table columns from explicit input and row key union."""
+    if columns is None:
+        return sorted({key for row in rows for key in row})
+    explicit_columns: list[str] = list(dict.fromkeys(columns))
+    extra_columns = sorted({key for row in rows for key in row} - set(explicit_columns))
+    return explicit_columns + extra_columns
+
+
+def write_dict_rows_csv_atomic(
+    path: str | os.PathLike[str],
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    columns: Sequence[str] | None = None,
+) -> None:
+    """Write a list of row mappings to CSV through the atomic text helper."""
+    if not rows:
+        write_text_atomic(path, "")
+        return
+    output = io.StringIO()
+    fieldnames = resolve_table_columns(rows, columns)
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(rows)
+    write_text_atomic(path, output.getvalue())
+
+
+def write_dict_rows_markdown_atomic(
+    path: str | os.PathLike[str],
+    *,
+    title: str,
+    rows: Sequence[Mapping[str, Any]],
+    columns: Sequence[str] | None = None,
+) -> None:
+    """Write a list of row mappings to Markdown through the atomic text helper."""
+    resolved_columns = resolve_table_columns(rows, columns)
+    write_markdown_table_atomic(
+        path,
+        title=title,
+        rows=rows,
+        columns=resolved_columns if resolved_columns else None,
+    )
 
 
 def _write_path_atomic(

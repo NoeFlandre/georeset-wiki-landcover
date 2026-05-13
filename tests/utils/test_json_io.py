@@ -6,9 +6,13 @@ import pandas as pd
 import pytest
 from shapely.geometry import Point
 
+from georeset.utils import json_io
 from georeset.utils.json_io import (
     read_json_file,
+    resolve_table_columns,
     write_csv_atomic,
+    write_dict_rows_csv_atomic,
+    write_dict_rows_markdown_atomic,
     write_geojson_atomic,
     write_html_map_atomic,
     write_json_atomic,
@@ -185,3 +189,73 @@ def test_read_json_file_propagates_json_decode_error(tmp_path):
 
     with pytest.raises(json.JSONDecodeError):
         read_json_file(bad_path)
+
+
+def test_resolve_table_columns_uses_union_all_rows_and_preserves_explicit_order_for_supplied_columns() -> None:
+    rows = [{"b": 1, "a": 2}, {"c": 3, "b": 4}]
+
+    assert resolve_table_columns(rows, ["b", "a"]) == ["b", "a", "c"]
+
+
+def test_resolve_table_columns_without_columns_is_deterministic_union() -> None:
+    rows = [{"b": 1, "a": 2}, {"c": 3, "b": 4}]
+
+    assert resolve_table_columns(rows) == ["a", "b", "c"]
+
+
+def test_write_dict_rows_csv_atomic_uses_union_columns_and_is_atomic(
+    tmp_path, monkeypatch
+) -> None:
+    output_path = tmp_path / "rows.csv"
+    captured: list[tuple[str, str]] = []
+
+    def fake_write_text_atomic(
+        path: str | os.PathLike[str],
+        text: str,
+        *,
+        encoding: str = "utf-8",
+    ) -> None:
+        captured.append((str(path), text))
+
+    monkeypatch.setattr(json_io, "write_text_atomic", fake_write_text_atomic)
+
+    write_dict_rows_csv_atomic(
+        output_path,
+        [{"a": "1", "b": "2"}, {"c": "3", "a": "4"}],
+        columns=["c", "a"],
+    )
+
+    assert captured
+    assert captured[0][0] == str(output_path)
+    assert captured[0][1].splitlines()[0] == "c,a,b"
+
+
+def test_write_dict_rows_csv_atomic_writes_empty_file_for_no_rows(tmp_path) -> None:
+    output_path = tmp_path / "rows.csv"
+
+    write_dict_rows_csv_atomic(output_path, [])
+
+    assert output_path.read_text(encoding="utf-8") == ""
+
+
+def test_write_dict_rows_markdown_atomic_resolves_columns_and_escapes_cells(tmp_path) -> None:
+    output_path = tmp_path / "overview.md"
+
+    write_dict_rows_markdown_atomic(
+        output_path,
+        title="Rows",
+        rows=[
+            {"label": "forest | water", "note": "line one\nline two", "extra": "A"},
+            {"note": "third", "score": 1},
+        ],
+        columns=["label", "note"],
+    )
+
+    expected = (
+        "# Rows\n\n"
+        "| label | note | extra | score |\n"
+        "| --- | --- | --- | --- |\n"
+        "| forest \\| water | line one<br>line two | A |  |\n"
+        "|  | third |  | 1 |\n"
+    )
+    assert output_path.read_text(encoding="utf-8") == expected

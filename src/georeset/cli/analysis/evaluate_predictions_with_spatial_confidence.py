@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
-import io
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, cast
@@ -18,8 +16,9 @@ from georeset.analysis.evaluation_metrics import (
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.utils.json_io import (
     read_json_file,
+    write_dict_rows_csv_atomic,
+    write_dict_rows_markdown_atomic,
     write_json_atomic,
-    write_markdown_table_atomic,
     write_text_atomic,
 )
 
@@ -118,22 +117,6 @@ def _subset_mask(spatial: pd.DataFrame, subset_name: str) -> pd.Series:
     return (
         SUBSET_DEFINITIONS[subset_name](spatial).astype("boolean").fillna(False).astype(bool)
     )
-
-
-def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
-    if not rows:
-        write_text_atomic(path, "")
-        return
-    fieldnames = sorted({key for row in rows for key in row})
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=fieldnames)
-    writer.writeheader()
-    writer.writerows(rows)
-    write_text_atomic(path, output.getvalue())
-
-
-def _write_md(path: Path, title: str, rows: list[dict[str, Any]]) -> None:
-    write_markdown_table_atomic(path, title=title, rows=rows)
 
 
 def _primary_score(row: dict[str, Any]) -> tuple[str, float]:
@@ -302,9 +285,13 @@ def evaluate(
         ),
     ]
     for stem, rows, title in outputs:
-        _write_csv(output_dir / f"{stem}.csv", rows)
+        write_dict_rows_csv_atomic(output_dir / f"{stem}.csv", rows)
         if stem != "per_class_metrics_corine_spatial_subsets":
-            _write_md(output_dir / f"{stem}.md", title, rows)
+            write_dict_rows_markdown_atomic(
+                output_dir / f"{stem}.md",
+                title=title,
+                rows=rows,
+            )
 
     manifest = {
         "experiment_id": experiment_id,
