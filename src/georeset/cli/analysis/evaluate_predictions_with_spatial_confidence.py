@@ -14,6 +14,7 @@ from georeset.analysis.evaluation_metrics import (
     compute_single_label_subset_metrics,
 )
 from georeset.analysis.prediction_loading import load_prediction_records
+from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.utils.json_io import (
     write_dict_rows_csv_atomic,
@@ -56,18 +57,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--parent-experiment-id", default=PARENT_EXPERIMENT_ID)
     parser.add_argument("--spatial-confidence-experiment-id", default=SPATIAL_EXPERIMENT_ID)
     return parser.parse_args(argv)
-
-
-def load_spatial_confidence(path: Path) -> pd.DataFrame:
-    if path.suffix == ".parquet":
-        df = pd.read_parquet(path)
-    else:
-        df = pd.read_csv(path, dtype={"pageid": str, "point_label": str})
-    df["pageid"] = df["pageid"].astype(str)
-    for column in df.columns:
-        if column.startswith("dominant_matches_point_label_") and df[column].dtype == object:
-            df[column] = df[column].map(lambda value: str(value).lower() == "true")
-    return df
 
 
 def _safe_div(num: float, den: float) -> float:

@@ -18,6 +18,7 @@ from georeset.analysis.prediction_loading import (
     infer_model_for_records,
     load_prediction_records,
 )
+from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.utils.json_io import (
     read_json_file,
@@ -116,15 +117,6 @@ def load_evidence_metadata(path: Path) -> pd.DataFrame:
             }
         )
     return pd.DataFrame(records)
-
-
-def load_spatial_confidence(path: Path) -> pd.DataFrame:
-    if path.suffix == ".parquet":
-        df = pd.read_parquet(path)
-    else:
-        df = pd.read_csv(path, dtype={"pageid": str})
-    df["pageid"] = df["pageid"].astype(str)
-    return df
 
 
 def join_metadata_with_evidence(

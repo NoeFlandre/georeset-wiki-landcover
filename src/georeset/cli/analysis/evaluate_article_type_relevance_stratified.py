@@ -16,6 +16,7 @@ from georeset.analysis.evaluation_metrics import (
     compute_single_label_subset_metrics,
 )
 from georeset.analysis.prediction_loading import infer_model_from_metadata, load_prediction_records
+from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.utils.json_io import (
     read_json_file,
@@ -158,17 +159,6 @@ def load_evidence_metadata(path: Path) -> pd.DataFrame:
             }
         )
     return pd.DataFrame(rows)
-
-
-def load_spatial_confidence(path: Path) -> pd.DataFrame:
-    if path.suffix == ".parquet":
-        df = pd.read_parquet(path)
-    else:
-        df = pd.read_csv(path, dtype={"pageid": str})
-    if "pageid" not in df.columns:
-        return pd.DataFrame()
-    df["pageid"] = df["pageid"].astype(str)
-    return df
 
 
 def define_relevance_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
@@ -422,7 +412,7 @@ def evaluate(
     experiment_id: str = DEFAULT_EXPERIMENT_ID,
 ) -> None:
     evidence = load_evidence_metadata(evidence_metadata_path)
-    spatial = load_spatial_confidence(spatial_confidence_path)
+    spatial = load_spatial_confidence(spatial_confidence_path, allow_missing_pageid=True)
     article_types = load_article_type_metadata(article_type_metadata_path)
 
     frames: list[pd.DataFrame] = []
