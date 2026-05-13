@@ -35,6 +35,11 @@ and next steps.
    - Reuses frozen Qwen and Gemma predictions without rerunning any LLM.
    - Tests whether land-use evidence metadata is useful as a relevance filter
      for raw content, generic summaries, shuffled controls, and spatial subsets.
+7. [`007_article_type_relevance_stratified_evaluation/analysis.md`](007_article_type_relevance_stratified_evaluation/analysis.md)
+   - Fetches French Wikipedia category/page metadata without refetching content.
+   - Tests whether category-derived article type explains where classification
+     works, and how article type interacts with land-cover relevance and CORINE
+     spatial confidence.
 
 ## Data Artifact Map
 
@@ -54,6 +59,7 @@ The reports cite artifacts under `data/experiments/`:
 - `article_text_classification_landuse_evidence_spatial_confidence_v1__gemma4_31b_it_q4_0/`
 - `landuse_evidence_comparison_v1/`
 - `article_text_classification_relevance_stratified_v1/`
+- `article_text_classification_article_type_relevance_stratified_v1/`
 
 Working classifier checkpoints live separately under `data/classification/runs/`.
 Those are useful for resumability, but the stable research outputs are the

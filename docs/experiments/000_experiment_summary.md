@@ -167,15 +167,34 @@ This changes the interpretation of the evidence extractor. It is not yet a good
 replacement for raw content, but it is a useful quality filter for identifying
 articles where the text is likely to contain real land-cover signal.
 
+We then tested whether French Wikipedia category metadata could explain where
+the classifier works. This was another analysis-only step: no LLM was rerun. We
+fetched article categories/page properties, assigned a noisy primary article
+type such as `natural_landscape`, `water_feature`, `agriculture_or_vineyard`,
+`settlement_or_administrative`, or `other_or_unclear`, and recomputed the same
+metrics by article type, relevance, and spatial confidence.
+
+The category proxy is useful for interpretation, but it is not a stronger
+filter than the evidence relevance score. Category metadata was incomplete:
+646 of the 1,251 articles had no visible categories returned by the API, and 672
+articles ended up in `other_or_unclear`. Agriculture/vineyard, water, and
+natural-landscape pages were usually medium/high relevance, which makes sense.
+But the best balanced CORINE signal still came from combining relevance and
+spatial confidence, not from article type alone. In fact, medium/high relevance
+inside the large `other_or_unclear` bucket still produced strong aligned-vs-
+shuffled deltas. This means the evidence extractor finds useful land-cover
+signal even when category metadata is missing or too vague.
+
 ## What to do next
 
 The next useful step is not to replace raw content with an even shorter summary.
 The evidence-summary experiment suggests that compression is too lossy. A better
 next direction is to use the evidence metadata as a filter or weight, then test a
 richer but still compact evidence representation: for example a small evidence
-card with several factual bullets and explicit evidence types. Another strong
-next step is article/entity-type filtering with Wikipedia categories or Wikidata,
-because many articles simply do not describe land cover.
+card with several factual bullets and explicit evidence types. Article-type
+metadata should remain a diagnostic context variable, not the main filter by
+itself, unless a later Wikidata/entity-type version proves cleaner than the
+current category proxy.
 
 At this point, the strongest result is that geolocated Wikipedia text contains
 real land-cover signal when both the spatial label and the article relevance are
