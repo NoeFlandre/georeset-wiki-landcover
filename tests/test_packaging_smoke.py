@@ -262,9 +262,7 @@ def test_ruff_first_party_namespace_is_georeset_not_src():
 def test_metric_contracts_are_split_by_metric_family():
     contracts = importlib.import_module("georeset.contracts")
     metrics_module = importlib.import_module("georeset.classification.metrics")
-    spatial_eval = importlib.import_module(
-        "georeset.cli.analysis.evaluate_predictions_with_spatial_confidence"
-    )
+    analysis_metrics = importlib.import_module("georeset.analysis.evaluation_metrics")
 
     assert hasattr(contracts, "SingleLabelMetricResult")
     assert hasattr(contracts, "MultiLabelMetricResult")
@@ -280,7 +278,7 @@ def test_metric_contracts_are_split_by_metric_family():
         is contracts.MultiLabelMetricResult
     )
     assert (
-        get_type_hints(spatial_eval._single_metrics)["return"].__args__[0]
+        get_type_hints(analysis_metrics.compute_single_label_subset_metrics)["return"].__args__[0]
         is contracts.SpatialSubsetMetricResult
     )
 

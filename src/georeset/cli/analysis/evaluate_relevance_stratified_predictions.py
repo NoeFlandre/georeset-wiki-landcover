@@ -5,17 +5,17 @@ from __future__ import annotations
 import argparse
 import csv
 import io
-import json
-from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 import pandas as pd
 
+from georeset.analysis.evaluation_metrics import (
+    compute_multilabel_subset_metrics,
+    compute_single_label_subset_metrics,
+)
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
-from georeset.classification.metrics import multilabel_metrics, single_label_metrics
-from georeset.contracts import MultiLabelMetricResult, PerLabelMetric, SpatialSubsetMetricResult
 from georeset.utils.json_io import (
     read_json_file,
     write_json_atomic,
@@ -42,8 +42,6 @@ SHUFFLED_TEXT_SOURCE_PAIRS = {
     "content": "content_shuffled",
     "landuse_evidence_summary": "landuse_evidence_summary_shuffled",
 }
-
-MetricName = Literal["precision", "recall", "f1"]
 
 EVIDENCE_TYPES = [
     "forest",
@@ -262,128 +260,6 @@ def define_evidence_type_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
     }
 
 
-def _weighted_from_per_label(
-    per_label: dict[str, PerLabelMetric], metric: MetricName
-) -> float:
-    total_support = sum(values["support"] for values in per_label.values())
-    if total_support == 0:
-        return 0.0
-    return _safe_div(
-        sum(values[metric] * values["support"] for values in per_label.values()),
-        total_support,
-    )
-
-
-def _single_label_metrics(
-    records: pd.DataFrame, labels: list[str]
-) -> tuple[SpatialSubsetMetricResult, list[dict[str, Any]]]:
-    y_true = {
-        row["pageid"]: str(row["target"]) for row in records.to_dict("records") if row["target"] is not None
-    }
-    ok = records[records["parse_status"] == "ok"]
-    y_pred = {
-        row["pageid"]: str(row["prediction"])
-        for row in ok.to_dict("records")
-        if row["target"] is not None and row["prediction"] is not None
-    }
-    base_metrics = single_label_metrics(y_true, y_pred, labels)
-    metrics: SpatialSubsetMetricResult = {
-        "n": base_metrics["n_eligible"],
-        "n_predicted_ok": base_metrics["n_predicted_ok"],
-        "n_parse_error": base_metrics["n_parse_error"],
-        "coverage": base_metrics["coverage"],
-        "accuracy": base_metrics["accuracy"],
-        "macro_precision": base_metrics["macro_precision"],
-        "macro_recall": base_metrics["macro_recall"],
-        "macro_f1": base_metrics["macro_f1"],
-        "balanced_accuracy": base_metrics["macro_recall"],
-    }
-    metrics["weighted_precision"] = _weighted_from_per_label(base_metrics["per_label"], "precision")
-    metrics["weighted_recall"] = _weighted_from_per_label(base_metrics["per_label"], "recall")
-    metrics["weighted_f1"] = _weighted_from_per_label(base_metrics["per_label"], "f1")
-    if y_true:
-        majority_label = Counter(y_true.values()).most_common(1)[0][0]
-        majority_pred = dict.fromkeys(y_true, majority_label)
-    else:
-        majority_pred = {}
-    majority = single_label_metrics(y_true, majority_pred, labels)
-    metrics["majority_accuracy"] = majority["accuracy"]
-    metrics["majority_balanced_accuracy"] = majority["macro_recall"]
-    metrics["majority_macro_f1"] = majority["macro_f1"]
-    metrics["delta_vs_majority_accuracy"] = metrics["accuracy"] - metrics["majority_accuracy"]
-    metrics["delta_vs_majority_balanced_accuracy"] = (
-        metrics["balanced_accuracy"] - metrics["majority_balanced_accuracy"]
-    )
-    metrics["delta_vs_majority_macro_f1"] = metrics["macro_f1"] - metrics["majority_macro_f1"]
-    per_class_rows = [
-        {
-            "label": label,
-            "support": values["support"],
-            "precision": values["precision"],
-            "recall": values["recall"],
-            "f1": values["f1"],
-        }
-        for label, values in base_metrics["per_label"].items()
-    ]
-    return metrics, per_class_rows
-
-
-def _multi_label_metrics(
-    records: pd.DataFrame, labels: list[str]
-) -> SpatialSubsetMetricResult:
-    rows = records.to_dict("records")
-    y_true = {row["pageid"]: row["target"] for row in rows if isinstance(row["target"], list)}
-    ok = records[records["parse_status"] == "ok"]
-    y_pred = {
-        row["pageid"]: (
-            [str(value) for value in row["prediction"]] if isinstance(row["prediction"], list) else []
-        )
-        for row in ok.to_dict("records")
-        if row["pageid"] in y_true
-    }
-    base_metrics: MultiLabelMetricResult = multilabel_metrics(y_true, y_pred, labels)
-    metrics: SpatialSubsetMetricResult = {
-        "n": base_metrics["n_eligible"],
-        "n_predicted_ok": base_metrics["n_predicted_ok"],
-        "n_parse_error": base_metrics["n_parse_error"],
-        "coverage": base_metrics["coverage"],
-        "exact_match_accuracy": base_metrics["exact_match_accuracy"],
-        "micro_precision": base_metrics["micro_precision"],
-        "micro_recall": base_metrics["micro_recall"],
-        "micro_f1": base_metrics["micro_f1"],
-        "macro_precision": base_metrics["macro_precision"],
-        "macro_recall": base_metrics["macro_recall"],
-        "macro_f1": base_metrics["macro_f1"],
-    }
-    jaccards: list[float] = []
-    hamming_errors = 0
-    for pageid, true_values in y_true.items():
-        pred_values = y_pred.get(pageid, [])
-        true_set = set(true_values)
-        pred_set = set(pred_values)
-        union = true_set | pred_set
-        if union:
-            jaccards.append(_safe_div(len(true_set & pred_set), len(union)))
-        else:
-            jaccards.append(1.0)
-        hamming_errors += len(true_set ^ pred_set)
-    metrics["jaccard"] = _safe_div(sum(jaccards), len(jaccards))
-    total_labels = len(labels) if labels else 1
-    metrics["hamming_loss"] = _safe_div(hamming_errors, max(len(y_true) * total_labels, 1))
-    target_keys = [json.dumps(sorted(values), ensure_ascii=False) for values in y_true.values()]
-    majority_key = Counter(target_keys).most_common(1)[0][0] if target_keys else "[]"
-    majority_set = json.loads(majority_key)
-    majority_pred = {pageid: list(majority_set) for pageid in y_true}
-    empty_pred: dict[str, list[str]] = {pageid: [] for pageid in y_true}
-    metrics["majority_labelset_exact_match_accuracy"] = multilabel_metrics(y_true, majority_pred, labels)[
-        "exact_match_accuracy"
-    ]
-    metrics["empty_set_exact_match_accuracy"] = multilabel_metrics(y_true, empty_pred, labels)[
-        "exact_match_accuracy"
-    ]
-    return metrics
-
-
 def _infer_model(records: pd.DataFrame, parent_dir: Path) -> str:
     for metadata in records["metadata"]:
         if isinstance(metadata, dict) and isinstance(metadata.get("model"), str):
@@ -582,9 +458,19 @@ def evaluate(
             for subset_name, mask in define_relevance_subsets(group).items():
                 subset = group[mask]
                 if task == "corine_level2":
-                    metrics, per_class = _single_label_metrics(subset, labels)
+                    metrics, per_class = compute_single_label_subset_metrics(
+                        subset,
+                        labels,
+                        include_records_without_target=False,
+                        include_missing_predictions=False,
+                    )
                 else:
-                    metrics = _multi_label_metrics(subset, labels)
+                    metrics = compute_multilabel_subset_metrics(
+                        subset,
+                        labels,
+                        require_list_targets=True,
+                        denominator_by_predicted=False,
+                    )
                     per_class = []
                 row: dict[str, Any] = {
                     "model": model,
@@ -654,9 +540,19 @@ def evaluate(
             for evidence_name, mask in define_evidence_type_subsets(group).items():
                 subset = group[mask]
                 if task == "corine_level2":
-                    metrics, _ = _single_label_metrics(subset, labels)
+                    metrics, _ = compute_single_label_subset_metrics(
+                        subset,
+                        labels,
+                        include_records_without_target=False,
+                        include_missing_predictions=False,
+                    )
                 else:
-                    metrics = _multi_label_metrics(subset, labels)
+                    metrics = compute_multilabel_subset_metrics(
+                        subset,
+                        labels,
+                        require_list_targets=True,
+                        denominator_by_predicted=False,
+                    )
                 evidence_rows.append(
                     {
                         "model": model,
@@ -681,9 +577,19 @@ def evaluate(
             for subset_name, mask in define_relevance_and_spatial_subsets(group).items():
                 subset = group[mask]
                 if task == "corine_level2":
-                    metrics, _ = _single_label_metrics(subset, labels)
+                    metrics, _ = compute_single_label_subset_metrics(
+                        subset,
+                        labels,
+                        include_records_without_target=False,
+                        include_missing_predictions=False,
+                    )
                 else:
-                    metrics = _multi_label_metrics(subset, labels)
+                    metrics = compute_multilabel_subset_metrics(
+                        subset,
+                        labels,
+                        require_list_targets=True,
+                        denominator_by_predicted=False,
+                    )
                 overview_spatial_rows.append(
                     {
                         "model": model,

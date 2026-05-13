@@ -5,17 +5,17 @@ from __future__ import annotations
 import argparse
 import csv
 import io
-import json
-from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 import pandas as pd
 
+from georeset.analysis.evaluation_metrics import (
+    compute_multilabel_subset_metrics,
+    compute_single_label_subset_metrics,
+)
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
-from georeset.classification.metrics import multilabel_metrics, single_label_metrics
-from georeset.contracts import MultiLabelMetricResult, PerLabelMetric, SpatialSubsetMetricResult
 from georeset.utils.json_io import (
     read_json_file,
     write_json_atomic,
@@ -105,63 +105,6 @@ def _safe_div(num: float, den: float) -> float:
     return num / den if den else 0.0
 
 
-def _weighted_from_per_label(
-    per_label: dict[str, PerLabelMetric], key: Literal["precision", "recall", "f1"]
-) -> float:
-    total_support = sum(values["support"] for values in per_label.values())
-    return _safe_div(
-        sum(values[key] * values["support"] for values in per_label.values()),
-        total_support,
-    )
-
-
-def _single_metrics(
-    records: pd.DataFrame, labels: list[str]
-) -> tuple[SpatialSubsetMetricResult, list[dict[str, Any]]]:
-    y_true = dict(zip(records["pageid"], records["target"].astype(str), strict=False))
-    ok_records = records[records["parse_status"] == "ok"]
-    y_pred = dict(zip(ok_records["pageid"], ok_records["prediction"].astype(str), strict=False))
-    base_metrics = single_label_metrics(y_true, y_pred, labels)
-    metrics: SpatialSubsetMetricResult = {
-        "n": base_metrics["n_eligible"],
-        "n_predicted_ok": base_metrics["n_predicted_ok"],
-        "n_parse_error": base_metrics["n_parse_error"],
-        "coverage": base_metrics["coverage"],
-        "accuracy": base_metrics["accuracy"],
-        "macro_precision": base_metrics["macro_precision"],
-        "macro_recall": base_metrics["macro_recall"],
-        "macro_f1": base_metrics["macro_f1"],
-    }
-    metrics["balanced_accuracy"] = metrics["macro_recall"]
-    metrics["weighted_precision"] = _weighted_from_per_label(base_metrics["per_label"], "precision")
-    metrics["weighted_recall"] = _weighted_from_per_label(base_metrics["per_label"], "recall")
-    metrics["weighted_f1"] = _weighted_from_per_label(base_metrics["per_label"], "f1")
-
-    majority_label = Counter(y_true.values()).most_common(1)[0][0] if y_true else None
-    majority_pred = dict.fromkeys(y_true, majority_label) if majority_label else {}
-    majority = single_label_metrics(y_true, majority_pred, labels)
-    metrics["majority_accuracy"] = majority["accuracy"]
-    metrics["majority_balanced_accuracy"] = majority["macro_recall"]
-    metrics["majority_macro_f1"] = majority["macro_f1"]
-    metrics["delta_vs_majority_accuracy"] = metrics["accuracy"] - majority["accuracy"]
-    metrics["delta_vs_majority_balanced_accuracy"] = (
-        metrics["balanced_accuracy"] - majority["macro_recall"]
-    )
-    metrics["delta_vs_majority_macro_f1"] = metrics["macro_f1"] - majority["macro_f1"]
-
-    per_class = [
-        {
-            "label": label,
-            "support": values["support"],
-            "precision": values["precision"],
-            "recall": values["recall"],
-            "f1": values["f1"],
-        }
-        for label, values in base_metrics["per_label"].items()
-    ]
-    return metrics, per_class
-
-
 def _label_universe(records: pd.DataFrame) -> list[str]:
     labels: set[str] = set()
     for column in ["target", "prediction"]:
@@ -169,52 +112,6 @@ def _label_universe(records: pd.DataFrame) -> list[str]:
             if isinstance(values, list):
                 labels.update(str(value) for value in values)
     return sorted(labels)
-
-
-def _multilabel_metrics(records: pd.DataFrame, labels: list[str]) -> SpatialSubsetMetricResult:
-    y_true = {row.pageid: [str(v) for v in row.target] for row in records.itertuples()}
-    ok_records = records[records["parse_status"] == "ok"]
-    y_pred = {
-        row.pageid: [str(v) for v in row.prediction] if isinstance(row.prediction, list) else []
-        for row in ok_records.itertuples()
-    }
-    base_metrics: MultiLabelMetricResult = multilabel_metrics(y_true, y_pred, labels)
-    metrics: SpatialSubsetMetricResult = {
-        "n": base_metrics["n_eligible"],
-        "n_predicted_ok": base_metrics["n_predicted_ok"],
-        "n_parse_error": base_metrics["n_parse_error"],
-        "coverage": base_metrics["coverage"],
-        "exact_match_accuracy": base_metrics["exact_match_accuracy"],
-        "micro_precision": base_metrics["micro_precision"],
-        "micro_recall": base_metrics["micro_recall"],
-        "micro_f1": base_metrics["micro_f1"],
-        "macro_precision": base_metrics["macro_precision"],
-        "macro_recall": base_metrics["macro_recall"],
-        "macro_f1": base_metrics["macro_f1"],
-    }
-    jaccards = []
-    hamming_errors = 0
-    for pageid, true_values in y_true.items():
-        true_set = set(true_values)
-        if pageid not in y_pred:
-            continue
-        pred_set = set(y_pred[pageid])
-        union = true_set | pred_set
-        jaccards.append(1.0 if not union else len(true_set & pred_set) / len(union))
-        hamming_errors += len(true_set ^ pred_set)
-    metrics["jaccard"] = _safe_div(sum(jaccards), len(jaccards))
-    metrics["hamming_loss"] = _safe_div(hamming_errors, len(y_pred) * len(labels))
-
-    target_keys = [json.dumps(sorted(values), ensure_ascii=False) for values in y_true.values()]
-    majority_key = Counter(target_keys).most_common(1)[0][0] if target_keys else "[]"
-    majority_set = json.loads(majority_key)
-    majority_pred = {pageid: list(majority_set) for pageid in y_true}
-    empty_pred: dict[str, list[str]] = {pageid: [] for pageid in y_true}
-    majority = multilabel_metrics(y_true, majority_pred, labels)
-    empty = multilabel_metrics(y_true, empty_pred, labels)
-    metrics["majority_labelset_exact_match_accuracy"] = majority["exact_match_accuracy"]
-    metrics["empty_set_exact_match_accuracy"] = empty["exact_match_accuracy"]
-    return metrics
 
 
 def _subset_mask(spatial: pd.DataFrame, subset_name: str) -> pd.Series:
@@ -317,13 +214,24 @@ def evaluate(
             if subset.empty:
                 continue
             if task == "corine_level2":
-                metrics, per_class = _single_metrics(subset, labels)
+                metrics, per_class = compute_single_label_subset_metrics(
+                    subset,
+                    labels,
+                    include_records_without_target=True,
+                    include_missing_predictions=False,
+                )
                 for item in per_class:
                     per_class_rows.append(
                         {"task": task, "text_source": text_source, "subset": subset_name, **item}
                     )
             else:
-                metrics = _multilabel_metrics(subset, labels)
+                metrics = compute_multilabel_subset_metrics(
+                    subset,
+                    labels,
+                    require_list_targets=False,
+                    denominator_by_predicted=True,
+                    include_missing_predictions_in_derived_multilabel_metrics=False,
+                )
             row = {"task": task, "text_source": text_source, "subset": subset_name, **metrics}
             overview_rows.append(row)
             majority_rows.append(
