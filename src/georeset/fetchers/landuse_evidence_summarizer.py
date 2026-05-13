@@ -512,8 +512,7 @@ class LandUseEvidenceSummarizer:
 
         logger.info("Processing %s of %s articles...", len(to_process), len(articles))
 
-        if not to_process:
-            write_json_atomic(output_path, existing, indent=2, ensure_ascii=False)
+        failed_summaries: list[tuple[str, str]] = []
 
         for i, (pageid, article) in enumerate(to_process.items(), 1):
             logger.info(
@@ -522,8 +521,28 @@ class LandUseEvidenceSummarizer:
                 len(to_process),
                 article.get("title", pageid),
             )
-            existing[pageid] = self.summarize(article)
+            try:
+                existing[pageid] = self.summarize(article)
+            except ValueError as exc:
+                failed_summarization = (pageid, str(article.get("title", "")))
+                failed_summaries.append(failed_summarization)
+                existing.pop(pageid, None)
+                logger.error(
+                    "Failed to summarize land-use evidence for pageid=%s title=%s: %s",
+                    pageid,
+                    article.get("title", ""),
+                    exc,
+                )
+                continue
             write_json_atomic(output_path, existing, indent=2, ensure_ascii=False)
+
+        write_json_atomic(output_path, existing, indent=2, ensure_ascii=False)
+        if failed_summaries:
+            failed_count = len(failed_summaries)
+            logger.warning(
+                "Land-use evidence summarization completed with %s failed articles.",
+                failed_count,
+            )
 
         logger.info("Done. Saved %s summaries to %s", len(existing), output_path)
 

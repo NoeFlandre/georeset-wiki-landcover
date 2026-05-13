@@ -417,6 +417,103 @@ def test_process_file_skips_current_records_regenerates_malformed_or_stale(tmp_p
     assert result["4"]["metadata"]["attempt_count"] == 1
 
 
+def test_process_file_continues_after_summary_failure_and_allows_retry(tmp_path: Any) -> None:
+    input_path = tmp_path / "articles.json"
+    output_path = tmp_path / "evidence.json"
+    input_path.write_text(
+        json.dumps(
+            {
+                "1": {
+                    "title": "Nice",
+                    "content": "La commune est près d'une rivière et de vignobles.",
+                    "url": "https://fr.wikipedia.org/wiki/Nice",
+                },
+                "2": {
+                    "title": "Lyon",
+                    "content": "Lyon est une grande ville.",
+                    "url": "https://fr.wikipedia.org/wiki/Lyon",
+                },
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    valid_current_record = {
+        "title": "Nice",
+        "content": "La commune est près d'une rivière et de vignobles.",
+        "url": "https://fr.wikipedia.org/wiki/Nice",
+        "landuse_evidence_summary": "La zone mentionne vignes et cours d'eau.",
+        "landcover_relevance": "low",
+        "evidence_types": ["water", "vineyard"],
+        "evidence_sentences_no_place": ["La commune est bordée d'eau."],
+        "uncertainty": "low",
+        "landuse_evidence_summary_char_count": 40,
+        "evidence_sentences_count": 1,
+        "metadata": {
+            "evidence_mode": "landuse_evidence",
+            "prompt_version": LANDUSE_EVIDENCE_PROMPT_VERSION,
+            "summary_no_place": True,
+            "model": "Qwen3.6-27B-Q4_0.gguf",
+            "model_repo_id": "unsloth/Qwen3.6-27B-GGUF",
+            "seed": 42,
+            "temperature": 0.0,
+            "prompt": "prompt",
+            "system_prompt": "system",
+        },
+    }
+    invalid_record = {
+        "title": "Lyon",
+        "content": "Lyon est une grande ville.",
+        "url": "https://fr.wikipedia.org/wiki/Lyon",
+        "landuse_evidence_summary": "invalid",
+        "landcover_relevance": "unknown",
+        "evidence_types": ["water"],
+        "evidence_sentences_no_place": [""],
+        "uncertainty": "low",
+        "landuse_evidence_summary_char_count": 7,
+        "evidence_sentences_count": 1,
+    }
+    output_path.write_text(
+        json.dumps({"1": valid_current_record, "2": invalid_record}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    failing_summarizer = LandUseEvidenceSummarizer(
+        model_path="Qwen3.6-27B-Q4_0.gguf",
+        model_repo_id="unsloth/Qwen3.6-27B-GGUF",
+        client=_FakeClient(["{not json", "{not json"]),
+    )
+    failing_summarizer.process_file(str(input_path), str(output_path))
+
+    first_result = json.loads(output_path.read_text(encoding="utf-8"))
+    assert set(first_result) == {"1"}
+    assert first_result["1"]["landuse_evidence_summary"] == valid_current_record["landuse_evidence_summary"]
+
+    success_response = json.dumps(
+        {
+            "landuse_evidence_summary": "L'article mentionne une zone boisée et des vignes.",
+            "landcover_relevance": "medium",
+            "evidence_types": ["forest", "vineyard"],
+            "evidence_sentences_no_place": ["Une forêt et des vignes existent."],
+            "uncertainty": "low",
+        }
+    )
+    retry_summarizer = LandUseEvidenceSummarizer(
+        model_path="Qwen3.6-27B-Q4_0.gguf",
+        model_repo_id="unsloth/Qwen3.6-27B-GGUF",
+        client=_FakeClient(success_response),
+    )
+    retry_summarizer.process_file(str(input_path), str(output_path))
+
+    second_result = json.loads(output_path.read_text(encoding="utf-8"))
+    assert set(second_result) == {"1", "2"}
+    assert second_result["2"]["landuse_evidence_summary"] == (
+        "L'article mentionne une zone boisée et des vignes."
+    )
+    assert second_result["1"]["metadata"]["prompt"] == "prompt"
+
+
 def test_process_file_default_output_path_matches_data_paths() -> None:
     assert DataPaths().article_landuse_evidence_summaries == (
         "data/wiki/article_landuse_evidence_summaries.json"
