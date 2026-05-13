@@ -51,6 +51,37 @@ TEXT_SOURCE_ORDER = {
     "landuse_evidence_summary_shuffled": 7,
 }
 
+SHUFFLED_TEXT_SOURCE_PAIRS = {
+    "summary": "summary_shuffled",
+    "summary_no_place": "summary_no_place_shuffled",
+    "content": "content_shuffled",
+    "landuse_evidence_summary": "landuse_evidence_summary_shuffled",
+}
+
+SHUFFLED_DELTA_FIELDNAMES = [
+    "task",
+    "text_source",
+    "shuffled_text_source",
+    "primary_metric",
+    "aligned_score",
+    "shuffled_score",
+    "delta",
+    "n_aligned",
+    "n_shuffled",
+    "aligned_macro_f1",
+    "shuffled_macro_f1",
+    "delta_macro_f1",
+    "aligned_accuracy",
+    "shuffled_accuracy",
+    "delta_accuracy",
+    "aligned_exact_match_accuracy",
+    "shuffled_exact_match_accuracy",
+    "delta_exact_match_accuracy",
+    "aligned_micro_f1",
+    "shuffled_micro_f1",
+    "delta_micro_f1",
+]
+
 
 def _load_json(path: Path) -> dict[str, Any]:
     return cast(dict[str, Any], read_json_file(path))
@@ -253,6 +284,68 @@ def write_overview_markdown(rows: list[dict[str, Any]], output_path: Path) -> No
     )
 
 
+def _delta(left: Any, right: Any) -> float | str:
+    if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+        return left - right
+    return ""
+
+
+def shuffled_delta_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_key = {(row["task"], row["text_source"]): row for row in rows}
+    deltas: list[dict[str, Any]] = []
+    for task in sorted({row["task"] for row in rows}):
+        for source, shuffled_source in SHUFFLED_TEXT_SOURCE_PAIRS.items():
+            aligned = by_key.get((task, source))
+            shuffled = by_key.get((task, shuffled_source))
+            if not aligned or not shuffled:
+                continue
+            deltas.append(
+                {
+                    "task": task,
+                    "text_source": source,
+                    "shuffled_text_source": shuffled_source,
+                    "primary_metric": aligned["primary_metric"],
+                    "aligned_score": aligned["primary_score"],
+                    "shuffled_score": shuffled["primary_score"],
+                    "delta": _delta(aligned["primary_score"], shuffled["primary_score"]),
+                    "n_aligned": aligned["n_eligible"],
+                    "n_shuffled": shuffled["n_eligible"],
+                    "aligned_macro_f1": aligned["macro_f1"],
+                    "shuffled_macro_f1": shuffled["macro_f1"],
+                    "delta_macro_f1": _delta(aligned["macro_f1"], shuffled["macro_f1"]),
+                    "aligned_accuracy": aligned["accuracy"],
+                    "shuffled_accuracy": shuffled["accuracy"],
+                    "delta_accuracy": _delta(aligned["accuracy"], shuffled["accuracy"]),
+                    "aligned_exact_match_accuracy": aligned["exact_match_accuracy"],
+                    "shuffled_exact_match_accuracy": shuffled["exact_match_accuracy"],
+                    "delta_exact_match_accuracy": _delta(
+                        aligned["exact_match_accuracy"], shuffled["exact_match_accuracy"]
+                    ),
+                    "aligned_micro_f1": aligned["micro_f1"],
+                    "shuffled_micro_f1": shuffled["micro_f1"],
+                    "delta_micro_f1": _delta(aligned["micro_f1"], shuffled["micro_f1"]),
+                }
+            )
+    return deltas
+
+
+def write_shuffled_delta_csv(rows: list[dict[str, Any]], output_path: Path) -> None:
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=SHUFFLED_DELTA_FIELDNAMES)
+    writer.writeheader()
+    writer.writerows(rows)
+    write_text_atomic(output_path, output.getvalue())
+
+
+def write_shuffled_delta_markdown(rows: list[dict[str, Any]], output_path: Path) -> None:
+    write_markdown_table_atomic(
+        output_path,
+        title="Shuffled Control Deltas",
+        rows=[{key: _format_cell(row.get(key, "")) for key in SHUFFLED_DELTA_FIELDNAMES} for row in rows],
+        columns=SHUFFLED_DELTA_FIELDNAMES,
+    )
+
+
 def write_readme(
     rows: list[dict[str, Any]],
     output_path: Path,
@@ -392,6 +485,9 @@ def main(argv: list[str] | None = None) -> None:
     readme_output = args.readme_output or args.experiment_dir / "README.md"
     write_overview_csv(rows, csv_output)
     write_overview_markdown(rows, markdown_output)
+    deltas = shuffled_delta_rows(rows)
+    write_shuffled_delta_csv(deltas, args.experiment_dir / "shuffled_delta.csv")
+    write_shuffled_delta_markdown(deltas, args.experiment_dir / "shuffled_delta.md")
     write_readme(rows, readme_output, title=args.title)
     logger.info(
         "Wrote %s rows to %s, %s, and %s", len(rows), csv_output, markdown_output, readme_output

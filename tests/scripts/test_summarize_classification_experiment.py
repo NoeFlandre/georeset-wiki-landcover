@@ -4,9 +4,12 @@ import json
 from georeset.cli.analysis.summarize_classification_experiment import (
     collect_metric_rows,
     majority_baseline_score,
+    shuffled_delta_rows,
     write_overview_csv,
     write_overview_markdown,
     write_readme,
+    write_shuffled_delta_csv,
+    write_shuffled_delta_markdown,
 )
 
 
@@ -158,6 +161,69 @@ def test_write_overview_outputs_csv_and_markdown(tmp_path):
     assert "majority baseline" in md_path.read_text(encoding="utf-8")
     assert "micro precision" in md_path.read_text(encoding="utf-8")
     assert "osm/summary" in md_path.read_text(encoding="utf-8")
+
+
+def test_write_shuffled_delta_outputs_landuse_pairs(tmp_path):
+    rows = [
+        {
+            "task": "corine_level2",
+            "text_source": "landuse_evidence_summary",
+            "n_eligible": 1251,
+            "primary_metric": "macro_recall",
+            "primary_score": 0.18,
+            "macro_f1": 0.20,
+            "accuracy": 0.24,
+            "exact_match_accuracy": "",
+            "micro_f1": "",
+        },
+        {
+            "task": "corine_level2",
+            "text_source": "landuse_evidence_summary_shuffled",
+            "n_eligible": 1251,
+            "primary_metric": "macro_recall",
+            "primary_score": 0.05,
+            "macro_f1": 0.06,
+            "accuracy": 0.09,
+            "exact_match_accuracy": "",
+            "micro_f1": "",
+        },
+    ]
+    csv_path = tmp_path / "shuffled_delta.csv"
+    md_path = tmp_path / "shuffled_delta.md"
+
+    deltas = shuffled_delta_rows(rows)
+    write_shuffled_delta_csv(deltas, csv_path)
+    write_shuffled_delta_markdown(deltas, md_path)
+
+    assert deltas == [
+        {
+            "task": "corine_level2",
+            "text_source": "landuse_evidence_summary",
+            "shuffled_text_source": "landuse_evidence_summary_shuffled",
+            "primary_metric": "macro_recall",
+            "aligned_score": 0.18,
+            "shuffled_score": 0.05,
+            "delta": 0.13,
+            "n_aligned": 1251,
+            "n_shuffled": 1251,
+            "aligned_macro_f1": 0.20,
+            "shuffled_macro_f1": 0.06,
+            "delta_macro_f1": 0.14,
+            "aligned_accuracy": 0.24,
+            "shuffled_accuracy": 0.09,
+            "delta_accuracy": 0.15,
+            "aligned_exact_match_accuracy": "",
+            "shuffled_exact_match_accuracy": "",
+            "delta_exact_match_accuracy": "",
+            "aligned_micro_f1": "",
+            "shuffled_micro_f1": "",
+            "delta_micro_f1": "",
+        }
+    ]
+    csv_rows = list(csv.DictReader(csv_path.open()))
+    assert csv_rows[0]["text_source"] == "landuse_evidence_summary"
+    assert csv_rows[0]["delta"] == "0.13"
+    assert "landuse_evidence_summary_shuffled" in md_path.read_text(encoding="utf-8")
 
 
 def test_write_readme_describes_experiment_inputs_and_outputs(tmp_path):

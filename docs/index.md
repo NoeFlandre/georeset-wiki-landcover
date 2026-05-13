@@ -24,6 +24,8 @@ the Hugging Face bucket instead of Git.
   verified analysis of spatial-confidence subset reevaluation.
 - [`experiments/004_gemma4_model_rerun_and_comparison/analysis.md`](experiments/004_gemma4_model_rerun_and_comparison/analysis.md):
   verified Gemma rerun and Qwen-vs-Gemma comparison.
+- [`experiments/005_landuse_evidence_summary/analysis.md`](experiments/005_landuse_evidence_summary/analysis.md):
+  verified land-use evidence summary experiment for Qwen and Gemma.
 
 ## Diagrams
 

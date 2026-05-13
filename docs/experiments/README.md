@@ -27,6 +27,10 @@ and next steps.
    - Repeats the same protocol with Gemma 4 31B IT Q4_0.
    - Compares Gemma against Qwen under the non-spatial and spatial-confidence
      evaluations.
+5. [`005_landuse_evidence_summary/analysis.md`](005_landuse_evidence_summary/analysis.md)
+   - Adds deterministic no-place land-use evidence summaries generated with Qwen.
+   - Re-runs Qwen and Gemma classifiers on the evidence summaries and shuffled
+     evidence controls, then compares non-spatial and spatial-confidence results.
 
 ## Data Artifact Map
 
@@ -40,6 +44,11 @@ The reports cite artifacts under `data/experiments/`:
 - `article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/`
 - `article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0/`
 - `model_comparison_qwen_vs_gemma4_31b_it_q4_0/`
+- `article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0/`
+- `article_text_classification_landuse_evidence_v1__gemma4_31b_it_q4_0/`
+- `article_text_classification_landuse_evidence_spatial_confidence_v1__qwen3_6_27b_q4_0/`
+- `article_text_classification_landuse_evidence_spatial_confidence_v1__gemma4_31b_it_q4_0/`
+- `landuse_evidence_comparison_v1/`
 
 Working classifier checkpoints live separately under `data/classification/runs/`.
 Those are useful for resumability, but the stable research outputs are the
