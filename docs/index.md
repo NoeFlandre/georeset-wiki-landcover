@@ -26,6 +26,9 @@ the Hugging Face bucket instead of Git.
   verified Gemma rerun and Qwen-vs-Gemma comparison.
 - [`experiments/005_landuse_evidence_summary/analysis.md`](experiments/005_landuse_evidence_summary/analysis.md):
   verified land-use evidence summary experiment for Qwen and Gemma.
+- [`experiments/006_relevance_stratified_evaluation/analysis.md`](experiments/006_relevance_stratified_evaluation/analysis.md):
+  analysis-only relevance-stratified evaluation showing how evidence metadata
+  filters the frozen Qwen and Gemma predictions.
 
 ## Diagrams
 

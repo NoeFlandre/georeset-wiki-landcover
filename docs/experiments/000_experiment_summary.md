@@ -151,12 +151,33 @@ The current summaries are also probably too generic and too short. Raw content u
 the one-sentence summaries, which suggests that summarization removed useful
 landscape evidence.
 
+We then tested deterministic no-place land-use evidence summaries. These short
+summaries were parse-clean and text-linked, but they did not beat raw content as
+a direct classifier input. The useful part turned out to be their metadata. When
+we stratified the frozen Qwen and Gemma predictions by the evidence extractor's
+`landcover_relevance`, raw content and generic summaries performed much better
+on medium/high relevance articles. For example, Qwen CORINE raw-content balanced
+accuracy improved from `0.281` on all articles to `0.374` on medium/high
+relevance articles, and to `0.409` when medium/high relevance was combined with
+the 250 m high-purity spatial subset. Gemma showed the same CORINE pattern,
+going from `0.271` to `0.352`, and to `0.384` with the combined relevance +
+spatial filter.
+
+This changes the interpretation of the evidence extractor. It is not yet a good
+replacement for raw content, but it is a useful quality filter for identifying
+articles where the text is likely to contain real land-cover signal.
+
 ## What to do next
 
-The most useful next experiment is likely to improve the text evidence:
-create a `landscape_evidence_summary` that explicitly preserves cues about
-forests, agriculture, vineyards, rivers, lakes, mountains, wetlands, and other
-landscape features. This would be a fourth text source. 
+The next useful step is not to replace raw content with an even shorter summary.
+The evidence-summary experiment suggests that compression is too lossy. A better
+next direction is to use the evidence metadata as a filter or weight, then test a
+richer but still compact evidence representation: for example a small evidence
+card with several factual bullets and explicit evidence types. Another strong
+next step is article/entity-type filtering with Wikipedia categories or Wikidata,
+because many articles simply do not describe land cover.
 
-We compared different LLMs, we made sure the spatial confidene of our labels is ensured so the next likely improvement should target the text
-representation.
+At this point, the strongest result is that geolocated Wikipedia text contains
+real land-cover signal when both the spatial label and the article relevance are
+credible. The bottleneck is no longer only the classifier model; it is the
+quality of the supervision and the relevance of the text.

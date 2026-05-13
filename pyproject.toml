@@ -47,6 +47,7 @@ georeset-summarize-articles = "georeset.cli.data.summarize_articles:main"
 georeset-summarize-landuse-evidence = "georeset.cli.data.summarize_landuse_evidence:main"
 georeset-summarize-classification-experiment = "georeset.cli.analysis.summarize_classification_experiment:main"
 georeset-evaluate-spatial-confidence = "georeset.cli.analysis.evaluate_predictions_with_spatial_confidence:main"
+georeset-evaluate-relevance-stratified = "georeset.cli.analysis.evaluate_relevance_stratified_predictions:main"
 
 [tool.ruff]
 target-version = "py310"
