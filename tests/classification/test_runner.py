@@ -25,6 +25,7 @@ def test_parse_args_uses_config_defaults(monkeypatch):
         DataPaths().article_landuse_evidence_summaries
     )
     assert args.article_evidence_cards_path == DataPaths().article_evidence_cards
+    assert args.article_evidence_highlights_path == DataPaths().article_evidence_highlights
     assert args.osm_polygons_path == DataPaths().osm_polygons
     assert args.corine_polygons_path == DataPaths().corine_polygons
     assert args.output_dir == DataPaths().classification_output_dir
@@ -159,6 +160,35 @@ def test_load_text_source_loads_evidence_card_variants(tmp_path):
     assert card == {"100": "Card only"}
     assert shuffled_card == {"100": "Card only"}
     assert content_with_card == {"100": "Card plus content"}
+
+
+def test_load_text_source_loads_evidence_highlight_variants(tmp_path):
+    summaries_path = tmp_path / "summaries.json"
+    contents_path = tmp_path / "contents.json"
+    no_place_path = tmp_path / "no_place.json"
+    landuse_path = tmp_path / "landuse.json"
+    evidence_cards_path = tmp_path / "cards.json"
+    highlights_path = tmp_path / "highlights.json"
+    contents_path.write_text(json.dumps({"100": {"content": "Full text"}}))
+    summaries_path.write_text(json.dumps({}))
+    no_place_path.write_text(json.dumps({}))
+    landuse_path.write_text(json.dumps({}))
+    evidence_cards_path.write_text(json.dumps({}))
+    highlights_path.write_text(
+        json.dumps({"100": {"content_with_evidence_highlights": "Highlights plus content"}})
+    )
+
+    result = load_text_source(
+        "content_with_evidence_highlights_shuffled",
+        str(contents_path),
+        str(summaries_path),
+        str(no_place_path),
+        str(landuse_path),
+        str(evidence_cards_path),
+        str(highlights_path),
+    )
+
+    assert result == {"100": "Highlights plus content"}
 
 
 def test_compute_multilabel_metrics_records_labels_evaluated():

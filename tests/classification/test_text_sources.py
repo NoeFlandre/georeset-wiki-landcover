@@ -13,6 +13,10 @@ def test_base_text_source_maps_shuffled_variants_to_real_inputs():
     assert base_text_source("landuse_evidence_summary_shuffled") == "landuse_evidence_summary"
     assert base_text_source("evidence_card_shuffled") == "evidence_card"
     assert base_text_source("content_with_evidence_card_shuffled") == "content_with_evidence_card"
+    assert (
+        base_text_source("content_with_evidence_highlights_shuffled")
+        == "content_with_evidence_highlights"
+    )
     assert base_text_source("content_shuffled") == "content"
     assert base_text_source("summary") == "summary"
 
@@ -24,12 +28,14 @@ def test_text_source_choices_include_primary_and_shuffled_sources():
         "landuse_evidence_summary",
         "evidence_card",
         "content_with_evidence_card",
+        "content_with_evidence_highlights",
         "content",
         "summary_shuffled",
         "summary_no_place_shuffled",
         "landuse_evidence_summary_shuffled",
         "evidence_card_shuffled",
         "content_with_evidence_card_shuffled",
+        "content_with_evidence_highlights_shuffled",
         "content_shuffled",
     ]
     assert SHUFFLED_TEXT_SOURCES["content_shuffled"] == "content"
@@ -38,6 +44,10 @@ def test_text_source_choices_include_primary_and_shuffled_sources():
     assert (
         SHUFFLED_TEXT_SOURCES["content_with_evidence_card_shuffled"]
         == "content_with_evidence_card"
+    )
+    assert (
+        SHUFFLED_TEXT_SOURCES["content_with_evidence_highlights_shuffled"]
+        == "content_with_evidence_highlights"
     )
 
 

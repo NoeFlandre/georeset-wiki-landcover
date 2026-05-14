@@ -226,6 +226,39 @@ def test_write_shuffled_delta_outputs_landuse_pairs(tmp_path):
     assert "landuse_evidence_summary_shuffled" in md_path.read_text(encoding="utf-8")
 
 
+def test_write_shuffled_delta_outputs_evidence_highlight_pairs(tmp_path):
+    rows = [
+        {
+            "task": "corine_level2",
+            "text_source": "content_with_evidence_highlights",
+            "n_eligible": 1251,
+            "primary_metric": "macro_recall",
+            "primary_score": 0.31,
+            "macro_f1": 0.28,
+            "accuracy": 0.34,
+            "exact_match_accuracy": "",
+            "micro_f1": "",
+        },
+        {
+            "task": "corine_level2",
+            "text_source": "content_with_evidence_highlights_shuffled",
+            "n_eligible": 1251,
+            "primary_metric": "macro_recall",
+            "primary_score": 0.07,
+            "macro_f1": 0.05,
+            "accuracy": 0.10,
+            "exact_match_accuracy": "",
+            "micro_f1": "",
+        },
+    ]
+
+    deltas = shuffled_delta_rows(rows)
+
+    assert deltas[0]["text_source"] == "content_with_evidence_highlights"
+    assert deltas[0]["shuffled_text_source"] == "content_with_evidence_highlights_shuffled"
+    assert deltas[0]["delta"] == 0.24
+
+
 def test_write_readme_describes_experiment_inputs_and_outputs(tmp_path):
     rows = [
         {

@@ -9,6 +9,7 @@ SHUFFLED_TEXT_SOURCES = {
     "landuse_evidence_summary_shuffled": "landuse_evidence_summary",
     "evidence_card_shuffled": "evidence_card",
     "content_with_evidence_card_shuffled": "content_with_evidence_card",
+    "content_with_evidence_highlights_shuffled": "content_with_evidence_highlights",
 }
 TEXT_SOURCE_CHOICES = [
     "summary",
@@ -16,12 +17,14 @@ TEXT_SOURCE_CHOICES = [
     "landuse_evidence_summary",
     "evidence_card",
     "content_with_evidence_card",
+    "content_with_evidence_highlights",
     "content",
     "summary_shuffled",
     "summary_no_place_shuffled",
     "landuse_evidence_summary_shuffled",
     "evidence_card_shuffled",
     "content_with_evidence_card_shuffled",
+    "content_with_evidence_highlights_shuffled",
     "content_shuffled",
 ]
 

@@ -242,3 +242,30 @@ candidate weak-supervision pairs for downstream Sentinel patch training or
 evaluation. If we continue with text-only diagnostics, the more promising
 direction is a retrieval-style classifier prompt over raw content with highlighted
 evidence sentences, not a standalone compact card.
+
+We then tested this first highlighted-content variant in
+`010_evidence_highlighted_content`, without running any new summarizer. The new
+source prepends a deterministic evidence-highlight block to the raw article
+content. It was run with both Qwen and Gemma on CORINE and OSM, with aligned and
+shuffled controls.
+
+The highlighted content was parse-clean and clearly text-linked: aligned
+highlighted text beat shuffled highlighted text for both models and both tasks.
+For example, CORINE balanced-accuracy deltas were about `+0.183` for Qwen and
+`+0.184` for Gemma on all articles, and became larger on the combined
+medium/high relevance plus 250 m spatial-purity subset.
+
+But highlighted content still did not replace raw content. For Qwen CORINE, raw
+content had balanced accuracy `0.281` and macro-F1 `0.270`, while highlighted
+content had `0.273` and `0.256`. For Gemma CORINE, raw content had `0.271` and
+`0.254`, while highlighted content had `0.259` and `0.253`. For OSM, raw content
+remained stronger on exact match, micro-F1, and Jaccard for both models.
+Highlighted content did beat the short land-use evidence summary on CORINE, so
+it is a better representation than that compressed summary, but it is not better
+than the full article.
+
+This reinforces the current direction: the strongest value is in selecting
+reliable article-location pairs using relevance and spatial diagnostics, not in
+compressing or prepending metadata to the article text. The next major step
+should therefore use these quality filters to build downstream weak-supervision
+datasets for Sentinel patch training or evaluation.

@@ -46,6 +46,7 @@ georeset-snapshot = "georeset.cli.dev.snapshot:main"
 georeset-summarize-articles = "georeset.cli.data.summarize_articles:main"
 georeset-summarize-landuse-evidence = "georeset.cli.data.summarize_landuse_evidence:main"
 georeset-build-evidence-cards = "georeset.cli.data.build_evidence_cards:main"
+georeset-build-evidence-highlights = "georeset.cli.data.build_evidence_highlights:main"
 georeset-summarize-classification-experiment = "georeset.cli.analysis.summarize_classification_experiment:main"
 georeset-evaluate-spatial-confidence = "georeset.cli.analysis.evaluate_predictions_with_spatial_confidence:main"
 georeset-evaluate-relevance-stratified = "georeset.cli.analysis.evaluate_relevance_stratified_predictions:main"
@@ -53,6 +54,7 @@ georeset-evaluate-supervision-quality-score = "georeset.cli.analysis.evaluate_su
 georeset-fetch-wikipedia-article-types = "georeset.cli.data.fetch_wikipedia_article_types:main"
 georeset-evaluate-article-type-relevance-stratified = "georeset.cli.analysis.evaluate_article_type_relevance_stratified:main"
 georeset-evaluate-evidence-card-experiment = "georeset.cli.analysis.evaluate_evidence_card_experiment:main"
+georeset-evaluate-evidence-highlights-experiment = "georeset.cli.analysis.evaluate_evidence_highlights_experiment:main"
 
 [tool.ruff]
 target-version = "py310"

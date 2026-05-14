@@ -51,6 +51,12 @@ and next steps.
    - Tests compact cards and cards prepended to raw content against Qwen
      summary, no-place summary, raw content, and land-use evidence-summary
      baselines.
+10. [`010_evidence_highlighted_content/analysis.md`](010_evidence_highlighted_content/analysis.md)
+    - Builds deterministic evidence-highlighted raw content from existing
+      evidence metadata, without rerunning summarization.
+    - Tests Qwen and Gemma on highlighted content and shuffled highlighted
+      content against raw content, generic summaries, evidence cards, and
+      land-use evidence-summary baselines.
 
 ## Data Artifact Map
 
@@ -74,6 +80,9 @@ The reports cite artifacts under `data/experiments/`:
 - `article_text_supervision_quality_score_v1/`
 - `article_text_evidence_card_v1__qwen3_6_27b_q4_0/`
 - `evidence_card_comparison_v1/`
+- `article_text_evidence_highlights_v1__qwen3_6_27b_q4_0/`
+- `article_text_evidence_highlights_v1__gemma4_31b_it_q4_0/`
+- `evidence_highlights_comparison_v1/`
 
 Working classifier checkpoints live separately under `data/classification/runs/`.
 Those are useful for resumability, but the stable research outputs are the

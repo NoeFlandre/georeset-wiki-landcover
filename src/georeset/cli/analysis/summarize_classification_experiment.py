@@ -49,6 +49,8 @@ TEXT_SOURCE_ORDER = {
     "content_shuffled": 5,
     "landuse_evidence_summary": 6,
     "landuse_evidence_summary_shuffled": 7,
+    "content_with_evidence_highlights": 8,
+    "content_with_evidence_highlights_shuffled": 9,
 }
 
 SHUFFLED_TEXT_SOURCE_PAIRS = {
@@ -56,6 +58,7 @@ SHUFFLED_TEXT_SOURCE_PAIRS = {
     "summary_no_place": "summary_no_place_shuffled",
     "content": "content_shuffled",
     "landuse_evidence_summary": "landuse_evidence_summary_shuffled",
+    "content_with_evidence_highlights": "content_with_evidence_highlights_shuffled",
 }
 
 SHUFFLED_DELTA_FIELDNAMES = [

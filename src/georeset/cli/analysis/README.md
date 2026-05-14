@@ -22,6 +22,11 @@ and produce derived tables, summaries, or reevaluations.
     previous Qwen summary/content and land-use evidence-summary baselines.
   - Recomputes quality/spatial subset metrics and shuffled deltas without
     rerunning summarization or mutating frozen parent experiments.
+- `evaluate_evidence_highlights_experiment.py`
+  - Compares deterministic evidence-highlighted raw-content outputs against
+    previous Qwen/Gemma summary/content and land-use evidence-summary baselines.
+  - Recomputes quality/spatial subset metrics and shuffled deltas without
+    rerunning summarization or mutating frozen parent experiments.
 
 ## Output Discipline
 

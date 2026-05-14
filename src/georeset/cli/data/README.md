@@ -16,6 +16,8 @@ experiments.
 - `build_evidence_cards.py`: builds deterministic no-LLM evidence-card text
   sources from existing evidence, article-type, spatial-confidence, and quality
   metadata.
+- `build_evidence_highlights.py`: builds deterministic no-LLM highlighted raw
+  content from existing land-use evidence metadata and article contents.
 - `classify_articles.py`: runs article-text classification for CORINE or OSM,
   including shuffled controls and checkpoint-based resumability.
 - `compute_corine_spatial_confidence.py`: computes CORINE buffer-purity
