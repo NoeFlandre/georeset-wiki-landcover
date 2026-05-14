@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from georeset.cli.data.build_evidence_cards import main
 
 
@@ -178,3 +180,23 @@ def test_build_evidence_cards_cli_sanitizes_missing_metadata_for_json(tmp_path):
     assert record["quality_bin"] is None
     assert record["recommended_use"] is None
     assert json.dumps(record, allow_nan=False)
+
+
+def test_build_evidence_cards_cli_fails_loudly_for_non_mapping_article_contents(
+    tmp_path,
+):
+    contents_path = tmp_path / "article_contents.json"
+    output_path = tmp_path / "article_evidence_cards.json"
+    _write_json(contents_path, [{"pageid": 100, "content": "not a mapping"}])
+
+    with pytest.raises(ValueError, match="article contents"):
+        main(
+            [
+                "--article-contents-path",
+                str(contents_path),
+                "--output-path",
+                str(output_path),
+            ]
+        )
+
+    assert not output_path.exists()

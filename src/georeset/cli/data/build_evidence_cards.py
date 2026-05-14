@@ -59,6 +59,13 @@ def _read_json_mapping(path: Path) -> dict[str, Any]:
     return cast(dict[str, Any], raw)
 
 
+def _read_required_json_mapping(path: Path, *, description: str) -> dict[str, Any]:
+    raw = read_json_file(path)
+    if not isinstance(raw, dict):
+        raise ValueError(f"{description} file '{path}' must contain a JSON object.")
+    return cast(dict[str, Any], raw)
+
+
 def _json_records_by_pageid(records: dict[str, Any]) -> dict[str, dict[str, Any]]:
     indexed: dict[str, dict[str, Any]] = {}
     for pageid_key, payload in records.items():
@@ -104,7 +111,9 @@ def build_cards(
     spatial_confidence_path: Path,
     quality_scores_path: Path,
 ) -> dict[str, dict[str, Any]]:
-    articles = _read_json_mapping(article_contents_path)
+    articles = _read_required_json_mapping(
+        article_contents_path, description="article contents"
+    )
     evidence_by_pageid = _json_records_by_pageid(_read_json_mapping(evidence_metadata_path))
     article_types = _dataframe_by_pageid(load_article_type_metadata(article_type_metadata_path))
     spatial = _dataframe_by_pageid(_load_spatial(spatial_confidence_path))
