@@ -3,6 +3,7 @@ import re
 
 import pandas as pd
 
+from georeset.fetchers.landuse_evidence_summarizer import EVIDENCE_TYPES
 from georeset.text.evidence_cards import build_evidence_card_record
 
 
@@ -174,6 +175,40 @@ def test_evidence_card_renders_readable_metadata_labels():
     assert "other_or_unclear" not in card
     assert "settlement_or_administrative" not in card
     assert "use_for_training" not in card
+
+
+def test_evidence_card_renders_all_fixed_evidence_types_as_french_labels():
+    record = build_evidence_card_record(
+        pageid="100",
+        article={"title": "Lieu", "content": "Texte d'exemple."},
+        evidence={"evidence_types": list(EVIDENCE_TYPES)},
+        article_type={},
+        spatial={},
+        quality={},
+    )
+
+    card = record["evidence_card"]
+
+    expected_labels = [
+        "forêt",
+        "agriculture",
+        "vignoble",
+        "prairie ou pâturage",
+        "eau",
+        "zone humide",
+        "végétation arbustive ou herbacée",
+        "sol nu ou rocheux",
+        "urbain ou artificiel",
+        "relief ou géologie",
+        "habitat ou écologie",
+    ]
+    for label in expected_labels:
+        assert label in card
+
+    for evidence_type in EVIDENCE_TYPES:
+        if "_" in evidence_type:
+            assert evidence_type not in card
+            assert evidence_type.replace("_", " ") not in card
 
 
 def test_evidence_card_handles_missing_scalar_and_list_values_as_json_safe():

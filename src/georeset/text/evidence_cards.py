@@ -45,11 +45,17 @@ UNCERTAINTY_LABELS = {
     "high": "élevée",
 }
 EVIDENCE_TYPE_LABELS = {
-    "water": "eau",
     "forest": "forêt",
     "agriculture": "agriculture",
-    "urban_or_artificial": "urbain ou artificiel",
     "vineyard": "vignoble",
+    "pasture": "prairie ou pâturage",
+    "water": "eau",
+    "wetland": "zone humide",
+    "shrubland": "végétation arbustive ou herbacée",
+    "bare_ground": "sol nu ou rocheux",
+    "urban_or_artificial": "urbain ou artificiel",
+    "relief_or_geology": "relief ou géologie",
+    "habitat_or_ecology": "habitat ou écologie",
 }
 
 
