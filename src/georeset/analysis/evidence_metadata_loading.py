@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -21,8 +22,20 @@ _EVIDENCE_METADATA_COLUMNS = [
 
 def _normalize_list_value(value: object) -> list[str]:
     """Normalize a single value into a list of strings."""
+    def normalize_items(items: list[object] | tuple[object, ...]) -> list[str]:
+        output: list[str] = []
+        for item in items:
+            if item is None:
+                continue
+            if not isinstance(item, (list, tuple, dict)) and pd.isna(item):
+                continue
+            text = str(item).strip()
+            if text:
+                output.append(text)
+        return output
+
     if isinstance(value, list):
-        return [str(item) for item in value]
+        return normalize_items(value)
     if value is None:
         return []
     if isinstance(value, str):
@@ -32,15 +45,18 @@ def _normalize_list_value(value: object) -> list[str]:
         try:
             parsed = ast.literal_eval(cleaned)
         except (ValueError, SyntaxError):
-            return [cleaned]
+            try:
+                parsed = json.loads(cleaned)
+            except json.JSONDecodeError:
+                return [cleaned]
         if isinstance(parsed, tuple):
-            return [str(item) for item in parsed]
+            return normalize_items(parsed)
         if isinstance(parsed, list):
-            return [str(item) for item in parsed]
+            return normalize_items(parsed)
         if parsed is None:
             return []
-        return [str(parsed)]
-    return [str(value)]
+        return normalize_items([parsed])
+    return normalize_items([value])
 
 
 def _coerce_count(value: object) -> int:

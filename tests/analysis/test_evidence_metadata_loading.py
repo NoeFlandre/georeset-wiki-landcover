@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 from georeset.analysis.evidence_metadata_loading import load_evidence_metadata
@@ -92,16 +93,23 @@ def test_load_evidence_metadata_returns_stable_columns_for_non_dict_top_level_pa
     ]
 
 
-def test_load_evidence_metadata_normalizes_evidence_types_to_list_of_strings(tmp_path: Path) -> None:
+def test_load_evidence_metadata_normalizes_evidence_types_to_list_of_non_empty_strings(
+    tmp_path: Path,
+) -> None:
     payload_path = tmp_path / "evidence_metadata.json"
     _write_json(
         payload_path,
-        {"1": {"pageid": "1", "evidence_types": ["forest", 2, None]}},
+        {
+            "1": {
+                "pageid": "1",
+                "evidence_types": ["forest", 2, None, "", "   ", math.nan],
+            }
+        },
     )
 
     frame = load_evidence_metadata(payload_path)
 
-    assert frame.loc[0, "evidence_types"] == ["forest", "2", "None"]
+    assert frame.loc[0, "evidence_types"] == ["forest", "2"]
 
 
 def test_load_evidence_metadata_parses_stringified_evidence_types(tmp_path: Path) -> None:
@@ -109,7 +117,7 @@ def test_load_evidence_metadata_parses_stringified_evidence_types(tmp_path: Path
     _write_json(
         payload_path,
         {
-            "1": {"pageid": "1", "evidence_types": '["forest", "water"]'},
+            "1": {"pageid": "1", "evidence_types": '["forest", "water", null, ""]'},
             "2": {"pageid": "2", "evidence_types": "['urban', 'wetland']"},
             "3": {"pageid": "3", "evidence_types": "forest"},
             "4": {"pageid": "4", "evidence_types": ""},
