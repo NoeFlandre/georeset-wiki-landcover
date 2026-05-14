@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
+from georeset.analysis.list_normalization import normalize_string_list
 from georeset.cli.analysis.evaluate_supervision_quality_score import (
     classify_quality_bin,
     compute_quality_row,
@@ -300,6 +302,11 @@ def test_quality_bin_edges() -> None:
     assert classify_quality_bin(7.0) == "quality_very_high"
 
 
+def test_local_list_normalizer_drops_missing_items_and_parses_json_null() -> None:
+    assert normalize_string_list(["forest", None, "", "   ", math.nan]) == ["forest"]
+    assert normalize_string_list('["water", null, ""]') == ["water"]
+
+
 def test_recommended_use_precedence() -> None:
     very_high_row = compute_quality_row(
         {
@@ -443,6 +450,81 @@ def test_string_pageid_joins_and_candidate_output_fields(tmp_path: Path) -> None
         "recommended_use",
     }
     assert expected_columns.issubset(set(first_row))
+
+
+def test_quality_score_output_normalizes_list_metadata_without_fake_missing_values(
+    tmp_path: Path,
+) -> None:
+    qwen_parent = tmp_path / "qwen"
+    output_dir = tmp_path / "out"
+    evidence_path = tmp_path / "evidence.json"
+    spatial_path = tmp_path / "spatial.csv"
+    wiki_path = tmp_path / "wiki_articles.json"
+    article_type_path = tmp_path / "article_type_metadata.json"
+
+    _build_parent_experiment(qwen_parent, model="Qwen3.6-27B-Q4_0.gguf")
+    _build_spatial_confidence(spatial_path)
+    _build_wiki_articles(wiki_path)
+    _write_json(
+        evidence_path,
+        {
+            "1": {
+                "pageid": "1",
+                "landcover_relevance": "high",
+                "uncertainty": "low",
+                "evidence_types": ["forest", None, "", "   ", math.nan],
+                "evidence_sentences_count": 1,
+            },
+            "2": {
+                "pageid": "2",
+                "landcover_relevance": "medium",
+                "uncertainty": "low",
+                "evidence_types": '["water", null, ""]',
+                "evidence_sentences_count": 1,
+            },
+        },
+    )
+    _write_json(
+        article_type_path,
+        {
+            "1": {
+                "pageid": "1",
+                "primary_article_type": "natural_landscape",
+                "candidate_article_types": ["natural_landscape", None, "", math.nan],
+            },
+            "2": {
+                "pageid": "2",
+                "primary_article_type": "water_feature",
+                "candidate_article_types": '["water_feature", null, ""]',
+            },
+        },
+    )
+
+    main(
+        [
+            "--parent-experiment-dir",
+            str(qwen_parent),
+            "--evidence-metadata-path",
+            str(evidence_path),
+            "--wiki-articles-path",
+            str(wiki_path),
+            "--spatial-confidence-path",
+            str(spatial_path),
+            "--article-type-metadata-path",
+            str(article_type_path),
+            "--output-dir",
+            str(output_dir),
+        ]
+    )
+
+    quality_rows = _read_csv(output_dir / "quality_scores.csv")
+    row_1 = next(row for row in quality_rows if row["pageid"] == "1")
+    row_2 = next(row for row in quality_rows if row["pageid"] == "2")
+
+    assert row_1["evidence_types"] == "['forest']"
+    assert row_1["candidate_article_types"] == "['natural_landscape']"
+    assert row_2["evidence_types"] == "['water']"
+    assert row_2["candidate_article_types"] == "['water_feature']"
 
 
 def test_manifest_contains_counts_and_fields(tmp_path: Path) -> None:

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import ast
 from collections.abc import Callable, Mapping
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +16,7 @@ from georeset.analysis.evaluation_metrics import (
     compute_single_label_subset_metrics,
 )
 from georeset.analysis.evidence_metadata_loading import load_evidence_metadata
+from georeset.analysis.list_normalization import normalize_string_list
 from georeset.analysis.prediction_loading import (
     infer_model_for_records,
     load_prediction_records,
@@ -154,29 +154,6 @@ def _normalize_optional_text(value: Any) -> str:
     if isinstance(value, str):
         return value.strip().lower()
     return str(value).strip().lower()
-
-
-def _normalize_list_value(value: Any) -> list[str]:
-    if isinstance(value, list):
-        return [str(item) for item in value]
-    if value is None:
-        return []
-    if isinstance(value, str):
-        cleaned = value.strip()
-        if not cleaned:
-            return []
-        try:
-            parsed = ast.literal_eval(cleaned)
-        except (ValueError, SyntaxError):
-            return [cleaned]
-        if isinstance(parsed, list):
-            return [str(item) for item in parsed]
-        if isinstance(parsed, tuple):
-            return [str(item) for item in parsed]
-        if parsed is None:
-            return []
-        return [str(parsed)]
-    return [str(value)]
 
 
 def classify_quality_bin(score: float) -> str:
@@ -583,9 +560,9 @@ def build_quality_rows(
 
     artifact["title"] = artifact["title"].fillna(artifact["_article_type_title"])
 
-    artifact["evidence_types"] = artifact["evidence_types"].apply(_normalize_list_value)
+    artifact["evidence_types"] = artifact["evidence_types"].apply(normalize_string_list)
     artifact["candidate_article_types"] = artifact["candidate_article_types"].apply(
-        lambda value: _normalize_list_value(value)
+        lambda value: normalize_string_list(value)
     )
     artifact["landcover_relevance"] = artifact["landcover_relevance"].astype("string")
     artifact["uncertainty"] = artifact["uncertainty"].astype("string")
