@@ -45,11 +45,12 @@ and next steps.
      rules using evidence metadata, spatial confidence, and article type metadata.
    - Adds quality-bin and recommended-use partitions and recomputes subset metrics
      for CORINE and OSM.
-9. `009_evidence_card_text_source/analysis.md`
-   - Planned next report for deterministic evidence-card text sources.
-   - Tests whether structured metadata cards improve over the previous
-     land-use evidence summary and whether cards help raw content on high-quality
-     subsets.
+9. [`009_evidence_card_text_source/analysis.md`](009_evidence_card_text_source/analysis.md)
+   - Builds deterministic no-place evidence cards from existing metadata, without
+     rerunning summarization.
+   - Tests compact cards and cards prepended to raw content against Qwen
+     summary, no-place summary, raw content, and land-use evidence-summary
+     baselines.
 
 ## Data Artifact Map
 

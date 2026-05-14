@@ -15,6 +15,28 @@ OUTPUT_PREFIX="${OUTPUT_DIR}/${TASK}_${TEXT_SOURCE}"
 JOB_SCRIPT="scripts/cluster/run_classification_job.sh"
 AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"
 OAR_PROPERTIES="${G5K_OAR_PROPERTIES:-gpu_mem>=32000}"
+OAR_QUEUE="${G5K_OAR_QUEUE:-production}"
+OAR_TYPES="${G5K_OAR_TYPES:-}"
+OAR_TYPE_FLAGS=""
+
+case "${OAR_QUEUE}" in
+  *[!A-Za-z0-9_.:-]*)
+    echo "Invalid OAR queue: ${OAR_QUEUE}." >&2
+    exit 1
+    ;;
+esac
+
+if [ -n "${OAR_TYPES}" ]; then
+  for OAR_TYPE in ${OAR_TYPES}; do
+    case "${OAR_TYPE}" in
+      *[!A-Za-z0-9_.:-]*)
+        echo "Invalid OAR type: ${OAR_TYPE}." >&2
+        exit 1
+        ;;
+    esac
+    OAR_TYPE_FLAGS="${OAR_TYPE_FLAGS} -t ${OAR_TYPE}"
+  done
+fi
 
 case "${TASK}:${TEXT_SOURCE}" in
   *[!A-Za-z0-9_:.-]*)
@@ -65,7 +87,8 @@ echo "Submitting OAR job"
 SUBMIT_OUTPUT="$(
   ssh -o BatchMode=yes "${ACCESS_HOST}" "
     ssh ${SITE} 'cd \"${REMOTE_PROJECT_DIR}\" && chmod +x \"${JOB_SCRIPT}\" && \
-      oarsub -q production \
+      oarsub -q \"${OAR_QUEUE}\" \
+        ${OAR_TYPE_FLAGS} \
         -l host=1/gpu=1,walltime=20:00:00 \
         -p \"${OAR_PROPERTIES}\" \
         -O OAR_%jobid%.out \

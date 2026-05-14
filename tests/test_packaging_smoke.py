@@ -351,7 +351,8 @@ def test_cluster_classification_submit_avoids_sed_generated_wrappers():
     assert "wrapper_${TASK}_${TEXT_SOURCE}.sh" not in script
     assert "G5K_REMOTE_HOME" in script
     assert "G5K_REMOTE_PROJECT_DIR" in script
-    assert "oarsub -q production" in script
+    assert 'OAR_QUEUE="${G5K_OAR_QUEUE:-production}"' in script
+    assert 'oarsub -q \\"${OAR_QUEUE}\\"' in script
     assert "env GEORESET_CLASSIFICATION_TASK=" in script
 
 

@@ -236,6 +236,58 @@ class LLMClassifier:
         labels, error = normalize_prediction_response(raw_response, allowed_labels)
 
         if error:
+            # For multi-label OSM, unknown labels are non-fatal; keep only
+            # in-scope labels and treat a fully unknown JSON payload as an
+            # empty prediction if it is otherwise structurally valid JSON.
+            if task == "osm" and error.startswith("Unknown labels in JSON:"):
+                data = json.loads(raw_response)
+                if isinstance(data, dict):
+                    if "labels" in data and isinstance(data["labels"], list):
+                        for item in data["labels"]:
+                            if not isinstance(item, str):
+                                return self._error_result(
+                                    "JSON list fields must contain only strings",
+                                    raw_response,
+                                    task,
+                                    text_source,
+                                    prompt,
+                                    allowed_labels,
+                                    labels,
+                                )
+                    elif "label" in data and isinstance(data["label"], str):
+                        # Keep behavior consistent with JSON list parsing for label
+                        # CSV/text payloads.
+                        pass
+                    else:
+                        return self._error_result(
+                            error,
+                            raw_response,
+                            task,
+                            text_source,
+                            prompt,
+                            allowed_labels,
+                            labels,
+                        )
+                elif not isinstance(data, dict):
+                    return self._error_result(
+                        error,
+                        raw_response,
+                        task,
+                        text_source,
+                        prompt,
+                        allowed_labels,
+                        labels,
+                    )
+
+                return {
+                    "prediction": labels,
+                    "prediction_labels": labels,
+                    "parse_status": "ok",
+                    "error": None,
+                    "raw_response": raw_response,
+                    "metadata": self._metadata(task, text_source, prompt, allowed_labels),
+                }
+
             return self._error_result(
                 error, raw_response, task, text_source, prompt, allowed_labels, labels
             )

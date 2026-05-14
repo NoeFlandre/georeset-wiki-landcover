@@ -11,6 +11,66 @@ import pandas as pd
 EVIDENCE_CARD_VERSION = 1
 
 
+ARTICLE_TYPE_LABELS = {
+    "other_or_unclear": "autre / non précisé",
+    "water_feature": "caractéristique hydrographique",
+    "natural_landscape": "paysage naturel",
+    "agriculture_or_vineyard": "agriculture ou vignoble",
+    "built_or_cultural_site": "site bâti ou culturel",
+    "transport_infrastructure": "infrastructure de transport",
+    "settlement_or_administrative": "zone urbaine / administrative",
+    "person_or_event": "personne ou événement",
+}
+QUALITY_BIN_LABELS = {
+    "quality_low": "qualité faible",
+    "quality_medium": "qualité moyenne",
+    "quality_high": "qualité élevée",
+    "quality_very_high": "qualité très élevée",
+}
+RECOMMENDED_USE_LABELS = {
+    "use_for_training": "utilisable pour entraînement",
+    "use_for_evaluation_only": "réservé à l'évaluation",
+    "inspect_manually": "à inspecter manuellement",
+    "exclude": "à exclure",
+}
+LANDCOVER_RELEVANCE_LABELS = {
+    "none": "aucune",
+    "low": "faible",
+    "medium": "moyenne",
+    "high": "élevée",
+}
+UNCERTAINTY_LABELS = {
+    "low": "faible",
+    "medium": "moyenne",
+    "high": "élevée",
+}
+EVIDENCE_TYPE_LABELS = {
+    "water": "eau",
+    "forest": "forêt",
+    "agriculture": "agriculture",
+    "urban_or_artificial": "urbain ou artificiel",
+    "vineyard": "vignoble",
+}
+
+
+def _enum_text(
+    value: object,
+    label_map: Mapping[str, str],
+    *,
+    default: str = "inconnue",
+) -> str:
+    if _is_missing(value):
+        return default
+    if not isinstance(value, str):
+        value = str(value)
+    normalized = value.strip().lower()
+    if not normalized:
+        return default
+    if normalized in label_map:
+        return label_map[normalized]
+    return normalized.replace("_", " ")
+
+
 def _is_missing(value: object) -> bool:
     if value is None:
         return True
@@ -155,6 +215,10 @@ def _build_card_text(
 ) -> tuple[str, int]:
     evidence_types = _list(_mapping_get(evidence, "evidence_types", []))
     candidate_article_types = _list(_mapping_get(article_type, "candidate_article_types", []))
+    evidence_type_labels = [_enum_text(item, EVIDENCE_TYPE_LABELS) for item in evidence_types]
+    candidate_article_type_labels = [
+        _enum_text(item, ARTICLE_TYPE_LABELS) for item in candidate_article_types
+    ]
     sentences = _evidence_sentences(evidence, title)
     sentence_lines = (
         [f"- {sentence}" for sentence in sentences]
@@ -165,13 +229,14 @@ def _build_card_text(
         [
             "Fiche d'indices d'occupation du sol, sans nom de lieu.",
             "",
-            f"Pertinence: {_text(_mapping_get(evidence, 'landcover_relevance'))}",
-            f"Incertitude: {_text(_mapping_get(evidence, 'uncertainty'))}",
-            f"Types d'indices: {_format_list(evidence_types)}",
-            f"Type d'article: {_text(_mapping_get(article_type, 'primary_article_type'))}",
-            f"Types d'article candidats: {_format_list(candidate_article_types)}",
+            f"Pertinence: {_enum_text(_mapping_get(evidence, 'landcover_relevance'), LANDCOVER_RELEVANCE_LABELS)}",
+            f"Incertitude: {_enum_text(_mapping_get(evidence, 'uncertainty'), UNCERTAINTY_LABELS)}",
+            f"Types d'indices: {_format_list(evidence_type_labels)}",
+            f"Type d'article: {_enum_text(_mapping_get(article_type, 'primary_article_type'), ARTICLE_TYPE_LABELS)}",
+            f"Types d'article candidats: {_format_list(candidate_article_type_labels)}",
             f"Score de qualité: {_text(_mapping_get(quality, 'quality_score'))}",
-            f"Catégorie d'usage recommandée: {_text(_mapping_get(quality, 'recommended_use'))}",
+            f"Catégorie de qualité: {_enum_text(_mapping_get(quality, 'quality_bin'), QUALITY_BIN_LABELS)}",
+            f"Catégorie d'usage recommandée: {_enum_text(_mapping_get(quality, 'recommended_use'), RECOMMENDED_USE_LABELS)}",
             "",
             "Confiance spatiale CORINE:",
             f"- part du label ponctuel à 250 m: {_number_text(_mapping_get(spatial, 'point_label_share_250m'))}",

@@ -45,12 +45,13 @@ def test_evidence_card_excludes_title_coordinates_and_target_labels():
     assert "31" not in card
     assert "dominant_label" not in card
     assert "point_label" not in card
-    assert "Pertinence: high" in card
-    assert "Incertitude: low" in card
-    assert "Types d'indices: forest, water" in card
-    assert "Type d'article: natural_landscape" in card
+    assert "Pertinence: élevée" in card
+    assert "Incertitude: faible" in card
+    assert "Types d'indices: forêt, eau" in card
+    assert "Type d'article: paysage naturel" in card
     assert "Score de qualité: 7.2" in card
-    assert "Catégorie d'usage recommandée: use_for_training" in card
+    assert "Catégorie de qualité: qualité très élevée" in card
+    assert "Catégorie d'usage recommandée: utilisable pour entraînement" in card
     assert "- part du label ponctuel à 250 m: 0.82" in card
     assert "- le label dominant à 250 m correspond au label ponctuel: oui" in card
     assert "- Des boisements et un cours d'eau sont mentionnés." in card
@@ -133,10 +134,46 @@ def test_evidence_card_accepts_series_metadata_values():
         quality=pd.Series({"quality_bin": "quality_medium"}),
     )
 
-    assert "Pertinence: medium" in record["evidence_card"]
+    assert "Pertinence: moyenne" in record["evidence_card"]
     assert "agriculture" in record["evidence_card"]
+    assert "agriculture ou vignoble" in record["evidence_card"]
     assert "agriculture_or_vineyard" in record["candidate_article_types"]
     assert "non" in record["evidence_card"]
+
+
+def test_evidence_card_renders_readable_metadata_labels():
+    record = build_evidence_card_record(
+        pageid="100",
+        article={"title": "Lieu", "content": "Texte d'exemple."},
+        evidence={
+            "landcover_relevance": "low",
+            "uncertainty": "high",
+            "evidence_types": ["urban_or_artificial", "water"],
+        },
+        article_type={
+            "primary_article_type": "settlement_or_administrative",
+            "candidate_article_types": ["settlement_or_administrative", "agriculture_or_vineyard"],
+        },
+        spatial={},
+        quality={
+            "quality_bin": "quality_medium",
+            "recommended_use": "inspect_manually",
+        },
+    )
+
+    card = record["evidence_card"]
+
+    assert "Type d'article: zone urbaine / administrative" in card
+    assert "Types d'article candidats: zone urbaine / administrative, agriculture ou vignoble" in card
+    assert "Pertinence: faible" in card
+    assert "Incertitude: élevée" in card
+    assert "Types d'indices: urbain ou artificiel, eau" in card
+    assert "Catégorie de qualité: qualité moyenne" in card
+    assert "Catégorie d'usage recommandée: à inspecter manuellement" in card
+    assert "exclude" not in card
+    assert "other_or_unclear" not in card
+    assert "settlement_or_administrative" not in card
+    assert "use_for_training" not in card
 
 
 def test_evidence_card_handles_missing_scalar_and_list_values_as_json_safe():

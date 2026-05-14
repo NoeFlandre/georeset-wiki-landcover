@@ -215,11 +215,30 @@ real land-cover signal when both the spatial label and the article relevance are
 credible. The bottleneck is no longer only the classifier model; it is the
 quality of the supervision and the relevance of the text.
 
-The next planned experiment is `article_text_evidence_card_v1`. It does not
-generate another LLM summary. Instead, it deterministically turns existing
-evidence metadata, article-type metadata, CORINE spatial confidence, and quality
-scores into a compact French evidence card, then tests two new classifier inputs:
-the card alone and the card prepended to raw article content. The key comparison
-will be whether the card improves over the previous `landuse_evidence_summary`,
-and whether `content_with_evidence_card` can match or improve raw content without
-destroying the raw article signal.
+We then ran `article_text_evidence_card_v1`. This did not generate another LLM
+summary. Instead, it deterministically turned existing evidence metadata,
+article-type metadata, CORINE spatial confidence, and quality scores into a
+compact French evidence card. We tested the card alone and the card prepended to
+raw article content, using Qwen only.
+
+The evidence card was better than the previous short `landuse_evidence_summary`
+as a compact text representation. On all CORINE articles, balanced accuracy went
+from `0.184` for `landuse_evidence_summary` to `0.224` for `evidence_card`, and
+macro-F1 went from `0.203` to `0.226`. The card also had clear aligned-vs-
+shuffled signal.
+
+But raw content remained the strongest direct input. For CORINE, raw content
+still had better macro-F1 (`0.270`) than `content_with_evidence_card` (`0.260`)
+and `evidence_card` (`0.226`). `content_with_evidence_card` improved raw
+accuracy (`0.337` versus `0.293` for content), but not the main balanced metrics.
+For OSM, raw content also stayed best on Jaccard and micro-F1. The conclusion is
+that cards organize useful metadata and are better than the previous compressed
+summary, but they still lose too much class-specific evidence to replace raw
+Wikipedia text.
+
+The next useful step is therefore not another shorter text representation. It is
+to use the relevance, spatial-confidence, and quality-score diagnostics to select
+candidate weak-supervision pairs for downstream Sentinel patch training or
+evaluation. If we continue with text-only diagnostics, the more promising
+direction is a retrieval-style classifier prompt over raw content with highlighted
+evidence sentences, not a standalone compact card.

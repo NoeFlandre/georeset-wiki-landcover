@@ -228,6 +228,63 @@ def test_classify_multilabel_mixed_returns_ok():
     assert result["parse_status"] == "ok"
 
 
+def test_classify_multilabel_json_with_unknown_label_only_is_ok_empty():
+    mock_client = MagicMock()
+    mock_client.complete_json.return_value = '{"labels": ["urban"]}'
+    classifier = LLMClassifier(model_path="model.gguf", client=mock_client)
+
+    result = classifier.classify_multilabel(
+        text="Article urbain.",
+        allowed_labels=["wood", "water"],
+        task="osm",
+        text_source="summary",
+    )
+
+    assert result["prediction"] == []
+    assert result["prediction_labels"] == []
+    assert result["parse_status"] == "ok"
+    assert result["error"] is None
+
+
+def test_classify_multilabel_json_with_unknown_and_allowed_labels_is_ok():
+    mock_client = MagicMock()
+    mock_client.complete_json.return_value = '{"labels": ["wood", "urban"]}'
+    classifier = LLMClassifier(model_path="model.gguf", client=mock_client)
+
+    result = classifier.classify_multilabel(
+        text="Article mélange.",
+        allowed_labels=["wood", "water"],
+        task="osm",
+        text_source="summary",
+    )
+
+    assert result["prediction"] == ["wood"]
+    assert result["prediction_labels"] == ["wood"]
+    assert result["parse_status"] == "ok"
+    assert result["error"] is None
+
+
+def test_classify_multilabel_json_with_unknown_only_is_error_for_non_osm_task():
+    mock_client = MagicMock()
+    mock_client.complete_json.side_effect = [
+        '{"labels": ["urban"]}',
+        '{"labels": ["urban"]}',
+    ]
+    classifier = LLMClassifier(model_path="model.gguf", client=mock_client)
+
+    result = classifier.classify_multilabel(
+        text="Article urbain.",
+        allowed_labels=["wood", "water"],
+        task="custom_multilabel",
+        text_source="summary",
+    )
+
+    assert result["prediction"] is None
+    assert result["prediction_labels"] == []
+    assert result["parse_status"] == "error"
+    assert "Unknown labels in JSON" in result["error"]
+
+
 def test_classify_multilabel_retries_empty_response_to_ok():
     classifier = LLMClassifier(model_path=None)
     mock_llm = MagicMock()
