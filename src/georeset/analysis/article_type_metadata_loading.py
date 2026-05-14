@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import json
 from numbers import Real
 from pathlib import Path
 
@@ -47,6 +48,18 @@ def _coalesce_pageid(value: object, fallback: object) -> str | None:
 
 
 def _normalize_list_value(value: object) -> list[str]:
+    def normalize_items(items: list[object] | tuple[object, ...]) -> list[str]:
+        output: list[str] = []
+        for item in items:
+            if item is None:
+                continue
+            if not isinstance(item, (list, tuple, dict)) and pd.isna(item):
+                continue
+            text = str(item).strip()
+            if text:
+                output.append(text)
+        return output
+
     if value is None:
         return []
     if isinstance(value, str):
@@ -56,19 +69,24 @@ def _normalize_list_value(value: object) -> list[str]:
         try:
             parsed = ast.literal_eval(cleaned)
         except (ValueError, SyntaxError):
-            return [cleaned]
+            try:
+                parsed = json.loads(cleaned)
+            except json.JSONDecodeError:
+                return [cleaned]
         if isinstance(parsed, list):
-            return [str(item) for item in parsed]
+            return normalize_items(parsed)
         if isinstance(parsed, tuple):
-            return [str(item) for item in parsed]
-        return [str(parsed)]
+            return normalize_items(parsed)
+        if parsed is None:
+            return []
+        return normalize_items([parsed])
     if isinstance(value, list):
-        return [str(item) for item in value]
+        return normalize_items(value)
     if isinstance(value, tuple):
-        return [str(item) for item in value]
+        return normalize_items(value)
     if pd.isna(value):
         return []
-    return [str(value)]
+    return normalize_items([value])
 
 
 def _coerce_count(value: object) -> int:

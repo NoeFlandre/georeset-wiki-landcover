@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from pathlib import Path
 
 from georeset.analysis.article_type_metadata_loading import load_article_type_metadata
@@ -141,7 +142,7 @@ def test_load_article_type_metadata_normalizes_candidate_and_rule_categories(tmp
         path,
         {
             "1": {
-                "candidate_article_types": '["water_feature", "wetland"]',
+                "candidate_article_types": '["water_feature", "wetland", null, ""]',
                 "matched_categories": "['forêt', 'rivière']",
                 "matched_rules": "('rule-a', 'rule-b')",
                 "primary_article_type": "water_feature",
@@ -153,9 +154,9 @@ def test_load_article_type_metadata_normalizes_candidate_and_rule_categories(tmp
                 "primary_article_type": "water_feature",
             },
             "3": {
-                "candidate_article_types": [],
-                "matched_categories": ["forêt"],
-                "matched_rules": ["rule-a"],
+                "candidate_article_types": [None, "", "   ", math.nan],
+                "matched_categories": ["forêt", None, "", math.nan],
+                "matched_rules": ["rule-a", None, ""],
                 "primary_article_type": "water_feature",
             },
         },
