@@ -5,11 +5,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 from georeset.utils.json_io import write_csv_atomic, write_text_atomic
-from georeset.vision.clip_embedding_cache import load_embedding_cache
+from georeset.vision.clip_embedding_cache import load_embedding_cache, stack_embeddings_for_rows
 from georeset.vision.linear_probe import (
     evaluate_predictions,
     fit_linear_probe,
@@ -57,8 +56,7 @@ def run_experiment(
     splits = pd.read_csv(splits_path, dtype={"pageid": str, "label": str})
     embeddings = load_embedding_cache(embeddings_path)
     eval_rows = splits[splits["split"] == "eval_strict"].copy()
-    eval_rows = eval_rows[eval_rows["pageid"].isin(embeddings)]
-    eval_x = np.stack([embeddings[pageid] for pageid in eval_rows["pageid"]])
+    eval_rows, eval_x = stack_embeddings_for_rows(eval_rows, embeddings, context="eval_strict")
     eval_y = eval_rows["label"].to_numpy()
     metric_rows: list[dict[str, object]] = []
     prediction_rows: list[dict[str, object]] = []
@@ -66,7 +64,7 @@ def run_experiment(
         train_rows = train_rows[train_rows["pageid"].isin(embeddings)]
         if train_rows["label"].nunique() < 2:
             continue
-        train_x = np.stack([embeddings[pageid] for pageid in train_rows["pageid"]])
+        train_rows, train_x = stack_embeddings_for_rows(train_rows, embeddings, context=f"train/{tier}")
         train_y = train_rows["label"].to_numpy()
         model = fit_linear_probe(
             train_x,

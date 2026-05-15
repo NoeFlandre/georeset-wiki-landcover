@@ -1,8 +1,10 @@
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
+import pytest
 
-from georeset.vision.clip_embedding_cache import load_embedding_cache
+from georeset.vision.clip_embedding_cache import load_embedding_cache, stack_embeddings_for_rows
 
 
 def test_load_embedding_cache_returns_string_pageid_float32_mapping(tmp_path: Path) -> None:
@@ -18,3 +20,20 @@ def test_load_embedding_cache_returns_string_pageid_float32_mapping(tmp_path: Pa
     assert list(embeddings) == ["1", "2"]
     assert embeddings["1"].dtype == np.float32
     assert embeddings["2"].tolist() == [3.0, 4.0]
+
+
+def test_stack_embeddings_for_rows_filters_missing_pageids_and_errors_when_empty() -> None:
+    rows = pd.DataFrame(
+        [
+            {"pageid": "1", "label": "31"},
+            {"pageid": "missing", "label": "22"},
+        ]
+    )
+    embeddings = {"1": np.array([1.0, 2.0], dtype=np.float32)}
+
+    filtered, matrix = stack_embeddings_for_rows(rows, embeddings, context="eval_strict")
+
+    assert filtered["pageid"].tolist() == ["1"]
+    assert matrix.tolist() == [[1.0, 2.0]]
+    with pytest.raises(ValueError, match="No cached embeddings available for eval_strict"):
+        stack_embeddings_for_rows(rows.iloc[0:0], embeddings, context="eval_strict")
