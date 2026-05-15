@@ -37,3 +37,18 @@ def test_sentinel2_planetary_computer_fetcher_rejects_non_positive_patch_size() 
             cloud_cover=25.0,
             datetime_range="2022-04-01/2022-10-31",
         )
+
+
+def test_sentinel2_planetary_computer_fetcher_rejects_invalid_cloud_cover() -> None:
+    with pytest.raises(ValueError, match="cloud_cover must be between 0 and 100"):
+        sentinel2_planetary_computer_fetcher(
+            patch_size=224,
+            cloud_cover=-1.0,
+            datetime_range="2022-04-01/2022-10-31",
+        )
+    with pytest.raises(ValueError, match="cloud_cover must be between 0 and 100"):
+        sentinel2_planetary_computer_fetcher(
+            patch_size=224,
+            cloud_cover=101.0,
+            datetime_range="2022-04-01/2022-10-31",
+        )
