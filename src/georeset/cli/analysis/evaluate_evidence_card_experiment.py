@@ -17,6 +17,7 @@ from georeset.analysis.pageid_frames import load_optional_pageid_csv
 from georeset.analysis.prediction_loading import load_annotated_prediction_records
 from georeset.analysis.quality_subsets import quality_subset_masks
 from georeset.analysis.shuffled_deltas import compute_shuffled_delta_rows
+from georeset.classification.text_sources import shuffled_text_source_pairs
 from georeset.text.evidence_cards import EVIDENCE_CARD_VERSION
 from georeset.utils.json_io import (
     write_dict_rows_table_pair_atomic,
@@ -47,10 +48,6 @@ EVIDENCE_CARD_SOURCES = {
 }
 PREVIOUS_SOURCES = {"summary", "summary_no_place", "content"}
 LANDUSE_SOURCES = {"landuse_evidence_summary"}
-SHUFFLED_PAIRS = {
-    "evidence_card": "evidence_card_shuffled",
-    "content_with_evidence_card": "content_with_evidence_card_shuffled",
-}
 OUTPUT_COLUMNS = [
     "subset",
     "model",
@@ -161,7 +158,7 @@ def _compute_rows(records: pd.DataFrame) -> tuple[list[dict[str, Any]], list[dic
 def _shuffled_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return compute_shuffled_delta_rows(
         rows,
-        shuffled_pairs=SHUFFLED_PAIRS,
+        shuffled_pairs=shuffled_text_source_pairs({str(row["text_source"]) for row in rows}),
         model_columns=("model",),
     )
 
