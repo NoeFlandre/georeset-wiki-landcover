@@ -52,3 +52,12 @@ def test_sentinel2_planetary_computer_fetcher_rejects_invalid_cloud_cover() -> N
             cloud_cover=101.0,
             datetime_range="2022-04-01/2022-10-31",
         )
+
+
+def test_sentinel2_planetary_computer_fetcher_rejects_empty_datetime_range() -> None:
+    with pytest.raises(ValueError, match="datetime_range must not be empty"):
+        sentinel2_planetary_computer_fetcher(
+            patch_size=224,
+            cloud_cover=25.0,
+            datetime_range="",
+        )

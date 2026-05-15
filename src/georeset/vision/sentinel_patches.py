@@ -64,6 +64,8 @@ def sentinel2_planetary_computer_fetcher(
         raise ValueError("patch_size must be positive")
     if cloud_cover < 0.0 or cloud_cover > 100.0:
         raise ValueError("cloud_cover must be between 0 and 100")
+    if not datetime_range.strip():
+        raise ValueError("datetime_range must not be empty")
 
     try:
         import planetary_computer
