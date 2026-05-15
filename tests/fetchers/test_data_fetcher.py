@@ -65,6 +65,24 @@ class TestDataFetcher:
 
         print_mock.assert_not_called()
 
+    def test_get_sample_polygons_raises_clear_error_when_request_exceeds_available(self, tmp_path):
+        data_path = tmp_path / "small.geojson"
+        gdf = gpd.GeoDataFrame({"code_18": ["311"]}, geometry=[Point(7.0, 48.0)], crs="EPSG:4326")
+        gdf.to_file(data_path, driver="GeoJSON")
+        fetcher = DataFetcher(data_path=str(data_path))
+
+        with pytest.raises(ValueError, match="Cannot sample 2 polygons from 1 available"):
+            fetcher.get_sample_polygons(n=2)
+
+    def test_get_sample_polygons_reports_filtering_when_no_non_artificial_polygons(self, tmp_path):
+        data_path = tmp_path / "artificial.geojson"
+        gdf = gpd.GeoDataFrame({"code_18": ["111"]}, geometry=[Point(7.0, 48.0)], crs="EPSG:4326")
+        gdf.to_file(data_path, driver="GeoJSON")
+        fetcher = DataFetcher(data_path=str(data_path))
+
+        with pytest.raises(ValueError, match="after filtering artificial surfaces"):
+            fetcher.get_sample_polygons(n=1, exclude_artificial=True)
+
     @requires_data
     def test_get_sample_polygons_returns_geodataframe(self):
         """Should return a GeoDataFrame with sampled polygons."""

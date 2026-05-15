@@ -61,16 +61,21 @@ class DataFetcher:
             self.load_data(exclude_artificial=exclude_artificial)
         assert self.gdf is not None
 
-        # we take a random sample
+        available_count = len(self.gdf)
+        if n > available_count:
+            filter_context = " after filtering artificial surfaces" if exclude_artificial else ""
+            raise ValueError(
+                f"Cannot sample {n} polygons from {available_count} available polygons"
+                f"{filter_context}."
+            )
+
         sample = self.gdf.sample(n).copy()
 
-        # then we extract the class code at the level desired. For this we use the code_18 column which contains the class label (e.g 311). To truncate this class label to the level desired we simply keep the number of digits wanted (e.g level 2 would keep the first two digits -> 31)
         sample["class_label"] = sample["code_18"].str[:level]
 
-        # then we compute the polygon centroid
         sample["centroid"] = sample.to_crs(epsg=2154).centroid.to_crs(
             epsg=4326
-        )  # we project to Lambert 93 (meters) to get an accurate centroid the we project back to WGS85 (degrees) for geocoding later.
+        )
 
         return sample[["class_label", "geometry", "centroid", "code_18"]]
 
