@@ -42,6 +42,9 @@ def embed_label_prompts(
 ) -> dict[str, FloatFeatures]:
     output: dict[str, FloatFeatures] = {}
     for label, prompts in prompts_by_label.items():
+        if not prompts:
+            raise ValueError(f"label {label} must have at least one prompt")
+
         encoded = _normalize(text_encoder(prompts).astype(np.float32))
         output[label] = _normalize(encoded.mean(axis=0, keepdims=True))[0]
     return output

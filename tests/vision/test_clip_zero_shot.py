@@ -6,6 +6,7 @@ import pytest
 
 from georeset.vision.clip_zero_shot import (
     build_corine_zero_shot_prompts,
+    embed_label_prompts,
     predict_zero_shot,
     run_zero_shot_evaluation,
 )
@@ -36,6 +37,14 @@ def test_predict_zero_shot_rejects_empty_text_embeddings() -> None:
         predict_zero_shot(
             np.array([[1.0, 0.0]], dtype=np.float32),
             {},
+        )
+
+
+def test_embed_label_prompts_rejects_empty_prompt_lists() -> None:
+    with pytest.raises(ValueError, match="label 31 must have at least one prompt"):
+        embed_label_prompts(
+            {"31": []},
+            text_encoder=lambda prompts: np.empty((len(prompts), 2), dtype=np.float32),
         )
 
 
