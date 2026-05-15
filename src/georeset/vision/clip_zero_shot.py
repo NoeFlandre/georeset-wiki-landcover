@@ -51,6 +51,9 @@ def predict_zero_shot(
     image_embeddings: FloatFeatures,
     text_embeddings: dict[str, FloatFeatures],
 ) -> NDArray[np.str_]:
+    if not text_embeddings:
+        raise ValueError("text embeddings must not be empty")
+
     labels = np.array(sorted(text_embeddings), dtype=np.str_)
     image_features = _normalize(image_embeddings.astype(np.float32))
     text_features = np.stack([text_embeddings[label] for label in labels]).astype(np.float32)

@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from georeset.vision.clip_zero_shot import (
     build_corine_zero_shot_prompts,
@@ -28,6 +29,14 @@ def test_predict_zero_shot_uses_cosine_similarity() -> None:
     predictions = predict_zero_shot(image_embeddings, text_embeddings)
 
     assert predictions.tolist() == ["31", "22"]
+
+
+def test_predict_zero_shot_rejects_empty_text_embeddings() -> None:
+    with pytest.raises(ValueError, match="text embeddings must not be empty"):
+        predict_zero_shot(
+            np.array([[1.0, 0.0]], dtype=np.float32),
+            {},
+        )
 
 
 def test_run_zero_shot_evaluation_writes_metrics_and_predictions(tmp_path: Path) -> None:
