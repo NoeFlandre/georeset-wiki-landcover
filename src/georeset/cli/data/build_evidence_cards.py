@@ -4,15 +4,20 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 
 from georeset.analysis.article_type_metadata_loading import load_article_type_metadata
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
+from georeset.cli.data.json_inputs import (
+    index_json_records_by_pageid,
+    read_optional_json_mapping,
+    read_required_json_mapping,
+)
 from georeset.config import DataPaths
 from georeset.text.evidence_cards import EVIDENCE_CARD_VERSION, build_evidence_card_record
-from georeset.utils.json_io import read_json_file, write_json_atomic
+from georeset.utils.json_io import write_json_atomic
 
 DEFAULT_ARTICLE_TYPE_METADATA_PATH = Path(
     "data/experiments/article_text_classification_article_type_relevance_stratified_v1/"
@@ -50,34 +55,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _read_json_mapping(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {}
-    raw = read_json_file(path)
-    if not isinstance(raw, dict):
-        return {}
-    return cast(dict[str, Any], raw)
-
-
-def _read_required_json_mapping(path: Path, *, description: str) -> dict[str, Any]:
-    raw = read_json_file(path)
-    if not isinstance(raw, dict):
-        raise ValueError(f"{description} file '{path}' must contain a JSON object.")
-    return cast(dict[str, Any], raw)
-
-
-def _json_records_by_pageid(records: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    indexed: dict[str, dict[str, Any]] = {}
-    for pageid_key, payload in records.items():
-        if not isinstance(payload, dict):
-            continue
-        pageid = payload.get("pageid", pageid_key)
-        if pageid in (None, ""):
-            pageid = pageid_key
-        indexed[str(pageid)] = payload
-    return indexed
-
-
 def _dataframe_by_pageid(frame: pd.DataFrame) -> dict[str, pd.Series]:
     if frame.empty or "pageid" not in frame.columns:
         return {}
@@ -111,10 +88,12 @@ def build_cards(
     spatial_confidence_path: Path,
     quality_scores_path: Path,
 ) -> dict[str, dict[str, Any]]:
-    articles = _read_required_json_mapping(
+    articles = read_required_json_mapping(
         article_contents_path, description="article contents"
     )
-    evidence_by_pageid = _json_records_by_pageid(_read_json_mapping(evidence_metadata_path))
+    evidence_by_pageid = index_json_records_by_pageid(
+        read_optional_json_mapping(evidence_metadata_path)
+    )
     article_types = _dataframe_by_pageid(load_article_type_metadata(article_type_metadata_path))
     spatial = _dataframe_by_pageid(_load_spatial(spatial_confidence_path))
     quality = _dataframe_by_pageid(_load_quality(quality_scores_path))

@@ -4,14 +4,19 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
+from georeset.cli.data.json_inputs import (
+    index_json_records_by_pageid,
+    read_optional_json_mapping,
+    read_required_json_mapping,
+)
 from georeset.config import DataPaths
 from georeset.text.evidence_highlights import (
     EVIDENCE_HIGHLIGHTS_VERSION,
     build_evidence_highlight_record,
 )
-from georeset.utils.json_io import read_json_file, write_json_atomic
+from georeset.utils.json_io import write_json_atomic
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -27,43 +32,17 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _read_optional_json_mapping(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {}
-    raw = read_json_file(path)
-    if not isinstance(raw, dict):
-        return {}
-    return cast(dict[str, Any], raw)
-
-
-def _read_required_json_mapping(path: Path, *, description: str) -> dict[str, Any]:
-    raw = read_json_file(path)
-    if not isinstance(raw, dict):
-        raise ValueError(f"{description} file '{path}' must contain a JSON object.")
-    return cast(dict[str, Any], raw)
-
-
-def _records_by_pageid(records: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    output: dict[str, dict[str, Any]] = {}
-    for key, payload in records.items():
-        if not isinstance(payload, dict):
-            continue
-        pageid = payload.get("pageid", key)
-        if pageid in (None, ""):
-            pageid = key
-        output[str(pageid)] = payload
-    return output
-
-
 def build_highlights(
     *,
     article_contents_path: Path,
     evidence_metadata_path: Path,
 ) -> dict[str, dict[str, Any]]:
-    articles = _read_required_json_mapping(
+    articles = read_required_json_mapping(
         article_contents_path, description="article contents"
     )
-    evidence_by_pageid = _records_by_pageid(_read_optional_json_mapping(evidence_metadata_path))
+    evidence_by_pageid = index_json_records_by_pageid(
+        read_optional_json_mapping(evidence_metadata_path)
+    )
     output: dict[str, dict[str, Any]] = {}
     for pageid, article in sorted(articles.items(), key=lambda item: str(item[0])):
         if not isinstance(article, dict):
