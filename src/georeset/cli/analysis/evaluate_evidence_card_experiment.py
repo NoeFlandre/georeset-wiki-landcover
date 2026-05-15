@@ -15,6 +15,7 @@ from georeset.analysis.evaluation_metrics import (
 from georeset.analysis.label_universe import label_universe
 from georeset.analysis.pageid_frames import load_optional_pageid_csv
 from georeset.analysis.prediction_loading import load_annotated_prediction_records
+from georeset.analysis.quality_subsets import quality_subset_masks
 from georeset.analysis.shuffled_deltas import compute_shuffled_delta_rows
 from georeset.text.evidence_cards import EVIDENCE_CARD_VERSION
 from georeset.utils.json_io import (
@@ -139,24 +140,7 @@ def _metric_row(records: pd.DataFrame, subset: str) -> tuple[dict[str, Any], lis
 
 
 def _subset_masks(records: pd.DataFrame) -> dict[str, pd.Series]:
-    empty = pd.Series("", index=records.index)
-    relevance = records.get("landcover_relevance", empty).astype("string").str.lower()
-    spatial = pd.to_numeric(records.get("point_label_share_250m", empty), errors="coerce")
-    quality_bin = records.get("quality_bin", empty).astype("string")
-    recommended_use = records.get("recommended_use", empty).astype("string")
-    high_quality = quality_bin.isin(["quality_high", "quality_very_high"])
-    return {
-        "all": pd.Series(True, index=records.index),
-        "relevance_medium_high": relevance.isin(["medium", "high"]),
-        "spatial_250m_ge_0.8": spatial >= 0.8,
-        "relevance_medium_high_and_spatial_250m_ge_0.8": relevance.isin(["medium", "high"])
-        & (spatial >= 0.8),
-        "quality_high_or_very_high": high_quality,
-        "quality_high_or_very_high_and_spatial_250m_ge_0.8": high_quality & (spatial >= 0.8),
-        "recommended_use_training": recommended_use == "use_for_training",
-        "recommended_use_evaluation_only": recommended_use == "use_for_evaluation_only",
-        "recommended_use_exclude": recommended_use == "exclude",
-    }
+    return quality_subset_masks(records)
 
 
 def _compute_rows(records: pd.DataFrame) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
