@@ -69,6 +69,7 @@ georeset-evaluate-evidence-card-experiment = "georeset.cli.analysis.evaluate_evi
 georeset-evaluate-evidence-highlights-experiment = "georeset.cli.analysis.evaluate_evidence_highlights_experiment:main"
 georeset-evaluate-retrieved-evidence-windows-experiment = "georeset.cli.analysis.evaluate_retrieved_evidence_windows_experiment:main"
 georeset-run-clip-linear-probe-experiment = "georeset.cli.analysis.run_clip_linear_probe_experiment:main"
+georeset-run-clip-zero-shot-experiment = "georeset.cli.analysis.run_clip_zero_shot_experiment:main"
 
 [tool.ruff]
 target-version = "py310"

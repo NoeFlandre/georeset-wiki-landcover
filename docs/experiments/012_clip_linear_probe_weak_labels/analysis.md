@@ -19,6 +19,8 @@ small linear probe to predict the CORINE level-2 label.
 - Patch size: `224x224`
 - Image model: `openai/clip-vit-base-patch32`, frozen image encoder
 - Classifier: NumPy softmax linear probe
+- Zero-shot baseline: same frozen CLIP model, no training, averaged text prompts
+  for each CORINE label description
 - Evaluation: fixed strict split, 5 examples per class, 35 examples total
 
 The split builder creates one fixed evaluation set from spatially reliable and
@@ -51,6 +53,8 @@ non-forest classes.
 
 ## Results
 
+### Linear probe
+
 | tier | train | eval | accuracy | balanced accuracy | macro-F1 |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | all | 482 | 35 | 0.600 | 0.600 | 0.586 |
@@ -63,6 +67,19 @@ accuracy. `spatial_only` is nearly tied on macro-F1 and uses fewer examples, so
 it remains useful as a conservative alternative. The stricter quality and
 text-agreement tiers underperform.
 
+### Out-of-the-box CLIP
+
+| method | train | eval | accuracy | balanced accuracy | macro-F1 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| zero-shot CLIP | 0 | 35 | 0.200 | 0.200 | 0.224 |
+| frozen CLIP + linear probe, all weak labels | 482 | 35 | 0.600 | 0.600 | 0.586 |
+| frozen CLIP + linear probe, spatial-only labels | 357 | 35 | 0.571 | 0.571 | 0.589 |
+
+The trained linear probe is much stronger than out-of-the-box zero-shot CLIP on
+the same frozen image embeddings and the same strict evaluation split. The best
+linear probe improves balanced accuracy by `+0.400` over zero-shot CLIP and
+macro-F1 by `+0.362`.
+
 ## Interpretation
 
 This result does not invalidate the text-quality and agreement filters. It shows
@@ -73,9 +90,11 @@ hurts more than the expected label-cleaning benefit.
 
 The image baseline is also intentionally simple: frozen CLIP features and a
 linear head. That is a good first test because it is cheap, deterministic, and
-easy to debug, but it is not a full Sentinel-specialized model. The result should
-be read as a weak-supervision data-policy test, not as the ceiling for satellite
-patch classification.
+easy to debug. The zero-shot result shows that generic CLIP text-image alignment
+does not map cleanly onto these Sentinel-2 CORINE classes without local
+supervision. But this is still not a full Sentinel-specialized model, so the
+result should be read as a weak-supervision data-policy test, not as the ceiling
+for satellite patch classification.
 
 ## Conclusion
 
@@ -92,6 +111,9 @@ also be a stronger follow-up than further tightening the weak-label filters.
 - `data/experiments/clip_linear_probe_weak_labels_v1/clip_embeddings.npz`
 - `data/experiments/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv`
 - `data/experiments/clip_linear_probe_weak_labels_v1/linear_probe_predictions.csv`
+- `data/experiments/clip_linear_probe_weak_labels_v1/zero_shot_clip_metrics.csv`
+- `data/experiments/clip_linear_probe_weak_labels_v1/zero_shot_clip_predictions.csv`
+- `data/experiments/clip_linear_probe_weak_labels_v1/zero_shot_clip_summary.md`
 - `data/experiments/clip_linear_probe_weak_labels_v1/summary.md`
 
 ## Artifact inventory
@@ -107,6 +129,9 @@ in git. The local completed run produced:
 | `linear_probe_predictions.csv` | 3,914 | `fdce79665767dc76f7b6ff2396edfe8a18e259dc63d336308559222bfa0b7fb0` |
 | `sentinel_patches_rgb.npz` | 120,147,394 | `797dd39a8ddd5709c59b7c8844c1c5d58163ac6f297ebd609beb3a1012085f49` |
 | `summary.md` | 492 | `4016d213e49b4617bd582e84fb483e2b819408e742571dcd42e8202cff87a815` |
+| `zero_shot_clip_metrics.csv` | 109 | `6dffedd6396d4387a02107b9f1569ede2eae351e2201083b5d4b09853a6436fa` |
+| `zero_shot_clip_predictions.csv` | 1,040 | `e6bee40765fba1270f47728400127e17c946971122803d12c6d310439b83466d` |
+| `zero_shot_clip_summary.md` | 118 | `ff87b336a5a864ad98faa2217f94d709d86bfdebea6f91c1e7268245fab062f3` |
 
 Completion checks:
 
@@ -114,4 +139,6 @@ Completion checks:
   `(798, 224, 224, 3)`.
 - The CLIP embedding cache contains 798 pageids and embeddings with shape
   `(798, 512)`.
+- The zero-shot baseline uses the same 35-example strict evaluation split as the
+  linear-probe comparison.
 - No Grid5000 jobs remained active after the run.

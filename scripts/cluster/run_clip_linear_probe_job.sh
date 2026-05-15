@@ -58,3 +58,10 @@ uv run georeset-run-clip-linear-probe-experiment \
   --output-dir "${CLIP_OUTPUT_DIR}" \
   --epochs "${CLIP_LINEAR_EPOCHS:-600}" \
   --learning-rate "${CLIP_LINEAR_LEARNING_RATE:-0.1}"
+
+uv run georeset-run-clip-zero-shot-experiment \
+  --splits-path "${CLIP_OUTPUT_DIR}/label_splits.csv" \
+  --embeddings-path "${CLIP_OUTPUT_DIR}/clip_embeddings.npz" \
+  --output-dir "${CLIP_OUTPUT_DIR}" \
+  --model-name "${CLIP_MODEL_NAME}" \
+  --device "${CLIP_DEVICE:-cuda}"

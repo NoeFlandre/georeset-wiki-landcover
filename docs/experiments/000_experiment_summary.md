@@ -310,7 +310,10 @@ The best tier was the broad `all` training set: accuracy `0.600`, balanced
 accuracy `0.600`, and macro-F1 `0.586`. The `spatial_only` tier was close,
 with accuracy `0.571`, balanced accuracy `0.571`, and macro-F1 `0.589`. The
 stricter `quality_spatial` and `text_spatial_agreement` tiers were worse,
-falling to balanced accuracy `0.514` and `0.400`.
+falling to balanced accuracy `0.514` and `0.400`. A true out-of-the-box
+zero-shot CLIP baseline on the same evaluation split reached only accuracy
+`0.200`, balanced accuracy `0.200`, and macro-F1 `0.224`, so the weakly
+supervised linear probe adds a large gain over generic CLIP alignment.
 
 The important finding is that the strict filters are too expensive as hard
 filters for downstream image training at this data size. They remove noise, but

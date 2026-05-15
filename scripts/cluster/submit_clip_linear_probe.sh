@@ -103,4 +103,5 @@ ls -lh "${OUTPUT_DIR}/label_splits.csv" \
   "${OUTPUT_DIR}/sentinel_patches_rgb.npz" \
   "${OUTPUT_DIR}/clip_embeddings.npz" \
   "${OUTPUT_DIR}/linear_probe_metrics.csv" \
+  "${OUTPUT_DIR}/zero_shot_clip_metrics.csv" \
   "${OUTPUT_DIR}/summary.md"

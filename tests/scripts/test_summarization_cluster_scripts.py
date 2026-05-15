@@ -111,6 +111,7 @@ def test_clip_linear_probe_job_uses_vision_group_and_job_local_caches():
     assert "georeset-fetch-sentinel-patches" in script
     assert "georeset-embed-clip-patches" in script
     assert "georeset-run-clip-linear-probe-experiment" in script
+    assert "georeset-run-clip-zero-shot-experiment" in script
 
 
 def test_submit_clip_linear_probe_syncs_outputs_safely():
@@ -124,3 +125,4 @@ def test_submit_clip_linear_probe_syncs_outputs_safely():
     assert "rsync -az" in script
     assert "sentinel_patches_rgb.npz" in script
     assert "clip_embeddings.npz" in script
+    assert "zero_shot_clip_metrics.csv" in script
