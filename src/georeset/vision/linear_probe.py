@@ -59,6 +59,10 @@ def fit_linear_probe(
         raise ValueError("features and labels must have the same number of rows")
     if epochs <= 0:
         raise ValueError("epochs must be positive")
+    if learning_rate <= 0.0:
+        raise ValueError("learning_rate must be positive")
+    if l2 < 0.0:
+        raise ValueError("l2 must be non-negative")
 
     unique_labels = np.array(sorted(set(labels.tolist())))
     if len(unique_labels) < 2:

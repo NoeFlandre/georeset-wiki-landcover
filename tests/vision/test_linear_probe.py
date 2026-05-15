@@ -42,3 +42,13 @@ def test_linear_probe_rejects_non_positive_epochs() -> None:
 
     with pytest.raises(ValueError, match="epochs must be positive"):
         fit_linear_probe(train_x, train_y, seed=7, epochs=0)
+
+
+def test_linear_probe_rejects_invalid_optimizer_hyperparameters() -> None:
+    train_x = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.float32)
+    train_y = np.array(["forest", "water"])
+
+    with pytest.raises(ValueError, match="learning_rate must be positive"):
+        fit_linear_probe(train_x, train_y, seed=7, learning_rate=0.0)
+    with pytest.raises(ValueError, match="l2 must be non-negative"):
+        fit_linear_probe(train_x, train_y, seed=7, l2=-0.1)
