@@ -17,9 +17,9 @@ from georeset.analysis.evaluation_metrics import (
     compute_single_label_subset_metrics,
 )
 from georeset.analysis.evidence_metadata_loading import load_evidence_metadata
+from georeset.analysis.label_universe import label_universe
 from georeset.analysis.prediction_loading import infer_model_from_metadata, load_prediction_records
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
-from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.classification.text_sources import shuffled_text_source_pairs
 from georeset.utils.json_io import (
     write_dict_rows_csv_atomic,
@@ -143,19 +143,6 @@ def define_article_type_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
     for article_type in ARTICLE_TYPE_PREFERENCE:
         subsets[f"article_type:{article_type}"] = article_types.astype(str) == article_type
     return subsets
-
-
-def _label_universe(records: pd.DataFrame, task: str) -> list[str]:
-    labels: set[str] = set()
-    for values in records["target"]:
-        if isinstance(values, list):
-            for value in values:
-                labels.add(str(value))
-        elif values is not None:
-            labels.add(str(values))
-    if task == "corine_level2":
-        return sorted(CORINE_LEVEL2_DESCRIPTIONS)
-    return sorted(labels)
 
 
 def _metric_rows_by_subset(
@@ -463,7 +450,7 @@ def evaluate(
     distribution_rows: list[dict[str, Any]] = []
 
     for (model, task, text_source), group in merged.groupby(["model", "task", "text_source"], sort=False):
-        labels = _label_universe(group, task)
+        labels = label_universe(group, task, columns=("target",))
 
         for subset_name, mask in article_type_subsets.items():
             rows = _metric_rows_by_subset(_subset_by_mask(group, mask), subset_name, task, labels)

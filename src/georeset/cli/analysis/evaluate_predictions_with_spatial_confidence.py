@@ -13,6 +13,7 @@ from georeset.analysis.evaluation_metrics import (
     compute_multilabel_subset_metrics,
     compute_single_label_subset_metrics,
 )
+from georeset.analysis.label_universe import label_universe
 from georeset.analysis.prediction_loading import load_prediction_records
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
@@ -60,15 +61,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _label_universe(records: pd.DataFrame) -> list[str]:
-    labels: set[str] = set()
-    for column in ["target", "prediction"]:
-        for values in records[column]:
-            if isinstance(values, list):
-                labels.update(str(value) for value in values)
-    return sorted(labels)
-
-
 def _subset_mask(spatial: pd.DataFrame, subset_name: str) -> pd.Series:
     return (
         SUBSET_DEFINITIONS[subset_name](spatial).astype("boolean").fillna(False).astype(bool)
@@ -83,7 +75,9 @@ def _primary_score(row: dict[str, Any]) -> tuple[str, float]:
 
 def _class_distribution(records: pd.DataFrame, task: str) -> list[dict[str, Any]]:
     labels = (
-        CORINE_LEVEL2_DESCRIPTIONS.keys() if task == "corine_level2" else _label_universe(records)
+        CORINE_LEVEL2_DESCRIPTIONS.keys()
+        if task == "corine_level2"
+        else label_universe(records, task)
     )
     total = len(records)
     rows = []
@@ -130,7 +124,7 @@ def evaluate(
         labels = (
             sorted(CORINE_LEVEL2_DESCRIPTIONS)
             if task == "corine_level2"
-            else _label_universe(group)
+            else label_universe(group, task)
         )
         for subset_name in SUBSET_DEFINITIONS:
             subset = group[_subset_mask(group, subset_name)]

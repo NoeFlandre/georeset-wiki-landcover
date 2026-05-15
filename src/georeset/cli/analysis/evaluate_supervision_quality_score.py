@@ -16,13 +16,13 @@ from georeset.analysis.evaluation_metrics import (
     compute_single_label_subset_metrics,
 )
 from georeset.analysis.evidence_metadata_loading import load_evidence_metadata
+from georeset.analysis.label_universe import label_universe
 from georeset.analysis.list_normalization import normalize_string_list
 from georeset.analysis.prediction_loading import (
     infer_model_for_records,
     load_prediction_records,
 )
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
-from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.classification.text_sources import shuffled_text_source_pairs
 from georeset.utils.json_io import (
     read_json_file,
@@ -242,18 +242,6 @@ def compute_quality_row(record: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _label_universe(records: pd.DataFrame, task: str) -> list[str]:
-    if task == "corine_level2":
-        return sorted(CORINE_LEVEL2_DESCRIPTIONS)
-    labels: set[str] = set()
-    for target in records["target"]:
-        if isinstance(target, list):
-            labels.update(str(item) for item in target)
-        elif target is not None:
-            labels.add(str(target))
-    return sorted(labels)
-
-
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -347,7 +335,7 @@ def _row_subset_metric(
     subset: pd.DataFrame,
     task: str,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    labels = _label_universe(subset, task=task)
+    labels = label_universe(subset, task=task, columns=("target",))
     if task == "corine_level2":
         metrics, per_class = compute_single_label_subset_metrics(
             subset,
