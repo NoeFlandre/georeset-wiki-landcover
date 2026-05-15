@@ -1,7 +1,7 @@
 """OSM map visualizer for Corine Land Cover polygons."""
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 import folium
 import geopandas as gpd
@@ -11,6 +11,12 @@ from georeset.utils.json_io import read_json_file, write_html_map_atomic
 
 DEFAULT_MAP_LOCATION = [48.5, 7.5]
 logger = logging.getLogger(__name__)
+
+
+def _add_html_overlay(m: folium.Map, html: str) -> None:
+    """Attach a small HTML overlay to a Folium map root."""
+    root = cast(Any, m.get_root())
+    root.html.add_child(folium.Element(html))
 
 
 class MapVisualizer:
@@ -67,7 +73,7 @@ class MapVisualizer:
             <i style="background-color: red; width: 10px; height: 10px; display: inline-block; border-radius: 50%;"></i> Articles: {len(articles)}
         </div>
         """
-        m.get_root().html.add_child(folium.Element(legend_html))  # type: ignore[attr-defined]
+        _add_html_overlay(m, legend_html)
 
         return m
 
@@ -98,7 +104,7 @@ class MapVisualizer:
             <i style="background-color: red; width: 20px; height: 10px; display: inline-block;"></i> OSM: {len(osm_gdf)}
         </div>
         """
-        m.get_root().html.add_child(folium.Element(legend_html))  # type: ignore[attr-defined]
+        _add_html_overlay(m, legend_html)
 
         return m
 
