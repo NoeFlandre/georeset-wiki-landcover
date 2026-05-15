@@ -60,6 +60,9 @@ def sentinel2_planetary_computer_fetcher(
     cloud_cover: float,
     datetime_range: str,
 ) -> PatchFetcher:
+    if patch_size <= 0:
+        raise ValueError("patch_size must be positive")
+
     try:
         import planetary_computer
         import pystac_client

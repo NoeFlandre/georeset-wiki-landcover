@@ -2,8 +2,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
-from georeset.vision.sentinel_patches import write_patch_cache
+from georeset.vision.sentinel_patches import sentinel2_planetary_computer_fetcher, write_patch_cache
 
 
 def test_write_patch_cache_stores_only_successful_uint8_rgb_patches(tmp_path: Path) -> None:
@@ -28,3 +29,11 @@ def test_write_patch_cache_stores_only_successful_uint8_rgb_patches(tmp_path: Pa
     assert cache["patches"].shape == (1, 4, 4, 3)
     assert cache["patches"].dtype == np.uint8
 
+
+def test_sentinel2_planetary_computer_fetcher_rejects_non_positive_patch_size() -> None:
+    with pytest.raises(ValueError, match="patch_size must be positive"):
+        sentinel2_planetary_computer_fetcher(
+            patch_size=0,
+            cloud_cover=25.0,
+            datetime_range="2022-04-01/2022-10-31",
+        )
