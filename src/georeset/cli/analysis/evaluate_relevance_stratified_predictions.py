@@ -19,6 +19,7 @@ from georeset.analysis.prediction_loading import (
     infer_model_for_records,
     load_prediction_records,
 )
+from georeset.analysis.shuffled_deltas import primary_metric_name
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.classification.text_sources import shuffled_text_source_pairs
@@ -162,10 +163,6 @@ def define_evidence_type_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
     }
 
 
-def _metric_name(task: str) -> str:
-    return "balanced_accuracy" if task == "corine_level2" else "exact_match_accuracy"
-
-
 def _compute_shuffled_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     lookup = {
         (row["model"], row["task"], row["text_source"], row["relevance_subset"]): row for row in rows
@@ -173,7 +170,7 @@ def _compute_shuffled_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]
     shuffled_pairs = shuffled_text_source_pairs({str(row["text_source"]) for row in rows})
     deltas: list[dict[str, Any]] = []
     for row in rows:
-        metric = _metric_name(row["task"])
+        metric = primary_metric_name(str(row["task"]), osm_metric="exact_match_accuracy")
         source = row["text_source"]
         shuffled = shuffled_pairs.get(source)
         if not shuffled:
@@ -217,7 +214,7 @@ def _compute_model_comparison(rows: list[dict[str, Any]]) -> list[dict[str, Any]
         model_b = models[1]
         row_a = model_rows[model_a]
         row_b = model_rows[model_b]
-        metric = _metric_name(task)
+        metric = primary_metric_name(task, osm_metric="exact_match_accuracy")
         score_a = row_a.get(metric)
         score_b = row_b.get(metric)
         if not isinstance(score_a, (int, float)) or not isinstance(score_b, (int, float)):

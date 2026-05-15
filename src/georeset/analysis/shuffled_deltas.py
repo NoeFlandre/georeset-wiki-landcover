@@ -12,8 +12,8 @@ def primary_score(row: Mapping[str, Any]) -> float:
     return float(row.get("jaccard", row.get("exact_match_accuracy", 0.0)))
 
 
-def primary_metric_name(task: str) -> str:
-    return "balanced_accuracy" if task == "corine_level2" else "jaccard"
+def primary_metric_name(task: str, *, osm_metric: str = "jaccard") -> str:
+    return "balanced_accuracy" if task == "corine_level2" else osm_metric
 
 
 def compute_shuffled_delta_rows(

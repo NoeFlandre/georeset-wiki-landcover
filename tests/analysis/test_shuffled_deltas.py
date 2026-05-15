@@ -1,4 +1,4 @@
-from georeset.analysis.shuffled_deltas import compute_shuffled_delta_rows
+from georeset.analysis.shuffled_deltas import compute_shuffled_delta_rows, primary_metric_name
 
 
 def test_compute_shuffled_delta_rows_matches_with_model_columns_and_scores():
@@ -100,3 +100,8 @@ def test_compute_shuffled_delta_rows_uses_jaccard_for_osm_and_skips_missing_pair
 
     assert delta["primary_metric"] == "jaccard"
     assert delta["delta"] == 0.15
+
+
+def test_primary_metric_name_can_use_exact_match_for_osm_reports() -> None:
+    assert primary_metric_name("corine_level2", osm_metric="exact_match_accuracy") == "balanced_accuracy"
+    assert primary_metric_name("osm", osm_metric="exact_match_accuracy") == "exact_match_accuracy"

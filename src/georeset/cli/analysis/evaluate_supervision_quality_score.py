@@ -22,6 +22,7 @@ from georeset.analysis.prediction_loading import (
     infer_model_for_records,
     load_prediction_records,
 )
+from georeset.analysis.shuffled_deltas import primary_metric_name
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.text_sources import shuffled_text_source_pairs
 from georeset.utils.json_io import (
@@ -378,10 +379,6 @@ def _row_subset_metric(
     ]
 
 
-def _primary_metric(task: str) -> str:
-    return "balanced_accuracy" if task == "corine_level2" else "exact_match_accuracy"
-
-
 def _compute_overview_rows(
     merged: pd.DataFrame,
     mask_map: dict[str, pd.Series],
@@ -449,7 +446,7 @@ def _compute_shuffled_delta_rows(overview_rows: list[dict[str, Any]]) -> list[di
         reference = lookup.get((row["model"], row["task"], shuffled, row["subset"]))
         if not reference:
             continue
-        metric = _primary_metric(row["task"])
+        metric = primary_metric_name(str(row["task"]), osm_metric="exact_match_accuracy")
         aligned_score = row.get(metric)
         shuffled_score = reference.get(metric)
         delta: float | str = ""
@@ -488,7 +485,7 @@ def _compute_model_comparison_rows(overview_rows: list[dict[str, Any]]) -> list[
         model_a, model_b = models[:2]
         row_a = model_rows[model_a]
         row_b = model_rows[model_b]
-        metric = _primary_metric(task)
+        metric = primary_metric_name(task, osm_metric="exact_match_accuracy")
         score_a = row_a.get(metric)
         score_b = row_b.get(metric)
         if not isinstance(score_a, (int, float)) or not isinstance(score_b, (int, float)):

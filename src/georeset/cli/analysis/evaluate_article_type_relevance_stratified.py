@@ -19,6 +19,7 @@ from georeset.analysis.evaluation_metrics import (
 from georeset.analysis.evidence_metadata_loading import load_evidence_metadata
 from georeset.analysis.label_universe import label_universe
 from georeset.analysis.prediction_loading import infer_model_from_metadata, load_prediction_records
+from georeset.analysis.shuffled_deltas import primary_metric_name
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.text_sources import shuffled_text_source_pairs
 from georeset.utils.json_io import (
@@ -101,10 +102,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--experiment-id", type=str, default=DEFAULT_EXPERIMENT_ID)
     return parser.parse_args(argv)
-
-
-def _metric_name(task: str) -> str:
-    return "balanced_accuracy" if task == "corine_level2" else "exact_match_accuracy"
 
 
 def define_relevance_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
@@ -227,7 +224,7 @@ def _build_delta_rows(
         ref = lookup.get((model, task, shuffled, row["subset"]))
         if not ref:
             continue
-        metric = _metric_name(task)
+        metric = primary_metric_name(task, osm_metric="exact_match_accuracy")
         metric_aligned = row.get(metric)
         metric_shuffled = ref.get(metric)
         delta: float | str = ""
