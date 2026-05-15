@@ -22,6 +22,18 @@ def test_load_embedding_cache_returns_string_pageid_float32_mapping(tmp_path: Pa
     assert embeddings["2"].tolist() == [3.0, 4.0]
 
 
+def test_load_embedding_cache_rejects_mismatched_rows(tmp_path: Path) -> None:
+    path = tmp_path / "embeddings.npz"
+    np.savez(
+        path,
+        pageids=np.array(["1", "2"]),
+        embeddings=np.array([[1.0, 2.0]], dtype=np.float32),
+    )
+
+    with pytest.raises(ValueError, match="pageids and embeddings must have the same number of rows"):
+        load_embedding_cache(path)
+
+
 def test_stack_embeddings_for_rows_filters_missing_pageids_and_errors_when_empty() -> None:
     rows = pd.DataFrame(
         [

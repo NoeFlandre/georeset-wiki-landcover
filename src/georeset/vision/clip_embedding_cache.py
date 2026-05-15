@@ -15,6 +15,9 @@ def load_embedding_cache(path: Path) -> dict[str, FloatFeatures]:
     data = np.load(path)
     pageids = data["pageids"].astype(str)
     embeddings = data["embeddings"].astype(np.float32)
+    if len(pageids) != len(embeddings):
+        raise ValueError("pageids and embeddings must have the same number of rows")
+
     return dict(zip(pageids.tolist(), embeddings, strict=True))
 
 
