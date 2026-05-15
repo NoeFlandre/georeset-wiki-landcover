@@ -7,9 +7,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from numpy.typing import NDArray
 
 from georeset.utils.json_io import write_csv_atomic, write_text_atomic
+from georeset.vision.clip_embedding_cache import load_embedding_cache
 from georeset.vision.linear_probe import (
     evaluate_predictions,
     fit_linear_probe,
@@ -30,13 +30,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=600)
     parser.add_argument("--learning-rate", type=float, default=0.1)
     return parser.parse_args(argv)
-
-
-def _load_embeddings(path: Path) -> dict[str, NDArray[np.float32]]:
-    data = np.load(path)
-    pageids = data["pageids"].astype(str)
-    embeddings = data["embeddings"].astype(np.float32)
-    return dict(zip(pageids.tolist(), embeddings, strict=True))
 
 
 def _markdown_table(frame: pd.DataFrame) -> str:
@@ -62,7 +55,7 @@ def run_experiment(
     learning_rate: float,
 ) -> None:
     splits = pd.read_csv(splits_path, dtype={"pageid": str, "label": str})
-    embeddings = _load_embeddings(embeddings_path)
+    embeddings = load_embedding_cache(embeddings_path)
     eval_rows = splits[splits["split"] == "eval_strict"].copy()
     eval_rows = eval_rows[eval_rows["pageid"].isin(embeddings)]
     eval_x = np.stack([embeddings[pageid] for pageid in eval_rows["pageid"]])

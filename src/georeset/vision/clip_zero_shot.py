@@ -11,6 +11,7 @@ from numpy.typing import NDArray
 
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.utils.json_io import write_csv_atomic, write_text_atomic
+from georeset.vision.clip_embedding_cache import load_embedding_cache
 from georeset.vision.linear_probe import evaluate_predictions
 
 FloatFeatures = NDArray[np.float32]
@@ -58,13 +59,6 @@ def predict_zero_shot(
     return np.asarray(labels[indices], dtype=np.str_)
 
 
-def _load_embeddings(path: Path) -> dict[str, FloatFeatures]:
-    data = np.load(path)
-    pageids = data["pageids"].astype(str)
-    embeddings = data["embeddings"].astype(np.float32)
-    return dict(zip(pageids.tolist(), embeddings, strict=True))
-
-
 def run_zero_shot_evaluation(
     *,
     splits_path: Path,
@@ -73,7 +67,7 @@ def run_zero_shot_evaluation(
     text_encoder: TextEncoder,
 ) -> None:
     splits = pd.read_csv(splits_path, dtype={"pageid": str, "label": str})
-    embeddings = _load_embeddings(embeddings_path)
+    embeddings = load_embedding_cache(embeddings_path)
     eval_rows = splits[splits["split"] == "eval_strict"].copy()
     eval_rows = eval_rows[eval_rows["pageid"].isin(embeddings)]
     eval_x = np.stack([embeddings[pageid] for pageid in eval_rows["pageid"]]).astype(np.float32)
