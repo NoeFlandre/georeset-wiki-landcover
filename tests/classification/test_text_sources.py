@@ -4,6 +4,8 @@ from georeset.classification.text_sources import (
     apply_shuffled_text_control,
     base_text_source,
     shuffled_metadata,
+    shuffled_text_source_pairs,
+    text_source_sort_key,
 )
 
 
@@ -49,6 +51,35 @@ def test_text_source_choices_include_primary_and_shuffled_sources():
         SHUFFLED_TEXT_SOURCES["content_with_evidence_highlights_shuffled"]
         == "content_with_evidence_highlights"
     )
+
+
+def test_text_source_sort_key_follows_declared_choice_order():
+    ordered = sorted(
+        ["content_shuffled", "summary", "content_with_evidence_highlights", "unknown_source"],
+        key=text_source_sort_key,
+    )
+
+    assert ordered == [
+        "summary",
+        "content_with_evidence_highlights",
+        "content_shuffled",
+        "unknown_source",
+    ]
+
+
+def test_shuffled_text_source_pairs_are_derived_from_classification_policy():
+    assert shuffled_text_source_pairs() == {
+        "summary": "summary_shuffled",
+        "summary_no_place": "summary_no_place_shuffled",
+        "landuse_evidence_summary": "landuse_evidence_summary_shuffled",
+        "evidence_card": "evidence_card_shuffled",
+        "content_with_evidence_card": "content_with_evidence_card_shuffled",
+        "content_with_evidence_highlights": "content_with_evidence_highlights_shuffled",
+        "content": "content_shuffled",
+    }
+    assert shuffled_text_source_pairs({"summary", "content_shuffled", "content"}) == {
+        "content": "content_shuffled",
+    }
 
 
 def test_apply_shuffled_text_control_is_deterministic_without_fixed_points():

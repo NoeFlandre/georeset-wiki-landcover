@@ -9,6 +9,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, cast
 
+from georeset.classification.text_sources import shuffled_text_source_pairs, text_source_sort_key
 from georeset.utils.json_io import read_json_file, write_markdown_table_atomic, write_text_atomic
 
 logger = logging.getLogger(__name__)
@@ -40,27 +41,6 @@ FIELDNAMES = [
 ]
 
 
-TEXT_SOURCE_ORDER = {
-    "summary": 0,
-    "summary_shuffled": 1,
-    "summary_no_place": 2,
-    "summary_no_place_shuffled": 3,
-    "content": 4,
-    "content_shuffled": 5,
-    "landuse_evidence_summary": 6,
-    "landuse_evidence_summary_shuffled": 7,
-    "content_with_evidence_highlights": 8,
-    "content_with_evidence_highlights_shuffled": 9,
-}
-
-SHUFFLED_TEXT_SOURCE_PAIRS = {
-    "summary": "summary_shuffled",
-    "summary_no_place": "summary_no_place_shuffled",
-    "content": "content_shuffled",
-    "landuse_evidence_summary": "landuse_evidence_summary_shuffled",
-    "content_with_evidence_highlights": "content_with_evidence_highlights_shuffled",
-}
-
 SHUFFLED_DELTA_FIELDNAMES = [
     "task",
     "text_source",
@@ -91,10 +71,11 @@ def _load_json(path: Path) -> dict[str, Any]:
 
 
 def _run_sort_key(row: dict[str, Any]) -> tuple[str, int, str]:
+    source_order, source_name = text_source_sort_key(str(row["text_source"]))
     return (
         str(row["task"]),
-        TEXT_SOURCE_ORDER.get(str(row["text_source"]), 99),
-        str(row["text_source"]),
+        source_order,
+        source_name,
     )
 
 
@@ -297,7 +278,8 @@ def shuffled_delta_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     by_key = {(row["task"], row["text_source"]): row for row in rows}
     deltas: list[dict[str, Any]] = []
     for task in sorted({row["task"] for row in rows}):
-        for source, shuffled_source in SHUFFLED_TEXT_SOURCE_PAIRS.items():
+        text_sources = {str(row["text_source"]) for row in rows if row["task"] == task}
+        for source, shuffled_source in shuffled_text_source_pairs(text_sources).items():
             aligned = by_key.get((task, source))
             shuffled = by_key.get((task, shuffled_source))
             if not aligned or not shuffled:
@@ -360,7 +342,7 @@ def write_readme(
     tasks = sorted({str(row["task"]) for row in rows})
     text_sources = sorted(
         {str(row["text_source"]) for row in rows},
-        key=lambda source: TEXT_SOURCE_ORDER.get(source, 99),
+        key=text_source_sort_key,
     )
     has_shuffled_controls = any(source.endswith("_shuffled") for source in text_sources)
     best_delta = max(

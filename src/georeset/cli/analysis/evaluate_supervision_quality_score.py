@@ -23,6 +23,7 @@ from georeset.analysis.prediction_loading import (
 )
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
+from georeset.classification.text_sources import shuffled_text_source_pairs
 from georeset.utils.json_io import (
     read_json_file,
     write_dict_rows_csv_atomic,
@@ -54,12 +55,6 @@ TEXT_SOURCES = [
     "content",
     "content_shuffled",
 ]
-SHUFFLED_TEXT_SOURCE_PAIRS = {
-    "summary": "summary_shuffled",
-    "summary_no_place": "summary_no_place_shuffled",
-    "content": "content_shuffled",
-}
-
 QUALITY_BINS: dict[str, Callable[[float], bool]] = {
     "quality_low": lambda score: score < 3.0,
     "quality_medium": lambda score: 3.0 <= score < 5.0,
@@ -456,10 +451,11 @@ def _compute_shuffled_delta_rows(overview_rows: list[dict[str, Any]]) -> list[di
         (row["model"], row["task"], row["text_source"], row["subset"]): row
         for row in overview_rows
     }
+    shuffled_pairs = shuffled_text_source_pairs({str(row["text_source"]) for row in overview_rows})
     output: list[dict[str, Any]] = []
     for row in overview_rows:
         source = row["text_source"]
-        shuffled = SHUFFLED_TEXT_SOURCE_PAIRS.get(source)
+        shuffled = shuffled_pairs.get(source)
         if not shuffled:
             continue
         reference = lookup.get((row["model"], row["task"], shuffled, row["subset"]))

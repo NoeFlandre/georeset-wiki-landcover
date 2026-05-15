@@ -20,6 +20,7 @@ from georeset.analysis.evidence_metadata_loading import load_evidence_metadata
 from georeset.analysis.prediction_loading import infer_model_from_metadata, load_prediction_records
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
+from georeset.classification.text_sources import shuffled_text_source_pairs
 from georeset.utils.json_io import (
     write_dict_rows_csv_atomic,
     write_dict_rows_markdown_atomic,
@@ -51,11 +52,6 @@ TEXT_SOURCES = [
     "summary_no_place_shuffled",
     "content_shuffled",
 ]
-SHUFFLED_TEXT_SOURCE_PAIRS = {
-    "summary": "summary_shuffled",
-    "summary_no_place": "summary_no_place_shuffled",
-    "content": "content_shuffled",
-}
 SPATIAL_THRESHOLD = "point_label_share_250m_ge_0.8"
 RELEVANCE_SUBSET_LABELS = [
     "all",
@@ -232,12 +228,13 @@ def _build_delta_rows(
     lookup = {
         (row["model"], row["task"], row["text_source"], row["subset"]): row for row in overview_rows
     }
+    shuffled_pairs = shuffled_text_source_pairs({str(row["text_source"]) for row in overview_rows})
     output: list[dict[str, Any]] = []
     for row in overview_rows:
         model = row["model"]
         task = row["task"]
         text_source = str(row["text_source"])
-        shuffled = SHUFFLED_TEXT_SOURCE_PAIRS.get(text_source)
+        shuffled = shuffled_pairs.get(text_source)
         if not shuffled:
             continue
         ref = lookup.get((model, task, shuffled, row["subset"]))

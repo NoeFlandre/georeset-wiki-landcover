@@ -21,6 +21,7 @@ from georeset.analysis.prediction_loading import (
 )
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
+from georeset.classification.text_sources import shuffled_text_source_pairs
 from georeset.utils.json_io import (
     write_dict_rows_csv_atomic,
     write_dict_rows_markdown_atomic,
@@ -40,13 +41,6 @@ DEFAULT_SPATIAL_CONFIDENCE_PATH = Path(
 )
 DEFAULT_OUTPUT_DIR = Path("data/experiments/article_text_classification_relevance_stratified_v1")
 DEFAULT_EXPERIMENT_ID = "article_text_classification_relevance_stratified_v1"
-
-SHUFFLED_TEXT_SOURCE_PAIRS = {
-    "summary": "summary_shuffled",
-    "summary_no_place": "summary_no_place_shuffled",
-    "content": "content_shuffled",
-    "landuse_evidence_summary": "landuse_evidence_summary_shuffled",
-}
 
 EVIDENCE_TYPES = [
     "forest",
@@ -180,11 +174,12 @@ def _compute_shuffled_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]
     lookup = {
         (row["model"], row["task"], row["text_source"], row["relevance_subset"]): row for row in rows
     }
+    shuffled_pairs = shuffled_text_source_pairs({str(row["text_source"]) for row in rows})
     deltas: list[dict[str, Any]] = []
     for row in rows:
         metric = _metric_name(row["task"])
         source = row["text_source"]
-        shuffled = SHUFFLED_TEXT_SOURCE_PAIRS.get(source)
+        shuffled = shuffled_pairs.get(source)
         if not shuffled:
             continue
         ref = lookup.get((row["model"], row["task"], shuffled, row["relevance_subset"]))
