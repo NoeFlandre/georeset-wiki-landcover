@@ -161,6 +161,25 @@ def write_dict_rows_markdown_atomic(
     )
 
 
+def write_dict_rows_table_pair_atomic(
+    *,
+    output_dir: str | os.PathLike[str],
+    stem: str,
+    title: str,
+    rows: Sequence[Mapping[str, Any]],
+    columns: Sequence[str] | None = None,
+) -> None:
+    """Write matching CSV and Markdown row tables with the same columns."""
+    base_dir = Path(output_dir)
+    write_dict_rows_csv_atomic(base_dir / f"{stem}.csv", rows, columns=columns)
+    write_dict_rows_markdown_atomic(
+        base_dir / f"{stem}.md",
+        title=title,
+        rows=rows,
+        columns=columns,
+    )
+
+
 def _write_path_atomic(
     path: str | os.PathLike[str],
     *,

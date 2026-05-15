@@ -19,8 +19,7 @@ from georeset.analysis.shuffled_deltas import compute_shuffled_delta_rows
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.text.evidence_cards import EVIDENCE_CARD_VERSION
 from georeset.utils.json_io import (
-    write_dict_rows_csv_atomic,
-    write_dict_rows_markdown_atomic,
+    write_dict_rows_table_pair_atomic,
     write_json_atomic,
     write_text_atomic,
 )
@@ -242,54 +241,36 @@ def evaluate(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     all_subset_rows = [row for row in overview_rows if row["subset"] == "all"]
-    write_dict_rows_csv_atomic(
-        output_dir / "evidence_card_vs_previous_sources.csv",
-        all_subset_rows,
-        columns=OUTPUT_COLUMNS,
-    )
-    write_dict_rows_markdown_atomic(
-        output_dir / "evidence_card_vs_previous_sources.md",
+    write_dict_rows_table_pair_atomic(
+        output_dir=output_dir,
+        stem="evidence_card_vs_previous_sources",
         title="Evidence Card vs Previous Sources",
         rows=all_subset_rows,
         columns=OUTPUT_COLUMNS,
     )
-    write_dict_rows_csv_atomic(
-        output_dir / "evidence_card_quality_subsets.csv",
-        overview_rows,
-        columns=OUTPUT_COLUMNS,
-    )
-    write_dict_rows_markdown_atomic(
-        output_dir / "evidence_card_quality_subsets.md",
+    write_dict_rows_table_pair_atomic(
+        output_dir=output_dir,
+        stem="evidence_card_quality_subsets",
         title="Evidence Card Quality Subsets",
         rows=overview_rows,
         columns=OUTPUT_COLUMNS,
     )
-    write_dict_rows_csv_atomic(
-        output_dir / "evidence_card_shuffled_deltas.csv",
-        shuffled_delta_rows,
-    )
-    write_dict_rows_markdown_atomic(
-        output_dir / "evidence_card_shuffled_deltas.md",
+    write_dict_rows_table_pair_atomic(
+        output_dir=output_dir,
+        stem="evidence_card_shuffled_deltas",
         title="Evidence Card Shuffled Deltas",
         rows=shuffled_delta_rows,
     )
-    write_dict_rows_csv_atomic(
-        output_dir / "evidence_card_per_class_corine.csv",
-        per_class_rows,
-    )
-    write_dict_rows_markdown_atomic(
-        output_dir / "evidence_card_per_class_corine.md",
+    write_dict_rows_table_pair_atomic(
+        output_dir=output_dir,
+        stem="evidence_card_per_class_corine",
         title="Evidence Card CORINE Per-class Metrics",
         rows=per_class_rows,
     )
     osm_rows = [row for row in overview_rows if row["task"] == "osm"]
-    write_dict_rows_csv_atomic(
-        output_dir / "evidence_card_osm_metrics.csv",
-        osm_rows,
-        columns=OUTPUT_COLUMNS,
-    )
-    write_dict_rows_markdown_atomic(
-        output_dir / "evidence_card_osm_metrics.md",
+    write_dict_rows_table_pair_atomic(
+        output_dir=output_dir,
+        stem="evidence_card_osm_metrics",
         title="Evidence Card OSM Metrics",
         rows=osm_rows,
         columns=OUTPUT_COLUMNS,

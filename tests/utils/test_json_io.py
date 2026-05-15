@@ -13,6 +13,7 @@ from georeset.utils.json_io import (
     write_csv_atomic,
     write_dict_rows_csv_atomic,
     write_dict_rows_markdown_atomic,
+    write_dict_rows_table_pair_atomic,
     write_geojson_atomic,
     write_html_map_atomic,
     write_json_atomic,
@@ -259,3 +260,20 @@ def test_write_dict_rows_markdown_atomic_resolves_columns_and_escapes_cells(tmp_
         "|  | third |  | 1 |\n"
     )
     assert output_path.read_text(encoding="utf-8") == expected
+
+
+def test_write_dict_rows_table_pair_atomic_writes_csv_and_markdown(tmp_path) -> None:
+    output_dir = tmp_path / "tables"
+
+    write_dict_rows_table_pair_atomic(
+        output_dir=output_dir,
+        stem="overview",
+        title="Overview",
+        rows=[{"b": 2, "a": 1}, {"a": 3, "c": 4}],
+        columns=["a"],
+    )
+
+    assert (output_dir / "overview.csv").read_text(encoding="utf-8").splitlines()[0] == "a,b,c"
+    assert (output_dir / "overview.md").read_text(encoding="utf-8").startswith(
+        "# Overview\n\n| a | b | c |"
+    )
