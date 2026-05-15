@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Protocol, cast
+from typing import Protocol
 
 import numpy as np
 from numpy.typing import NDArray
+
+from georeset.vision.clip_transformers import select_clip_features
 
 UInt8ImageBatch = NDArray[np.uint8]
 FloatFeatures = NDArray[np.float32]
@@ -14,28 +16,6 @@ FloatFeatures = NDArray[np.float32]
 
 class PatchEncoder(Protocol):
     def __call__(self, batch: UInt8ImageBatch) -> FloatFeatures: ...
-
-
-class TorchFeatureTensor(Protocol):
-    def norm(self, dim: int, keepdim: bool) -> TorchFeatureTensor: ...
-
-    def detach(self) -> TorchFeatureTensor: ...
-
-    def cpu(self) -> TorchFeatureTensor: ...
-
-    def numpy(self) -> object: ...
-
-    def __truediv__(self, other: object) -> TorchFeatureTensor: ...
-
-
-def _select_image_features(output: TorchFeatureTensor | object) -> TorchFeatureTensor:
-    image_embeds = getattr(output, "image_embeds", None)
-    if image_embeds is not None:
-        return cast(TorchFeatureTensor, image_embeds)
-    pooler_output = getattr(output, "pooler_output", None)
-    if pooler_output is not None:
-        return cast(TorchFeatureTensor, pooler_output)
-    return output  # type: ignore[return-value]
 
 
 def embed_patch_cache(
@@ -79,7 +59,7 @@ def build_transformers_clip_encoder(
         images = [Image.fromarray(patch.astype(np.uint8), mode="RGB") for patch in batch]
         inputs = processor(images=images, return_tensors="pt").to(device)
         with torch.no_grad():
-            features = _select_image_features(model.get_image_features(**inputs))
+            features = select_clip_features(model.get_image_features(**inputs), "image_embeds")
             features = features / features.norm(dim=-1, keepdim=True)
         return np.asarray(features.detach().cpu().numpy(), dtype=np.float32)
 

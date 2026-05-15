@@ -2,15 +2,7 @@ from pathlib import Path
 
 import numpy as np
 
-from georeset.vision.clip_embeddings import _select_image_features, embed_patch_cache
-
-
-class _FakeClipOutput:
-    def __init__(self, *, pooler_output: object | None = None, image_embeds: object | None = None) -> None:
-        if pooler_output is not None:
-            self.pooler_output = pooler_output
-        if image_embeds is not None:
-            self.image_embeds = image_embeds
+from georeset.vision.clip_embeddings import embed_patch_cache
 
 
 def test_embed_patch_cache_writes_normalized_embeddings_with_pageids(tmp_path: Path) -> None:
@@ -39,12 +31,3 @@ def test_embed_patch_cache_writes_normalized_embeddings_with_pageids(tmp_path: P
     assert output["pageids"].tolist() == ["1", "2"]
     assert output["embeddings"].shape == (2, 1)
     assert output["embeddings"].dtype == np.float32
-
-
-def test_select_image_features_accepts_transformers_output_objects() -> None:
-    projected = object()
-    pooled = object()
-
-    assert _select_image_features(_FakeClipOutput(image_embeds=projected, pooler_output=pooled)) is projected
-    assert _select_image_features(_FakeClipOutput(pooler_output=pooled)) is pooled
-    assert _select_image_features(projected) is projected

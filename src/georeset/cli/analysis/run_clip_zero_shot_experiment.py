@@ -4,34 +4,12 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Protocol, cast
 
 import numpy as np
 from numpy.typing import NDArray
 
+from georeset.vision.clip_transformers import select_clip_features
 from georeset.vision.clip_zero_shot import TextEncoder, run_zero_shot_evaluation
-
-
-class TorchFeatureTensor(Protocol):
-    def norm(self, dim: int, keepdim: bool) -> TorchFeatureTensor: ...
-
-    def detach(self) -> TorchFeatureTensor: ...
-
-    def cpu(self) -> TorchFeatureTensor: ...
-
-    def numpy(self) -> object: ...
-
-    def __truediv__(self, other: object) -> TorchFeatureTensor: ...
-
-
-def _select_text_features(output: TorchFeatureTensor | object) -> TorchFeatureTensor:
-    text_embeds = getattr(output, "text_embeds", None)
-    if text_embeds is not None:
-        return cast(TorchFeatureTensor, text_embeds)
-    pooler_output = getattr(output, "pooler_output", None)
-    if pooler_output is not None:
-        return cast(TorchFeatureTensor, pooler_output)
-    return output  # type: ignore[return-value]
 
 
 def build_transformers_clip_text_encoder(*, model_name: str, device: str) -> TextEncoder:
@@ -51,7 +29,7 @@ def build_transformers_clip_text_encoder(*, model_name: str, device: str) -> Tex
     def encode(prompts: list[str]) -> NDArray[np.float32]:
         inputs = processor(text=prompts, padding=True, return_tensors="pt").to(device)
         with torch.no_grad():
-            features = _select_text_features(model.get_text_features(**inputs))
+            features = select_clip_features(model.get_text_features(**inputs), "text_embeds")
             features = features / features.norm(dim=-1, keepdim=True)
         return np.asarray(features.detach().cpu().numpy(), dtype=np.float32)
 
