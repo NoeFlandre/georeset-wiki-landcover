@@ -298,3 +298,22 @@ replacement for raw content. The next major experiment should freeze a
 high-confidence weak-supervision dataset using relevance, quality score, spatial
 confidence, and model agreement, then test it in downstream Sentinel patch
 training or evaluation.
+
+We then ran that first downstream image test in
+`012_clip_linear_probe_weak_labels`. The experiment used the existing quality
+signals to build four CORINE weak-label training tiers, fetched 798 Sentinel-2
+RGB patches from Planetary Computer, embedded them with frozen
+`openai/clip-vit-base-patch32` image features, and trained a simple NumPy linear
+probe. The fixed strict evaluation split had 35 examples, 5 per class.
+
+The best tier was the broad `all` training set: accuracy `0.600`, balanced
+accuracy `0.600`, and macro-F1 `0.586`. The `spatial_only` tier was close,
+with accuracy `0.571`, balanced accuracy `0.571`, and macro-F1 `0.589`. The
+stricter `quality_spatial` and `text_spatial_agreement` tiers were worse,
+falling to balanced accuracy `0.514` and `0.400`.
+
+The important finding is that the strict filters are too expensive as hard
+filters for downstream image training at this data size. They remove noise, but
+they also remove too many rare-class examples. For the next image experiment,
+quality signals should be used as soft weights, sampling controls, or evaluation
+strata rather than as a hard training-only gate.

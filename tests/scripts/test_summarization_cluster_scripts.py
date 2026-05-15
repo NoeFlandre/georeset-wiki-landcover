@@ -99,3 +99,28 @@ def test_classification_job_uses_job_local_caches_to_protect_home_quota():
     assert 'export HF_HOME="${HF_HOME:-${JOB_CACHE_DIR}/hf}"' in script
     assert 'export UV_CACHE_DIR="${UV_CACHE_DIR:-${JOB_CACHE_DIR}/uv}"' in script
     assert 'mkdir -p "${HF_HOME}" "${UV_CACHE_DIR}"' in script
+
+
+def test_clip_linear_probe_job_uses_vision_group_and_job_local_caches():
+    script = Path("scripts/cluster/run_clip_linear_probe_job.sh").read_text()
+
+    assert "uv sync --group dev --group vision" in script
+    assert 'export HF_HOME="${HF_HOME:-${JOB_CACHE_DIR}/hf}"' in script
+    assert 'export UV_CACHE_DIR="${UV_CACHE_DIR:-${JOB_CACHE_DIR}/uv}"' in script
+    assert "georeset-build-clip-label-splits" in script
+    assert "georeset-fetch-sentinel-patches" in script
+    assert "georeset-embed-clip-patches" in script
+    assert "georeset-run-clip-linear-probe-experiment" in script
+
+
+def test_submit_clip_linear_probe_syncs_outputs_safely():
+    script = Path("scripts/cluster/submit_clip_linear_probe.sh").read_text()
+
+    assert 'OUTPUT_DIR="${CLIP_OUTPUT_DIR:-data/experiments/clip_linear_probe_weak_labels_v1}"' in script
+    assert 'AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"' in script
+    assert "run_clip_linear_probe_job.sh" in script
+    assert "uv.lock" not in script
+    assert 'if [ "${AUTO_SYNC}" != "1" ]; then' in script
+    assert "rsync -az" in script
+    assert "sentinel_patches_rgb.npz" in script
+    assert "clip_embeddings.npz" in script

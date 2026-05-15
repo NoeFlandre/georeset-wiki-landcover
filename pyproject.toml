@@ -33,6 +33,14 @@ llm = [
     "huggingface-hub>=1.1.6",
     "llama-cpp-python>=0.3.16",
 ]
+vision = [
+    "pillow>=11.0.0",
+    "planetary-computer>=1.0.0",
+    "pystac-client>=0.9.0",
+    "rasterio>=1.4.0",
+    "torch>=2.5.0",
+    "transformers>=4.50.0",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/georeset"]
@@ -48,6 +56,9 @@ georeset-summarize-landuse-evidence = "georeset.cli.data.summarize_landuse_evide
 georeset-build-evidence-cards = "georeset.cli.data.build_evidence_cards:main"
 georeset-build-evidence-highlights = "georeset.cli.data.build_evidence_highlights:main"
 georeset-build-retrieved-evidence-windows = "georeset.cli.data.build_retrieved_evidence_windows:main"
+georeset-build-clip-label-splits = "georeset.cli.data.build_clip_label_splits:main"
+georeset-fetch-sentinel-patches = "georeset.cli.data.fetch_sentinel_patches:main"
+georeset-embed-clip-patches = "georeset.cli.data.embed_clip_patches:main"
 georeset-summarize-classification-experiment = "georeset.cli.analysis.summarize_classification_experiment:main"
 georeset-evaluate-spatial-confidence = "georeset.cli.analysis.evaluate_predictions_with_spatial_confidence:main"
 georeset-evaluate-relevance-stratified = "georeset.cli.analysis.evaluate_relevance_stratified_predictions:main"
@@ -57,6 +68,7 @@ georeset-evaluate-article-type-relevance-stratified = "georeset.cli.analysis.eva
 georeset-evaluate-evidence-card-experiment = "georeset.cli.analysis.evaluate_evidence_card_experiment:main"
 georeset-evaluate-evidence-highlights-experiment = "georeset.cli.analysis.evaluate_evidence_highlights_experiment:main"
 georeset-evaluate-retrieved-evidence-windows-experiment = "georeset.cli.analysis.evaluate_retrieved_evidence_windows_experiment:main"
+georeset-run-clip-linear-probe-experiment = "georeset.cli.analysis.run_clip_linear_probe_experiment:main"
 
 [tool.ruff]
 target-version = "py310"

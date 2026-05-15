@@ -1,0 +1,95 @@
+# CLIP linear probe over weak CORINE labels
+
+## Question
+
+Can the quality filters developed so far produce a useful weak-supervision set
+for satellite-image classification?
+
+This experiment tests that directly. Instead of asking an LLM to predict CORINE
+from article text, it uses the article coordinates to fetch Sentinel-2 RGB
+patches, embeds those patches with frozen CLIP image features, and trains a
+small linear probe to predict the CORINE level-2 label.
+
+## Setup
+
+- Experiment id: `clip_linear_probe_weak_labels_v1`
+- Image source: Sentinel-2 L2A RGB from Microsoft Planetary Computer
+- Date range: `2022-04-01/2022-10-31`
+- Cloud filter: `<25`
+- Patch size: `224x224`
+- Image model: `openai/clip-vit-base-patch32`, frozen image encoder
+- Classifier: NumPy softmax linear probe
+- Evaluation: fixed strict split, 5 examples per class, 35 examples total
+
+The split builder creates one fixed evaluation set from spatially reliable and
+quality-screened articles, then excludes those pageids from every training tier.
+This keeps the comparison focused on the training-label policy.
+
+Training tiers:
+
+- `all`: all available CORINE weak labels after excluding eval pageids
+- `spatial_only`: `point_label_share_250m >= 0.8` and dominant 250 m label
+  matches the point label
+- `quality_spatial`: `spatial_only` plus medium/high text relevance, high or
+  very-high quality, and no high uncertainty
+- `text_spatial_agreement`: `quality_spatial` plus Qwen and Gemma both agreeing
+  with the CORINE point label
+
+## Split sizes
+
+| split | tier | examples |
+| --- | --- | ---: |
+| eval | eval_strict | 35 |
+| train | all | 482 |
+| train | spatial_only | 357 |
+| train | quality_spatial | 184 |
+| train | text_spatial_agreement | 142 |
+
+The strictest tier is much smaller and has very few minority-class examples. In
+particular, `text_spatial_agreement` has only 1-4 training examples for several
+non-forest classes.
+
+## Results
+
+| tier | train | eval | accuracy | balanced accuracy | macro-F1 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| all | 482 | 35 | 0.600 | 0.600 | 0.586 |
+| spatial_only | 357 | 35 | 0.571 | 0.571 | 0.589 |
+| quality_spatial | 184 | 35 | 0.514 | 0.514 | 0.490 |
+| text_spatial_agreement | 142 | 35 | 0.400 | 0.400 | 0.363 |
+
+The strongest result is the permissive `all` tier by accuracy and balanced
+accuracy. `spatial_only` is nearly tied on macro-F1 and uses fewer examples, so
+it remains useful as a conservative alternative. The stricter quality and
+text-agreement tiers underperform.
+
+## Interpretation
+
+This result does not invalidate the text-quality and agreement filters. It shows
+that they are too expensive as hard filters for this downstream image model at
+the current data size. CLIP linear probing needs broad class coverage. Removing
+noisy labels also removes many of the rare labels, and the rare-class data loss
+hurts more than the expected label-cleaning benefit.
+
+The image baseline is also intentionally simple: frozen CLIP features and a
+linear head. That is a good first test because it is cheap, deterministic, and
+easy to debug, but it is not a full Sentinel-specialized model. The result should
+be read as a weak-supervision data-policy test, not as the ceiling for satellite
+patch classification.
+
+## Conclusion
+
+For the next image experiment, do not train only on the strict
+`text_spatial_agreement` set. The best next step is to keep a broad training set
+and use the quality signals as soft weights or sampling controls, while keeping
+the strict set for evaluation or calibration. A Sentinel-native encoder would
+also be a stronger follow-up than further tightening the weak-label filters.
+
+## Artifacts
+
+- `data/experiments/clip_linear_probe_weak_labels_v1/label_splits.csv`
+- `data/experiments/clip_linear_probe_weak_labels_v1/sentinel_patches_rgb.npz`
+- `data/experiments/clip_linear_probe_weak_labels_v1/clip_embeddings.npz`
+- `data/experiments/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv`
+- `data/experiments/clip_linear_probe_weak_labels_v1/linear_probe_predictions.csv`
+- `data/experiments/clip_linear_probe_weak_labels_v1/summary.md`

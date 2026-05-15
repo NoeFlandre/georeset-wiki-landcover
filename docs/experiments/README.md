@@ -63,6 +63,11 @@ and next steps.
       shuffled controls.
     - Tests Qwen and Gemma on CORINE and OSM, then compares the compact
       retrieved windows against raw content and prior controls.
+12. [`012_clip_linear_probe_weak_labels/analysis.md`](012_clip_linear_probe_weak_labels/analysis.md)
+    - Builds weak-label training tiers from spatial confidence, quality scores,
+      and Qwen/Gemma agreement.
+    - Fetches Sentinel-2 RGB patches, embeds them with frozen CLIP image
+      features, and trains a linear probe for CORINE level-2 prediction.
 
 ## Data Artifact Map
 
@@ -92,6 +97,7 @@ The reports cite artifacts under `data/experiments/`:
 - `article_text_retrieved_evidence_windows_v1__qwen3_6_27b_q4_0/`
 - `article_text_retrieved_evidence_windows_v1__gemma4_31b_it_q4_0/`
 - `retrieved_evidence_windows_comparison_v1/`
+- `clip_linear_probe_weak_labels_v1/`
 
 Working classifier checkpoints live separately under `data/classification/runs/`.
 Those are useful for resumability, but the stable research outputs are the
