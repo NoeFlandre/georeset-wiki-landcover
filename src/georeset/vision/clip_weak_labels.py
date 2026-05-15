@@ -87,6 +87,9 @@ def build_clip_label_splits(
     eval_per_class: int = 5,
     train_per_class: int = 80,
 ) -> pd.DataFrame:
+    if eval_per_class <= 0 or train_per_class <= 0:
+        raise ValueError("per-class counts must be positive")
+
     frame = _base_frame(
         quality_scores_path=quality_scores_path,
         qwen_predictions_path=qwen_predictions_path,

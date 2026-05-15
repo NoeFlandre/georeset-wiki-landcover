@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from georeset.vision.clip_weak_labels import build_clip_label_splits
 
@@ -68,3 +69,33 @@ def test_build_clip_label_splits_creates_fixed_eval_and_train_tiers(tmp_path: Pa
     assert agreement_rows["qwen_prediction"].eq(agreement_rows["label"]).all()
     assert agreement_rows["gemma_prediction"].eq(agreement_rows["label"]).all()
 
+
+def test_build_clip_label_splits_rejects_non_positive_per_class_counts(tmp_path: Path) -> None:
+    quality_path = tmp_path / "quality.csv"
+    qwen_path = tmp_path / "qwen.json"
+    gemma_path = tmp_path / "gemma.json"
+    pd.DataFrame(
+        [
+            {
+                "pageid": "1",
+                "corine_label": "21",
+                "quality_bin": "quality_high",
+                "landcover_relevance": "high",
+                "uncertainty": "low",
+                "point_label_share_250m": 0.9,
+                "dominant_matches_point_label_250m": True,
+            }
+        ]
+    ).to_csv(quality_path, index=False)
+    _write_predictions(qwen_path, {"1": "21"})
+    _write_predictions(gemma_path, {"1": "21"})
+
+    with pytest.raises(ValueError, match="per-class counts must be positive"):
+        build_clip_label_splits(
+            quality_scores_path=quality_path,
+            qwen_predictions_path=qwen_path,
+            gemma_predictions_path=gemma_path,
+            seed=11,
+            eval_per_class=0,
+            train_per_class=1,
+        )
