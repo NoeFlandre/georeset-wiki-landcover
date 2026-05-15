@@ -9,6 +9,7 @@ import pytest
 
 from georeset.analysis.prediction_loading import (
     infer_model_from_metadata,
+    load_annotated_prediction_records,
     load_prediction_records,
     prediction_identity,
 )
@@ -139,6 +140,38 @@ def test_load_prediction_records_includes_source_parent_dir_when_requested(tmp_p
 
     assert "source_parent_experiment_dir" in loaded.columns
     assert loaded["source_parent_experiment_dir"].iloc[0] == str(experiment_dir)
+
+
+def test_load_annotated_prediction_records_adds_model_source_and_optional_model_key(
+    tmp_path: Path,
+) -> None:
+    experiment_dir = tmp_path / "annotated"
+    experiment_dir.mkdir()
+    _write_json(
+        experiment_dir / "corine_level2_summary_predictions.json",
+        {
+            "1": {
+                "pageid": 1,
+                "target": 31,
+                "prediction": 31,
+                "metadata": {"model": "explicit-model.gguf"},
+            }
+        },
+    )
+
+    loaded = load_annotated_prediction_records(
+        experiment_dir,
+        text_sources={"summary"},
+        source_group="baseline",
+        model_key="qwen",
+    )
+
+    row = loaded.iloc[0]
+    assert row["target"] == "31"
+    assert row["model"] == "explicit-model.gguf"
+    assert row["model_key"] == "qwen"
+    assert row["source_group"] == "baseline"
+    assert row["source_experiment_dir"] == str(experiment_dir)
 
 
 def test_infer_model_from_metadata_prefers_metadata_and_falls_back_to_directory_name() -> None:

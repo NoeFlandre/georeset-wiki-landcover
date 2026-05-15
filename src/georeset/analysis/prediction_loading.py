@@ -100,3 +100,26 @@ def load_prediction_records(
         for row in rows:
             row["source_parent_experiment_dir"] = str(experiment_dir)
     return pd.DataFrame(rows)
+
+
+def load_annotated_prediction_records(
+    experiment_dir: Path,
+    *,
+    text_sources: Collection[str],
+    source_group: str,
+    model_key: str | None = None,
+) -> pd.DataFrame:
+    """Load prediction records and attach experiment-level analysis metadata."""
+    records = load_prediction_records(
+        experiment_dir,
+        text_sources=text_sources,
+        normalize_targets=True,
+    )
+    if records.empty:
+        return records
+    records["model"] = infer_model_for_records(records, experiment_dir)
+    if model_key is not None:
+        records["model_key"] = model_key
+    records["source_group"] = source_group
+    records["source_experiment_dir"] = str(experiment_dir)
+    return records

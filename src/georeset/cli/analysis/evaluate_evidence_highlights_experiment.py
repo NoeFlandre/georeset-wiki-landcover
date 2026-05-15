@@ -14,7 +14,7 @@ from georeset.analysis.evaluation_metrics import (
     compute_single_label_subset_metrics,
 )
 from georeset.analysis.pageid_frames import load_optional_pageid_csv
-from georeset.analysis.prediction_loading import infer_model_for_records, load_prediction_records
+from georeset.analysis.prediction_loading import load_annotated_prediction_records
 from georeset.analysis.shuffled_deltas import compute_shuffled_delta_rows
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.text.evidence_highlights import EVIDENCE_HIGHLIGHTS_VERSION
@@ -147,18 +147,12 @@ def _load_records(
     source_group: str,
     model_key: str,
 ) -> pd.DataFrame:
-    records = load_prediction_records(
+    return load_annotated_prediction_records(
         experiment_dir,
         text_sources=text_sources,
-        normalize_targets=True,
+        source_group=source_group,
+        model_key=model_key,
     )
-    if records.empty:
-        return records
-    records["model"] = infer_model_for_records(records, experiment_dir)
-    records["model_key"] = model_key
-    records["source_group"] = source_group
-    records["source_experiment_dir"] = str(experiment_dir)
-    return records
 
 
 def _label_universe(records: pd.DataFrame, task: str) -> list[str]:
