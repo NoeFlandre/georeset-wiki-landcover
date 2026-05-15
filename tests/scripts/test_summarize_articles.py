@@ -116,6 +116,15 @@ class TestArticleSummarizer:
         with pytest.raises(ValueError, match="private thinking markers"):
             summarizer._summary_from_response('{"summary": "<think>hidden</think> Résumé"}')
 
+    def test_generate_summary_rejects_unexpected_json_fields(self):
+        """Should reject fields outside the public summary schema."""
+        summarizer = ArticleSummarizer(model_path=None)
+
+        with pytest.raises(ValueError, match="unexpected keys"):
+            summarizer._summary_from_response(
+                '{"summary": "Résumé public.", "thinking": "private"}'
+            )
+
     def test_process_file_skips_existing_and_saves_progress(self):
         """Should skip already-summarized articles and save progress."""
         with tempfile.TemporaryDirectory() as tmpdir:

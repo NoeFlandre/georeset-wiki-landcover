@@ -128,7 +128,8 @@ class ArticleSummarizer:
             raise ValueError("LLM summary JSON must be an object")
 
         payload_dict = cast(dict[str, Any], payload)
-        unexpected_keys = set(payload_dict.keys()) - set(self.SUMMARY_SCHEMA["properties"])  # type: ignore[call-overload]
+        schema_properties = cast(dict[str, Any], self.SUMMARY_SCHEMA["properties"])
+        unexpected_keys = set(payload_dict) - set(schema_properties)
         if unexpected_keys:
             raise ValueError(
                 f"LLM summary JSON contains unexpected keys: {sorted(unexpected_keys)}"
