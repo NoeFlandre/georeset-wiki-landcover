@@ -198,3 +198,25 @@ def compute_multilabel_subset_metrics(
         "exact_match_accuracy"
     ]
     return metrics
+
+
+def compute_task_subset_metrics(
+    records: pd.DataFrame,
+    *,
+    task: str,
+    labels: list[str],
+) -> tuple[SpatialSubsetMetricResult, list[dict[str, Any]]]:
+    if task == "corine_level2":
+        return compute_single_label_subset_metrics(
+            records,
+            labels,
+            include_records_without_target=False,
+            include_missing_predictions=False,
+        )
+    metrics = compute_multilabel_subset_metrics(
+        records,
+        labels,
+        require_list_targets=True,
+        denominator_by_predicted=False,
+    )
+    return metrics, []

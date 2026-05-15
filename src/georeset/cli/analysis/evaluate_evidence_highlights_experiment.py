@@ -10,8 +10,7 @@ from typing import Any
 import pandas as pd
 
 from georeset.analysis.evaluation_metrics import (
-    compute_multilabel_subset_metrics,
-    compute_single_label_subset_metrics,
+    compute_task_subset_metrics,
 )
 from georeset.analysis.label_universe import label_universe
 from georeset.analysis.pageid_frames import load_optional_pageid_csv
@@ -158,21 +157,7 @@ def _load_records(
 def _metric_row(records: pd.DataFrame, subset: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     task = str(records["task"].iloc[0])
     labels = label_universe(records, task)
-    if task == "corine_level2":
-        metrics, per_class = compute_single_label_subset_metrics(
-            records,
-            labels,
-            include_records_without_target=False,
-            include_missing_predictions=False,
-        )
-    else:
-        metrics = compute_multilabel_subset_metrics(
-            records,
-            labels,
-            require_list_targets=True,
-            denominator_by_predicted=False,
-        )
-        per_class = []
+    metrics, per_class = compute_task_subset_metrics(records, task=task, labels=labels)
     row = {
         "subset": subset,
         "model_key": records["model_key"].iloc[0],

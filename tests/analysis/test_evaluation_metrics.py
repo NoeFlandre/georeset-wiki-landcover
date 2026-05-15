@@ -8,6 +8,7 @@ import pytest
 from georeset.analysis.evaluation_metrics import (
     compute_multilabel_subset_metrics,
     compute_single_label_subset_metrics,
+    compute_task_subset_metrics,
 )
 
 
@@ -180,3 +181,39 @@ def test_multilabel_subset_metrics_supported_denominator_switch() -> None:
     )
 
     assert metrics["hamming_loss"] == 1.0
+
+
+def test_compute_task_subset_metrics_dispatches_corine_and_returns_per_class() -> None:
+    records = pd.DataFrame(
+        [
+            {"pageid": "1", "target": "31", "prediction": "31", "parse_status": "ok"},
+            {"pageid": "2", "target": "21", "prediction": "31", "parse_status": "ok"},
+        ]
+    )
+
+    metrics, per_class = compute_task_subset_metrics(
+        records,
+        task="corine_level2",
+        labels=["21", "31"],
+    )
+
+    assert metrics["balanced_accuracy"] == pytest.approx(0.5)
+    assert [row["label"] for row in per_class] == ["21", "31"]
+
+
+def test_compute_task_subset_metrics_dispatches_multilabel_without_per_class() -> None:
+    records = pd.DataFrame(
+        [
+            {"pageid": "1", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
+            {"pageid": "2", "target": ["water"], "prediction": ["wood"], "parse_status": "ok"},
+        ]
+    )
+
+    metrics, per_class = compute_task_subset_metrics(
+        records,
+        task="osm",
+        labels=["water", "wood"],
+    )
+
+    assert metrics["jaccard"] == pytest.approx(0.5)
+    assert per_class == []
