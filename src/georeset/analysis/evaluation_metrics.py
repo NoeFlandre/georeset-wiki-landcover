@@ -213,6 +213,8 @@ def compute_task_subset_metrics(
             include_records_without_target=False,
             include_missing_predictions=False,
         )
+    if task != "osm":
+        raise ValueError(f"Unsupported classification task for subset metrics: {task}")
     metrics = compute_multilabel_subset_metrics(
         records,
         labels,

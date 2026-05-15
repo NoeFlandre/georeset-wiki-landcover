@@ -217,3 +217,14 @@ def test_compute_task_subset_metrics_dispatches_multilabel_without_per_class() -
 
     assert metrics["jaccard"] == pytest.approx(0.5)
     assert per_class == []
+
+
+def test_compute_task_subset_metrics_rejects_unknown_task() -> None:
+    records = pd.DataFrame(
+        [
+            {"pageid": "1", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
+        ]
+    )
+
+    with pytest.raises(ValueError, match="Unsupported classification task"):
+        compute_task_subset_metrics(records, task="unknown", labels=["wood"])
