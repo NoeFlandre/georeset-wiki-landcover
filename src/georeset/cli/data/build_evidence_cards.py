@@ -9,6 +9,7 @@ from typing import Any
 import pandas as pd
 
 from georeset.analysis.article_type_metadata_loading import load_article_type_metadata
+from georeset.analysis.pageid_frames import dataframe_by_pageid, load_optional_pageid_csv
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.cli.data.json_inputs import (
     index_json_records_by_pageid,
@@ -55,29 +56,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _dataframe_by_pageid(frame: pd.DataFrame) -> dict[str, pd.Series]:
-    if frame.empty or "pageid" not in frame.columns:
-        return {}
-    indexed: dict[str, pd.Series] = {}
-    for _, row in frame.iterrows():
-        indexed[str(row["pageid"])] = row
-    return indexed
-
-
 def _load_spatial(path: Path) -> pd.DataFrame:
     if not path.exists():
         return pd.DataFrame()
     return load_spatial_confidence(path, allow_missing_pageid=True)
-
-
-def _load_quality(path: Path) -> pd.DataFrame:
-    if not path.exists():
-        return pd.DataFrame()
-    frame = pd.read_csv(path, dtype={"pageid": str})
-    if "pageid" not in frame.columns:
-        return pd.DataFrame()
-    frame["pageid"] = frame["pageid"].astype(str)
-    return frame
 
 
 def build_cards(
@@ -94,9 +76,9 @@ def build_cards(
     evidence_by_pageid = index_json_records_by_pageid(
         read_optional_json_mapping(evidence_metadata_path)
     )
-    article_types = _dataframe_by_pageid(load_article_type_metadata(article_type_metadata_path))
-    spatial = _dataframe_by_pageid(_load_spatial(spatial_confidence_path))
-    quality = _dataframe_by_pageid(_load_quality(quality_scores_path))
+    article_types = dataframe_by_pageid(load_article_type_metadata(article_type_metadata_path))
+    spatial = dataframe_by_pageid(_load_spatial(spatial_confidence_path))
+    quality = dataframe_by_pageid(load_optional_pageid_csv(quality_scores_path))
 
     output: dict[str, dict[str, Any]] = {}
     for pageid, article in sorted(articles.items(), key=lambda item: str(item[0])):

@@ -13,6 +13,7 @@ from georeset.analysis.evaluation_metrics import (
     compute_multilabel_subset_metrics,
     compute_single_label_subset_metrics,
 )
+from georeset.analysis.pageid_frames import load_optional_pageid_csv
 from georeset.analysis.prediction_loading import infer_model_for_records, load_prediction_records
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.text.evidence_cards import EVIDENCE_CARD_VERSION
@@ -101,16 +102,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--experiment-id", default=DEFAULT_EXPERIMENT_ID)
     return parser.parse_args(argv)
-
-
-def _load_quality_scores(path: Path) -> pd.DataFrame:
-    if not path.exists():
-        return pd.DataFrame(columns=["pageid"])
-    frame = pd.read_csv(path, dtype={"pageid": str})
-    if "pageid" not in frame.columns:
-        return pd.DataFrame(columns=["pageid"])
-    frame["pageid"] = frame["pageid"].astype(str)
-    return frame
 
 
 def _load_records(
@@ -274,7 +265,7 @@ def evaluate(
     if records.empty:
         raise ValueError("No prediction records were loaded.")
 
-    quality_scores = _load_quality_scores(quality_scores_path)
+    quality_scores = load_optional_pageid_csv(quality_scores_path)
     if not quality_scores.empty:
         records = records.merge(quality_scores, on="pageid", how="left")
 
