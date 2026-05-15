@@ -19,6 +19,7 @@ def test_base_text_source_maps_shuffled_variants_to_real_inputs():
         base_text_source("content_with_evidence_highlights_shuffled")
         == "content_with_evidence_highlights"
     )
+    assert base_text_source("retrieved_evidence_windows_shuffled") == "retrieved_evidence_windows"
     assert base_text_source("content_shuffled") == "content"
     assert base_text_source("summary") == "summary"
 
@@ -31,6 +32,10 @@ def test_text_source_choices_include_primary_and_shuffled_sources():
         "evidence_card",
         "content_with_evidence_card",
         "content_with_evidence_highlights",
+        "retrieved_evidence_windows",
+        "retrieved_evidence_sentences_only",
+        "random_sentence_windows",
+        "retrieved_evidence_windows_no_place",
         "content",
         "summary_shuffled",
         "summary_no_place_shuffled",
@@ -38,6 +43,7 @@ def test_text_source_choices_include_primary_and_shuffled_sources():
         "evidence_card_shuffled",
         "content_with_evidence_card_shuffled",
         "content_with_evidence_highlights_shuffled",
+        "retrieved_evidence_windows_shuffled",
         "content_shuffled",
     ]
     assert SHUFFLED_TEXT_SOURCES["content_shuffled"] == "content"
@@ -51,17 +57,20 @@ def test_text_source_choices_include_primary_and_shuffled_sources():
         SHUFFLED_TEXT_SOURCES["content_with_evidence_highlights_shuffled"]
         == "content_with_evidence_highlights"
     )
+    assert SHUFFLED_TEXT_SOURCES["retrieved_evidence_windows_shuffled"] == (
+        "retrieved_evidence_windows"
+    )
 
 
 def test_text_source_sort_key_follows_declared_choice_order():
     ordered = sorted(
-        ["content_shuffled", "summary", "content_with_evidence_highlights", "unknown_source"],
+        ["content_shuffled", "summary", "retrieved_evidence_windows", "unknown_source"],
         key=text_source_sort_key,
     )
 
     assert ordered == [
         "summary",
-        "content_with_evidence_highlights",
+        "retrieved_evidence_windows",
         "content_shuffled",
         "unknown_source",
     ]
@@ -75,6 +84,7 @@ def test_shuffled_text_source_pairs_are_derived_from_classification_policy():
         "evidence_card": "evidence_card_shuffled",
         "content_with_evidence_card": "content_with_evidence_card_shuffled",
         "content_with_evidence_highlights": "content_with_evidence_highlights_shuffled",
+        "retrieved_evidence_windows": "retrieved_evidence_windows_shuffled",
         "content": "content_shuffled",
     }
     assert shuffled_text_source_pairs({"summary", "content_shuffled", "content"}) == {

@@ -47,6 +47,7 @@ georeset-summarize-articles = "georeset.cli.data.summarize_articles:main"
 georeset-summarize-landuse-evidence = "georeset.cli.data.summarize_landuse_evidence:main"
 georeset-build-evidence-cards = "georeset.cli.data.build_evidence_cards:main"
 georeset-build-evidence-highlights = "georeset.cli.data.build_evidence_highlights:main"
+georeset-build-retrieved-evidence-windows = "georeset.cli.data.build_retrieved_evidence_windows:main"
 georeset-summarize-classification-experiment = "georeset.cli.analysis.summarize_classification_experiment:main"
 georeset-evaluate-spatial-confidence = "georeset.cli.analysis.evaluate_predictions_with_spatial_confidence:main"
 georeset-evaluate-relevance-stratified = "georeset.cli.analysis.evaluate_relevance_stratified_predictions:main"
@@ -55,6 +56,7 @@ georeset-fetch-wikipedia-article-types = "georeset.cli.data.fetch_wikipedia_arti
 georeset-evaluate-article-type-relevance-stratified = "georeset.cli.analysis.evaluate_article_type_relevance_stratified:main"
 georeset-evaluate-evidence-card-experiment = "georeset.cli.analysis.evaluate_evidence_card_experiment:main"
 georeset-evaluate-evidence-highlights-experiment = "georeset.cli.analysis.evaluate_evidence_highlights_experiment:main"
+georeset-evaluate-retrieved-evidence-windows-experiment = "georeset.cli.analysis.evaluate_retrieved_evidence_windows_experiment:main"
 
 [tool.ruff]
 target-version = "py310"

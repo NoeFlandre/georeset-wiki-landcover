@@ -57,6 +57,12 @@ and next steps.
     - Tests Qwen and Gemma on highlighted content and shuffled highlighted
       content against raw content, generic summaries, evidence cards, and
       land-use evidence-summary baselines.
+11. [`011_retrieved_evidence_windows/analysis.md`](011_retrieved_evidence_windows/analysis.md)
+    - Builds deterministic raw sentence windows around matched land-cover
+      evidence sentences, plus sentence-only, random-window, no-place, and
+      shuffled controls.
+    - Tests Qwen and Gemma on CORINE and OSM, then compares the compact
+      retrieved windows against raw content and prior controls.
 
 ## Data Artifact Map
 
@@ -83,6 +89,9 @@ The reports cite artifacts under `data/experiments/`:
 - `article_text_evidence_highlights_v1__qwen3_6_27b_q4_0/`
 - `article_text_evidence_highlights_v1__gemma4_31b_it_q4_0/`
 - `evidence_highlights_comparison_v1/`
+- `article_text_retrieved_evidence_windows_v1__qwen3_6_27b_q4_0/`
+- `article_text_retrieved_evidence_windows_v1__gemma4_31b_it_q4_0/`
+- `retrieved_evidence_windows_comparison_v1/`
 
 Working classifier checkpoints live separately under `data/classification/runs/`.
 Those are useful for resumability, but the stable research outputs are the

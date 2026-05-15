@@ -11,6 +11,7 @@ SHUFFLED_TEXT_SOURCES = {
     "evidence_card_shuffled": "evidence_card",
     "content_with_evidence_card_shuffled": "content_with_evidence_card",
     "content_with_evidence_highlights_shuffled": "content_with_evidence_highlights",
+    "retrieved_evidence_windows_shuffled": "retrieved_evidence_windows",
 }
 TEXT_SOURCE_CHOICES = [
     "summary",
@@ -19,6 +20,10 @@ TEXT_SOURCE_CHOICES = [
     "evidence_card",
     "content_with_evidence_card",
     "content_with_evidence_highlights",
+    "retrieved_evidence_windows",
+    "retrieved_evidence_sentences_only",
+    "random_sentence_windows",
+    "retrieved_evidence_windows_no_place",
     "content",
     "summary_shuffled",
     "summary_no_place_shuffled",
@@ -26,6 +31,7 @@ TEXT_SOURCE_CHOICES = [
     "evidence_card_shuffled",
     "content_with_evidence_card_shuffled",
     "content_with_evidence_highlights_shuffled",
+    "retrieved_evidence_windows_shuffled",
     "content_shuffled",
 ]
 TEXT_SOURCE_ORDER = {text_source: index for index, text_source in enumerate(TEXT_SOURCE_CHOICES)}

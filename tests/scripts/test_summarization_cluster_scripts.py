@@ -90,3 +90,12 @@ def test_submit_landuse_evidence_script_uses_safe_default_sync_path():
     assert "Manual sync: GEORESET_SUMMARY_OUTPUT=${OUTPUT_PATH}" in script
     assert "GEORESET_LANDUSE_EVIDENCE_INPUT_PATH" in script
     assert "GEORESET_LANDUSE_EVIDENCE_TEMPERATURE" in script
+
+
+def test_classification_job_uses_job_local_caches_to_protect_home_quota():
+    script = Path("scripts/cluster/run_classification_job.sh").read_text()
+
+    assert 'JOB_CACHE_DIR="${GEORESET_JOB_CACHE_DIR:-${TMPDIR:-/tmp}/georeset_${OAR_JOB_ID:-manual}}"' in script
+    assert 'export HF_HOME="${HF_HOME:-${JOB_CACHE_DIR}/hf}"' in script
+    assert 'export UV_CACHE_DIR="${UV_CACHE_DIR:-${JOB_CACHE_DIR}/uv}"' in script
+    assert 'mkdir -p "${HF_HOME}" "${UV_CACHE_DIR}"' in script

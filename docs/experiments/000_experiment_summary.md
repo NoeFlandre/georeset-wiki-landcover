@@ -269,3 +269,32 @@ reliable article-location pairs using relevance and spatial diagnostics, not in
 compressing or prepending metadata to the article text. The next major step
 should therefore use these quality filters to build downstream weak-supervision
 datasets for Sentinel patch training or evaluation.
+
+We then ran `011_retrieved_evidence_windows`, which tested a stricter
+retrieval-style text source. Instead of prepending metadata, the builder selects
+raw Wikipedia sentences that match existing land-cover evidence, adds nearby
+context sentences, and compares that to sentence-only, random-window, no-place,
+and shuffled controls. The artifact covers all 1,251 articles; evidence was
+matched in 752 articles, with complete fallback coverage for the rest.
+
+The result is useful but not a reversal of the previous conclusion. Retrieved
+windows are clearly text-linked and better than random windows for CORINE. On
+all CORINE examples, Qwen retrieved windows reached balanced accuracy `0.266`
+versus `0.254` for random windows and `0.087` for shuffled retrieved windows.
+Gemma retrieved windows reached `0.245` versus `0.214` for random windows and
+`0.077` for shuffled retrieved windows. But full raw content still remained
+stronger: Qwen raw content was `0.281`, and Gemma raw content was `0.271`.
+
+On the best quality-plus-spatial subset, retrieved windows were competitive but
+still below raw content. For example, Gemma reached CORINE balanced accuracy
+`0.358` with retrieved windows and `0.362` with no-place retrieved windows, while
+raw content reached `0.375`. Qwen reached `0.341` with retrieved windows versus
+`0.394` for raw content. OSM did not benefit from retrieval windows; raw content
+remained best on Jaccard for both models.
+
+This confirms the research direction: retrieved windows are a strong compact
+diagnostic representation and a possible prompt-cost reduction source, but not a
+replacement for raw content. The next major experiment should freeze a
+high-confidence weak-supervision dataset using relevance, quality score, spatial
+confidence, and model agreement, then test it in downstream Sentinel patch
+training or evaluation.
