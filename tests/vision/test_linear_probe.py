@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from georeset.vision.linear_probe import fit_linear_probe, predict_linear_probe
 
@@ -33,3 +34,11 @@ def test_linear_probe_model_exposes_typed_attributes_and_legacy_mapping_access()
 
     assert model.weights.shape == (2, 2)
     assert model["weights"] is model.weights
+
+
+def test_linear_probe_rejects_non_positive_epochs() -> None:
+    train_x = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.float32)
+    train_y = np.array(["forest", "water"])
+
+    with pytest.raises(ValueError, match="epochs must be positive"):
+        fit_linear_probe(train_x, train_y, seed=7, epochs=0)

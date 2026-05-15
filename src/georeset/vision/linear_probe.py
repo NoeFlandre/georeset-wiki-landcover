@@ -57,6 +57,9 @@ def fit_linear_probe(
 ) -> LinearProbeModel:
     if len(features) != len(labels):
         raise ValueError("features and labels must have the same number of rows")
+    if epochs <= 0:
+        raise ValueError("epochs must be positive")
+
     unique_labels = np.array(sorted(set(labels.tolist())))
     if len(unique_labels) < 2:
         raise ValueError("linear probe needs at least two labels")
