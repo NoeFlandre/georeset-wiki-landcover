@@ -13,10 +13,10 @@ from georeset.analysis.evaluation_metrics import (
     compute_multilabel_subset_metrics,
     compute_single_label_subset_metrics,
 )
+from georeset.analysis.label_universe import label_universe
 from georeset.analysis.pageid_frames import load_optional_pageid_csv
 from georeset.analysis.prediction_loading import load_annotated_prediction_records
 from georeset.analysis.shuffled_deltas import compute_shuffled_delta_rows
-from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.text.evidence_cards import EVIDENCE_CARD_VERSION
 from georeset.utils.json_io import (
     write_dict_rows_table_pair_atomic,
@@ -116,20 +116,9 @@ def _load_records(
     )
 
 
-def _label_universe(records: pd.DataFrame, task: str) -> list[str]:
-    if task == "corine_level2":
-        return sorted(CORINE_LEVEL2_DESCRIPTIONS)
-    labels: set[str] = set()
-    for column in ["target", "prediction"]:
-        for values in records[column]:
-            if isinstance(values, list):
-                labels.update(str(value) for value in values)
-    return sorted(labels)
-
-
 def _metric_row(records: pd.DataFrame, subset: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     task = str(records["task"].iloc[0])
-    labels = _label_universe(records, task)
+    labels = label_universe(records, task)
     if task == "corine_level2":
         metrics, per_class = compute_single_label_subset_metrics(
             records,
