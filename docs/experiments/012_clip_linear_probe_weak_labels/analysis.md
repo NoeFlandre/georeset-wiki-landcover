@@ -93,3 +93,25 @@ also be a stronger follow-up than further tightening the weak-label filters.
 - `data/experiments/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv`
 - `data/experiments/clip_linear_probe_weak_labels_v1/linear_probe_predictions.csv`
 - `data/experiments/clip_linear_probe_weak_labels_v1/summary.md`
+
+## Artifact inventory
+
+Generated data artifacts are kept under ignored `data/experiments/` storage, not
+in git. The local completed run produced:
+
+| artifact | bytes | sha256 |
+| --- | ---: | --- |
+| `clip_embeddings.npz` | 1,660,360 | `fb8932e791888752b045ddec3a112b5bae5b1ff760ed9e68e7c8cfb5f8c53e52` |
+| `label_splits.csv` | 192,574 | `16a56c1c6ce2afc7a95c84ff0a3e016004d49cc4ed93e163886ae184b4b8fcf5` |
+| `linear_probe_metrics.csv` | 332 | `97ea65d30715b6290d438939cd59426d44db89187d144737c063c479af4ad723` |
+| `linear_probe_predictions.csv` | 3,914 | `fdce79665767dc76f7b6ff2396edfe8a18e259dc63d336308559222bfa0b7fb0` |
+| `sentinel_patches_rgb.npz` | 120,147,394 | `797dd39a8ddd5709c59b7c8844c1c5d58163ac6f297ebd609beb3a1012085f49` |
+| `summary.md` | 492 | `4016d213e49b4617bd582e84fb483e2b819408e742571dcd42e8202cff87a815` |
+
+Completion checks:
+
+- The Sentinel cache contains 798 unique pageids and patches with shape
+  `(798, 224, 224, 3)`.
+- The CLIP embedding cache contains 798 pageids and embeddings with shape
+  `(798, 512)`.
+- No Grid5000 jobs remained active after the run.
