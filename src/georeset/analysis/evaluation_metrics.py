@@ -11,12 +11,9 @@ import pandas as pd
 
 from georeset.classification.metrics import multilabel_metrics, single_label_metrics
 from georeset.contracts import PerLabelMetric, SpatialSubsetMetricResult
+from georeset.utils.math import safe_div
 
 MetricName = Literal["precision", "recall", "f1"]
-
-
-def _safe_div(num: float, den: float) -> float:
-    return num / den if den else 0.0
 
 
 def _weighted_from_per_label(
@@ -25,7 +22,7 @@ def _weighted_from_per_label(
     total_support = sum(values["support"] for values in per_label.values())
     if total_support == 0:
         return 0.0
-    return _safe_div(
+    return safe_div(
         sum(values[metric] * values["support"] for values in per_label.values()),
         total_support,
     )
@@ -174,17 +171,17 @@ def compute_multilabel_subset_metrics(
         pred_set = set(y_pred.get(pageid, []))
         union = true_set | pred_set
         if union:
-            jaccards.append(_safe_div(len(true_set & pred_set), len(union)))
+            jaccards.append(safe_div(len(true_set & pred_set), len(union)))
         else:
             jaccards.append(1.0)
         hamming_errors += len(true_set ^ pred_set)
-    metrics["jaccard"] = _safe_div(sum(jaccards), len(jaccards))
+    metrics["jaccard"] = safe_div(sum(jaccards), len(jaccards))
 
     if denominator_by_predicted:
-        metrics["hamming_loss"] = _safe_div(hamming_errors, len(y_pred) * len(labels))
+        metrics["hamming_loss"] = safe_div(hamming_errors, len(y_pred) * len(labels))
     else:
         total_labels = len(labels) if labels else 1
-        metrics["hamming_loss"] = _safe_div(hamming_errors, max(len(y_true) * total_labels, 1))
+        metrics["hamming_loss"] = safe_div(hamming_errors, max(len(y_true) * total_labels, 1))
 
     target_keys = [json.dumps(sorted(values), ensure_ascii=False) for values in y_true.values()]
     majority_key = Counter(target_keys).most_common(1)[0][0] if target_keys else "[]"

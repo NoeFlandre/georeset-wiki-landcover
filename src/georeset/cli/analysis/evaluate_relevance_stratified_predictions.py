@@ -85,10 +85,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _safe_div(num: float, den: float) -> float:
-    return num / den if den else 0.0
-
-
 def join_metadata_with_evidence(
     records: pd.DataFrame, evidence_metadata: pd.DataFrame
 ) -> pd.DataFrame:

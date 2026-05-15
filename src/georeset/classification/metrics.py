@@ -1,8 +1,5 @@
 from georeset.contracts import MultiLabelMetricResult, PerLabelMetric, SingleLabelMetricResult
-
-
-def _safe_div(num: float, den: float) -> float:
-    return num / den if den else 0.0
+from georeset.utils.math import safe_div
 
 
 def single_label_metrics(
@@ -12,8 +9,8 @@ def single_label_metrics(
     evaluated = {k: v for k, v in y_pred.items() if k in y_true}
     evaluated_n = len(evaluated)
     n_parse_error = n_eligible - evaluated_n
-    coverage = _safe_div(evaluated_n, n_eligible)
-    accuracy = _safe_div(
+    coverage = safe_div(evaluated_n, n_eligible)
+    accuracy = safe_div(
         sum(1 for k, v in evaluated.items() if y_true[k] == v),
         evaluated_n,
     )
@@ -30,13 +27,13 @@ def single_label_metrics(
         support = sum(1 for k, v in y_true.items() if v == label)
         per_label[label] = {
             "support": support,
-            "precision": _safe_div(tp, tp + fp),
-            "recall": _safe_div(tp, tp + fn),
-            "f1": _safe_div(2 * tp, 2 * tp + fp + fn),
+            "precision": safe_div(tp, tp + fp),
+            "recall": safe_div(tp, tp + fn),
+            "f1": safe_div(2 * tp, 2 * tp + fp + fn),
         }
-    macro_precision = _safe_div(sum(p["precision"] for p in per_label.values()), len(labels))
-    macro_recall = _safe_div(sum(p["recall"] for p in per_label.values()), len(labels))
-    macro_f1 = _safe_div(sum(p["f1"] for p in per_label.values()), len(labels))
+    macro_precision = safe_div(sum(p["precision"] for p in per_label.values()), len(labels))
+    macro_recall = safe_div(sum(p["recall"] for p in per_label.values()), len(labels))
+    macro_f1 = safe_div(sum(p["f1"] for p in per_label.values()), len(labels))
     return {
         "n_eligible": n_eligible,
         "n_predicted_ok": evaluated_n,
@@ -57,17 +54,17 @@ def multilabel_metrics(
     evaluated = {k: v for k, v in y_pred.items() if k in y_true}
     evaluated_n = len(evaluated)
     n_parse_error = n_eligible - evaluated_n
-    coverage = _safe_div(evaluated_n, n_eligible)
-    exact_match = _safe_div(
+    coverage = safe_div(evaluated_n, n_eligible)
+    exact_match = safe_div(
         sum(1 for k, v in evaluated.items() if set(y_true[k]) == set(v)),
         evaluated_n,
     )
     micro_tp = sum(1 for k, v in evaluated.items() for label in set(y_true[k]) & set(v))
     micro_fp = sum(1 for k, v in evaluated.items() for label in set(v) - set(y_true[k]))
     micro_fn = sum(1 for k, v in evaluated.items() for label in set(y_true[k]) - set(v))
-    micro_precision = _safe_div(micro_tp, micro_tp + micro_fp)
-    micro_recall = _safe_div(micro_tp, micro_tp + micro_fn)
-    micro_f1 = _safe_div(2 * micro_tp, 2 * micro_tp + micro_fp + micro_fn)
+    micro_precision = safe_div(micro_tp, micro_tp + micro_fp)
+    micro_recall = safe_div(micro_tp, micro_tp + micro_fn)
+    micro_f1 = safe_div(2 * micro_tp, 2 * micro_tp + micro_fp + micro_fn)
     per_label: dict[str, PerLabelMetric] = {}
     for label in labels:
         tp = sum(1 for k, v in evaluated.items() if label in y_true[k] and label in v)
@@ -76,13 +73,13 @@ def multilabel_metrics(
         support = sum(1 for k, v in y_true.items() if label in v)
         per_label[label] = {
             "support": support,
-            "precision": _safe_div(tp, tp + fp),
-            "recall": _safe_div(tp, tp + fn),
-            "f1": _safe_div(2 * tp, 2 * tp + fp + fn),
+            "precision": safe_div(tp, tp + fp),
+            "recall": safe_div(tp, tp + fn),
+            "f1": safe_div(2 * tp, 2 * tp + fp + fn),
         }
-    macro_precision = _safe_div(sum(p["precision"] for p in per_label.values()), len(labels))
-    macro_recall = _safe_div(sum(p["recall"] for p in per_label.values()), len(labels))
-    macro_f1 = _safe_div(sum(p["f1"] for p in per_label.values()), len(labels))
+    macro_precision = safe_div(sum(p["precision"] for p in per_label.values()), len(labels))
+    macro_recall = safe_div(sum(p["recall"] for p in per_label.values()), len(labels))
+    macro_f1 = safe_div(sum(p["f1"] for p in per_label.values()), len(labels))
     return {
         "n_eligible": n_eligible,
         "n_predicted_ok": evaluated_n,

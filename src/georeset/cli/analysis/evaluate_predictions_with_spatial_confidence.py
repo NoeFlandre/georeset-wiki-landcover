@@ -22,6 +22,7 @@ from georeset.utils.json_io import (
     write_json_atomic,
     write_text_atomic,
 )
+from georeset.utils.math import safe_div
 
 EXPERIMENT_ID = "article_text_classification_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
@@ -59,10 +60,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _safe_div(num: float, den: float) -> float:
-    return num / den if den else 0.0
-
-
 def _label_universe(records: pd.DataFrame) -> list[str]:
     labels: set[str] = set()
     for column in ["target", "prediction"]:
@@ -95,7 +92,7 @@ def _class_distribution(records: pd.DataFrame, task: str) -> list[dict[str, Any]
             support = sum(str(value) == label for value in records["target"])
         else:
             support = sum(label in [str(v) for v in values] for values in records["target"])
-        rows.append({"label": label, "support": support, "share": _safe_div(support, total)})
+        rows.append({"label": label, "support": support, "share": safe_div(support, total)})
     return rows
 
 
