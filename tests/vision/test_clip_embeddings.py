@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from georeset.vision.clip_embeddings import embed_patch_cache
 
@@ -31,3 +32,21 @@ def test_embed_patch_cache_writes_normalized_embeddings_with_pageids(tmp_path: P
     assert output["pageids"].tolist() == ["1", "2"]
     assert output["embeddings"].shape == (2, 1)
     assert output["embeddings"].dtype == np.float32
+
+
+def test_embed_patch_cache_rejects_non_positive_batch_size(tmp_path: Path) -> None:
+    patch_path = tmp_path / "patches.npz"
+    output_path = tmp_path / "embeddings.npz"
+    np.savez(
+        patch_path,
+        pageids=np.array(["1"]),
+        patches=np.ones((1, 2, 2, 3), dtype=np.uint8),
+    )
+
+    with pytest.raises(ValueError, match="batch_size must be positive"):
+        embed_patch_cache(
+            patches_path=patch_path,
+            output_path=output_path,
+            batch_size=0,
+            encoder=lambda batch: np.ones((len(batch), 1), dtype=np.float32),
+        )

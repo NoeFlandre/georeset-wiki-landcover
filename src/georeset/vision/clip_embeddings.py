@@ -26,6 +26,9 @@ def embed_patch_cache(
     batch_size: int,
     encoder: PatchEncoder,
 ) -> None:
+    if batch_size <= 0:
+        raise ValueError("batch_size must be positive")
+
     data = np.load(patches_path)
     pageids = data["pageids"].astype(str)
     patches = data["patches"]
