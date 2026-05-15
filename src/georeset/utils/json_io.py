@@ -11,6 +11,8 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, Protocol
 
+import numpy as np
+
 
 class HtmlMap(Protocol):
     """Minimal protocol implemented by Folium map objects."""
@@ -235,3 +237,12 @@ def write_parquet_atomic(
         frame.to_parquet(temp_path, **to_parquet_kwargs)
 
     _write_path_atomic(path, suffix=".tmp.parquet", writer=writer)
+
+
+def write_npz_atomic(path: str | os.PathLike[str], **arrays: Any) -> None:
+    """Write a NumPy NPZ archive through a temp file and atomic replacement."""
+
+    def writer(temp_path: Path) -> None:
+        np.savez(temp_path, **arrays)
+
+    _write_path_atomic(path, suffix=".tmp.npz", writer=writer)

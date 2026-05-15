@@ -2,6 +2,7 @@ import json
 import os
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import pytest
 from shapely.geometry import Point
@@ -18,6 +19,7 @@ from georeset.utils.json_io import (
     write_html_map_atomic,
     write_json_atomic,
     write_markdown_table_atomic,
+    write_npz_atomic,
     write_parquet_atomic,
     write_text_atomic,
 )
@@ -170,6 +172,30 @@ def test_write_parquet_atomic_preserves_existing_file_when_replace_fails(tmp_pat
         write_parquet_atomic(output_path, FakeFrame(), index=False)
 
     assert output_path.read_bytes() == b"old parquet"
+    assert not list(tmp_path.glob("*.tmp*"))
+
+
+def test_write_npz_atomic_writes_arrays_and_preserves_existing_file_when_replace_fails(
+    tmp_path, monkeypatch
+) -> None:
+    output_path = tmp_path / "cache.npz"
+    np.savez(output_path, pageids=np.array(["old"]), embeddings=np.array([[0.0]], dtype=np.float32))
+
+    def failing_replace(src, dst):
+        raise OSError("replace failed")
+
+    monkeypatch.setattr(os, "replace", failing_replace)
+
+    with pytest.raises(OSError, match="replace failed"):
+        write_npz_atomic(
+            output_path,
+            pageids=np.array(["new"]),
+            embeddings=np.array([[1.0]], dtype=np.float32),
+        )
+
+    existing = np.load(output_path)
+    assert existing["pageids"].tolist() == ["old"]
+    assert existing["embeddings"].tolist() == [[0.0]]
     assert not list(tmp_path.glob("*.tmp*"))
 
 

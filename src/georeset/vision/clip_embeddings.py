@@ -8,6 +8,7 @@ from typing import Protocol
 import numpy as np
 from numpy.typing import NDArray
 
+from georeset.utils.json_io import write_npz_atomic
 from georeset.vision.clip_transformers import select_clip_features
 
 UInt8ImageBatch = NDArray[np.uint8]
@@ -32,8 +33,7 @@ def embed_patch_cache(
     for start in range(0, len(patches), batch_size):
         encoded = encoder(patches[start : start + batch_size])
         embeddings.append(encoded.astype(np.float32))
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez(output_path, pageids=pageids, embeddings=np.vstack(embeddings).astype(np.float32))
+    write_npz_atomic(output_path, pageids=pageids, embeddings=np.vstack(embeddings).astype(np.float32))
 
 
 def build_transformers_clip_encoder(

@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
+from georeset.utils.json_io import write_npz_atomic
+
 RgbPatch = NDArray[np.uint8]
 PatchFetcher = Callable[[pd.Series], RgbPatch | None]
 
@@ -45,12 +47,11 @@ def write_patch_cache(
             raise ValueError("patch fetcher must return uint8 RGB arrays")
         pageids.append(pageid)
         patches.append(patch)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        np.savez(output_path, pageids=np.array(pageids), patches=np.stack(patches))
+        write_npz_atomic(output_path, pageids=np.array(pageids), patches=np.stack(patches))
         print(f"[{index}/{len(unique_rows)}] {pageid}: cached", flush=True)
     if not patches:
         raise ValueError("No Sentinel patches were fetched.")
-    np.savez(output_path, pageids=np.array(pageids), patches=np.stack(patches))
+    write_npz_atomic(output_path, pageids=np.array(pageids), patches=np.stack(patches))
 
 
 def sentinel2_planetary_computer_fetcher(
