@@ -15,6 +15,7 @@ from georeset.analysis.evaluation_metrics import (
 )
 from georeset.analysis.pageid_frames import load_optional_pageid_csv
 from georeset.analysis.prediction_loading import infer_model_for_records, load_prediction_records
+from georeset.analysis.shuffled_deltas import compute_shuffled_delta_rows
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.text.evidence_highlights import EVIDENCE_HIGHLIGHTS_VERSION
 from georeset.utils.json_io import (
@@ -247,45 +248,12 @@ def _compute_rows(records: pd.DataFrame) -> tuple[list[dict[str, Any]], list[dic
     return overview_rows, per_class_rows
 
 
-def _primary_score(row: dict[str, Any]) -> float:
-    if row["task"] == "corine_level2":
-        return float(row.get("balanced_accuracy", 0.0))
-    return float(row.get("jaccard", row.get("exact_match_accuracy", 0.0)))
-
-
 def _shuffled_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    by_key = {
-        (row["subset"], row["model_key"], row["task"], row["text_source"]): row for row in rows
-    }
-    deltas: list[dict[str, Any]] = []
-    for aligned, shuffled in SHUFFLED_PAIRS.items():
-        for row in rows:
-            if row["text_source"] != aligned:
-                continue
-            shuffled_row = by_key.get((row["subset"], row["model_key"], row["task"], shuffled))
-            if shuffled_row is None:
-                continue
-            aligned_score = _primary_score(row)
-            shuffled_score = _primary_score(shuffled_row)
-            deltas.append(
-                {
-                    "subset": row["subset"],
-                    "model_key": row["model_key"],
-                    "model": row["model"],
-                    "task": row["task"],
-                    "text_source": aligned,
-                    "shuffled_text_source": shuffled,
-                    "primary_metric": "balanced_accuracy"
-                    if row["task"] == "corine_level2"
-                    else "jaccard",
-                    "aligned_score": aligned_score,
-                    "shuffled_score": shuffled_score,
-                    "delta": aligned_score - shuffled_score,
-                    "n_aligned": row["n"],
-                    "n_shuffled": shuffled_row["n"],
-                }
-            )
-    return deltas
+    return compute_shuffled_delta_rows(
+        rows,
+        shuffled_pairs=SHUFFLED_PAIRS,
+        model_columns=("model_key", "model"),
+    )
 
 
 def evaluate(
