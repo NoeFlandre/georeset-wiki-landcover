@@ -50,3 +50,21 @@ def test_embed_patch_cache_rejects_non_positive_batch_size(tmp_path: Path) -> No
             batch_size=0,
             encoder=lambda batch: np.ones((len(batch), 1), dtype=np.float32),
         )
+
+
+def test_embed_patch_cache_rejects_empty_patch_cache(tmp_path: Path) -> None:
+    patch_path = tmp_path / "patches.npz"
+    output_path = tmp_path / "embeddings.npz"
+    np.savez(
+        patch_path,
+        pageids=np.array([], dtype=str),
+        patches=np.empty((0, 2, 2, 3), dtype=np.uint8),
+    )
+
+    with pytest.raises(ValueError, match="patch cache is empty"):
+        embed_patch_cache(
+            patches_path=patch_path,
+            output_path=output_path,
+            batch_size=1,
+            encoder=lambda batch: np.ones((len(batch), 1), dtype=np.float32),
+        )

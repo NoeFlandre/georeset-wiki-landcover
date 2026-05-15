@@ -32,6 +32,9 @@ def embed_patch_cache(
     data = np.load(patches_path)
     pageids = data["pageids"].astype(str)
     patches = data["patches"]
+    if len(patches) == 0:
+        raise ValueError("patch cache is empty")
+
     embeddings: list[FloatFeatures] = []
     for start in range(0, len(patches), batch_size):
         encoded = encoder(patches[start : start + batch_size])
