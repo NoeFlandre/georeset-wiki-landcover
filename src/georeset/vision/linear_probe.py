@@ -2,13 +2,35 @@
 
 from __future__ import annotations
 
-from typing import Any
+from dataclasses import dataclass
+from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
 
 FloatArray = NDArray[np.float64]
 StringArray = NDArray[np.str_]
+LinearProbeField = Literal["labels", "weights", "bias", "mean", "scale"]
+
+
+@dataclass(frozen=True)
+class LinearProbeModel:
+    labels: StringArray
+    weights: FloatArray
+    bias: FloatArray
+    mean: FloatArray
+    scale: FloatArray
+
+    def __getitem__(self, key: LinearProbeField) -> StringArray | FloatArray:
+        if key == "labels":
+            return self.labels
+        if key == "weights":
+            return self.weights
+        if key == "bias":
+            return self.bias
+        if key == "mean":
+            return self.mean
+        return self.scale
 
 
 def _standardize(features: NDArray[np.float32] | FloatArray) -> tuple[FloatArray, FloatArray, FloatArray]:
@@ -32,7 +54,7 @@ def fit_linear_probe(
     epochs: int = 500,
     learning_rate: float = 0.1,
     l2: float = 1e-4,
-) -> dict[str, Any]:
+) -> LinearProbeModel:
     if len(features) != len(labels):
         raise ValueError("features and labels must have the same number of rows")
     unique_labels = np.array(sorted(set(labels.tolist())))
@@ -49,19 +71,19 @@ def fit_linear_probe(
         diff = (probs - target) / len(x)
         weights -= learning_rate * (x.T @ diff + l2 * weights)
         bias -= learning_rate * diff.sum(axis=0)
-    return {
-        "labels": unique_labels,
-        "weights": weights,
-        "bias": bias,
-        "mean": mean,
-        "scale": scale,
-    }
+    return LinearProbeModel(
+        labels=unique_labels,
+        weights=weights,
+        bias=bias,
+        mean=mean,
+        scale=scale,
+    )
 
 
-def predict_linear_probe(model: dict[str, Any], features: NDArray[np.float32] | FloatArray) -> StringArray:
-    x = (features.astype(np.float64) - model["mean"]) / model["scale"]
-    indices = np.argmax(x @ model["weights"] + model["bias"], axis=1)
-    return np.asarray(model["labels"][indices])
+def predict_linear_probe(model: LinearProbeModel, features: NDArray[np.float32] | FloatArray) -> StringArray:
+    x = (features.astype(np.float64) - model.mean) / model.scale
+    indices = np.argmax(x @ model.weights + model.bias, axis=1)
+    return np.asarray(model.labels[indices])
 
 
 def evaluate_predictions(y_true: StringArray, y_pred: StringArray) -> dict[str, float]:

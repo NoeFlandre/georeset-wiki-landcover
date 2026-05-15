@@ -24,3 +24,12 @@ def test_linear_probe_learns_separable_embeddings() -> None:
     assert model["weights"].shape == (2, 3)
     assert model["labels"].tolist() == ["crop", "forest", "water"]
 
+
+def test_linear_probe_model_exposes_typed_attributes_and_legacy_mapping_access() -> None:
+    train_x = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.float32)
+    train_y = np.array(["forest", "water"])
+
+    model = fit_linear_probe(train_x, train_y, seed=7, epochs=1)
+
+    assert model.weights.shape == (2, 2)
+    assert model["weights"] is model.weights
