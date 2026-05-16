@@ -136,14 +136,10 @@ def _metric_row(records: pd.DataFrame, subset: str) -> tuple[dict[str, Any], lis
     ]
 
 
-def _subset_masks(records: pd.DataFrame) -> dict[str, pd.Series]:
-    return quality_subset_masks(records)
-
-
 def _compute_rows(records: pd.DataFrame) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     overview_rows: list[dict[str, Any]] = []
     per_class_rows: list[dict[str, Any]] = []
-    masks = _subset_masks(records)
+    masks = quality_subset_masks(records)
     for subset, mask in masks.items():
         subset_records = records[mask].copy()
         if subset_records.empty:
@@ -239,7 +235,12 @@ def evaluate(
                 "quality_scores_path": str(quality_scores_path),
             },
             "text_sources_compared": sorted(set(records["text_source"])),
-            "required_baselines": ["summary", "summary_no_place", "content", "landuse_evidence_summary"],
+            "required_baselines": [
+                "summary",
+                "summary_no_place",
+                "content",
+                "landuse_evidence_summary",
+            ],
             "subsets": sorted({row["subset"] for row in overview_rows}),
             "metrics": OUTPUT_COLUMNS,
         },

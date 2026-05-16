@@ -11,7 +11,8 @@ from typing import Any
 import pandas as pd
 
 from georeset.analysis.list_normalization import normalize_string_list
-from georeset.text.evidence_highlights import _json_scalar, _remove_title_variants
+from georeset.text.record_access import json_scalar, mapping_get
+from georeset.text.title_scrubbing import remove_title_variants
 
 RETRIEVED_EVIDENCE_WINDOWS_VERSION = 1
 EVIDENCE_TYPE_KEYWORDS = {
@@ -30,22 +31,12 @@ EVIDENCE_TYPE_KEYWORDS = {
 }
 
 
-def _mapping_get(mapping: Mapping[str, Any] | pd.Series | None, key: str, default: Any = None) -> Any:
-    if mapping is None:
-        return default
-    if isinstance(mapping, pd.Series):
-        return mapping.get(key, default)
-    return mapping.get(key, default)
-
-
 def _split_sentences(text: str) -> list[str]:
     normalized = re.sub(r"\s+", " ", text).strip()
     if not normalized:
         return []
     return [
-        sentence.strip()
-        for sentence in re.split(r"(?<=[.!?])\s+", normalized)
-        if sentence.strip()
+        sentence.strip() for sentence in re.split(r"(?<=[.!?])\s+", normalized) if sentence.strip()
     ]
 
 
@@ -59,8 +50,7 @@ def _matched_sentence_indices(sentences: list[str], evidence_sentences: list[str
     for index, sentence in enumerate(sentences):
         normalized_sentence = _normalized_match_text(sentence)
         if any(
-            evidence
-            and (evidence in normalized_sentence or normalized_sentence in evidence)
+            evidence and (evidence in normalized_sentence or normalized_sentence in evidence)
             for evidence in normalized_evidence
         ):
             matches.append(index)
@@ -121,12 +111,12 @@ def build_retrieved_evidence_window_record(
     content = str(article.get("content") or "").strip()
     sentences = _split_sentences(content)
     evidence_sentences = normalize_string_list(
-        _mapping_get(evidence, "evidence_sentences_no_place", [])
+        mapping_get(evidence, "evidence_sentences_no_place", [])
     )
     matches = _matched_sentence_indices(sentences, evidence_sentences)
     if not matches:
         matches = _keyword_sentence_indices(
-            sentences, normalize_string_list(_mapping_get(evidence, "evidence_types", []))
+            sentences, normalize_string_list(mapping_get(evidence, "evidence_types", []))
         )
     retrieved_indices = _window_indices(matches, len(sentences), context_radius)
     if not retrieved_indices and sentences:
@@ -138,7 +128,9 @@ def build_retrieved_evidence_window_record(
     retrieved_sentences = [sentences[index] for index in retrieved_indices]
     sentence_only = [sentences[index] for index in sentence_only_indices]
     random_sentences = [sentences[index] for index in random_indices]
-    no_place_sentences = [_remove_title_variants(sentence, title) for sentence in retrieved_sentences]
+    no_place_sentences = [
+        remove_title_variants(sentence, title) for sentence in retrieved_sentences
+    ]
 
     retrieved_text = _format_sentences(
         "Phrases brutes extraites de l'article.", retrieved_sentences
@@ -161,9 +153,9 @@ def build_retrieved_evidence_window_record(
         "retrieved_evidence_sentences_only": sentence_only_text,
         "random_sentence_windows": random_text,
         "retrieved_evidence_windows_no_place": no_place_text,
-        "landcover_relevance": _json_scalar(_mapping_get(evidence, "landcover_relevance")),
-        "uncertainty": _json_scalar(_mapping_get(evidence, "uncertainty")),
-        "evidence_types": normalize_string_list(_mapping_get(evidence, "evidence_types", [])),
+        "landcover_relevance": json_scalar(mapping_get(evidence, "landcover_relevance")),
+        "uncertainty": json_scalar(mapping_get(evidence, "uncertainty")),
+        "evidence_types": normalize_string_list(mapping_get(evidence, "evidence_types", [])),
         "article_sentence_count": len(sentences),
         "matched_evidence_sentence_count": len(matches),
         "retrieved_sentence_count": len(retrieved_sentences),

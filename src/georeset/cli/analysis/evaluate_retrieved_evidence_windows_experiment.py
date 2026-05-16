@@ -14,7 +14,7 @@ from georeset.analysis.label_universe import label_universe
 from georeset.analysis.pageid_frames import load_optional_pageid_csv
 from georeset.analysis.prediction_loading import load_annotated_prediction_records
 from georeset.analysis.quality_subsets import quality_subset_masks
-from georeset.analysis.shuffled_deltas import compute_shuffled_delta_rows
+from georeset.analysis.shuffled_deltas import compute_shuffled_delta_rows, primary_metric_name
 from georeset.classification.text_sources import shuffled_text_source_pairs
 from georeset.text.retrieved_evidence_windows import RETRIEVED_EVIDENCE_WINDOWS_VERSION
 from georeset.utils.json_io import (
@@ -177,10 +177,6 @@ def _compute_rows(records: pd.DataFrame) -> tuple[list[dict[str, Any]], list[dic
     return overview_rows, per_class_rows
 
 
-def _primary_metric(task: str) -> str:
-    return "balanced_accuracy" if task == "corine_level2" else "jaccard"
-
-
 def _pairwise_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     by_key = {
         (row["subset"], row["model_key"], row["model"], row["task"], row["text_source"]): row
@@ -191,10 +187,12 @@ def _pairwise_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         for comparison, (source_a, source_b) in PAIRWISE_COMPARISONS.items():
             if row["text_source"] != source_a:
                 continue
-            other = by_key.get((row["subset"], row["model_key"], row["model"], row["task"], source_b))
+            other = by_key.get(
+                (row["subset"], row["model_key"], row["model"], row["task"], source_b)
+            )
             if other is None:
                 continue
-            metric = _primary_metric(str(row["task"]))
+            metric = primary_metric_name(str(row["task"]))
             score_a = float(row.get(metric, 0.0) or 0.0)
             score_b = float(other.get(metric, 0.0) or 0.0)
             output.append(
@@ -224,7 +222,9 @@ def _agreement_rows(records: pd.DataFrame) -> list[dict[str, Any]]:
         subset_records = ok[mask].copy()
         if subset_records.empty:
             continue
-        for (task, text_source), group in subset_records.groupby(["task", "text_source"], sort=True):
+        for (task, text_source), group in subset_records.groupby(
+            ["task", "text_source"], sort=True
+        ):
             if task != "corine_level2":
                 continue
             pivot = group.pivot_table(
@@ -291,7 +291,9 @@ def evaluate(
     overview_rows, per_class_rows = _compute_rows(records)
     shuffled_delta_rows = compute_shuffled_delta_rows(
         overview_rows,
-        shuffled_pairs=shuffled_text_source_pairs({str(row["text_source"]) for row in overview_rows}),
+        shuffled_pairs=shuffled_text_source_pairs(
+            {str(row["text_source"]) for row in overview_rows}
+        ),
         model_columns=("model_key", "model"),
     )
     pairwise_rows = _pairwise_deltas(overview_rows)

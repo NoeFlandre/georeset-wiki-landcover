@@ -53,10 +53,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _load_json(path: Path) -> Any:
-    return read_json_file(path)
-
-
 def _prediction_files(parent_dir: Path) -> list[Path]:
     return sorted(parent_dir.glob("*_predictions.json"))
 
@@ -64,7 +60,7 @@ def _prediction_files(parent_dir: Path) -> list[Path]:
 def load_parent_prediction_pageids(parent_dir: Path) -> set[str]:
     pageids: set[str] = set()
     for path in _prediction_files(parent_dir):
-        pageids.update(str(pageid) for pageid in _load_json(path))
+        pageids.update(str(pageid) for pageid in read_json_file(path))
     return pageids
 
 
@@ -72,7 +68,7 @@ def load_corine_targets(parent_dir: Path) -> dict[str, str]:
     targets: dict[str, str] = {}
     seen_by_pageid: dict[str, set[str]] = {}
     for path in sorted(parent_dir.glob("corine_level2_*_predictions.json")):
-        for pageid, record in _load_json(path).items():
+        for pageid, record in read_json_file(path).items():
             target = str(record["target"])
             seen_by_pageid.setdefault(str(pageid), set()).add(target)
     mismatches = {pageid: values for pageid, values in seen_by_pageid.items() if len(values) > 1}
@@ -210,7 +206,7 @@ def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     pageids = load_parent_prediction_pageids(args.parent_experiment_dir)
     corine_targets = load_corine_targets(args.parent_experiment_dir)
-    articles = articles_to_points(_load_json(args.wiki_articles_path), pageids)
+    articles = articles_to_points(read_json_file(args.wiki_articles_path), pageids)
     corine = gpd.read_file(args.corine_polygons_path)
     if "label" not in corine.columns:
         corine["label"] = corine["code_18"].map(derive_level2_label)

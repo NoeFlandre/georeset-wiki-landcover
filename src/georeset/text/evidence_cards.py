@@ -8,93 +8,29 @@ from typing import Any
 
 import pandas as pd
 
+from georeset.text.labels import (
+    ARTICLE_TYPE_LABELS,
+    EVIDENCE_TYPE_LABELS,
+    LANDCOVER_RELEVANCE_LABELS,
+    QUALITY_BIN_LABELS,
+    RECOMMENDED_USE_LABELS,
+    UNCERTAINTY_LABELS,
+    enum_text,
+    format_list,
+)
+from georeset.text.record_access import is_missing, json_scalar, mapping_get
+
 EVIDENCE_CARD_VERSION = 1
 
 
-ARTICLE_TYPE_LABELS = {
-    "other_or_unclear": "autre / non précisé",
-    "water_feature": "caractéristique hydrographique",
-    "natural_landscape": "paysage naturel",
-    "agriculture_or_vineyard": "agriculture ou vignoble",
-    "built_or_cultural_site": "site bâti ou culturel",
-    "transport_infrastructure": "infrastructure de transport",
-    "settlement_or_administrative": "zone urbaine / administrative",
-    "person_or_event": "personne ou événement",
-}
-QUALITY_BIN_LABELS = {
-    "quality_low": "qualité faible",
-    "quality_medium": "qualité moyenne",
-    "quality_high": "qualité élevée",
-    "quality_very_high": "qualité très élevée",
-}
-RECOMMENDED_USE_LABELS = {
-    "use_for_training": "utilisable pour entraînement",
-    "use_for_evaluation_only": "réservé à l'évaluation",
-    "inspect_manually": "à inspecter manuellement",
-    "exclude": "à exclure",
-}
-LANDCOVER_RELEVANCE_LABELS = {
-    "none": "aucune",
-    "low": "faible",
-    "medium": "moyenne",
-    "high": "élevée",
-}
-UNCERTAINTY_LABELS = {
-    "low": "faible",
-    "medium": "moyenne",
-    "high": "élevée",
-}
-EVIDENCE_TYPE_LABELS = {
-    "forest": "forêt",
-    "agriculture": "agriculture",
-    "vineyard": "vignoble",
-    "pasture": "prairie ou pâturage",
-    "water": "eau",
-    "wetland": "zone humide",
-    "shrubland": "végétation arbustive ou herbacée",
-    "bare_ground": "sol nu ou rocheux",
-    "urban_or_artificial": "urbain ou artificiel",
-    "relief_or_geology": "relief ou géologie",
-    "habitat_or_ecology": "habitat ou écologie",
-}
-
-
-def _enum_text(
-    value: object,
-    label_map: Mapping[str, str],
-    *,
-    default: str = "inconnue",
-) -> str:
-    if _is_missing(value):
-        return default
-    if not isinstance(value, str):
-        value = str(value)
-    normalized = value.strip().lower()
-    if not normalized:
-        return default
-    if normalized in label_map:
-        return label_map[normalized]
-    return normalized.replace("_", " ")
-
-
-def _is_missing(value: object) -> bool:
-    if value is None:
-        return True
-    if isinstance(value, str):
-        return value.strip() == ""
-    if isinstance(value, (list, tuple, dict)):
-        return False
-    return bool(pd.isna(value))
-
-
 def _text(value: object, default: str = "inconnue") -> str:
-    if _is_missing(value):
+    if is_missing(value):
         return default
     return str(value).strip()
 
 
 def _number_text(value: object) -> str:
-    if _is_missing(value):
+    if is_missing(value):
         return "inconnue"
     numeric = pd.to_numeric(value, errors="coerce")
     if pd.isna(numeric):
@@ -105,7 +41,7 @@ def _number_text(value: object) -> str:
 def _bool_text(value: object) -> str:
     if isinstance(value, bool):
         return "oui" if value else "non"
-    if _is_missing(value):
+    if is_missing(value):
         return "inconnue"
     normalized = str(value).strip().lower()
     if normalized in {"true", "1", "yes", "y", "oui"}:
@@ -117,29 +53,12 @@ def _bool_text(value: object) -> str:
 
 def _list(value: object) -> list[str]:
     if isinstance(value, list):
-        return [str(item).strip() for item in value if not _is_missing(item) and str(item).strip()]
+        return [str(item).strip() for item in value if not is_missing(item) and str(item).strip()]
     if isinstance(value, tuple):
         return _list(list(value))
-    if _is_missing(value):
+    if is_missing(value):
         return []
     return [str(value).strip()]
-
-
-def _json_scalar(value: Any, *, default: Any = None) -> Any:
-    if _is_missing(value):
-        return default
-    if isinstance(value, str):
-        return value.strip()
-    if isinstance(value, bool):
-        return bool(value)
-    if isinstance(value, int):
-        return int(value)
-    if isinstance(value, float):
-        return float(value)
-    if hasattr(value, "item"):
-        converted = value.item()
-        return _json_scalar(converted, default=default)
-    return value
 
 
 def _json_list(value: object) -> list[Any]:
@@ -147,24 +66,16 @@ def _json_list(value: object) -> list[Any]:
         raw_values = value
     elif isinstance(value, tuple):
         raw_values = list(value)
-    elif _is_missing(value):
+    elif is_missing(value):
         return []
     else:
         raw_values = [value]
     values: list[Any] = []
     for item in raw_values:
-        cleaned = _json_scalar(item)
+        cleaned = json_scalar(item)
         if cleaned is not None:
             values.append(cleaned)
     return values
-
-
-def _mapping_get(mapping: Mapping[str, Any] | pd.Series | None, key: str, default: Any = None) -> Any:
-    if mapping is None:
-        return default
-    if isinstance(mapping, pd.Series):
-        return mapping.get(key, default)
-    return mapping.get(key, default)
 
 
 def _title_pattern(title: str) -> re.Pattern[str] | None:
@@ -194,21 +105,17 @@ def _remove_title_variants(text: str, title: str) -> str:
 
 
 def _evidence_sentences(evidence: Mapping[str, Any] | pd.Series | None, title: str) -> list[str]:
-    raw = _mapping_get(evidence, "evidence_sentences_no_place", [])
+    raw = mapping_get(evidence, "evidence_sentences_no_place", [])
     sentences = [_remove_title_variants(sentence, title) for sentence in _list(raw)]
     return [sentence for sentence in sentences if sentence]
 
 
 def _summary(evidence: Mapping[str, Any] | pd.Series | None, title: str) -> str:
     summary = _text(
-        _mapping_get(evidence, "landuse_evidence_summary"),
+        mapping_get(evidence, "landuse_evidence_summary"),
         default="Aucun résumé d'indices n'est disponible.",
     )
     return _remove_title_variants(summary, title)
-
-
-def _format_list(values: list[str]) -> str:
-    return ", ".join(values) if values else "aucun"
 
 
 def _build_card_text(
@@ -219,11 +126,11 @@ def _build_card_text(
     spatial: Mapping[str, Any] | pd.Series | None,
     quality: Mapping[str, Any] | pd.Series | None,
 ) -> tuple[str, int]:
-    evidence_types = _list(_mapping_get(evidence, "evidence_types", []))
-    candidate_article_types = _list(_mapping_get(article_type, "candidate_article_types", []))
-    evidence_type_labels = [_enum_text(item, EVIDENCE_TYPE_LABELS) for item in evidence_types]
+    evidence_types = _list(mapping_get(evidence, "evidence_types", []))
+    candidate_article_types = _list(mapping_get(article_type, "candidate_article_types", []))
+    evidence_type_labels = [enum_text(item, EVIDENCE_TYPE_LABELS) for item in evidence_types]
     candidate_article_type_labels = [
-        _enum_text(item, ARTICLE_TYPE_LABELS) for item in candidate_article_types
+        enum_text(item, ARTICLE_TYPE_LABELS) for item in candidate_article_types
     ]
     sentences = _evidence_sentences(evidence, title)
     sentence_lines = (
@@ -235,20 +142,20 @@ def _build_card_text(
         [
             "Fiche d'indices d'occupation du sol, sans nom de lieu.",
             "",
-            f"Pertinence: {_enum_text(_mapping_get(evidence, 'landcover_relevance'), LANDCOVER_RELEVANCE_LABELS)}",
-            f"Incertitude: {_enum_text(_mapping_get(evidence, 'uncertainty'), UNCERTAINTY_LABELS)}",
-            f"Types d'indices: {_format_list(evidence_type_labels)}",
-            f"Type d'article: {_enum_text(_mapping_get(article_type, 'primary_article_type'), ARTICLE_TYPE_LABELS)}",
-            f"Types d'article candidats: {_format_list(candidate_article_type_labels)}",
-            f"Score de qualité: {_text(_mapping_get(quality, 'quality_score'))}",
-            f"Catégorie de qualité: {_enum_text(_mapping_get(quality, 'quality_bin'), QUALITY_BIN_LABELS)}",
-            f"Catégorie d'usage recommandée: {_enum_text(_mapping_get(quality, 'recommended_use'), RECOMMENDED_USE_LABELS)}",
+            f"Pertinence: {enum_text(mapping_get(evidence, 'landcover_relevance'), LANDCOVER_RELEVANCE_LABELS)}",
+            f"Incertitude: {enum_text(mapping_get(evidence, 'uncertainty'), UNCERTAINTY_LABELS)}",
+            f"Types d'indices: {format_list(evidence_type_labels)}",
+            f"Type d'article: {enum_text(mapping_get(article_type, 'primary_article_type'), ARTICLE_TYPE_LABELS)}",
+            f"Types d'article candidats: {format_list(candidate_article_type_labels)}",
+            f"Score de qualité: {_text(mapping_get(quality, 'quality_score'))}",
+            f"Catégorie de qualité: {enum_text(mapping_get(quality, 'quality_bin'), QUALITY_BIN_LABELS)}",
+            f"Catégorie d'usage recommandée: {enum_text(mapping_get(quality, 'recommended_use'), RECOMMENDED_USE_LABELS)}",
             "",
             "Confiance spatiale CORINE:",
-            f"- part du label ponctuel à 250 m: {_number_text(_mapping_get(spatial, 'point_label_share_250m'))}",
-            f"- part du label ponctuel à 500 m: {_number_text(_mapping_get(spatial, 'point_label_share_500m'))}",
+            f"- part du label ponctuel à 250 m: {_number_text(mapping_get(spatial, 'point_label_share_250m'))}",
+            f"- part du label ponctuel à 500 m: {_number_text(mapping_get(spatial, 'point_label_share_500m'))}",
             "- le label dominant à 250 m correspond au label ponctuel: "
-            f"{_bool_text(_mapping_get(spatial, 'dominant_matches_point_label_250m'))}",
+            f"{_bool_text(mapping_get(spatial, 'dominant_matches_point_label_250m'))}",
             "",
             "Indices factuels:",
             *sentence_lines,
@@ -279,37 +186,35 @@ def build_evidence_card_record(
         spatial=spatial,
         quality=quality,
     )
-    content_with_evidence_card = (
-        f"{evidence_card}\n\nTexte complet de l'article:\n{raw_content}"
-    )
-    evidence_types = _json_list(_mapping_get(evidence, "evidence_types", []))
-    candidate_article_types = _json_list(_mapping_get(article_type, "candidate_article_types", []))
+    content_with_evidence_card = f"{evidence_card}\n\nTexte complet de l'article:\n{raw_content}"
+    evidence_types = _json_list(mapping_get(evidence, "evidence_types", []))
+    candidate_article_types = _json_list(mapping_get(article_type, "candidate_article_types", []))
     record = {
         "pageid": str(pageid),
         "title": title,
         "url": article.get("url", ""),
         "evidence_card": evidence_card,
         "content_with_evidence_card": content_with_evidence_card,
-        "landcover_relevance": _json_scalar(_mapping_get(evidence, "landcover_relevance")),
-        "uncertainty": _json_scalar(_mapping_get(evidence, "uncertainty")),
+        "landcover_relevance": json_scalar(mapping_get(evidence, "landcover_relevance")),
+        "uncertainty": json_scalar(mapping_get(evidence, "uncertainty")),
         "evidence_types": evidence_types,
         "evidence_sentences_count": sentence_count,
-        "landuse_evidence_summary_char_count": _json_scalar(
-            _mapping_get(evidence, "landuse_evidence_summary_char_count", 0)
+        "landuse_evidence_summary_char_count": json_scalar(
+            mapping_get(evidence, "landuse_evidence_summary_char_count", 0)
         ),
-        "primary_article_type": _json_scalar(
-            _mapping_get(article_type, "primary_article_type", "other_or_unclear"),
+        "primary_article_type": json_scalar(
+            mapping_get(article_type, "primary_article_type", "other_or_unclear"),
             default="other_or_unclear",
         ),
         "candidate_article_types": candidate_article_types,
-        "point_label_share_250m": _json_scalar(_mapping_get(spatial, "point_label_share_250m")),
-        "point_label_share_500m": _json_scalar(_mapping_get(spatial, "point_label_share_500m")),
-        "dominant_matches_point_label_250m": _json_scalar(
-            _mapping_get(spatial, "dominant_matches_point_label_250m")
+        "point_label_share_250m": json_scalar(mapping_get(spatial, "point_label_share_250m")),
+        "point_label_share_500m": json_scalar(mapping_get(spatial, "point_label_share_500m")),
+        "dominant_matches_point_label_250m": json_scalar(
+            mapping_get(spatial, "dominant_matches_point_label_250m")
         ),
-        "quality_score": _json_scalar(_mapping_get(quality, "quality_score")),
-        "quality_bin": _json_scalar(_mapping_get(quality, "quality_bin")),
-        "recommended_use": _json_scalar(_mapping_get(quality, "recommended_use")),
+        "quality_score": json_scalar(mapping_get(quality, "quality_score")),
+        "quality_bin": json_scalar(mapping_get(quality, "quality_bin")),
+        "recommended_use": json_scalar(mapping_get(quality, "recommended_use")),
         "evidence_card_char_count": len(evidence_card),
         "content_with_evidence_card_char_count": len(content_with_evidence_card),
         "evidence_sentence_count": sentence_count,

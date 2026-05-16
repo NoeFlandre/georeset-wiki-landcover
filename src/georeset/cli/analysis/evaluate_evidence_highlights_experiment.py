@@ -176,14 +176,10 @@ def _metric_row(records: pd.DataFrame, subset: str) -> tuple[dict[str, Any], lis
     ]
 
 
-def _subset_masks(records: pd.DataFrame) -> dict[str, pd.Series]:
-    return quality_subset_masks(records)
-
-
 def _compute_rows(records: pd.DataFrame) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     overview_rows: list[dict[str, Any]] = []
     per_class_rows: list[dict[str, Any]] = []
-    for subset, mask in _subset_masks(records).items():
+    for subset, mask in quality_subset_masks(records).items():
         subset_records = records[mask].copy()
         if subset_records.empty:
             continue
@@ -318,12 +314,8 @@ def evaluate(
                 ),
                 "qwen_previous_experiment_dir": str(qwen_previous_experiment_dir),
                 "gemma_previous_experiment_dir": str(gemma_previous_experiment_dir),
-                "qwen_landuse_evidence_experiment_dir": str(
-                    qwen_landuse_evidence_experiment_dir
-                ),
-                "gemma_landuse_evidence_experiment_dir": str(
-                    gemma_landuse_evidence_experiment_dir
-                ),
+                "qwen_landuse_evidence_experiment_dir": str(qwen_landuse_evidence_experiment_dir),
+                "gemma_landuse_evidence_experiment_dir": str(gemma_landuse_evidence_experiment_dir),
                 "qwen_evidence_card_experiment_dir": str(qwen_evidence_card_experiment_dir),
                 "quality_scores_path": str(quality_scores_path),
             },

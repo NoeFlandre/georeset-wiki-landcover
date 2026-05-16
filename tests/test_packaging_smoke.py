@@ -101,14 +101,38 @@ def test_experiment_cli_modules_use_read_json_file_helper():
         text = path.read_text(encoding="utf-8")
         assert "read_json_file(" in text, f"{path} must import and use read_json_file()"
 
-    spatial_predictions_module = Path("src/georeset/cli/analysis/evaluate_predictions_with_spatial_confidence.py")
+    spatial_confidence_module = Path("src/georeset/cli/data/compute_corine_spatial_confidence.py")
+    spatial_confidence_text = spatial_confidence_module.read_text(encoding="utf-8")
+    assert "def _load_json(" not in spatial_confidence_text, (
+        f"{spatial_confidence_module} should use read_json_file() directly"
+    )
+
+    spatial_predictions_module = Path(
+        "src/georeset/cli/analysis/evaluate_predictions_with_spatial_confidence.py"
+    )
     spatial_text = spatial_predictions_module.read_text(encoding="utf-8")
     assert (
         "from georeset.analysis.prediction_loading import load_prediction_records" in spatial_text
-    ), f"{spatial_predictions_module} must use load_prediction_records from georeset.analysis.prediction_loading"
-    assert (
-        "load_prediction_records(" in spatial_text
-    ), f"{spatial_predictions_module} must invoke load_prediction_records()"
+    ), (
+        f"{spatial_predictions_module} must use load_prediction_records from georeset.analysis.prediction_loading"
+    )
+    assert "load_prediction_records(" in spatial_text, (
+        f"{spatial_predictions_module} must invoke load_prediction_records()"
+    )
+
+
+def test_evidence_evaluators_call_shared_quality_subset_helper_directly():
+    modules = [
+        Path("src/georeset/cli/analysis/evaluate_evidence_card_experiment.py"),
+        Path("src/georeset/cli/analysis/evaluate_evidence_highlights_experiment.py"),
+    ]
+
+    for path in modules:
+        text = path.read_text(encoding="utf-8")
+        assert "def _subset_masks(" not in text, (
+            f"{path} should call quality_subset_masks() directly"
+        )
+        assert "quality_subset_masks(" in text
 
 
 def test_pre_commit_scopes_match_ci_quality_commands():
@@ -179,6 +203,7 @@ def test_major_codebase_subfolders_have_local_readmes():
         Path("src/georeset/fetchers/README.md"),
         Path("src/georeset/llm/README.md"),
         Path("src/georeset/spatial/README.md"),
+        Path("src/georeset/text/README.md"),
         Path("src/georeset/utils/README.md"),
         Path("src/georeset/visualization/README.md"),
         Path("scripts/README.md"),
@@ -192,6 +217,7 @@ def test_major_codebase_subfolders_have_local_readmes():
         Path("tests/fetchers/README.md"),
         Path("tests/scripts/README.md"),
         Path("tests/spatial/README.md"),
+        Path("tests/text/README.md"),
         Path("tests/utils/README.md"),
         Path("tests/visualization/README.md"),
     ]
