@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment 007 - Article-Type + Relevance Stratification</title>
+  <style>
+    :root {
+      --bg: #f6f7fc;
+      --panel: #ffffff;
+      --line: #d8e0f2;
+      --text: #0f172a;
+      --muted: #54607a;
+      --accent: #1d4ed8;
+      --ok: #166534;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: linear-gradient(140deg, #f8fbff 0%, var(--bg) 46%, #edf3ff 100%);
+      color: var(--text);
+      font: 14px/1.5 "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    .container { width: min(1180px, calc(100% - 44px)); margin: 18px auto 42px; }
+    h1 { margin: 0 0 6px; font-size: 38px; line-height: 1.08; letter-spacing: -0.35px; }
+    h2 {
+      margin: 22px 0 10px;
+      font-size: 26px;
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+      line-height: 1.15;
+    }
+    h3 { margin: 10px 0 8px; font-size: 18px; }
+    p { margin: 0.25rem 0 0.85rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { margin: 0.35rem 0 0.8rem 1.2rem; padding: 0; }
+    .subtitle { color: var(--muted); margin-bottom: 14px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfdff;
+      padding: 10px;
+      min-width: 0;
+    }
+    .kpi .k { color: var(--muted); font-size: 11px; }
+    .kpi .v {
+      font-size: 24px;
+      font-weight: 750;
+      margin-top: 3px;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+    .badge {
+      display: inline-block;
+      margin: 0 4px 4px 0;
+      padding: 2px 8px;
+      border: 1px solid #c9d6f2;
+      border-radius: 999px;
+      background: #f0f5ff;
+      font-size: 11px;
+      color: #25395f;
+    }
+    code, pre, .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+    pre {
+      border: 1px solid #dbe6ff;
+      border-radius: 8px;
+      padding: 10px;
+      background: #f6f8ff;
+      overflow: auto;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+      background: #fff;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 7px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #eff4ff; }
+    .callout {
+      border-left: 4px solid #8b5cf6;
+      background: #f4efff;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      color: #341d66;
+      font-size: 13px;
+    }
+    .warn-box {
+      border-left: 4px solid var(--warn);
+      background: #fff7ed;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      color: #7c2d12;
+      font-size: 13px;
+    }
+    .foot { margin-top: 8px; color: var(--muted); font-size: 11px; }
+    .positive { color: var(--ok); font-weight: 650; }
+    .negative { color: var(--bad); font-weight: 650; }
+    .neutral { color: #0f766e; font-weight: 650; }
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .mermaid {
+      overflow-x: auto;
+      margin-top: 6px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fcfdff;
+    }
+    @media (max-width: 980px) {
+      .split { grid-template-columns: 1fr; }
+      h1 { font-size: 30px; }
+    }
+  </style>
+  <script type="module">
+    const loadMermaid = async () => {
+      if (document.getElementById('mermaid-script')) return;
+      const s = document.createElement('script');
+      s.id = 'mermaid-script';
+      s.src = 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';
+      s.onload = () => {
+        window.mermaid?.initialize({
+          startOnLoad: false,
+          securityLevel: 'loose',
+          theme: 'default',
+          flowchart: { useMaxWidth: true, nodeSpacing: 56, rankSpacing: 50, curve: 'basis' },
+          themeVariables: { fontSize: '13px' },
+        });
+        window.mermaid?.run({ nodes: document.querySelectorAll('.mermaid') });
+      };
+      document.head.appendChild(s);
+    };
+    loadMermaid();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Experiment 007: Article-Type + Relevance Stratification</h1>
+    <div class="subtitle">Detailed implementation and result audit for using French Wikipedia category metadata as an article-type diagnostic over frozen Qwen and Gemma predictions.</div>
+
+    <div class="panel">
+      <div class="section-title">
+        <h2>1) Executive summary</h2>
+        <span class="badge">No LLM rerun</span>
+      </div>
+      <p>
+        Experiment 007 asks whether French Wikipedia category metadata helps explain where GeoReset article-text classification works. It reuses frozen predictions, land-use evidence metadata, and spatial confidence, then adds a deterministic category-derived article-type proxy.
+      </p>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="k">Article ids covered</div><div class="v">1,251</div></div>
+        <div class="kpi"><div class="k">Visible category metadata</div><div class="v">605</div></div>
+        <div class="kpi"><div class="k">Missing/unmatched category bucket</div><div class="v">672</div></div>
+        <div class="kpi"><div class="k">Taxonomy size</div><div class="v">8 article types</div></div>
+        <div class="kpi"><div class="k">Best diagnostic filter</div><div class="v">relevance + spatial</div></div>
+        <div class="kpi"><div class="k">Primary conclusion</div><div class="v">type explains, relevance filters</div></div>
+      </div>
+      <p class="callout">Main result: article type is useful as an explanatory diagnostic, but it is not a better filter than land-cover relevance. Category-derived type is incomplete and noisy; evidence relevance remains the stronger quality signal.</p>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h2>2) Source artifacts</h2>
+        <ul>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1">Generated experiment 007 artifact directory</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/article_type_metadata.json">article_type_metadata.json</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/article_type_assignments.csv">article_type_assignments.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/wiki/article_landuse_evidence_summaries.json">Land-use evidence metadata</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv">CORINE spatial confidence</a></li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h2>3) Processing flow</h2>
+        <div class="mermaid">
+flowchart TD
+  A["Frozen Qwen + Gemma predictions"] --> D["join by pageid"]
+  B["Wikipedia categories + pageprops"] --> C["deterministic article-type classifier"]
+  C --> D
+  E["land-use relevance metadata"] --> D
+  F["CORINE spatial confidence"] --> D
+  D --> G["article-type subsets"]
+  D --> H["article type + relevance subsets"]
+  D --> I["article type + relevance + spatial subsets"]
+  G --> J["metrics, baselines, shuffled deltas"]
+  H --> J
+  I --> J
+        </div>
+        <p class="foot">The experiment is analysis-only. No classifier predictions are regenerated.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>4) What article-type metadata looks like</h2>
+      <p>Experiment 007 introduces a deterministic article-type assignment based on normalized French Wikipedia categories. It is not a gold label; it is a noisy proxy for analysis.</p>
+      <div class="split">
+        <div>
+          <h3>Taxonomy</h3>
+          <pre>water_feature
+natural_landscape
+agriculture_or_vineyard
+built_or_cultural_site
+transport_infrastructure
+settlement_or_administrative
+person_or_event
+other_or_unclear</pre>
+        </div>
+        <div>
+          <h3>Example assignment</h3>
+          <pre>{
+  "title": "District des Franches-Montagnes",
+  "primary_article_type": "natural_landscape",
+  "candidate_article_types": [
+    "natural_landscape",
+    "built_or_cultural_site",
+    "settlement_or_administrative"
+  ],
+  "matched_categories": [
+    "district dans le canton du jura",
+    "paysage, site ou monument naturel d'importance nationale en suisse"
+  ],
+  "matched_rules": ["canton", "paysage", "monument"]
+}</pre>
+        </div>
+      </div>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/article_type_assignments.csv">article_type_assignments.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>5) Metadata coverage and distribution</h2>
+      <p>The fetcher produced article-type rows for all article ids, but category coverage is incomplete. The largest bucket is therefore mostly missing or unmatched metadata, not a semantic type.</p>
+      <table>
+        <thead><tr><th>Primary article type</th><th>Articles</th><th>Medium/high relevance share</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr><td>other_or_unclear</td><td>672</td><td>39.1%</td><td>Largest bucket; mostly missing or unmatched categories.</td></tr>
+          <tr><td>settlement_or_administrative</td><td>284</td><td>34.9%</td><td>Mixed land-cover usefulness.</td></tr>
+          <tr><td>natural_landscape</td><td>115</td><td>80.9%</td><td>Often relevant.</td></tr>
+          <tr><td>built_or_cultural_site</td><td>94</td><td>55.3%</td><td>Mixed; may mention setting or not.</td></tr>
+          <tr><td>water_feature</td><td>36</td><td>91.7%</td><td>Usually relevant, but small.</td></tr>
+          <tr><td>agriculture_or_vineyard</td><td>34</td><td>97.1%</td><td>Nearly always evidence-rich, but class-dominated.</td></tr>
+          <tr><td>transport_infrastructure</td><td>14</td><td>7.1%</td><td>Usually weak for land cover.</td></tr>
+          <tr><td>person_or_event</td><td>2</td><td></td><td>Too small to interpret.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Sources: <a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/article_type_distribution.csv">article_type_distribution.csv</a> and the report analysis.</p>
+    </div>
+
+    <div class="panel">
+      <h2>6) CORINE: article type alone</h2>
+      <p>For Qwen raw content, article-type buckets show where the classifier behaves differently, but raw accuracy can be misleading because several buckets are strongly class-imbalanced.</p>
+      <table>
+        <thead><tr><th>Subset</th><th>n</th><th>Accuracy</th><th>Balanced accuracy</th><th>Macro F1</th><th>Majority accuracy</th><th>Takeaway</th></tr></thead>
+        <tbody>
+          <tr><td>other_or_unclear</td><td>672</td><td>0.269</td><td class="positive">0.257</td><td class="positive">0.255</td><td>0.397</td><td>Large bucket; still meaningful when relevance-filtered.</td></tr>
+          <tr><td>agriculture_or_vineyard</td><td>34</td><td class="positive">0.912</td><td>0.222</td><td>0.183</td><td>0.882</td><td>High raw accuracy mostly follows majority class.</td></tr>
+          <tr><td>natural_landscape</td><td>115</td><td>0.426</td><td>0.204</td><td>0.203</td><td>0.548</td><td>Relevant but still class-skewed.</td></tr>
+          <tr><td>settlement_or_administrative</td><td>284</td><td>0.243</td><td>0.119</td><td>0.123</td><td>0.282</td><td>Weak without relevance filtering.</td></tr>
+          <tr><td>built_or_cultural_site</td><td>94</td><td>0.234</td><td>0.112</td><td>0.140</td><td>0.723</td><td>Raw accuracy is far below majority baseline.</td></tr>
+          <tr><td>water_feature</td><td>36</td><td>0.306</td><td>0.111</td><td>0.052</td><td>0.500</td><td>Small and not useful for CORINE ranking.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/overview_by_article_type.csv">overview_by_article_type.csv</a>.</p>
+      <div class="warn-box">The agriculture/vineyard row is the cautionary example: 0.912 raw accuracy looks strong, but the majority baseline is already 0.882 and balanced accuracy is only 0.222.</div>
+    </div>
+
+    <div class="panel">
+      <h2>7) CORINE: article type plus relevance</h2>
+      <p>Adding <span class="mono">landcover_relevance</span> is more informative than article type alone. The strongest balanced result is the large unclear bucket after medium/high relevance filtering.</p>
+      <table>
+        <thead><tr><th>Subset</th><th>n</th><th>Accuracy</th><th>Balanced accuracy</th><th>Macro F1</th><th>Majority accuracy</th></tr></thead>
+        <tbody>
+          <tr><td>other_or_unclear + medium/high</td><td>263</td><td>0.483</td><td class="positive">0.363</td><td class="positive">0.341</td><td>0.517</td></tr>
+          <tr><td>natural_landscape + medium/high</td><td>93</td><td>0.505</td><td>0.229</td><td>0.217</td><td>0.505</td></tr>
+          <tr><td>settlement_or_administrative + medium/high</td><td>99</td><td>0.354</td><td>0.225</td><td>0.200</td><td>0.394</td></tr>
+          <tr><td>agriculture_or_vineyard + medium/high</td><td>33</td><td>0.939</td><td>0.222</td><td>0.183</td><td>0.909</td></tr>
+          <tr><td>built_or_cultural_site + medium/high</td><td>52</td><td>0.365</td><td>0.182</td><td>0.190</td><td>0.750</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/overview_by_article_type.csv">overview_by_article_type.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>8) Shuffled controls by article type</h2>
+      <p>Within medium/high relevance article-type subsets, Qwen raw content still beats shuffled content. That confirms the signal is article-specific, not just a category or label-frequency artifact.</p>
+      <table>
+        <thead><tr><th>Subset</th><th>Aligned BA</th><th>Shuffled BA</th><th>Delta</th><th>n</th></tr></thead>
+        <tbody>
+          <tr><td>other_or_unclear + medium/high</td><td>0.363</td><td>0.073</td><td class="positive">+0.290</td><td>263</td></tr>
+          <tr><td>agriculture_or_vineyard + medium/high</td><td>0.222</td><td>0.011</td><td class="positive">+0.211</td><td>33</td></tr>
+          <tr><td>natural_landscape + medium/high</td><td>0.229</td><td>0.059</td><td class="positive">+0.169</td><td>93</td></tr>
+          <tr><td>settlement_or_administrative + medium/high</td><td>0.225</td><td>0.074</td><td class="positive">+0.151</td><td>99</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/shuffled_delta_by_article_type.csv">shuffled_delta_by_article_type.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>9) Article type plus relevance plus spatial confidence</h2>
+      <p>The spatial-confidence filter improves diagnostic credibility, but some groups become small and class-dominated. These rows should be read as diagnostics, not leaderboard rankings.</p>
+      <table>
+        <thead><tr><th>Subset</th><th>n</th><th>Accuracy</th><th>Balanced accuracy</th><th>Macro F1</th><th>Majority accuracy</th></tr></thead>
+        <tbody>
+          <tr><td>other_or_unclear + medium/high + spatial 250m</td><td>164</td><td>0.543</td><td class="positive">0.356</td><td class="positive">0.311</td><td>0.659</td></tr>
+          <tr><td>settlement_or_administrative + medium/high + spatial 250m</td><td>31</td><td>0.516</td><td>0.336</td><td>0.291</td><td>0.419</td></tr>
+          <tr><td>natural_landscape + medium/high + spatial 250m</td><td>43</td><td>0.744</td><td>0.275</td><td>0.264</td><td>0.744</td></tr>
+          <tr><td>agriculture_or_vineyard + medium/high + spatial 250m</td><td>29</td><td>0.966</td><td>0.222</td><td>0.220</td><td>0.931</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/overview_by_article_type_relevance_spatial.csv">overview_by_article_type_relevance_spatial.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>10) OSM findings</h2>
+      <p>OSM remains harder because it is multi-label and exact match is strict. Small article-type buckets can look strong when the label-set majority baseline is already high.</p>
+      <table>
+        <thead><tr><th>Subset</th><th>n</th><th>Exact match</th><th>Micro F1</th><th>Macro F1</th><th>Jaccard</th><th>Majority exact</th></tr></thead>
+        <tbody>
+          <tr><td>water_feature</td><td>12</td><td>0.833</td><td>0.833</td><td>0.061</td><td>0.833</td><td>0.833</td></tr>
+          <tr><td>other_or_unclear</td><td>143</td><td>0.168</td><td>0.212</td><td>0.150</td><td>0.197</td><td>0.224</td></tr>
+          <tr><td>settlement_or_administrative</td><td>34</td><td>0.118</td><td>0.118</td><td>0.057</td><td>0.132</td><td>0.265</td></tr>
+          <tr><td>built_or_cultural_site</td><td>44</td><td>0.114</td><td>0.119</td><td>0.068</td><td>0.125</td><td>0.364</td></tr>
+          <tr><td>natural_landscape</td><td>37</td><td>0.054</td><td>0.168</td><td>0.106</td><td>0.108</td><td>0.270</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/overview_by_article_type.csv">overview_by_article_type.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>11) Implementation notes</h2>
+      <ul>
+        <li>Evaluator: <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_article_type_relevance_stratified.py">evaluate_article_type_relevance_stratified.py</a>.</li>
+        <li>Article-type classifier: <a href="/Users/noeflandre/georeset/src/georeset/analysis/article_type_classifier.py">article_type_classifier.py</a>.</li>
+        <li>Article-type metadata loader: <a href="/Users/noeflandre/georeset/src/georeset/analysis/article_type_metadata_loading.py">article_type_metadata_loading.py</a>.</li>
+        <li>The assignment uses ordered preference: water, natural landscape, agriculture/vineyard, built/cultural, transport, settlement/admin, person/event, then other/unclear.</li>
+        <li>Category strings are normalized for case, accents, underscores, and French category prefixes before rule matching.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>12) Interpretation and next step</h2>
+      <ul>
+        <li><strong>Article type explains context:</strong> landscape, water, and agriculture/vineyard pages are often relevant.</li>
+        <li><strong>Article type is not enough:</strong> many pages lack category metadata, and some type buckets are tiny or class-dominated.</li>
+        <li><strong>Relevance remains the main filter:</strong> the evidence extractor still finds useful signal inside <span class="mono">other_or_unclear</span>.</li>
+        <li><strong>Spatial confidence still matters:</strong> the best diagnostic rows combine evidence relevance with reliable point labels.</li>
+      </ul>
+      <p class="callout">Recommended next step: use raw content or richer evidence-card representations, then weight or stratify examples by land-cover relevance and spatial confidence rather than relying on category type alone.</p>
+    </div>
+
+    <div class="panel">
+      <h2>13) Artifact index</h2>
+      <ul>
+        <li><a href="/Users/noeflandre/georeset/docs/experiments/007_article_type_relevance_stratified_evaluation/analysis.md">Original experiment 007 analysis.md</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/article_type_metadata.json">article_type_metadata.json</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/article_type_assignments.csv">article_type_assignments.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/article_type_distribution.csv">article_type_distribution.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/overview_by_article_type.csv">overview_by_article_type.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/overview_by_article_type_relevance_spatial.csv">overview_by_article_type_relevance_spatial.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/shuffled_delta_by_article_type.csv">shuffled_delta_by_article_type.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/majority_baselines_by_article_type.csv">majority_baselines_by_article_type.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/manifest.json">manifest.json</a></li>
+      </ul>
+      <p class="foot">This detailed HTML was written from the checked markdown analysis, generated CSV artifacts, and the deterministic article-type assignment code path.</p>
+    </div>
+  </div>
+</body>
+</html>
