@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment 008 - Supervision Quality Score</title>
+  <style>
+    :root {
+      --bg: #f6f7fc;
+      --panel: #ffffff;
+      --line: #d8e0f2;
+      --text: #0f172a;
+      --muted: #54607a;
+      --accent: #1d4ed8;
+      --ok: #166534;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: linear-gradient(140deg, #f8fbff 0%, var(--bg) 46%, #edf3ff 100%);
+      color: var(--text);
+      font: 14px/1.5 "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    .container { width: min(1180px, calc(100% - 44px)); margin: 18px auto 42px; }
+    h1 { margin: 0 0 6px; font-size: 38px; line-height: 1.08; letter-spacing: -0.35px; }
+    h2 {
+      margin: 22px 0 10px;
+      font-size: 26px;
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+      line-height: 1.15;
+    }
+    h3 { margin: 10px 0 8px; font-size: 18px; }
+    p { margin: 0.25rem 0 0.85rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { margin: 0.35rem 0 0.8rem 1.2rem; padding: 0; }
+    .subtitle { color: var(--muted); margin-bottom: 14px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfdff;
+      padding: 10px;
+      min-width: 0;
+    }
+    .kpi .k { color: var(--muted); font-size: 11px; }
+    .kpi .v {
+      font-size: 24px;
+      font-weight: 750;
+      margin-top: 3px;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+    .badge {
+      display: inline-block;
+      margin: 0 4px 4px 0;
+      padding: 2px 8px;
+      border: 1px solid #c9d6f2;
+      border-radius: 999px;
+      background: #f0f5ff;
+      font-size: 11px;
+      color: #25395f;
+    }
+    code, pre, .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+    pre {
+      border: 1px solid #dbe6ff;
+      border-radius: 8px;
+      padding: 10px;
+      background: #f6f8ff;
+      overflow: auto;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+      background: #fff;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 7px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #eff4ff; }
+    .callout {
+      border-left: 4px solid #8b5cf6;
+      background: #f4efff;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      color: #341d66;
+      font-size: 13px;
+    }
+    .warn-box {
+      border-left: 4px solid var(--warn);
+      background: #fff7ed;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      color: #7c2d12;
+      font-size: 13px;
+    }
+    .foot { margin-top: 8px; color: var(--muted); font-size: 11px; }
+    .positive { color: var(--ok); font-weight: 650; }
+    .negative { color: var(--bad); font-weight: 650; }
+    .neutral { color: #0f766e; font-weight: 650; }
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .mermaid {
+      overflow-x: auto;
+      margin-top: 6px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fcfdff;
+    }
+    @media (max-width: 980px) {
+      .split { grid-template-columns: 1fr; }
+      h1 { font-size: 30px; }
+    }
+  </style>
+  <script type="module">
+    const loadMermaid = async () => {
+      if (document.getElementById('mermaid-script')) return;
+      const s = document.createElement('script');
+      s.id = 'mermaid-script';
+      s.src = 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';
+      s.onload = () => {
+        window.mermaid?.initialize({
+          startOnLoad: false,
+          securityLevel: 'loose',
+          theme: 'default',
+          flowchart: { useMaxWidth: true, nodeSpacing: 56, rankSpacing: 50, curve: 'basis' },
+          themeVariables: { fontSize: '13px' },
+        });
+        window.mermaid?.run({ nodes: document.querySelectorAll('.mermaid') });
+      };
+      document.head.appendChild(s);
+    };
+    loadMermaid();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Experiment 008: Supervision Quality Score</h1>
+    <div class="subtitle">Detailed implementation and result audit for deterministic quality scoring over frozen Qwen and Gemma article-text predictions.</div>
+
+    <div class="panel">
+      <div class="section-title">
+        <h2>1) Executive summary</h2>
+        <span class="badge">No LLM rerun</span>
+      </div>
+      <p>
+        Experiment 008 turns the metadata introduced earlier into one deterministic supervision-quality row per article. It combines land-cover relevance, spatial confidence, evidence density, article type, and uncertainty into a score, then recomputes model metrics by quality bin and recommended-use bucket.
+      </p>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="k">Quality-scored articles</div><div class="v">1,251</div></div>
+        <div class="kpi"><div class="k">High or very high quality</div><div class="v">662</div></div>
+        <div class="kpi"><div class="k">Training candidates</div><div class="v">195</div></div>
+        <div class="kpi"><div class="k">Evaluation-only candidates</div><div class="v">126</div></div>
+        <div class="kpi"><div class="k">Excluded rows</div><div class="v">451</div></div>
+        <div class="kpi"><div class="k">Main conclusion</div><div class="v">useful pruning, not dominant filter</div></div>
+      </div>
+      <p class="callout">Main result: quality scoring is useful for conservative candidate selection, but it does not consistently beat the simpler relevance + spatial filter as an evaluation signal.</p>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h2>2) Source artifacts</h2>
+        <ul>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1">Generated experiment 008 artifact directory</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/quality_scores.csv">quality_scores.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/candidate_training_pairs_by_quality.csv">candidate_training_pairs_by_quality.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/wiki/article_landuse_evidence_summaries.json">Land-use evidence summaries</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/article_type_assignments.csv">Article-type assignments</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv">CORINE spatial confidence</a></li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h2>3) Processing flow</h2>
+        <div class="mermaid">
+flowchart TD
+  A["Frozen Qwen + Gemma predictions"] --> E["join by pageid"]
+  B["land-use relevance + uncertainty"] --> E
+  C["spatial confidence shares"] --> E
+  D["article type metadata"] --> E
+  F["evidence density"] --> E
+  E --> G["quality score + quality bin"]
+  G --> H["recommended_use bucket"]
+  H --> I["candidate rows + subset metrics"]
+        </div>
+        <p class="foot">The experiment is analysis-only. It does not regenerate article-text classifications.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>4) What a supervision-quality row looks like</h2>
+      <p>Experiment 008 introduces a single computed row per article. The score is not a learned confidence model; it is a transparent rule-based gate for downstream supervision.</p>
+      <div class="split">
+        <div>
+          <h3>Scoring rule</h3>
+          <pre>quality_score =
+  relevance_score
+  + spatial_score
+  + evidence_density_score
+  + article_type_score
+  - uncertainty_penalty
+
+quality_low:       score &lt; 3
+quality_medium:    3 &lt;= score &lt; 5
+quality_high:      5 &lt;= score &lt; 7
+quality_very_high: score &gt;= 7</pre>
+        </div>
+        <div>
+          <h3>Example row</h3>
+          <pre>{
+  "title": "Altenweiher",
+  "primary_article_type": "water_feature",
+  "landcover_relevance": "high",
+  "uncertainty": "low",
+  "evidence_types": ["water", "wetland", "relief_or_geology"],
+  "point_label_share_250m": 1.000,
+  "relevance_score": 3,
+  "spatial_score": 3.000,
+  "evidence_density_score": 2,
+  "article_type_score": 2,
+  "uncertainty_penalty": 0,
+  "quality_score": 10.000,
+  "quality_bin": "quality_very_high",
+  "recommended_use": "use_for_evaluation_only"
+}</pre>
+        </div>
+      </div>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/quality_scores.csv">quality_scores.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>5) Recommended-use precedence</h2>
+      <p>The final bucket is intentionally conservative. Exclusion overrides otherwise strong spatial evidence when relevance is absent, uncertainty is high, or the final quality score is low.</p>
+      <table>
+        <thead><tr><th>Precedence</th><th>Rule</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><span class="mono">exclude</span> if quality low, relevance none, or uncertainty high</td><td>Keep noisy rows out of downstream supervision.</td></tr>
+          <tr><td>2</td><td><span class="mono">use_for_evaluation_only</span> if very high quality, spatial 250 m >= 0.9, and high relevance</td><td>Strict diagnostic subset with strong point-label support.</td></tr>
+          <tr><td>3</td><td><span class="mono">use_for_training</span> if high/very high quality, spatial 250 m >= 0.8, and medium/high relevance</td><td>Candidate weak labels for later model training.</td></tr>
+          <tr><td>4</td><td><span class="mono">inspect_manually</span> otherwise, especially medium quality, unclear type, or medium uncertainty</td><td>Useful but not trusted automatically.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_supervision_quality_score.py">evaluate_supervision_quality_score.py</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>6) Quality and use distributions</h2>
+      <div class="split">
+        <div>
+          <h3>Quality bins</h3>
+          <table>
+            <thead><tr><th>Quality bin</th><th>Articles</th><th>Share</th></tr></thead>
+            <tbody>
+              <tr><td>quality_low</td><td>448</td><td>35.8%</td></tr>
+              <tr><td>quality_medium</td><td>141</td><td>11.3%</td></tr>
+              <tr><td>quality_high</td><td>295</td><td>23.6%</td></tr>
+              <tr><td>quality_very_high</td><td>367</td><td>29.3%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3>Recommended use</h3>
+          <table>
+            <thead><tr><th>Bucket</th><th>Articles</th><th>Share</th></tr></thead>
+            <tbody>
+              <tr><td>inspect_manually</td><td>479</td><td>38.3%</td></tr>
+              <tr><td>exclude</td><td>451</td><td>36.1%</td></tr>
+              <tr><td>use_for_training</td><td>195</td><td>15.6%</td></tr>
+              <tr><td>use_for_evaluation_only</td><td>126</td><td>10.1%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="foot">Sources: <a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/quality_bin_distribution.csv">quality_bin_distribution.csv</a> and <a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/recommended_use_distribution.csv">recommended_use_distribution.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>7) CORINE: quality-filtered content metrics</h2>
+      <p>On CORINE level-2 classification, stricter quality buckets improve over all rows, but the simpler relevance + spatial subset remains the strongest comparison row for balanced accuracy.</p>
+      <table>
+        <thead><tr><th>Subset</th><th>n</th><th>Qwen BA</th><th>Gemma BA</th><th>Qwen accuracy</th><th>Gemma accuracy</th><th>Takeaway</th></tr></thead>
+        <tbody>
+          <tr><td>all</td><td>1,251</td><td>0.281</td><td>0.271</td><td>0.293</td><td>0.357</td><td>Full noisy set.</td></tr>
+          <tr><td>quality_high_or_very_high</td><td>662</td><td>0.359</td><td>0.346</td><td>0.426</td><td>0.520</td><td>Good pruning signal.</td></tr>
+          <tr><td>quality_high_or_very_high + spatial 250 m >= 0.8</td><td>388</td><td>0.394</td><td>0.375</td><td>0.490</td><td>0.629</td><td>Strong, but still below relevance + spatial.</td></tr>
+          <tr><td>recommended_use_evaluation_only</td><td>126</td><td class="positive">0.473</td><td class="positive">0.472</td><td>0.738</td><td>0.738</td><td>Very clean but small and class-skewed.</td></tr>
+          <tr><td>recommended_use_training</td><td>195</td><td>0.385</td><td>0.338</td><td>0.462</td><td>0.621</td><td>Training candidates are not necessarily the best evaluation subset.</td></tr>
+          <tr><td>relevance_medium_high + spatial 250 m >= 0.8</td><td>321</td><td class="positive">0.409</td><td class="positive">0.384</td><td>0.570</td><td>0.667</td><td>Best simple filter comparison.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/overview_by_quality_bin.csv">overview_by_quality_bin.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>8) Shuffled-control deltas</h2>
+      <p>Quality-filtered content remains far above shuffled content, so the filtered signal is still article-specific and not only a label-frequency artifact.</p>
+      <table>
+        <thead><tr><th>Subset</th><th>Model</th><th>Metric</th><th>Aligned</th><th>Shuffled</th><th>Delta</th><th>n</th></tr></thead>
+        <tbody>
+          <tr><td>quality_high_or_very_high</td><td>Qwen</td><td>balanced accuracy</td><td>0.359</td><td>0.076</td><td class="positive">+0.283</td><td>662</td></tr>
+          <tr><td>quality_high_or_very_high + spatial 250 m >= 0.8</td><td>Qwen</td><td>balanced accuracy</td><td>0.394</td><td>0.082</td><td class="positive">+0.312</td><td>388</td></tr>
+          <tr><td>recommended_use_evaluation_only</td><td>Qwen</td><td>balanced accuracy</td><td>0.473</td><td>0.079</td><td class="positive">+0.394</td><td>126</td></tr>
+          <tr><td>recommended_use_evaluation_only</td><td>Gemma</td><td>balanced accuracy</td><td>0.472</td><td>0.067</td><td class="positive">+0.404</td><td>126</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/shuffled_delta_by_quality_bin.csv">shuffled_delta_by_quality_bin.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>9) OSM: quality-filtered content metrics</h2>
+      <p>OSM remains stricter because it is multi-label. The evaluation-only bucket has the highest exact match and Jaccard, but only 25 rows; quality high/very high alone is weaker than several simpler filters.</p>
+      <table>
+        <thead><tr><th>Subset</th><th>n</th><th>Qwen exact</th><th>Gemma exact</th><th>Qwen Jaccard</th><th>Gemma Jaccard</th><th>Majority exact</th></tr></thead>
+        <tbody>
+          <tr><td>all</td><td>275</td><td>0.164</td><td>0.215</td><td>0.190</td><td>0.252</td><td>0.207</td></tr>
+          <tr><td>quality_high_or_very_high</td><td>174</td><td>0.184</td><td>0.201</td><td>0.222</td><td>0.249</td><td>0.213</td></tr>
+          <tr><td>quality_high_or_very_high + spatial 250 m >= 0.8</td><td>110</td><td>0.227</td><td>0.236</td><td>0.257</td><td>0.269</td><td>0.255</td></tr>
+          <tr><td>recommended_use_evaluation_only</td><td>25</td><td class="positive">0.360</td><td class="positive">0.360</td><td class="positive">0.407</td><td class="positive">0.415</td><td>0.240</td></tr>
+          <tr><td>relevance_medium_high + spatial 250 m >= 0.8</td><td>92</td><td>0.261</td><td>0.261</td><td>0.291</td><td>0.294</td><td>0.196</td></tr>
+          <tr><td>article_type_high_prior</td><td>51</td><td>0.235</td><td>0.294</td><td>0.275</td><td>0.345</td><td>0.196</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/overview_by_quality_bin.csv">overview_by_quality_bin.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>10) Simple-filter comparison</h2>
+      <p>The quality score aggregates useful ingredients, but aggregation is not automatically better than the ingredients. In the main CORINE/content comparison, quality + spatial beats relevance-only and spatial-only, but not relevance + spatial.</p>
+      <table>
+        <thead><tr><th>Task</th><th>Model</th><th>Quality high/very high</th><th>Quality + spatial</th><th>Relevance</th><th>Spatial</th><th>Relevance + spatial</th><th>Article type</th></tr></thead>
+        <tbody>
+          <tr><td>CORINE BA</td><td>Qwen</td><td>0.359</td><td>0.394</td><td>0.374</td><td>0.352</td><td class="positive">0.409</td><td>0.323</td></tr>
+          <tr><td>CORINE BA</td><td>Gemma</td><td>0.346</td><td>0.375</td><td>0.352</td><td>0.326</td><td class="positive">0.384</td><td>0.321</td></tr>
+          <tr><td>OSM exact / Jaccard</td><td>Qwen</td><td>0.184 / 0.222</td><td>0.227 / 0.257</td><td>0.196 / 0.236</td><td>0.225 / 0.245</td><td class="positive">0.261 / 0.291</td><td>0.235 / 0.275</td></tr>
+          <tr><td>OSM exact / Jaccard</td><td>Gemma</td><td>0.201 / 0.249</td><td>0.236 / 0.269</td><td>0.196 / 0.247</td><td>0.256 / 0.286</td><td>0.261 / 0.294</td><td class="positive">0.294 / 0.345</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/overview_comparison_simple_filters.csv">overview_comparison_simple_filters.csv</a>.</p>
+      <div class="warn-box">Interpretation: the score is a candidate-pruning tool. It should not replace relevance + spatial as the main diagnostic filter without additional validation.</div>
+    </div>
+
+    <div class="panel">
+      <h2>11) Implementation notes</h2>
+      <ul>
+        <li>Evaluator: <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_supervision_quality_score.py">evaluate_supervision_quality_score.py</a>.</li>
+        <li>The experiment reads frozen Qwen and Gemma prediction directories, so reruns are fast and deterministic.</li>
+        <li>Rows are joined by string <span class="mono">pageid</span> to avoid numeric id drift across CSV/JSON inputs.</li>
+        <li>Outputs include both full scored rows and the candidate subset used by later weak-label/vision experiments.</li>
+        <li>The score intentionally penalizes high uncertainty and gives no article-type bonus to <span class="mono">other_or_unclear</span>.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>12) Interpretation and next step</h2>
+      <ul>
+        <li><strong>Use quality scores for data selection:</strong> they provide a compact, auditable way to rank candidate training and evaluation rows.</li>
+        <li><strong>Keep relevance + spatial as the diagnostic baseline:</strong> it remains simpler and often stronger.</li>
+        <li><strong>Manual inspection still matters:</strong> the largest bucket is <span class="mono">inspect_manually</span>, not an automatic use bucket.</li>
+        <li><strong>Downstream experiments can reuse the rows:</strong> experiments 009-012 consume these scores for evidence cards, highlights, retrieved windows, and CLIP weak labels.</li>
+      </ul>
+      <p class="callout">Recommended next step: use <span class="mono">use_for_training</span> and <span class="mono">use_for_evaluation_only</span> as conservative candidate pools, while reporting relevance + spatial as the primary comparison baseline.</p>
+    </div>
+
+    <div class="panel">
+      <h2>13) Artifact index</h2>
+      <ul>
+        <li><a href="/Users/noeflandre/georeset/docs/experiments/008_supervision_quality_score/analysis.md">Original experiment 008 analysis.md</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/summary.md">summary.md</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/quality_scores.csv">quality_scores.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/candidate_training_pairs_by_quality.csv">candidate_training_pairs_by_quality.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/quality_bin_distribution.csv">quality_bin_distribution.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/recommended_use_distribution.csv">recommended_use_distribution.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/overview_by_quality_bin.csv">overview_by_quality_bin.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/overview_by_quality_and_spatial.csv">overview_by_quality_and_spatial.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/shuffled_delta_by_quality_bin.csv">shuffled_delta_by_quality_bin.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/model_comparison_by_quality_bin.csv">model_comparison_by_quality_bin.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/majority_baselines_by_quality_bin.csv">majority_baselines_by_quality_bin.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/per_class_corine_by_quality_bin.csv">per_class_corine_by_quality_bin.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/manifest.json">manifest.json</a></li>
+      </ul>
+      <p class="foot">This detailed HTML was written from the checked markdown analysis, generated CSV artifacts, and the deterministic scoring code path.</p>
+    </div>
+  </div>
+</body>
+</html>
