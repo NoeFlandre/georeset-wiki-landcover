@@ -2,10 +2,11 @@
 
 This package contains shared local-LLM infrastructure.
 
-## Module
+## Files
 
+- `__init__.py`: exports shared local-LLM helpers without loading a model.
 - `llama_client.py`: lazy `llama-cpp-python` JSON chat client used by article
-  summarization and classification.
+  summarization, evidence extraction, and classification.
 
 ## Model Identity
 

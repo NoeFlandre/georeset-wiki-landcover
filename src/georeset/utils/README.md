@@ -2,10 +2,13 @@
 
 This package contains small cross-cutting helpers.
 
-## Modules
+## Files
 
+- `__init__.py`: marks the package; keep it free of heavyweight imports.
+- `articles.py`: helpers for article metadata records and page ID handling.
 - `json_io.py`: atomic file writers for JSON, text, CSV, GeoJSON, Folium HTML
   maps, and optional parquet outputs.
+- `math.py`: small numeric helpers shared across metric code.
 
 ## Atomic Write Policy
 

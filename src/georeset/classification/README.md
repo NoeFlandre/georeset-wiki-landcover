@@ -4,22 +4,23 @@ This package implements the article-text land-cover classification experiment.
 It supports CORINE level-2 single-label classification and OSM multi-label
 classification under the same text-source and shuffled-control protocol.
 
-## Core Modules
+## Files
 
-- `labels.py`: CORINE level-2 descriptions and OSM label allowlists.
+- `__init__.py`: marks the package; keep it free of heavy imports.
 - `ground_truth.py`: spatial joins that build task-specific ground truth from
   article coordinates and CORINE/OSM polygons.
-- `text_sources.py`: primary and shuffled text-source policy.
-- `prediction_parser.py`: conservative parser/normalizer for model JSON or
-  near-JSON outputs.
+- `labels.py`: CORINE level-2 descriptions and OSM label allowlists.
 - `llm_classifier.py`: LLM boundary. It builds prompts, calls the shared Llama
   client, records model metadata, and converts inference/parser failures into
   auditable prediction records.
-- `records.py`: prediction checkpoint shape and resumability skip policy.
 - `metrics.py`: single-label and multi-label metric implementations.
-- `task_setup.py`: task-specific data loading and label-description setup.
+- `prediction_parser.py`: conservative parser/normalizer for model JSON or
+  near-JSON outputs.
+- `records.py`: prediction checkpoint shape and resumability skip policy.
 - `runner.py`: reusable classification orchestration used by packaged CLIs and
   tests.
+- `task_setup.py`: task-specific data loading and label-description setup.
+- `text_sources.py`: primary and shuffled text-source policy.
 - `types.py`: narrow typed contracts for classification results.
 
 ## Invariants

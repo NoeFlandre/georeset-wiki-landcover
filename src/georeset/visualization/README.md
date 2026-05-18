@@ -2,8 +2,9 @@
 
 This package contains Folium map helpers for visual sanity checks.
 
-## Module
+## Files
 
+- `__init__.py`: marks the package; keep it free of rendering side effects.
 - `map_visualizer.py`: renders CORINE polygons, Wikipedia article points, and
   OSM polygon overlays.
 

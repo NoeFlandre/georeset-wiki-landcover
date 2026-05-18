@@ -2,12 +2,13 @@
 
 This package contains spatial-policy and spatial-confidence utilities.
 
-## Modules
+## Files
 
-- `policy.py`: shared point/polygon predicate policy used to keep filtering and
-  classification ground-truth behavior aligned.
+- `__init__.py`: marks the package; keep it free of geospatial data loading.
 - `corine_confidence.py`: computes CORINE level-2 area shares around article
   coordinates at fixed metric radii.
+- `policy.py`: shared point/polygon predicate policy used to keep filtering and
+  classification ground-truth behavior aligned.
 
 ## CORINE Confidence Contract
 

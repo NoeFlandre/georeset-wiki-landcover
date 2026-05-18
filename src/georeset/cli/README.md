@@ -6,12 +6,14 @@ This package contains installable command-line entry points exposed through
 Prefer these `georeset-*` commands over importing top-level `scripts.*`
 wrappers in new documentation or automation.
 
-## Entry Point Groups
+## Files And Subpackages
 
-- `georeset.cli.data`: data preparation, article summarization, classification,
-  and spatial-confidence generation.
-- `georeset.cli.analysis`: experiment summarization and reevaluation commands.
-- `georeset.cli.dev`: small developer diagnostics.
+- `__init__.py`: marks the CLI package and should not import command modules.
+- `analysis/`: commands that read frozen artifacts and produce derived metrics,
+  summaries, or comparisons.
+- `data/`: commands that create or update data artifacts used by experiments.
+- `dev/`: local developer diagnostics that are not part of the formal research
+  protocol.
 
 ## Design Rules
 
