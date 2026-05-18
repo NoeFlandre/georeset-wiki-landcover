@@ -336,7 +336,7 @@ locally, or to regenerate overview tables for any experiment directory:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 uv run georeset-summarize-classification-experiment \
-  --experiment-dir data/experiments/article_text_classification_e2e_with_shuffled_control_v1 \
+  --experiment-dir data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1 \
   --title "Article-Text Classification E2E with Shuffled Control v1"
 ```
 
@@ -350,8 +350,8 @@ ambiguity evidence.
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 uv run georeset-compute-corine-spatial-confidence \
-  --parent-experiment-dir data/experiments/article_text_classification_e2e_with_shuffled_control_v1 \
-  --output-dir data/experiments/corine_spatial_confidence_v1
+  --parent-experiment-dir data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1 \
+  --output-dir data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1
 ```
 
 Reevaluate the frozen parent predictions on spatially reliable subsets without
@@ -359,9 +359,9 @@ changing prompts, summaries, model outputs, or temperature:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 uv run georeset-evaluate-spatial-confidence \
-  --parent-experiment-dir data/experiments/article_text_classification_e2e_with_shuffled_control_v1 \
-  --spatial-confidence-path data/experiments/corine_spatial_confidence_v1/spatial_confidence.csv \
-  --output-dir data/experiments/article_text_classification_spatial_confidence_v1
+  --parent-experiment-dir data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1 \
+  --spatial-confidence-path data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv \
+  --output-dir data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1
 ```
 
 ## Docker

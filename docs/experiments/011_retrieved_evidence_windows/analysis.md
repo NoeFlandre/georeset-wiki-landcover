@@ -129,9 +129,9 @@ The research conclusion is therefore:
 Generated data and analysis artifacts:
 
 - `data/wiki/article_retrieved_evidence_windows.json`
-- `data/experiments/article_text_retrieved_evidence_windows_v1__qwen3_6_27b_q4_0/`
-- `data/experiments/article_text_retrieved_evidence_windows_v1__gemma4_31b_it_q4_0/`
-- `data/experiments/retrieved_evidence_windows_comparison_v1/`
+- `data/experiments/011_retrieved_evidence_windows/article_text_retrieved_evidence_windows_v1__qwen3_6_27b_q4_0/`
+- `data/experiments/011_retrieved_evidence_windows/article_text_retrieved_evidence_windows_v1__gemma4_31b_it_q4_0/`
+- `data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/`
 
 Code paths:
 

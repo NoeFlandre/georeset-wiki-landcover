@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from georeset.experiment_paths import experiment_artifact_file
 from georeset.vision.sentinel_patches import (
     sentinel2_planetary_computer_fetcher,
     write_patch_cache,
@@ -16,12 +17,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--splits-path",
         type=Path,
-        default=Path("data/experiments/clip_linear_probe_weak_labels_v1/label_splits.csv"),
+        default=experiment_artifact_file("clip_linear_probe_weak_labels_v1", "label_splits.csv"),
     )
     parser.add_argument(
         "--output-path",
         type=Path,
-        default=Path("data/experiments/clip_linear_probe_weak_labels_v1/sentinel_patches_rgb.npz"),
+        default=experiment_artifact_file(
+            "clip_linear_probe_weak_labels_v1", "sentinel_patches_rgb.npz"
+        ),
     )
     parser.add_argument("--patch-size", type=int, default=224)
     parser.add_argument("--cloud-cover", type=float, default=25.0)

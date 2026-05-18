@@ -106,15 +106,15 @@ also be a stronger follow-up than further tightening the weak-label filters.
 
 ## Artifacts
 
-- `data/experiments/clip_linear_probe_weak_labels_v1/label_splits.csv`
-- `data/experiments/clip_linear_probe_weak_labels_v1/sentinel_patches_rgb.npz`
-- `data/experiments/clip_linear_probe_weak_labels_v1/clip_embeddings.npz`
-- `data/experiments/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv`
-- `data/experiments/clip_linear_probe_weak_labels_v1/linear_probe_predictions.csv`
-- `data/experiments/clip_linear_probe_weak_labels_v1/zero_shot_clip_metrics.csv`
-- `data/experiments/clip_linear_probe_weak_labels_v1/zero_shot_clip_predictions.csv`
-- `data/experiments/clip_linear_probe_weak_labels_v1/zero_shot_clip_summary.md`
-- `data/experiments/clip_linear_probe_weak_labels_v1/summary.md`
+- `data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv`
+- `data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/sentinel_patches_rgb.npz`
+- `data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/clip_embeddings.npz`
+- `data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv`
+- `data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_predictions.csv`
+- `data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_metrics.csv`
+- `data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_predictions.csv`
+- `data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_summary.md`
+- `data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/summary.md`
 
 ## Artifact inventory
 

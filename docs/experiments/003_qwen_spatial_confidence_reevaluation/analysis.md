@@ -2,8 +2,8 @@
 
 This note analyzes the frozen outputs in:
 
-- `data/experiments/corine_spatial_confidence_v1/`
-- `data/experiments/article_text_classification_spatial_confidence_v1/`
+- `data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/`
+- `data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/`
 
 The analysis is based on the generated CSV artifacts only. No LLM predictions were rerun.
 

@@ -17,6 +17,7 @@ from georeset.analysis.label_universe import label_universe
 from georeset.analysis.prediction_loading import load_prediction_records
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
+from georeset.experiment_paths import experiment_artifact_dir, experiment_artifact_file
 from georeset.utils.json_io import (
     write_dict_rows_csv_atomic,
     write_dict_rows_markdown_atomic,
@@ -29,10 +30,10 @@ EXPERIMENT_ID = "article_text_classification_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
 SPATIAL_EXPERIMENT_ID = "corine_spatial_confidence_v1"
 DEFAULT_PARENT_DIR = Path(
-    "data/experiments/article_text_classification_e2e_with_shuffled_control_v1"
+    experiment_artifact_dir(PARENT_EXPERIMENT_ID)
 )
-DEFAULT_SPATIAL_PATH = Path("data/experiments/corine_spatial_confidence_v1/spatial_confidence.csv")
-DEFAULT_OUTPUT_DIR = Path("data/experiments/article_text_classification_spatial_confidence_v1")
+DEFAULT_SPATIAL_PATH = experiment_artifact_file(SPATIAL_EXPERIMENT_ID, "spatial_confidence.csv")
+DEFAULT_OUTPUT_DIR = experiment_artifact_dir(EXPERIMENT_ID)
 
 SUBSET_DEFINITIONS = {
     "all_available_spatial_confidence": lambda df: pd.Series(True, index=df.index),

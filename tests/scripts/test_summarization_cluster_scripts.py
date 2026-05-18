@@ -117,7 +117,10 @@ def test_clip_linear_probe_job_uses_vision_group_and_job_local_caches():
 def test_submit_clip_linear_probe_syncs_outputs_safely():
     script = Path("scripts/cluster/submit_clip_linear_probe.sh").read_text()
 
-    assert 'OUTPUT_DIR="${CLIP_OUTPUT_DIR:-data/experiments/clip_linear_probe_weak_labels_v1}"' in script
+    assert (
+        'OUTPUT_DIR="${CLIP_OUTPUT_DIR:-data/experiments/012_clip_linear_probe_weak_labels/'
+        'clip_linear_probe_weak_labels_v1}"' in script
+    )
     assert 'AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"' in script
     assert "run_clip_linear_probe_job.sh" in script
     assert "uv.lock" not in script

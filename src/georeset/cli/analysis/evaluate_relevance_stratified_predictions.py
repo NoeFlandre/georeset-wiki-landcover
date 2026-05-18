@@ -23,6 +23,7 @@ from georeset.analysis.shuffled_deltas import primary_metric_name
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.classification.text_sources import shuffled_text_source_pairs
+from georeset.experiment_paths import experiment_artifact_dir, experiment_artifact_file
 from georeset.utils.json_io import (
     write_dict_rows_csv_atomic,
     write_dict_rows_markdown_atomic,
@@ -31,16 +32,18 @@ from georeset.utils.json_io import (
 )
 
 DEFAULT_PARENT_DIRS = [
-    Path("data/experiments/article_text_classification_e2e_with_shuffled_control_v1"),
-    Path(
-        "data/experiments/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0"
+    experiment_artifact_dir("article_text_classification_e2e_with_shuffled_control_v1"),
+    experiment_artifact_dir(
+        "article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0"
     ),
 ]
 DEFAULT_EVIDENCE_METADATA_PATH = Path("data/wiki/article_landuse_evidence_summaries.json")
-DEFAULT_SPATIAL_CONFIDENCE_PATH = Path(
-    "data/experiments/corine_spatial_confidence_v1/spatial_confidence.csv"
+DEFAULT_SPATIAL_CONFIDENCE_PATH = experiment_artifact_file(
+    "corine_spatial_confidence_v1", "spatial_confidence.csv"
 )
-DEFAULT_OUTPUT_DIR = Path("data/experiments/article_text_classification_relevance_stratified_v1")
+DEFAULT_OUTPUT_DIR = experiment_artifact_dir(
+    "article_text_classification_relevance_stratified_v1"
+)
 DEFAULT_EXPERIMENT_ID = "article_text_classification_relevance_stratified_v1"
 
 EVIDENCE_TYPES = [

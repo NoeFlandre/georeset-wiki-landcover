@@ -7,7 +7,7 @@ It is an analysis-only experiment. No LLM was rerun. The analysis reused the fro
 The output artifacts are in:
 
 ```text
-data/experiments/article_text_classification_article_type_relevance_stratified_v1/
+data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/
 ```
 
 ## What Was Added

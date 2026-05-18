@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GeoReSeT Experiment Summary</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #5f6f7d;
+      --line: #d9e2e8;
+      --paper: #ffffff;
+      --soft: #f5f8fa;
+      --blue: #245b84;
+      --teal: #1d776f;
+      --green: #51732c;
+      --gold: #9a6a14;
+      --red: #a33c32;
+      --violet: #5f4b8b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #f2f5f7;
+      color: var(--ink);
+      font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+
+    .hero {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 32px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.85fr);
+      gap: 28px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3 { line-height: 1.15; margin: 0; }
+    h1 { font-size: clamp(32px, 5vw, 54px); letter-spacing: 0; }
+    h2 { margin-top: 36px; font-size: 25px; }
+    h3 { font-size: 17px; }
+    p { margin: 10px 0 0; }
+
+    .lead {
+      max-width: 780px;
+      color: #334553;
+      font-size: 18px;
+    }
+
+    .stamp {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--soft);
+      padding: 6px 11px;
+      color: #314453;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .key-number {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: #f7fafb;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      min-height: 116px;
+    }
+
+    .metric-card strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+      color: var(--blue);
+      margin-bottom: 8px;
+    }
+
+    .metric-card span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .panel p { color: var(--muted); }
+
+    .flow {
+      margin-top: 16px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      overflow-x: auto;
+    }
+
+    .chart-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 0.72fr);
+      gap: 16px;
+      margin-top: 14px;
+      align-items: stretch;
+    }
+
+    .bar-chart {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 170px minmax(0, 1fr) 60px;
+      gap: 10px;
+      align-items: center;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+
+    .bar-track {
+      height: 12px;
+      background: #e8eef2;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--blue);
+    }
+
+    .bar.teal { background: var(--teal); }
+    .bar.green { background: var(--green); }
+    .bar.gold { background: var(--gold); }
+    .bar.red { background: var(--red); }
+    .bar.violet { background: var(--violet); }
+
+    .note {
+      background: #fbfcfd;
+      border-left: 4px solid var(--teal);
+      padding: 16px 18px;
+      color: #344a58;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      display: table;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #eef4f7;
+      font-size: 12px;
+      color: #394b57;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+    td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+    .status {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #e9f4ee;
+      color: #2e6441;
+      white-space: nowrap;
+    }
+
+    .status.warn {
+      background: #fff4dd;
+      color: #7a4e00;
+    }
+
+    .status.stop {
+      background: #f8e7e4;
+      color: #8f2e25;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 860px) {
+      .hero, .chart-wrap, .grid { grid-template-columns: 1fr; }
+      .key-number { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      table { display: block; overflow-x: auto; }
+    }
+
+    @media (max-width: 520px) {
+      .page { padding: 20px 12px 40px; }
+      .hero { padding: 22px; }
+      .key-number { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 1fr; gap: 6px; }
+      .bar-row .num { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">GeoReSeT experiment review</p>
+        <h1>What the experiments show so far</h1>
+        <p class="lead">
+          We are testing whether French Wikipedia text and geolocated article
+          coordinates can produce useful land-cover supervision. The core result:
+          article text contains real signal, but label reliability, relevance,
+          class imbalance, and image-model data coverage matter more than another
+          compact text rewrite.
+        </p>
+        <div class="stamp">
+          <span class="pill">12 experiment stages</span>
+          <span class="pill">1,251 CORINE articles</span>
+          <span class="pill">275 OSM articles</span>
+          <span class="pill">35-image strict CLIP eval</span>
+        </div>
+      </div>
+      <div class="key-number" aria-label="Headline metrics">
+        <div class="metric-card">
+          <strong>0.281</strong>
+          <span>Qwen raw-content CORINE balanced accuracy on all articles</span>
+        </div>
+        <div class="metric-card">
+          <strong>0.409</strong>
+          <span>Qwen raw-content CORINE balanced accuracy after relevance + spatial filtering</span>
+        </div>
+        <div class="metric-card">
+          <strong>0.600</strong>
+          <span>Frozen CLIP + linear probe accuracy on the strict image eval split</span>
+        </div>
+        <div class="metric-card">
+          <strong>0.200</strong>
+          <span>Out-of-the-box zero-shot CLIP accuracy on that same image eval split</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Research Arc</h2>
+      <div class="flow">
+        <svg viewBox="0 0 1100 260" width="100%" height="260" role="img" aria-label="Experiment sequence from text classification through image probing">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#526676"></path>
+            </marker>
+          </defs>
+          <rect x="16" y="38" width="170" height="92" rx="8" fill="#eef4f7" stroke="#cbd8df"></rect>
+          <text x="101" y="68" text-anchor="middle" font-size="15" font-weight="700" fill="#17202a">Text signal?</text>
+          <text x="101" y="94" text-anchor="middle" font-size="12" fill="#526676">Qwen, shuffled controls</text>
+          <text x="101" y="113" text-anchor="middle" font-size="12" fill="#1d776f">Signal is real</text>
+
+          <line x1="186" y1="84" x2="280" y2="84" stroke="#526676" stroke-width="2" marker-end="url(#arrow)"></line>
+
+          <rect x="280" y="38" width="190" height="92" rx="8" fill="#f0f7f5" stroke="#c6dcd8"></rect>
+          <text x="375" y="68" text-anchor="middle" font-size="15" font-weight="700" fill="#17202a">Label reliability?</text>
+          <text x="375" y="94" text-anchor="middle" font-size="12" fill="#526676">CORINE purity filters</text>
+          <text x="375" y="113" text-anchor="middle" font-size="12" fill="#1d776f">Better when clean</text>
+
+          <line x1="470" y1="84" x2="564" y2="84" stroke="#526676" stroke-width="2" marker-end="url(#arrow)"></line>
+
+          <rect x="564" y="38" width="190" height="92" rx="8" fill="#fff7e8" stroke="#e5d2aa"></rect>
+          <text x="659" y="68" text-anchor="middle" font-size="15" font-weight="700" fill="#17202a">Better text?</text>
+          <text x="659" y="94" text-anchor="middle" font-size="12" fill="#526676">Summaries, cards, highlights</text>
+          <text x="659" y="113" text-anchor="middle" font-size="12" fill="#9a6a14">Raw content still wins</text>
+
+          <line x1="754" y1="84" x2="848" y2="84" stroke="#526676" stroke-width="2" marker-end="url(#arrow)"></line>
+
+          <rect x="848" y="38" width="220" height="92" rx="8" fill="#f3eff8" stroke="#d7cce5"></rect>
+          <text x="958" y="68" text-anchor="middle" font-size="15" font-weight="700" fill="#17202a">Image supervision?</text>
+          <text x="958" y="94" text-anchor="middle" font-size="12" fill="#526676">Sentinel patches + CLIP probe</text>
+          <text x="958" y="113" text-anchor="middle" font-size="12" fill="#5f4b8b">Broad weak labels help</text>
+
+          <path d="M90 151 C180 205, 345 205, 456 151" fill="none" stroke="#9a6a14" stroke-width="2"></path>
+          <text x="273" y="218" text-anchor="middle" font-size="13" fill="#526676">Controls prevent over-reading priors and majority-class effects</text>
+          <path d="M520 151 C620 205, 820 205, 952 151" fill="none" stroke="#9a6a14" stroke-width="2"></path>
+          <text x="737" y="238" text-anchor="middle" font-size="13" fill="#526676">Filters are strongest as selection signals, not hard replacement text</text>
+        </svg>
+      </div>
+    </section>
+
+    <section>
+      <h2>At A Glance</h2>
+      <div class="grid">
+        <article class="panel">
+          <h3>1. Text is informative</h3>
+          <p>Aligned article text beats shuffled controls. For Qwen CORINE raw content, balanced accuracy is 0.281 versus 0.067 shuffled.</p>
+        </article>
+        <article class="panel">
+          <h3>2. Ground truth quality matters</h3>
+          <p>Only 646 of 1,251 articles pass point-label share >= 0.8 at 250 m. On that cleaner subset, Qwen raw-content balanced accuracy rises to 0.352.</p>
+        </article>
+        <article class="panel">
+          <h3>3. Relevance is the best filter</h3>
+          <p>Medium/high land-cover relevance plus 250 m spatial purity gives the strongest text diagnostic: Qwen raw-content balanced accuracy 0.409.</p>
+        </article>
+        <article class="panel">
+          <h3>4. Compact text is lossy</h3>
+          <p>Evidence cards, highlights, and retrieved windows preserve signal, but none clearly replaces the full raw article for the main benchmark.</p>
+        </article>
+        <article class="panel">
+          <h3>5. Models trade off differently</h3>
+          <p>Gemma improves raw CORINE accuracy and OSM exact/micro metrics, while Qwen is stronger on balanced CORINE behavior.</p>
+        </article>
+        <article class="panel">
+          <h3>6. Image probing is promising</h3>
+          <p>Frozen CLIP plus a linear probe trained on broad weak labels reaches 0.600 accuracy, far above zero-shot CLIP at 0.200.</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Core Metrics</h2>
+      <div class="chart-wrap">
+        <div class="bar-chart">
+          <h3>CORINE balanced accuracy, Qwen content unless noted</h3>
+          <div class="bar-row"><span>Raw content, all</span><div class="bar-track"><div class="bar" style="width:68.7%"></div></div><span class="num">0.281</span></div>
+          <div class="bar-row"><span>Spatial 250 m clean</span><div class="bar-track"><div class="bar teal" style="width:86.0%"></div></div><span class="num">0.352</span></div>
+          <div class="bar-row"><span>Medium/high relevance</span><div class="bar-track"><div class="bar green" style="width:91.3%"></div></div><span class="num">0.374</span></div>
+          <div class="bar-row"><span>Relevance + spatial</span><div class="bar-track"><div class="bar green" style="width:100%"></div></div><span class="num">0.409</span></div>
+          <div class="bar-row"><span>Evidence card only</span><div class="bar-track"><div class="bar gold" style="width:54.8%"></div></div><span class="num">0.224</span></div>
+          <div class="bar-row"><span>Retrieved windows</span><div class="bar-track"><div class="bar violet" style="width:65.1%"></div></div><span class="num">0.266</span></div>
+        </div>
+        <div class="bar-chart">
+          <h3>Sentinel image probe</h3>
+          <div class="bar-row"><span>Zero-shot CLIP</span><div class="bar-track"><div class="bar red" style="width:33.3%"></div></div><span class="num">0.200</span></div>
+          <div class="bar-row"><span>Linear probe, all weak labels</span><div class="bar-track"><div class="bar violet" style="width:100%"></div></div><span class="num">0.600</span></div>
+          <div class="bar-row"><span>Linear probe, spatial-only</span><div class="bar-track"><div class="bar teal" style="width:95.2%"></div></div><span class="num">0.571</span></div>
+          <div class="bar-row"><span>Linear probe, text agreement</span><div class="bar-track"><div class="bar gold" style="width:66.7%"></div></div><span class="num">0.400</span></div>
+          <p class="small">Image metrics use a separate 35-example strict evaluation split, so they are not directly comparable to text-classifier CORINE metrics.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Experiment Ledger</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Question</th>
+            <th>Best grounded result</th>
+            <th>Interpretation</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="num"><a href="001_qwen_e2e_shuffled_control/analysis.md">001</a></td>
+            <td>Does article text contain land-cover signal?</td>
+            <td>Qwen CORINE content: 0.281 balanced accuracy vs 0.067 shuffled. OSM content Jaccard: 0.190 vs 0.077 shuffled.</td>
+            <td>Signal is article-linked, but raw accuracy and exact match can understate it.</td>
+            <td><span class="status">Keep</span></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="002_corine_spatial_confidence/README.md">002</a></td>
+            <td>How reliable are point-in-polygon CORINE labels?</td>
+            <td>646/1,251 articles pass point-label share >= 0.8 at 250 m; 419 pass at 500 m.</td>
+            <td>Spatial supervision is noisy and needs filtering or stratification.</td>
+            <td><span class="status">Use as filter</span></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="003_qwen_spatial_confidence_reevaluation/analysis.md">003</a></td>
+            <td>Does spatial reliability clarify text signal?</td>
+            <td>Qwen CORINE content improves from 0.281 to 0.352 balanced accuracy at 250 m purity >= 0.8.</td>
+            <td>Cleaner spatial labels make the text signal stronger and more credible.</td>
+            <td><span class="status">Use</span></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="004_gemma4_model_rerun_and_comparison/analysis.md">004</a></td>
+            <td>Does the result survive another local LLM?</td>
+            <td>Gemma CORINE content accuracy 0.357 vs Qwen 0.293, but balanced accuracy 0.271 vs Qwen 0.281.</td>
+            <td>Signal is robust across models; model choice shifts majority-class vs balanced behavior.</td>
+            <td><span class="status">Replicated</span></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="005_landuse_evidence_summary/analysis.md">005</a></td>
+            <td>Can a short land-use summary replace raw content?</td>
+            <td>Qwen CORINE land-use summary: 0.184 balanced accuracy vs 0.281 raw content.</td>
+            <td>The short summary is too lossy as classifier input.</td>
+            <td><span class="status stop">Do not replace</span></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="006_relevance_stratified_evaluation/analysis.md">006</a></td>
+            <td>Is the evidence extractor useful as metadata?</td>
+            <td>Qwen content on medium/high relevance: 0.374 balanced accuracy; relevance + spatial: 0.409.</td>
+            <td>Relevance is valuable as a quality filter even when summaries are lossy.</td>
+            <td><span class="status">Use</span></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="007_article_type_relevance_stratified_evaluation/analysis.md">007</a></td>
+            <td>Do Wikipedia categories explain performance?</td>
+            <td>Only 605/1,251 articles have visible category metadata; the largest bucket is other_or_unclear.</td>
+            <td>Article type helps interpretation, but relevance is a better filter.</td>
+            <td><span class="status warn">Diagnostic</span></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="008_supervision_quality_score/analysis.md">008</a></td>
+            <td>Can a deterministic quality score dominate simpler filters?</td>
+            <td>Qwen quality+spatial content: 0.394 balanced accuracy; simpler relevance+spatial reaches 0.409.</td>
+            <td>The score is useful for candidate selection but not a clear replacement for simple filters.</td>
+            <td><span class="status warn">Use carefully</span></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="009_evidence_card_text_source/analysis.md">009</a></td>
+            <td>Can an evidence card improve classifier input?</td>
+            <td>Evidence card alone reaches 0.224 CORINE balanced accuracy; content with card reaches 0.285 but lowers macro-F1.</td>
+            <td>Cards organize signal but lose minority-class evidence versus raw content.</td>
+            <td><span class="status warn">Diagnostic</span></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="010_evidence_highlighted_content/analysis.md">010</a></td>
+            <td>Does prepending deterministic evidence highlights help?</td>
+            <td>Qwen highlighted content: 0.273 CORINE balanced accuracy vs 0.281 raw content; Gemma 0.259 vs 0.271.</td>
+            <td>Highlights are text-linked but generally weaker than raw content.</td>
+            <td><span class="status stop">Do not replace</span></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="011_retrieved_evidence_windows/analysis.md">011</a></td>
+            <td>Can retrieved raw evidence windows preserve the signal?</td>
+            <td>Qwen retrieved windows: 0.266 CORINE balanced accuracy vs 0.254 random windows and 0.281 raw content.</td>
+            <td>Best compact raw-text source so far, but not a full-content replacement.</td>
+            <td><span class="status warn">Cost tool</span></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="012_clip_linear_probe_weak_labels/analysis.md">012</a></td>
+            <td>Do weak labels help a Sentinel image classifier?</td>
+            <td>Frozen CLIP + linear probe reaches 0.600 accuracy; zero-shot CLIP reaches 0.200 on the same eval split.</td>
+            <td>Broad weak supervision is promising; overly strict filters reduce class coverage too much.</td>
+            <td><span class="status">Next path</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Current Research Position</h2>
+      <div class="note">
+        <strong>Best concise interpretation:</strong>
+        Wikipedia text is useful for land-cover supervision when articles are relevant
+        and point labels are spatially reliable. The best text input remains raw content.
+        Deterministic summaries, cards, highlights, and retrieved windows are useful for
+        diagnostics, filtering, and cost control, but not as primary replacements. For
+        image learning, broader weak-label coverage beats the strictest text-agreement
+        filter at the current data size.
+      </div>
+    </section>
+
+    <section>
+      <h2>Recommended Next Experiment</h2>
+      <div class="grid">
+        <article class="panel">
+          <h3>Train with broad weak labels</h3>
+          <p>Keep the broad `all` or `spatial_only` training pools so rare CORINE classes remain represented.</p>
+        </article>
+        <article class="panel">
+          <h3>Use quality as a soft signal</h3>
+          <p>Use relevance, spatial purity, quality score, and model agreement as weights or sampling controls, not hard exclusions.</p>
+        </article>
+        <article class="panel">
+          <h3>Move beyond generic CLIP</h3>
+          <p>Test a Sentinel-native encoder or fine-tuned vision backbone against the frozen CLIP linear-probe baseline.</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Grounding</h2>
+      <p class="small">
+        This page was checked against the local generated artifacts under
+        <code>data/experiments/</code>, including CSV summaries, metrics JSON files,
+        prediction JSON files, Sentinel patch caches, CLIP embedding caches, and
+        the markdown analyses linked in the ledger. Numeric values are rounded for
+        readability; the source reports keep more precision where needed.
+      </p>
+    </section>
+
+    <p class="footer">Generated as a concise master view for the experiment analyses in <code>docs/experiments</code>.</p>
+  </main>
+</body>
+</html>

@@ -11,6 +11,7 @@ import requests
 
 from georeset.analysis.article_type_classifier import ArticleTypeAssignment, assign_article_types
 from georeset.config import DataPaths
+from georeset.experiment_paths import experiment_artifact_file
 from georeset.utils.json_io import read_json_file, write_json_atomic
 
 logger = logging.getLogger(__name__)
@@ -199,7 +200,10 @@ def main() -> None:
     data_paths = DataPaths()
     fetcher.fetch_from_file(
         data_paths.wiki_articles,
-        "data/experiments/article_text_classification_article_type_relevance_stratified_v1/article_type_metadata.json",
+        experiment_artifact_file(
+            "article_text_classification_article_type_relevance_stratified_v1",
+            "article_type_metadata.json",
+        ),
     )
 
 

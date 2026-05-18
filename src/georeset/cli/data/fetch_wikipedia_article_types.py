@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from georeset.experiment_paths import experiment_artifact_file
 from georeset.fetchers.wiki_article_type_fetcher import WikiArticleTypeFetcher
 
 DEFAULT_INPUT_PATH = Path("data/wiki/wiki_articles.json")
-DEFAULT_OUTPUT_PATH = Path(
-    "data/experiments/article_text_classification_article_type_relevance_stratified_v1/article_type_metadata.json"
+DEFAULT_OUTPUT_PATH = experiment_artifact_file(
+    "article_text_classification_article_type_relevance_stratified_v1",
+    "article_type_metadata.json",
 )
 DEFAULT_BATCH_SIZE = 50
 

@@ -8,15 +8,15 @@ The experiment reads these inputs:
 
 - `data/wiki/wiki_articles.json`
 - `data/wiki/article_landuse_evidence_summaries.json`
-- `data/experiments/corine_spatial_confidence_v1/spatial_confidence.csv`
-- `data/experiments/article_text_classification_article_type_relevance_stratified_v1/article_type_assignments.csv`
-- `data/experiments/article_text_classification_e2e_with_shuffled_control_v1/*`
-- `data/experiments/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/*`
+- `data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv`
+- `data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/article_type_assignments.csv`
+- `data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1/*`
+- `data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/*`
 
 Outputs are written to:
 
 ```text
-data/experiments/article_text_supervision_quality_score_v1/
+data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/
 ```
 
 The experiment id used in the generated manifest is
@@ -158,38 +158,40 @@ heuristic:
       relevance+spatial `0.384421673`, article_type `0.321048916`.
       -> better than relevance, spatial, article_type; slightly worse than
       relevance+spatial.
-- OSM/content (`exact_match_accuracy` and `jaccard`) tells a similar story:
+- OSM/content tells a similar story. The values below are reported as
+  `exact_match_accuracy` / `jaccard`:
   - Qwen:
-    - `quality_high_or_very_high` exact/jaccard: `0.222222222` / `0.226327944`.
-      Relevance: `0.236383442` / `0.235897436`; spatial: `0.2453125` / `0.248618785`;
-      relevance+spatial: `0.260869565` / `0.286995516`; article_type:
-      `0.274509804` / `0.281481481`.
+    - `quality_high_or_very_high` exact/jaccard: `0.183908046` / `0.222222222`.
+      Relevance: `0.196078431` / `0.236383442`; spatial: `0.225000000` / `0.245312500`;
+      relevance+spatial: `0.260869565` / `0.290760870`; article_type:
+      `0.235294118` / `0.274509804`.
       -> worse than relevance, spatial, relevance+spatial, and article_type.
     - `quality_high_or_very_high_and_spatial_250m_ge_0.8` exact/jaccard:
-      `0.256818182` / `0.261538462`. It is above relevance
-      (`0.236383442` / `0.235897436`) and spatial (`0.2453125` / `0.248618785`)
-      on exact match, but still below relevance+spatial
-      (`0.260869565` / `0.286995516`) and article_type (`0.274509804` / `0.281481481`)
+      `0.227272727` / `0.256818182`. It is above relevance
+      (`0.196078431` / `0.236383442`) on exact match and Jaccard, above spatial
+      (`0.225000000` / `0.245312500`) on exact match and Jaccard, but still below
+      relevance+spatial (`0.260869565` / `0.290760870`) and article_type
+      (`0.235294118` / `0.274509804`)
       on both metrics.
   - Gemma:
-    - `quality_high_or_very_high` exact/jaccard: `0.248563218` / `0.245833333`.
-      Relevance: `0.246732026` / `0.242562929`; spatial: `0.286458333` / `0.278606965`;
-      relevance+spatial: `0.294384058` / `0.278884462`; article_type:
-      `0.345098039` / `0.328767123`.
+    - `quality_high_or_very_high` exact/jaccard: `0.201149425` / `0.248563218`.
+      Relevance: `0.196078431` / `0.246732026`; spatial: `0.256250000` / `0.286458333`;
+      relevance+spatial: `0.260869565` / `0.294384058`; article_type:
+      `0.294117647` / `0.345098039`.
       -> slightly above relevance-only, but below spatial, relevance+spatial, and
       article_type on both metrics.
     - `quality_high_or_very_high_and_spatial_250m_ge_0.8` exact/jaccard:
-      `0.268939394` / `0.263888889` is above relevance (`0.246732026` / `0.242562929`)
-      but below spatial (`0.286458333` / `0.278606965`), relevance+spatial
-      (`0.294384058` / `0.278884462`), and article_type (`0.345098039` / `0.328767123`)
-      on exact and jaccard.
+      `0.236363636` / `0.268939394` is above relevance (`0.196078431` / `0.246732026`)
+      but below spatial (`0.256250000` / `0.286458333`), relevance+spatial
+      (`0.260869565` / `0.294384058`), and article_type (`0.294117647` / `0.345098039`)
+      on exact match and Jaccard.
 - Article-type-only baseline remains useful for interpretation but does not dominate
   the spatial+relevance filters:
   - CORINE/content `article_type_high_prior`: Qwen `0.322556751`, Gemma
     `0.321048916` (both lower than relevance+spatial; Qwen/Gemma quality+spatial are
     above article-type only).
-  - OSM/content `article_type_high_prior`: Qwen exact `0.274509804` / jaccard
-    `0.281481481`; Gemma exact `0.345098039` / jaccard `0.328767123` (both are
+  - OSM/content `article_type_high_prior`: Qwen exact `0.235294118` / Jaccard
+    `0.274509804`; Gemma exact `0.294117647` / Jaccard `0.345098039` (both are
     above the corresponding OSM quality rows, so article type adds interpretation but
     does not dominate the combined relevance/spatial signal).
 

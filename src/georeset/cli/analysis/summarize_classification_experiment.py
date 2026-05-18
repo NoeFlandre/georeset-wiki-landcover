@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from georeset.classification.text_sources import shuffled_text_source_pairs, text_source_sort_key
+from georeset.experiment_paths import experiment_artifact_dir
 from georeset.utils.json_io import read_json_file, write_markdown_table_atomic, write_text_atomic
 
 logger = logging.getLogger(__name__)
@@ -453,7 +454,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--experiment-dir",
         type=Path,
-        default=Path("data/experiments/article_text_classification_e2e_v1"),
+        default=experiment_artifact_dir("article_text_classification_e2e_v1"),
     )
     parser.add_argument("--csv-output", type=Path, default=None)
     parser.add_argument("--markdown-output", type=Path, default=None)

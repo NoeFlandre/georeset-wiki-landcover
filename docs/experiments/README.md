@@ -71,33 +71,10 @@ and next steps.
 
 ## Data Artifact Map
 
-The reports cite artifacts under `data/experiments/`:
-
-- `article_text_classification_e2e_v1/`
-- `article_text_classification_e2e_with_shuffled_control_v1/`
-- `article_text_classification_shuffled_control_v1/`
-- `corine_spatial_confidence_v1/`
-- `article_text_classification_spatial_confidence_v1/`
-- `article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/`
-- `article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0/`
-- `model_comparison_qwen_vs_gemma4_31b_it_q4_0/`
-- `article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0/`
-- `article_text_classification_landuse_evidence_v1__gemma4_31b_it_q4_0/`
-- `article_text_classification_landuse_evidence_spatial_confidence_v1__qwen3_6_27b_q4_0/`
-- `article_text_classification_landuse_evidence_spatial_confidence_v1__gemma4_31b_it_q4_0/`
-- `landuse_evidence_comparison_v1/`
-- `article_text_classification_relevance_stratified_v1/`
-- `article_text_classification_article_type_relevance_stratified_v1/`
-- `article_text_supervision_quality_score_v1/`
-- `article_text_evidence_card_v1__qwen3_6_27b_q4_0/`
-- `evidence_card_comparison_v1/`
-- `article_text_evidence_highlights_v1__qwen3_6_27b_q4_0/`
-- `article_text_evidence_highlights_v1__gemma4_31b_it_q4_0/`
-- `evidence_highlights_comparison_v1/`
-- `article_text_retrieved_evidence_windows_v1__qwen3_6_27b_q4_0/`
-- `article_text_retrieved_evidence_windows_v1__gemma4_31b_it_q4_0/`
-- `retrieved_evidence_windows_comparison_v1/`
-- `clip_linear_probe_weak_labels_v1/`
+The reports cite artifacts under matching numbered folders in
+`data/experiments/`. For example, report
+`docs/experiments/012_clip_linear_probe_weak_labels/analysis.md` cites
+`data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/`.
 
 Working classifier checkpoints live separately under `data/classification/runs/`.
 Those are useful for resumability, but the stable research outputs are the
@@ -112,5 +89,6 @@ Use a numeric prefix for future report folders:
   analysis.md
 ```
 
-Keep generated data in `data/experiments/<experiment_id>/` and keep narrative
+Keep generated data in
+`data/experiments/<number>_<short_name>/<experiment_id>/` and keep narrative
 analysis in `docs/experiments/<number>_<short_name>/`.

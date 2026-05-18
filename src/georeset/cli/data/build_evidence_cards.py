@@ -17,18 +17,19 @@ from georeset.cli.data.json_inputs import (
     read_required_json_mapping,
 )
 from georeset.config import DataPaths
+from georeset.experiment_paths import experiment_artifact_file
 from georeset.text.evidence_cards import EVIDENCE_CARD_VERSION, build_evidence_card_record
 from georeset.utils.json_io import write_json_atomic
 
-DEFAULT_ARTICLE_TYPE_METADATA_PATH = Path(
-    "data/experiments/article_text_classification_article_type_relevance_stratified_v1/"
-    "article_type_assignments.csv"
+DEFAULT_ARTICLE_TYPE_METADATA_PATH = experiment_artifact_file(
+    "article_text_classification_article_type_relevance_stratified_v1",
+    "article_type_assignments.csv",
 )
-DEFAULT_SPATIAL_CONFIDENCE_PATH = Path(
-    "data/experiments/corine_spatial_confidence_v1/spatial_confidence.csv"
+DEFAULT_SPATIAL_CONFIDENCE_PATH = experiment_artifact_file(
+    "corine_spatial_confidence_v1", "spatial_confidence.csv"
 )
-DEFAULT_QUALITY_SCORES_PATH = Path(
-    "data/experiments/article_text_supervision_quality_score_v1/quality_scores.csv"
+DEFAULT_QUALITY_SCORES_PATH = experiment_artifact_file(
+    "article_text_supervision_quality_score_v1", "quality_scores.csv"
 )
 
 

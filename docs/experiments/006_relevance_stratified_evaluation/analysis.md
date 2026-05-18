@@ -12,7 +12,7 @@ metrics by relevance, evidence type, and CORINE spatial-confidence subsets.
 The generated artifacts are in:
 
 ```text
-data/experiments/article_text_classification_relevance_stratified_v1/
+data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/
 ```
 
 The main files are `overview_by_relevance.csv`,
@@ -27,13 +27,13 @@ The main files are `overview_by_relevance.csv`,
 The manifest records `no_llm_rerun: true`. The evaluator loaded 18,312 frozen
 prediction rows from:
 
-- `data/experiments/article_text_classification_e2e_with_shuffled_control_v1/`
-- `data/experiments/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/`
+- `data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1/`
+- `data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/`
 
 It joined those rows to:
 
 - `data/wiki/article_landuse_evidence_summaries.json`
-- `data/experiments/corine_spatial_confidence_v1/spatial_confidence.csv`
+- `data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv`
 
 The evidence metadata was available for all evaluated article ids. For the
 article set, relevance was distributed as:

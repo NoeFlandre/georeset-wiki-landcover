@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 from numpy.typing import NDArray
 
+from georeset.experiment_paths import experiment_artifact_dir
 from georeset.vision.clip_transformers import select_clip_features
 from georeset.vision.clip_zero_shot import TextEncoder, run_zero_shot_evaluation
 
@@ -43,7 +44,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("data/experiments/clip_linear_probe_weak_labels_v1"),
+        default=experiment_artifact_dir("clip_linear_probe_weak_labels_v1"),
     )
     parser.add_argument("--model-name", default="openai/clip-vit-base-patch32")
     parser.add_argument("--device", default="cuda")

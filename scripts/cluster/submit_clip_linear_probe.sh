@@ -9,7 +9,7 @@ REMOTE_HOME="${G5K_REMOTE_HOME:-/home/${REMOTE_USER}}"
 REMOTE_PROJECT_DIR="${G5K_REMOTE_PROJECT_DIR:-${REMOTE_HOME}/${REMOTE_DIR}}"
 REMOTE_ACCESS_DIR="${SITE}/${REMOTE_DIR}"
 JOB_SCRIPT="scripts/cluster/run_clip_linear_probe_job.sh"
-OUTPUT_DIR="${CLIP_OUTPUT_DIR:-data/experiments/clip_linear_probe_weak_labels_v1}"
+OUTPUT_DIR="${CLIP_OUTPUT_DIR:-data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1}"
 AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"
 OAR_QUEUE="${G5K_OAR_QUEUE:-production}"
 OAR_PROPERTIES="${G5K_OAR_PROPERTIES:-gpu_mem>=16000}"
@@ -38,11 +38,19 @@ rsync -az --delete \
   ./ "${ACCESS_HOST}:${REMOTE_ACCESS_DIR}/"
 
 echo "Syncing experiment input data to Grid5000"
+ssh -o BatchMode=yes "${ACCESS_HOST}" "mkdir -p \
+  ${REMOTE_ACCESS_DIR}/data/experiments/001_qwen_e2e_shuffled_control \
+  ${REMOTE_ACCESS_DIR}/data/experiments/004_gemma4_model_rerun_and_comparison \
+  ${REMOTE_ACCESS_DIR}/data/experiments/008_supervision_quality_score"
 rsync -az \
-  data/experiments/article_text_supervision_quality_score_v1 \
-  data/experiments/article_text_classification_e2e_with_shuffled_control_v1 \
-  data/experiments/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0 \
-  "${ACCESS_HOST}:${REMOTE_ACCESS_DIR}/data/experiments/"
+  data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1 \
+  "${ACCESS_HOST}:${REMOTE_ACCESS_DIR}/data/experiments/008_supervision_quality_score/"
+rsync -az \
+  data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1 \
+  "${ACCESS_HOST}:${REMOTE_ACCESS_DIR}/data/experiments/001_qwen_e2e_shuffled_control/"
+rsync -az \
+  data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0 \
+  "${ACCESS_HOST}:${REMOTE_ACCESS_DIR}/data/experiments/004_gemma4_model_rerun_and_comparison/"
 
 ssh -o BatchMode=yes "${ACCESS_HOST}" "mkdir -p ${REMOTE_ACCESS_DIR}/${OUTPUT_DIR}"
 mkdir -p "${OUTPUT_DIR}"

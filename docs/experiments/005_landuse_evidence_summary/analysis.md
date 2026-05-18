@@ -1,10 +1,10 @@
 # Land-use Evidence Summary Experiment Comparison
 
 ## Source Artifacts
-- Qwen land-use experiment: `data/experiments/article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0`
-- Gemma land-use experiment: `data/experiments/article_text_classification_landuse_evidence_v1__gemma4_31b_it_q4_0`
-- Qwen land-use spatial: `data/experiments/article_text_classification_landuse_evidence_spatial_confidence_v1__qwen3_6_27b_q4_0`
-- Gemma land-use spatial: `data/experiments/article_text_classification_landuse_evidence_spatial_confidence_v1__gemma4_31b_it_q4_0`
+- Qwen land-use experiment: `data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0`
+- Gemma land-use experiment: `data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__gemma4_31b_it_q4_0`
+- Qwen land-use spatial: `data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_spatial_confidence_v1__qwen3_6_27b_q4_0`
+- Gemma land-use spatial: `data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_spatial_confidence_v1__gemma4_31b_it_q4_0`
 
 ## Validation
 - Non-spatial files are parseable and include four rows per model (corine/OSM × aligned/shuffled).

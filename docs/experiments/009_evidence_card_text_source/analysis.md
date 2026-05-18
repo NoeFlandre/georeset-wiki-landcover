@@ -23,9 +23,9 @@ signal.
 Source artifacts:
 
 - Frozen run:
-  `data/experiments/article_text_evidence_card_v1__qwen3_6_27b_q4_0/`
+  `data/experiments/009_evidence_card_text_source/article_text_evidence_card_v1__qwen3_6_27b_q4_0/`
 - Comparison tables:
-  `data/experiments/evidence_card_comparison_v1/`
+  `data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/`
 - Cards:
   `data/wiki/article_evidence_cards.json`
 

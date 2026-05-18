@@ -13,7 +13,7 @@ cd "${REMOTE_PROJECT_DIR}"
 
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 export PYTHONDONTWRITEBYTECODE=1
-export CLIP_OUTPUT_DIR="${CLIP_OUTPUT_DIR:-data/experiments/clip_linear_probe_weak_labels_v1}"
+export CLIP_OUTPUT_DIR="${CLIP_OUTPUT_DIR:-data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1}"
 export CLIP_MODEL_NAME="${CLIP_MODEL_NAME:-openai/clip-vit-base-patch32}"
 JOB_CACHE_DIR="${GEORESET_JOB_CACHE_DIR:-${TMPDIR:-/tmp}/georeset_${OAR_JOB_ID:-manual}}"
 export HF_HOME="${HF_HOME:-${JOB_CACHE_DIR}/hf}"

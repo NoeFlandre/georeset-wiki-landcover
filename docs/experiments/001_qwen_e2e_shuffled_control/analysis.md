@@ -4,9 +4,9 @@ This note analyzes the first frozen article-text classification batch before the
 
 Inputs analyzed:
 
-- `data/experiments/article_text_classification_e2e_v1/`
-- `data/experiments/article_text_classification_shuffled_control_v1/`
-- `data/experiments/article_text_classification_e2e_with_shuffled_control_v1/`
+- `data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_v1/`
+- `data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_shuffled_control_v1/`
+- `data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1/`
 
 The analysis is grounded in the generated `overview.csv`, `shuffled_delta.csv`, and per-run `*_metrics.json` files. No LLM predictions were rerun. The LLM used for all experiments here is Qwen3.6-27B-Q4_0.gguf
 

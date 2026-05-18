@@ -15,6 +15,7 @@ from shapely.geometry import Point
 
 from georeset.config import DataPaths
 from georeset.contracts import ArticleMeta
+from georeset.experiment_paths import experiment_artifact_dir
 from georeset.spatial.corine_confidence import (
     METRIC_CRS,
     compute_article_spatial_confidence,
@@ -32,9 +33,9 @@ from georeset.utils.json_io import (
 EXPERIMENT_ID = "corine_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
 DEFAULT_PARENT_DIR = Path(
-    "data/experiments/article_text_classification_e2e_with_shuffled_control_v1"
+    experiment_artifact_dir(PARENT_EXPERIMENT_ID)
 )
-DEFAULT_OUTPUT_DIR = Path("data/experiments/corine_spatial_confidence_v1")
+DEFAULT_OUTPUT_DIR = experiment_artifact_dir(EXPERIMENT_ID)
 DEFAULT_RADII = [100, 250, 500, 1000]
 
 

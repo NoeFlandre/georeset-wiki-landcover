@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from georeset.experiment_paths import experiment_artifact_dir
 from georeset.utils.json_io import write_csv_atomic, write_text_atomic
 from georeset.vision.clip_embedding_cache import load_embedding_cache, stack_embeddings_for_rows
 from georeset.vision.linear_probe import (
@@ -23,7 +24,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("data/experiments/clip_linear_probe_weak_labels_v1"),
+        default=experiment_artifact_dir("clip_linear_probe_weak_labels_v1"),
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--epochs", type=int, default=600)

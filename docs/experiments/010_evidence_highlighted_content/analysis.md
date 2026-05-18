@@ -24,9 +24,9 @@ same classifier prompts, and same shuffled-control logic.
 
 The new frozen outputs are:
 
-- `data/experiments/article_text_evidence_highlights_v1__qwen3_6_27b_q4_0/`
-- `data/experiments/article_text_evidence_highlights_v1__gemma4_31b_it_q4_0/`
-- `data/experiments/evidence_highlights_comparison_v1/`
+- `data/experiments/010_evidence_highlighted_content/article_text_evidence_highlights_v1__qwen3_6_27b_q4_0/`
+- `data/experiments/010_evidence_highlighted_content/article_text_evidence_highlights_v1__gemma4_31b_it_q4_0/`
+- `data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/`
 
 Both Qwen and Gemma were run on CORINE and OSM, aligned and shuffled. All eight
 prediction files are parse-clean:
@@ -37,7 +37,7 @@ prediction files are parse-clean:
 - Gemma OSM aligned/shuffled: `275/275` ok
 
 The numbers below are taken from
-`data/experiments/evidence_highlights_comparison_v1/evidence_highlights_quality_subsets.csv`
+`data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_quality_subsets.csv`
 and `evidence_highlights_shuffled_deltas.csv`.
 
 ## Main result

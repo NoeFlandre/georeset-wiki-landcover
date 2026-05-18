@@ -18,6 +18,7 @@ from georeset.analysis.prediction_loading import load_annotated_prediction_recor
 from georeset.analysis.quality_subsets import quality_subset_masks
 from georeset.analysis.shuffled_deltas import compute_shuffled_delta_rows
 from georeset.classification.text_sources import shuffled_text_source_pairs
+from georeset.experiment_paths import experiment_artifact_dir, experiment_artifact_file
 from georeset.text.evidence_cards import EVIDENCE_CARD_VERSION
 from georeset.utils.json_io import (
     write_dict_rows_table_pair_atomic,
@@ -25,20 +26,20 @@ from georeset.utils.json_io import (
     write_text_atomic,
 )
 
-DEFAULT_EVIDENCE_CARD_EXPERIMENT_DIR = Path(
-    "data/experiments/article_text_evidence_card_v1__qwen3_6_27b_q4_0"
+DEFAULT_EVIDENCE_CARD_EXPERIMENT_DIR = experiment_artifact_dir(
+    "article_text_evidence_card_v1__qwen3_6_27b_q4_0"
 )
-DEFAULT_PREVIOUS_QWEN_EXPERIMENT_DIR = Path(
-    "data/experiments/article_text_classification_e2e_with_shuffled_control_v1"
+DEFAULT_PREVIOUS_QWEN_EXPERIMENT_DIR = experiment_artifact_dir(
+    "article_text_classification_e2e_with_shuffled_control_v1"
 )
-DEFAULT_LANDUSE_EVIDENCE_EXPERIMENT_DIR = Path(
-    "data/experiments/article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0"
+DEFAULT_LANDUSE_EVIDENCE_EXPERIMENT_DIR = experiment_artifact_dir(
+    "article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0"
 )
-DEFAULT_QUALITY_SCORES_PATH = Path(
-    "data/experiments/article_text_supervision_quality_score_v1/quality_scores.csv"
+DEFAULT_QUALITY_SCORES_PATH = experiment_artifact_file(
+    "article_text_supervision_quality_score_v1", "quality_scores.csv"
 )
-DEFAULT_OUTPUT_DIR = Path("data/experiments/evidence_card_comparison_v1")
 DEFAULT_EXPERIMENT_ID = "evidence_card_comparison_v1"
+DEFAULT_OUTPUT_DIR = experiment_artifact_dir(DEFAULT_EXPERIMENT_ID)
 
 EVIDENCE_CARD_SOURCES = {
     "evidence_card",
