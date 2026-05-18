@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment 009 - Evidence-Card Text Source</title>
+  <style>
+    :root {
+      --bg:#f6f7fc; --panel:#fff; --line:#d8e0f2; --text:#0f172a; --muted:#54607a;
+      --accent:#1d4ed8; --ok:#166534; --warn:#b45309; --bad:#b91c1c;
+      --shadow:0 10px 30px rgba(15,23,42,.08);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:linear-gradient(140deg,#f8fbff 0%,var(--bg) 46%,#edf3ff 100%);color:var(--text);font:14px/1.5 "Inter","Segoe UI",Roboto,Arial,sans-serif}
+    .container{width:min(1180px,calc(100% - 44px));margin:18px auto 42px}
+    h1{margin:0 0 6px;font-size:38px;line-height:1.08;letter-spacing:-.35px}
+    h2{margin:22px 0 10px;font-size:26px;border-left:4px solid var(--accent);padding-left:12px;line-height:1.15}
+    h3{margin:10px 0 8px;font-size:18px}
+    p{margin:.25rem 0 .85rem}
+    a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+    ul{margin:.35rem 0 .8rem 1.2rem;padding:0}
+    .subtitle{color:var(--muted);margin-bottom:14px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow);min-width:0}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px}
+    .kpi{border:1px solid var(--line);border-radius:10px;background:#fbfdff;padding:10px;min-width:0}
+    .kpi .k{color:var(--muted);font-size:11px}.kpi .v{font-size:24px;font-weight:750;margin-top:3px;line-height:1.15;overflow-wrap:anywhere}
+    .badge{display:inline-block;margin:0 4px 4px 0;padding:2px 8px;border:1px solid #c9d6f2;border-radius:999px;background:#f0f5ff;font-size:11px;color:#25395f}
+    code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+    pre{border:1px solid #dbe6ff;border-radius:8px;padding:10px;background:#f6f8ff;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;background:#fff}
+    th,td{border-bottom:1px solid var(--line);padding:8px 7px;text-align:left;vertical-align:top}
+    th{background:#eff4ff}
+    .callout{border-left:4px solid #8b5cf6;background:#f4efff;padding:8px 10px;border-radius:8px;margin-top:8px;color:#341d66;font-size:13px}
+    .warn-box{border-left:4px solid var(--warn);background:#fff7ed;padding:8px 10px;border-radius:8px;margin-top:8px;color:#7c2d12;font-size:13px}
+    .foot{margin-top:8px;color:var(--muted);font-size:11px}.positive{color:var(--ok);font-weight:650}.negative{color:var(--bad);font-weight:650}
+    .section-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+    .mermaid{overflow-x:auto;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fcfdff}
+    @media(max-width:980px){.split{grid-template-columns:1fr}h1{font-size:30px}}
+  </style>
+  <script type="module">
+    const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';s.onload=()=>{window.mermaid?.initialize({startOnLoad:false,securityLevel:'loose',theme:'default',flowchart:{useMaxWidth:true,nodeSpacing:56,rankSpacing:50,curve:'basis'},themeVariables:{fontSize:'13px'}});window.mermaid?.run({nodes:document.querySelectorAll('.mermaid')});};document.head.appendChild(s);
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Experiment 009: Evidence-Card Text Source</h1>
+    <div class="subtitle">Detailed implementation and result audit for deterministic evidence-card inputs, compared with raw content, summaries, and earlier land-use summaries.</div>
+
+    <div class="panel">
+      <div class="section-title"><h2>1) Executive summary</h2><span class="badge">Qwen rerun</span></div>
+      <p>Experiment 009 tests whether a deterministic, no-place evidence card can help Qwen classify land cover better than the previous short land-use evidence summary. The card is built from existing metadata; no LLM is used to create it.</p>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="k">New text sources</div><div class="v">4</div></div>
+        <div class="kpi"><div class="k">CORINE valid predictions</div><div class="v">1,251 / 1,251</div></div>
+        <div class="kpi"><div class="k">OSM valid predictions</div><div class="v">275 / 275</div></div>
+        <div class="kpi"><div class="k">Evidence card CORINE BA</div><div class="v">0.224</div></div>
+        <div class="kpi"><div class="k">Land-use summary CORINE BA</div><div class="v">0.184</div></div>
+        <div class="kpi"><div class="k">Main conclusion</div><div class="v">better compact text, not better than raw content</div></div>
+      </div>
+      <p class="callout">Main result: the evidence card improves over the earlier land-use evidence summary as a compact source, but raw content remains the strongest overall input for balanced CORINE and OSM metrics.</p>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h2>2) Source artifacts</h2>
+        <ul>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/article_text_evidence_card_v1__qwen3_6_27b_q4_0">Frozen Qwen evidence-card run</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1">Comparison artifact directory</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/wiki/article_evidence_cards.json">article_evidence_cards.json</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_vs_previous_sources.csv">evidence_card_vs_previous_sources.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_quality_subsets.csv">evidence_card_quality_subsets.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_shuffled_deltas.csv">evidence_card_shuffled_deltas.csv</a></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h2>3) Processing flow</h2>
+        <div class="mermaid">
+flowchart TD
+  A["existing evidence metadata"] --> E["deterministic evidence card"]
+  B["article type"] --> E
+  C["spatial confidence"] --> E
+  D["quality score"] --> E
+  E --> F["evidence_card"]
+  E --> G["content_with_evidence_card"]
+  F --> H["Qwen CORINE + OSM rerun"]
+  G --> H
+  H --> I["compare with content, summaries, land-use summary"]
+        </div>
+        <p class="foot">The card text is generated deterministically, but Qwen is rerun on the new card-based text sources.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>4) What an evidence card looks like</h2>
+      <p>Experiment 009 introduces the evidence card. It is intentionally no-place: place names are removed from factual evidence sentences so the classifier must lean on land-cover cues rather than memorizing locations.</p>
+      <pre>Fiche d'indices d'occupation du sol, sans nom de lieu.
+
+Pertinence: élevée
+Incertitude: faible
+Types d'indices: eau, wetland, relief or geology
+Type d'article: caractéristique hydrographique
+Types d'article candidats: caractéristique hydrographique, paysage naturel
+Score de qualité: 10.000000000000078
+Catégorie de qualité: qualité très élevée
+Catégorie d'usage recommandée: réservé à l'évaluation
+
+Confiance spatiale CORINE:
+- part du label ponctuel à 250 m: 1
+- part du label ponctuel à 500 m: 0.997
+- le label dominant à 250 m correspond au label ponctuel: oui
+
+Indices factuels:
+- Le lac est un exemple caractéristique des lacs vosgiens d'origine glaciaire nichés dans des cirques fortement érodés et poncés par les glaciers quaternaires.
+- Le barrage a été installé à l'emplacement d'une ancienne tourbière naturelle, aujourd'hui noyée.
+- Le lac est bordé de nombreux sentiers de randonnée.
+- Il est alimenté par un cours d'eau et a pour exutoire un affluent de la rivière locale.
+
+Résumé d'indices:
+Le site est un lac d'origine glaciaire situé dans un cirque érodé, construit sur une ancienne tourbière naturelle. Il est bordé de sentiers de randonnée et alimenté par un cours d'eau.</pre>
+      <p class="foot">Example source: <a href="/Users/noeflandre/georeset/data/wiki/article_evidence_cards.json">article_evidence_cards.json</a>, article “Altenweiher”.</p>
+    </div>
+
+    <div class="panel">
+      <h2>5) Text sources tested</h2>
+      <table>
+        <thead><tr><th>Text source</th><th>Uses raw article?</th><th>Place names?</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>evidence_card</td><td>No</td><td>No-place card</td><td>Compact deterministic evidence source.</td></tr>
+          <tr><td>evidence_card_shuffled</td><td>No</td><td>No-place card</td><td>Shuffled control for card signal.</td></tr>
+          <tr><td>content_with_evidence_card</td><td>Yes</td><td>Yes, in appended article</td><td>Tests whether structured evidence can guide raw content classification.</td></tr>
+          <tr><td>content_with_evidence_card_shuffled</td><td>Yes</td><td>Yes, in appended article</td><td>Shuffled control for the combined source.</td></tr>
+        </tbody>
+      </table>
+      <div class="warn-box">Design issue found during the run: raw enum tokens such as <span class="mono">exclude</span> and <span class="mono">settlement_or_administrative</span> confused OSM classification, so card text was changed to human-readable French labels while preserving raw enum fields in JSON.</div>
+    </div>
+
+    <div class="panel">
+      <h2>6) CORINE: all articles</h2>
+      <p>The evidence card is better than the first land-use summary, but it does not beat raw content or generic summaries on balanced metrics. Adding the card to raw content improves raw accuracy but not macro-F1.</p>
+      <table>
+        <thead><tr><th>Text source</th><th>Accuracy</th><th>Balanced accuracy</th><th>Macro F1</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr><td>content</td><td>0.293</td><td class="positive">0.281</td><td class="positive">0.270</td><td>Best balanced baseline.</td></tr>
+          <tr><td>content_with_evidence_card</td><td class="positive">0.337</td><td>0.285</td><td>0.260</td><td>Higher raw accuracy, weaker class balance.</td></tr>
+          <tr><td>summary</td><td>0.237</td><td>0.255</td><td>0.244</td><td>Generic summary remains strong for compact text.</td></tr>
+          <tr><td>summary_no_place</td><td>0.232</td><td>0.243</td><td>0.235</td><td>No-place baseline.</td></tr>
+          <tr><td>evidence_card</td><td>0.286</td><td>0.224</td><td>0.226</td><td>Better compact evidence than experiment 5 summary.</td></tr>
+          <tr><td>landuse_evidence_summary</td><td>0.237</td><td>0.184</td><td>0.203</td><td>Earlier compact evidence source.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_vs_previous_sources.csv">evidence_card_vs_previous_sources.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>7) OSM: all articles</h2>
+      <p>For OSM, the evidence card carries article-specific signal but is not the best direct input. Raw content and no-place summary remain stronger on exact match and Jaccard.</p>
+      <table>
+        <thead><tr><th>Text source</th><th>Exact match</th><th>Micro F1</th><th>Macro F1</th><th>Jaccard</th></tr></thead>
+        <tbody>
+          <tr><td>content</td><td class="positive">0.164</td><td>0.197</td><td class="positive">0.158</td><td class="positive">0.190</td></tr>
+          <tr><td>summary_no_place</td><td class="positive">0.164</td><td>0.188</td><td>0.122</td><td>0.180</td></tr>
+          <tr><td>landuse_evidence_summary</td><td>0.109</td><td class="positive">0.195</td><td>0.120</td><td>0.168</td></tr>
+          <tr><td>content_with_evidence_card</td><td>0.135</td><td>0.152</td><td>0.086</td><td>0.164</td></tr>
+          <tr><td>evidence_card</td><td>0.095</td><td>0.168</td><td>0.107</td><td>0.137</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_osm_metrics.csv">evidence_card_osm_metrics.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>8) Shuffled controls</h2>
+      <p>The new sources are article-linked: both evidence cards and card+content beat their shuffled controls. The deltas are positive, even though the aligned source does not dominate raw content.</p>
+      <table>
+        <thead><tr><th>Task</th><th>Text source</th><th>Metric</th><th>Aligned</th><th>Shuffled</th><th>Delta</th><th>n</th></tr></thead>
+        <tbody>
+          <tr><td>CORINE</td><td>evidence_card</td><td>balanced accuracy</td><td>0.224</td><td>0.069</td><td class="positive">+0.155</td><td>1,251</td></tr>
+          <tr><td>CORINE</td><td>content_with_evidence_card</td><td>balanced accuracy</td><td>0.285</td><td>0.089</td><td class="positive">+0.195</td><td>1,251</td></tr>
+          <tr><td>OSM</td><td>evidence_card</td><td>Jaccard</td><td>0.137</td><td>0.085</td><td class="positive">+0.052</td><td>275</td></tr>
+          <tr><td>OSM</td><td>content_with_evidence_card</td><td>Jaccard</td><td>0.164</td><td>0.075</td><td class="positive">+0.089</td><td>275</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_shuffled_deltas.csv">evidence_card_shuffled_deltas.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>9) Clean relevance + spatial subset</h2>
+      <p>On the cleaner subset, evidence cards become much stronger in raw accuracy, but raw content still has the best balanced accuracy and macro-F1.</p>
+      <table>
+        <thead><tr><th>Task</th><th>Text source</th><th>n</th><th>Primary metric</th><th>Secondary metrics</th></tr></thead>
+        <tbody>
+          <tr><td>CORINE</td><td>content</td><td>321</td><td class="positive">BA 0.409</td><td>accuracy 0.570; macro-F1 0.363</td></tr>
+          <tr><td>CORINE</td><td>content_with_evidence_card</td><td>321</td><td>BA 0.362</td><td>accuracy 0.604; macro-F1 0.323</td></tr>
+          <tr><td>CORINE</td><td>evidence_card</td><td>321</td><td>BA 0.354</td><td>accuracy 0.601; macro-F1 0.316</td></tr>
+          <tr><td>CORINE</td><td>landuse_evidence_summary</td><td>321</td><td>BA 0.360</td><td>accuracy 0.592; macro-F1 0.315</td></tr>
+          <tr><td>OSM</td><td>content</td><td>92</td><td class="positive">Jaccard 0.291</td><td>exact 0.261; micro-F1 0.287; macro-F1 0.181</td></tr>
+          <tr><td>OSM</td><td>content_with_evidence_card</td><td>92</td><td>Jaccard 0.270</td><td>exact 0.239; micro-F1 0.255; macro-F1 0.133</td></tr>
+          <tr><td>OSM</td><td>evidence_card</td><td>92</td><td>Jaccard 0.230</td><td>exact 0.163; micro-F1 0.247; macro-F1 0.169</td></tr>
+          <tr><td>OSM</td><td>landuse_evidence_summary</td><td>92</td><td>Jaccard 0.219</td><td>exact 0.120; micro-F1 0.253; macro-F1 0.156</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Subset: <span class="mono">relevance_medium_high_and_spatial_250m_ge_0.8</span>. Source: <a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_quality_subsets.csv">evidence_card_quality_subsets.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>10) Per-class CORINE behavior</h2>
+      <p>The card improves several common or clear classes, but it loses nuance for several hard classes. This explains why raw accuracy can improve while macro-F1 does not.</p>
+      <table>
+        <thead><tr><th>Class</th><th>Content F1</th><th>Evidence card F1</th><th>Content + card F1</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr><td>21 arable land</td><td>0.292</td><td class="positive">0.333</td><td class="positive">0.369</td><td>Card helps.</td></tr>
+          <tr><td>22 permanent crops</td><td>0.673</td><td>0.673</td><td>0.675</td><td>All strong.</td></tr>
+          <tr><td>31 forests</td><td>0.381</td><td class="positive">0.436</td><td class="positive">0.440</td><td>Card helps common clear class.</td></tr>
+          <tr><td>23 pastures</td><td>0.117</td><td>0.108</td><td>0.113</td><td>Still weak.</td></tr>
+          <tr><td>24 heterogeneous agriculture</td><td class="positive">0.208</td><td>0.100</td><td>0.199</td><td>Standalone card loses nuance.</td></tr>
+          <tr><td>32 shrub/herbaceous</td><td class="positive">0.327</td><td>0.111</td><td>0.177</td><td>Raw content is much better.</td></tr>
+          <tr><td>51 inland waters</td><td class="positive">0.431</td><td>0.277</td><td>0.369</td><td>Card underuses water-specific evidence.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_per_class_corine.csv">evidence_card_per_class_corine.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>11) Implementation notes</h2>
+      <ul>
+        <li>Card builder: <a href="/Users/noeflandre/georeset/src/georeset/text/evidence_cards.py">evidence_cards.py</a>.</li>
+        <li>Card generation CLI: <a href="/Users/noeflandre/georeset/src/georeset/cli/data/build_evidence_cards.py">build_evidence_cards.py</a>.</li>
+        <li>Comparison evaluator: <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_evidence_card_experiment.py">evaluate_evidence_card_experiment.py</a>.</li>
+        <li>The standalone card uses existing metadata only: relevance, evidence sentences, article type, spatial confidence, and quality score.</li>
+        <li><span class="mono">content_with_evidence_card</span> prepends the same card to the raw article, so it is not a no-place source.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>12) Interpretation and next step</h2>
+      <ul>
+        <li><strong>Evidence cards are better compact evidence than experiment 5 summaries:</strong> CORINE balanced accuracy rises from 0.184 to 0.224.</li>
+        <li><strong>They are not a replacement for raw content:</strong> raw content keeps better balanced CORINE behavior and stronger OSM metrics.</li>
+        <li><strong>The combined source guides majority-like decisions:</strong> CORINE accuracy improves, but macro-F1 drops.</li>
+        <li><strong>The next text-only direction is highlighting or retrieval:</strong> keep raw content, but focus attention on evidence sentences instead of replacing the article with a compact card.</li>
+      </ul>
+      <p class="callout">Recommended next step: use evidence cards as structured metadata and diagnostics, while testing highlighted-content or retrieved-window inputs that preserve raw article context.</p>
+    </div>
+
+    <div class="panel">
+      <h2>13) Artifact index</h2>
+      <ul>
+        <li><a href="/Users/noeflandre/georeset/docs/experiments/009_evidence_card_text_source/analysis.md">Original experiment 009 analysis.md</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/wiki/article_evidence_cards.json">article_evidence_cards.json</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/article_text_evidence_card_v1__qwen3_6_27b_q4_0/overview.csv">Qwen evidence-card overview.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/article_text_evidence_card_v1__qwen3_6_27b_q4_0/shuffled_delta.csv">Qwen evidence-card shuffled_delta.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_vs_previous_sources.csv">evidence_card_vs_previous_sources.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_quality_subsets.csv">evidence_card_quality_subsets.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_osm_metrics.csv">evidence_card_osm_metrics.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_per_class_corine.csv">evidence_card_per_class_corine.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/evidence_card_shuffled_deltas.csv">evidence_card_shuffled_deltas.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/009_evidence_card_text_source/evidence_card_comparison_v1/manifest.json">manifest.json</a></li>
+      </ul>
+      <p class="foot">This detailed HTML was written from the checked markdown analysis, generated comparison CSVs, evidence-card JSON, and the deterministic card-building code path.</p>
+    </div>
+  </div>
+</body>
+</html>
