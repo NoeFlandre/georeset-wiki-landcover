@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment 006 - Relevance-Stratified Evaluation</title>
+  <style>
+    :root {
+      --bg: #f6f7fc;
+      --panel: #ffffff;
+      --line: #d8e0f2;
+      --text: #0f172a;
+      --muted: #54607a;
+      --accent: #1d4ed8;
+      --ok: #166534;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: linear-gradient(140deg, #f8fbff 0%, var(--bg) 46%, #edf3ff 100%);
+      color: var(--text);
+      font: 14px/1.5 "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    .container { width: min(1180px, calc(100% - 44px)); margin: 18px auto 42px; }
+    h1 { margin: 0 0 6px; font-size: 38px; line-height: 1.08; letter-spacing: -0.35px; }
+    h2 {
+      margin: 22px 0 10px;
+      font-size: 26px;
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+      line-height: 1.15;
+    }
+    h3 { margin: 10px 0 8px; font-size: 18px; }
+    p { margin: 0.25rem 0 0.85rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { margin: 0.35rem 0 0.8rem 1.2rem; padding: 0; }
+    .subtitle { color: var(--muted); margin-bottom: 14px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .thirds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfdff;
+      padding: 10px;
+      min-width: 0;
+    }
+    .kpi .k { color: var(--muted); font-size: 11px; }
+    .kpi .v {
+      font-size: 24px;
+      font-weight: 750;
+      margin-top: 3px;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+    .badge {
+      display: inline-block;
+      margin: 0 4px 4px 0;
+      padding: 2px 8px;
+      border: 1px solid #c9d6f2;
+      border-radius: 999px;
+      background: #f0f5ff;
+      font-size: 11px;
+      color: #25395f;
+    }
+    code, pre, .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+    pre {
+      border: 1px solid #dbe6ff;
+      border-radius: 8px;
+      padding: 10px;
+      background: #f6f8ff;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+      background: #fff;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 7px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #eff4ff; }
+    .callout {
+      border-left: 4px solid #8b5cf6;
+      background: #f4efff;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      color: #341d66;
+      font-size: 13px;
+    }
+    .warn-box {
+      border-left: 4px solid var(--warn);
+      background: #fff7ed;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      color: #7c2d12;
+      font-size: 13px;
+    }
+    .foot { margin-top: 8px; color: var(--muted); font-size: 11px; }
+    .positive { color: var(--ok); font-weight: 650; }
+    .negative { color: var(--bad); font-weight: 650; }
+    .neutral { color: #0f766e; font-weight: 650; }
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .mermaid {
+      overflow-x: auto;
+      margin-top: 6px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fcfdff;
+    }
+    @media (max-width: 980px) {
+      .split, .thirds { grid-template-columns: 1fr; }
+      h1 { font-size: 30px; }
+    }
+  </style>
+  <script type="module">
+    const loadMermaid = async () => {
+      if (document.getElementById('mermaid-script')) return;
+      const s = document.createElement('script');
+      s.id = 'mermaid-script';
+      s.src = 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';
+      s.onload = () => {
+        window.mermaid?.initialize({
+          startOnLoad: false,
+          securityLevel: 'loose',
+          theme: 'default',
+          flowchart: { useMaxWidth: true, nodeSpacing: 56, rankSpacing: 50, curve: 'basis' },
+          themeVariables: { fontSize: '13px' },
+        });
+        window.mermaid?.run({ nodes: document.querySelectorAll('.mermaid') });
+      };
+      document.head.appendChild(s);
+    };
+    loadMermaid();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Experiment 006: Relevance-Stratified Evaluation</h1>
+    <div class="subtitle">Detailed implementation and result audit for using land-use evidence metadata as a relevance filter over frozen Qwen and Gemma predictions.</div>
+
+    <div class="panel">
+      <div class="section-title">
+        <h2>1) Executive summary</h2>
+        <span class="badge">No LLM rerun</span>
+      </div>
+      <p>
+        Experiment 006 reuses frozen predictions from the Qwen and Gemma shuffled-control experiments, joins them to land-use evidence metadata, and recomputes metrics by relevance, evidence type, and spatial-confidence subsets. It asks whether the evidence extractor is useful as metadata, even though experiment 005 showed the short land-use summary is too lossy as a replacement classifier input.
+      </p>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="k">Frozen prediction rows loaded</div><div class="v">18,312</div></div>
+        <div class="kpi"><div class="k">Evidence metadata coverage</div><div class="v">100%</div></div>
+        <div class="kpi"><div class="k">Medium/high relevance</div><div class="v">576 articles</div></div>
+        <div class="kpi"><div class="k">Spatial + medium/high</div><div class="v">321 CORINE rows</div></div>
+        <div class="kpi"><div class="k">Qwen best CORINE BA</div><div class="v">0.409</div></div>
+        <div class="kpi"><div class="k">Gemma best CORINE BA</div><div class="v">0.384</div></div>
+      </div>
+      <p class="callout">Core conclusion: the land-use evidence extractor is valuable as a relevance and quality filter. It identifies articles where raw content and generic summaries become more predictive, especially when combined with high CORINE spatial confidence.</p>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h2>2) Source artifacts</h2>
+        <ul>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1">Generated experiment 006 artifact directory</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1">Frozen Qwen predictions</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0">Frozen Gemma predictions</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/wiki/article_landuse_evidence_summaries.json">Land-use evidence metadata</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv">CORINE spatial confidence</a></li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h2>3) Processing flow</h2>
+        <div class="mermaid">
+flowchart TD
+  A["Frozen Qwen predictions<br/>Experiment 001"] --> C["load_prediction_records"]
+  B["Frozen Gemma predictions<br/>Experiment 004"] --> C
+  D["article_landuse_evidence_summaries.json"] --> E["load_evidence_metadata"]
+  F["spatial_confidence.csv"] --> G["load_spatial_confidence"]
+  C --> H["join by pageid"]
+  E --> H
+  G --> H
+  H --> I["relevance subsets<br/>none, low, medium, high, medium/high"]
+  H --> J["evidence type subsets"]
+  H --> K["spatial + relevance subsets"]
+  I --> L["metrics + shuffled deltas + model comparison"]
+  J --> L
+  K --> L
+        </div>
+        <p class="foot">The evaluator records <span class="mono">no_llm_rerun: true</span> in the manifest.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>4) What the evidence artifacts look like</h2>
+      <p>Experiment 006 uses only metadata from the land-use evidence summary file. The examples below show the related text representations used across this experiment family so readers can distinguish summaries, highlights, and retrieved windows.</p>
+      <div class="thirds">
+        <div>
+          <h3>Land-use summary</h3>
+          <p class="foot">Compact no-place synthesis. Useful metadata, but lossy as classifier input.</p>
+          <pre>Le territoire est majoritairement agricole avec des pâturages et des cultures, et une part significative de forêts. Des zones humides, notamment des tourbières, sont présentes et certaines sont protégées. Le relief est montagneux, situé à haute altitude.</pre>
+          <p class="foot">Metadata: relevance = high; uncertainty = low; evidence types = agriculture, forest, pasture, wetland, relief_or_geology.</p>
+        </div>
+        <div>
+          <h3>Evidence highlights</h3>
+          <p class="foot">A deterministic prefix that surfaces extracted evidence before the full article text.</p>
+          <pre>Indices d'occupation du sol extraits, sans nom de lieu.
+
+Pertinence des indices: high
+Incertitude des indices: low
+Types d'indices: agriculture, forêt, prairie ou pâturage, zone humide, relief ou géologie
+
+Phrases d'indices:
+- 70,6 % de la superficie sont utilisés à des fins agricoles, tandis que 23,2 % sont boisés.
+- 10,1 % des terres agricoles sont utilisées pour la culture, 33,1 % pour les pâturages et 27,4 % pour les pâturages alpins.</pre>
+        </div>
+        <div>
+          <h3>Retrieved window</h3>
+          <p class="foot">Raw article sentences around evidence-bearing content. Less compressed than the summary.</p>
+          <pre>Phrases brutes extraites de l'article.
+
+- Le village se trouve à 1 016 mètres d'altitude à la frontière Jura - Berne.
+- Les logements et les bâtiments ont représenté 1,7 % de la surface bâtie et l’infrastructure de transport 1,2 %.
+- Sur les terres forestières, 18,3 % de la superficie totale est fortement boisée et 4,9 % est recouverte de vergers ou de petites grappes d’arbres.
+- 10,1 % des terres agricoles sont utilisées pour la culture, 33,1 % pour les pâturages et 27,4 % pour les pâturages alpins.</pre>
+        </div>
+      </div>
+      <p class="foot">Example pageid: 188561. Source files: <span class="mono">article_landuse_evidence_summaries.json</span>, <span class="mono">article_evidence_highlights.json</span>, and <span class="mono">article_retrieved_evidence_windows.json</span>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>5) Evidence metadata distribution</h2>
+      <p>The article set has complete evidence metadata. The medium/high subset is large enough for stable aggregate evaluation and small enough to remove many articles with no useful landscape text.</p>
+      <table>
+        <thead><tr><th>Dimension</th><th>Value</th><th>Articles</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr><td>landcover_relevance</td><td>none</td><td>443</td><td>No useful land-cover evidence detected.</td></tr>
+          <tr><td>landcover_relevance</td><td>low</td><td>232</td><td>Weak or incidental landscape signal.</td></tr>
+          <tr><td>landcover_relevance</td><td>medium</td><td>280</td><td>Explicit but not dominant land-cover signal.</td></tr>
+          <tr><td>landcover_relevance</td><td>high</td><td>296</td><td>Strong land-cover or landscape signal.</td></tr>
+          <tr><td>uncertainty</td><td>low</td><td>653</td><td>Extractor judged the evidence reliable.</td></tr>
+          <tr><td>uncertainty</td><td>medium</td><td>152</td><td>Some ambiguity.</td></tr>
+          <tr><td>uncertainty</td><td>high</td><td>446</td><td>Evidence absent or uncertain.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/evidence_metadata_distribution.csv">evidence_metadata_distribution.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>6) CORINE: relevance filtering strengthens signal</h2>
+      <p>For both models, every aligned CORINE input improves when filtered to medium/high evidence relevance. Raw content remains the strongest text source.</p>
+      <table>
+        <thead>
+          <tr><th>Model</th><th>Text source</th><th>BA all</th><th>BA medium/high</th><th>BA lift</th><th>Macro F1 all</th><th>Macro F1 medium/high</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Qwen</td><td>summary</td><td>0.255</td><td>0.323</td><td class="positive">+0.068</td><td>0.244</td><td>0.298</td></tr>
+          <tr><td>Qwen</td><td>summary_no_place</td><td>0.243</td><td>0.306</td><td class="positive">+0.063</td><td>0.235</td><td>0.277</td></tr>
+          <tr><td>Qwen</td><td>content</td><td>0.281</td><td>0.374</td><td class="positive">+0.093</td><td>0.270</td><td>0.346</td></tr>
+          <tr><td>Gemma</td><td>summary</td><td>0.236</td><td>0.312</td><td class="positive">+0.076</td><td>0.217</td><td>0.286</td></tr>
+          <tr><td>Gemma</td><td>summary_no_place</td><td>0.223</td><td>0.292</td><td class="positive">+0.068</td><td>0.209</td><td>0.265</td></tr>
+          <tr><td>Gemma</td><td>content</td><td>0.271</td><td>0.352</td><td class="positive">+0.081</td><td>0.254</td><td>0.328</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/overview_by_relevance.csv">overview_by_relevance.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>7) Spatial confidence plus relevance is strongest</h2>
+      <p>The cleanest CORINE signal comes from combining <span class="mono">landcover_relevance in {medium, high}</span> with <span class="mono">point_label_share_250m >= 0.8</span>.</p>
+      <table>
+        <thead>
+          <tr><th>Model</th><th>Text source</th><th>Subset</th><th>n</th><th>Accuracy</th><th>Balanced accuracy</th><th>Macro F1</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Qwen</td><td>content</td><td>all + 250m >= 0.8</td><td>646</td><td>0.350</td><td>0.352</td><td>0.285</td></tr>
+          <tr><td>Qwen</td><td>content</td><td>medium/high + 250m >= 0.8</td><td>321</td><td>0.570</td><td class="positive">0.409</td><td class="positive">0.363</td></tr>
+          <tr><td>Gemma</td><td>content</td><td>all + 250m >= 0.8</td><td>646</td><td>0.455</td><td>0.326</td><td>0.265</td></tr>
+          <tr><td>Gemma</td><td>content</td><td>medium/high + 250m >= 0.8</td><td>321</td><td>0.667</td><td class="positive">0.384</td><td class="positive">0.355</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Sources: <a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/overview_by_relevance_and_spatial_confidence.csv">overview_by_relevance_and_spatial_confidence.csv</a> and <a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/model_comparison_by_relevance.csv">model_comparison_by_relevance.csv</a>.</p>
+      <div class="callout">This is the main scientific result: text signal is strongest when the article contains explicit land-cover evidence and the point-derived CORINE label is spatially reliable.</div>
+    </div>
+
+    <div class="panel">
+      <h2>8) Shuffled controls remain low</h2>
+      <p>The medium/high relevance filter does not merely select an easier class distribution. Aligned text still beats shuffled text by a wide margin.</p>
+      <table>
+        <thead>
+          <tr><th>Model</th><th>Text source</th><th>Aligned BA</th><th>Shuffled BA</th><th>Delta</th><th>n</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Qwen</td><td>summary</td><td>0.323</td><td>0.059</td><td class="positive">+0.265</td><td>576</td></tr>
+          <tr><td>Qwen</td><td>summary_no_place</td><td>0.306</td><td>0.055</td><td class="positive">+0.250</td><td>576</td></tr>
+          <tr><td>Qwen</td><td>content</td><td>0.374</td><td>0.076</td><td class="positive">+0.297</td><td>576</td></tr>
+          <tr><td>Gemma</td><td>summary</td><td>0.312</td><td>0.042</td><td class="positive">+0.270</td><td>576</td></tr>
+          <tr><td>Gemma</td><td>summary_no_place</td><td>0.292</td><td>0.049</td><td class="positive">+0.242</td><td>576</td></tr>
+          <tr><td>Gemma</td><td>content</td><td>0.352</td><td>0.074</td><td class="positive">+0.279</td><td>576</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/shuffled_delta_by_relevance.csv">shuffled_delta_by_relevance.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>9) CORINE per-class behavior</h2>
+      <p>For raw content, medium/high relevance improves most CORINE classes. Classes 33 and 41 have zero support in these rows.</p>
+      <table>
+        <thead>
+          <tr><th>Model</th><th>Class</th><th>Support all -> medium/high</th><th>F1 all -> medium/high</th><th>Interpretation</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Qwen</td><td>21 arable land</td><td>209 -> 51</td><td>0.292 -> 0.381</td><td>Clear lift.</td></tr>
+          <tr><td>Qwen</td><td>22 permanent crops</td><td>137 -> 85</td><td>0.673 -> 0.873</td><td>Very strong lift.</td></tr>
+          <tr><td>Qwen</td><td>31 forests</td><td>474 -> 253</td><td>0.381 -> 0.547</td><td>Large forest improvement.</td></tr>
+          <tr><td>Qwen</td><td>32 shrub/herbaceous</td><td>50 -> 31</td><td>0.327 -> 0.455</td><td>Small support but improved.</td></tr>
+          <tr><td>Gemma</td><td>21 arable land</td><td>209 -> 51</td><td>0.160 -> 0.367</td><td>Large relevance-driven gain.</td></tr>
+          <tr><td>Gemma</td><td>22 permanent crops</td><td>137 -> 85</td><td>0.685 -> 0.883</td><td>Strongest class behavior.</td></tr>
+          <tr><td>Gemma</td><td>31 forests</td><td>474 -> 253</td><td>0.581 -> 0.668</td><td>Forest signal remains strong.</td></tr>
+          <tr><td>Gemma</td><td>51 inland waters</td><td>42 -> 25</td><td>0.449 -> 0.447</td><td>Roughly flat.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/per_class_corine_by_relevance.csv">per_class_corine_by_relevance.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>10) OSM: useful but model-dependent</h2>
+      <p>OSM is multi-label and exact match is strict. Relevance filtering helps Qwen broadly, helps Gemma most on <span class="mono">summary_no_place</span>, and does not improve Gemma raw-content exact match.</p>
+      <table>
+        <thead>
+          <tr><th>Model</th><th>Text source</th><th>Exact all</th><th>Exact medium/high</th><th>Micro F1 all</th><th>Micro F1 medium/high</th><th>Jaccard all</th><th>Jaccard medium/high</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Qwen</td><td>summary</td><td>0.145</td><td>0.163</td><td>0.161</td><td>0.186</td><td>0.155</td><td>0.178</td></tr>
+          <tr><td>Qwen</td><td>summary_no_place</td><td>0.164</td><td>0.203</td><td>0.188</td><td>0.236</td><td>0.180</td><td>0.225</td></tr>
+          <tr><td>Qwen</td><td>content</td><td>0.164</td><td>0.196</td><td>0.197</td><td>0.236</td><td>0.190</td><td>0.236</td></tr>
+          <tr><td>Gemma</td><td>summary</td><td>0.240</td><td>0.242</td><td>0.264</td><td>0.276</td><td>0.261</td><td>0.269</td></tr>
+          <tr><td>Gemma</td><td>summary_no_place</td><td>0.244</td><td>0.268</td><td>0.259</td><td>0.287</td><td>0.258</td><td>0.284</td></tr>
+          <tr><td>Gemma</td><td>content</td><td>0.215</td><td>0.196</td><td>0.247</td><td>0.243</td><td>0.252</td><td>0.247</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/overview_by_relevance.csv">overview_by_relevance.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>11) Implementation notes</h2>
+      <ul>
+        <li>Evaluator: <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_relevance_stratified_predictions.py">evaluate_relevance_stratified_predictions.py</a>.</li>
+        <li>Evidence metadata loader: <a href="/Users/noeflandre/georeset/src/georeset/analysis/evidence_metadata_loading.py">evidence_metadata_loading.py</a>.</li>
+        <li>Prediction loader: <a href="/Users/noeflandre/georeset/src/georeset/analysis/prediction_loading.py">prediction_loading.py</a>.</li>
+        <li>Relevance subsets include individual relevance levels, medium/high, sentence-count thresholds, uncertainty levels, spatial confidence, and spatial + relevance combinations.</li>
+        <li>Evidence type subsets are built for forest, agriculture, vineyard, pasture, water, wetland, shrubland, bare ground, urban/artificial, relief/geology, and habitat/ecology.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>12) Interpretation and next step</h2>
+      <ul>
+        <li><strong>Experiment 005 remains true:</strong> the short land-use summary is too lossy as a direct replacement text.</li>
+        <li><strong>Experiment 006 adds the useful role:</strong> land-cover relevance metadata is a strong filter for article quality.</li>
+        <li><strong>Spatial reliability and textual relevance compound:</strong> the best CORINE rows require both reliable point labels and evidence-rich articles.</li>
+        <li><strong>Less lossy evidence representations are promising:</strong> highlights and retrieved windows preserve more raw context than summaries while still focusing the classifier on land-cover cues.</li>
+      </ul>
+      <p class="callout">The next high-impact direction is to test evidence cards, highlighted content, or retrieved evidence windows as classifier inputs, using relevance and spatial confidence as analysis filters rather than throwing away raw context.</p>
+    </div>
+
+    <div class="panel">
+      <h2>13) Artifact index</h2>
+      <ul>
+        <li><a href="/Users/noeflandre/georeset/docs/experiments/006_relevance_stratified_evaluation/analysis.md">Original experiment 006 analysis.md</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/overview_by_relevance.csv">overview_by_relevance.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/overview_by_relevance_and_spatial_confidence.csv">overview_by_relevance_and_spatial_confidence.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/overview_by_evidence_type.csv">overview_by_evidence_type.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/shuffled_delta_by_relevance.csv">shuffled_delta_by_relevance.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/model_comparison_by_relevance.csv">model_comparison_by_relevance.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/per_class_corine_by_relevance.csv">per_class_corine_by_relevance.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/evidence_metadata_distribution.csv">evidence_metadata_distribution.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/manifest.json">manifest.json</a></li>
+      </ul>
+      <p class="foot">This detailed HTML was written from the checked markdown analysis, CSV artifacts, and representative local evidence examples.</p>
+    </div>
+  </div>
+</body>
+</html>
