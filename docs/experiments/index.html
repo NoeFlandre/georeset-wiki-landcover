@@ -382,36 +382,6 @@
     </section>
 
     <section>
-      <h2>At A Glance</h2>
-      <div class="grid">
-        <article class="panel">
-          <h3>1. Text is informative</h3>
-          <p>Aligned article text beats shuffled controls. For Qwen CORINE full article text, balanced accuracy is 0.281 versus 0.067 shuffled.</p>
-        </article>
-        <article class="panel">
-          <h3>2. Ground truth quality matters</h3>
-          <p>Only 646 of 1,251 articles pass point-label share &gt;= 0.8 at 250 m. On that cleaner subset, Qwen full-article-text balanced accuracy rises to 0.352.</p>
-        </article>
-        <article class="panel">
-          <h3>3. Relevance is the best filter</h3>
-          <p>Medium/high land-cover relevance plus 250 m spatial purity gives the strongest text diagnostic: Qwen full-article-text balanced accuracy 0.409.</p>
-        </article>
-        <article class="panel">
-          <h3>4. Compact text is lossy</h3>
-          <p>Evidence cards, highlights, and retrieved windows preserve signal, but none clearly replaces the complete Wikipedia article body for the main benchmark.</p>
-        </article>
-        <article class="panel">
-          <h3>5. Models trade off differently</h3>
-          <p>Gemma improves raw CORINE accuracy and OSM exact/micro metrics, while Qwen is stronger on balanced CORINE behavior.</p>
-        </article>
-        <article class="panel">
-          <h3>6. Image probing is promising</h3>
-          <p>Frozen CLIP plus a linear probe trained on broad weak labels reaches 0.600 accuracy, far above zero-shot CLIP at 0.200.</p>
-        </article>
-      </div>
-    </section>
-
-    <section>
       <h2>Quick Decoder</h2>
       <p class="small">
         The labels below define the project shorthand used in the reports and tables.
@@ -465,6 +435,36 @@
         <article class="term">
           <h3>OSM exact / Jaccard</h3>
           <p>OSM can have multiple labels. Exact match requires the whole label set; Jaccard gives partial credit for overlapping predicted and target tags.</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>At A Glance</h2>
+      <div class="grid">
+        <article class="panel">
+          <h3>1. Text is informative</h3>
+          <p>Aligned article text beats shuffled controls. For Qwen CORINE full article text, balanced accuracy is 0.281 versus 0.067 shuffled.</p>
+        </article>
+        <article class="panel">
+          <h3>2. Ground truth quality matters</h3>
+          <p>Only 646 of 1,251 articles pass point-label share &gt;= 0.8 at 250 m. On that cleaner subset, Qwen full-article-text balanced accuracy rises to 0.352.</p>
+        </article>
+        <article class="panel">
+          <h3>3. Relevance is the best filter</h3>
+          <p>Medium/high land-cover relevance plus 250 m spatial purity gives the strongest text diagnostic: Qwen full-article-text balanced accuracy 0.409.</p>
+        </article>
+        <article class="panel">
+          <h3>4. Compact text is lossy</h3>
+          <p>Evidence cards, highlights, and retrieved windows preserve signal, but none clearly replaces the complete Wikipedia article body for the main benchmark.</p>
+        </article>
+        <article class="panel">
+          <h3>5. Models trade off differently</h3>
+          <p>Gemma improves raw CORINE accuracy and OSM exact/micro metrics, while Qwen is stronger on balanced CORINE behavior.</p>
+        </article>
+        <article class="panel">
+          <h3>6. Image probing is promising</h3>
+          <p>Frozen CLIP plus a linear probe trained on broad weak labels reaches 0.600 accuracy, far above zero-shot CLIP at 0.200.</p>
         </article>
       </div>
     </section>
