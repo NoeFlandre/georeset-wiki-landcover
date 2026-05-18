@@ -221,6 +221,8 @@
       word-break: break-word; 
     }
     .metric-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 10px; margin-top: 8px; }
+    .source-example { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 8px 0; }
+    .source-example pre { min-height: 150px; }
     .mermaid { overflow-x: auto; }
     .footnote { color: #5f6d87; font-size: 11px; margin-top: 8px; }
     .caption { color: #334155; margin: 6px 0 4px; font-size: 12px; }
@@ -245,6 +247,7 @@
     }
     @media (max-width: 980px) {
       .split { grid-template-columns: 1fr; }
+      .source-example { grid-template-columns: 1fr; }
       .bar-row { grid-template-columns: 1fr 1fr; }
       .bar-shell { grid-column: 1 / -1; }
     }
@@ -388,6 +391,29 @@
       <div class="flow">
         <div class="item"><strong>3.1 Defaults and configuration:</strong> <span class="mono">src/georeset/config.py</span> sets model path to <span class="mono">Qwen3.6-27B-Q4_0.gguf</span>, seed 42, temperature 0.0. Environment is only used for model path and repo id in current code.</div>
         <div class="item"><strong>3.2 Text sources:</strong> in <span class="mono">src/georeset/classification/text_sources.py</span>, <span class="mono">load_text_source</span> supports summaries, no-place summaries, content, landuse evidence, evidence cards, highlighted windows, etc. This experiment uses only <span class="mono">summary</span>, <span class="mono">summary_no_place</span>, and <span class="mono">content</span> plus shuffled variants.</div>
+        <div class="item"><strong>3.2a What these text sources look like:</strong> the first experiment introduces the generic text inputs used throughout later reports.
+          <div class="source-example">
+            <div>
+              <h3>Raw content</h3>
+              <pre>La nécropoles protohistoriques et gallo-romaine de Brumath est un monument historique situé à Brumath, dans le département français du Bas-Rhin.
+
+== Localisation ==
+Ce site situé dans la forêt de Brumath.
+
+== Historique ==
+L'édifice fait l'objet d'une inscription au titre des monuments historiques depuis 2015.</pre>
+            </div>
+            <div>
+              <h3>Generic summary</h3>
+              <pre>Les nécropoles protohistoriques et gallo-romaines de Brumath, situées dans la forêt du même nom dans le Bas-Rhin, sont inscrites au titre des monuments historiques depuis 2015.</pre>
+            </div>
+            <div>
+              <h3>No-place summary</h3>
+              <pre>Classé monument historique en 2015, ce site archéologique protohistorique et gallo-romain est situé dans la forêt du département du Bas-Rhin.</pre>
+            </div>
+          </div>
+          <p class="footnote">Example pageid 10016815. A shuffled source is not a new wording style: the deterministic control assigns one article's text source to another eligible pageid, preserving the text distribution while breaking article-target alignment.</p>
+        </div>
         <div class="item"><strong>3.3 Ground truth setup:</strong> <span class="mono">load_task_setup</span> dispatches two pipelines:
           <ul>
             <li><strong>corine_level2:</strong> <a href="/Users/noeflandre/georeset/src/georeset/classification/ground_truth.py">build_corine_ground_truth</a></li>

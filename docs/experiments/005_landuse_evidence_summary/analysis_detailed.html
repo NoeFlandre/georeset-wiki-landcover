@@ -92,6 +92,8 @@
       padding: 10px;
       background: #f6f8ff;
       overflow: auto;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
     }
     table {
       width: 100%;
@@ -182,8 +184,9 @@
       border-radius: 10px;
       background: #fcfdff;
     }
+    .example-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 12px; }
     @media (max-width: 980px) {
-      .split { grid-template-columns: 1fr; }
+      .split, .example-grid { grid-template-columns: 1fr; }
       .bar-row { grid-template-columns: 1fr 80px; }
       .bar-shell { grid-column: 1 / -1; }
       h1 { font-size: 30px; }
@@ -292,7 +295,28 @@ flowchart TD
     </div>
 
     <div class="panel">
-      <h2>5) Land-use summary non-spatial results</h2>
+      <h2>5) What a land-use summary looks like</h2>
+      <p>Experiment 005 is where <span class="mono">landuse_evidence_summary</span> is introduced as a classifier text source. It is a compact, no-place synthesis extracted from the raw article, paired with metadata used later in experiment 006.</p>
+      <div class="example-grid">
+        <div>
+          <h3>Example summary</h3>
+          <pre>Le territoire est majoritairement agricole avec des pâturages et des cultures, et une part significative de forêts. Des zones humides, notamment des tourbières, sont présentes et certaines sont protégées. Le relief est montagneux, situé à haute altitude.</pre>
+        </div>
+        <div>
+          <h3>Attached metadata</h3>
+          <ul>
+            <li><strong>landcover_relevance:</strong> high</li>
+            <li><strong>uncertainty:</strong> low</li>
+            <li><strong>evidence_types:</strong> agriculture, forest, pasture, wetland, relief_or_geology</li>
+            <li><strong>source evidence:</strong> acreage shares for agriculture, forest, pasture, wetland, and altitude/relief cues</li>
+          </ul>
+        </div>
+      </div>
+      <p class="foot">Example from <span class="mono">data/wiki/article_landuse_evidence_summaries.json</span>, pageid 188561. The page title is deliberately not part of the summary text.</p>
+    </div>
+
+    <div class="panel">
+      <h2>6) Land-use summary non-spatial results</h2>
       <p>Primary metric is macro recall for CORINE and exact-match accuracy for OSM. All rows have coverage 1.0 and zero parse errors.</p>
       <table>
         <thead>
@@ -309,7 +333,7 @@ flowchart TD
     </div>
 
     <div class="panel">
-      <h2>6) Aligned vs shuffled control</h2>
+      <h2>7) Aligned vs shuffled control</h2>
       <p>Aligned land-use summaries beat shuffled land-use summaries in every model/task pair. This means the extracted evidence text still carries article-specific signal.</p>
       <table>
         <thead>
@@ -326,7 +350,7 @@ flowchart TD
     </div>
 
     <div class="panel">
-      <h2>7) Land-use summary vs generic text sources</h2>
+      <h2>8) Land-use summary vs generic text sources</h2>
       <p>The compact evidence summary underperforms the earlier generic text sources on the primary metric in every model/task comparison.</p>
       <table>
         <thead>
@@ -348,7 +372,7 @@ flowchart TD
     </div>
 
     <div class="panel">
-      <h2>8) Spatial reliability still helps</h2>
+      <h2>9) Spatial reliability still helps</h2>
       <p>Filtering to <span class="mono">point_label_share_250m_ge_0.8</span> improves land-use-summary results for both models and tasks, even though the absolute scores remain below raw content baselines.</p>
       <table>
         <thead>
@@ -365,7 +389,7 @@ flowchart TD
     </div>
 
     <div class="panel">
-      <h2>9) Qwen vs Gemma on land-use summaries</h2>
+      <h2>10) Qwen vs Gemma on land-use summaries</h2>
       <div class="split">
         <div>
           <h3>Non-spatial</h3>
@@ -396,7 +420,7 @@ flowchart TD
     </div>
 
     <div class="panel">
-      <h2>10) CORINE per-class behavior</h2>
+      <h2>11) CORINE per-class behavior</h2>
       <p>On the 250m high-confidence subset, both models preserve strong performance on permanent crops and forests, while pastures and heterogeneous agriculture remain weak.</p>
       <table>
         <thead>
@@ -416,7 +440,7 @@ flowchart TD
     </div>
 
     <div class="panel">
-      <h2>11) Interpretation and next step</h2>
+      <h2>12) Interpretation and next step</h2>
       <ul>
         <li><strong>Signal survives extraction:</strong> aligned evidence summaries beat shuffled controls for both models and tasks.</li>
         <li><strong>Extraction is lossy:</strong> the compact no-place summaries underperform raw content and generic summaries on primary metrics.</li>
@@ -428,7 +452,7 @@ flowchart TD
     </div>
 
     <div class="panel">
-      <h2>12) Artifact index</h2>
+      <h2>13) Artifact index</h2>
       <ul>
         <li><a href="/Users/noeflandre/georeset/docs/experiments/005_landuse_evidence_summary/analysis.md">Original experiment 005 analysis.md</a></li>
         <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0/overview.csv">Qwen overview.csv</a></li>

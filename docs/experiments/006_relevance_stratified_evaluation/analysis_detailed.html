@@ -49,7 +49,6 @@
       min-width: 0;
     }
     .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .thirds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -145,7 +144,7 @@
       background: #fcfdff;
     }
     @media (max-width: 980px) {
-      .split, .thirds { grid-template-columns: 1fr; }
+      .split { grid-template-columns: 1fr; }
       h1 { font-size: 30px; }
     }
   </style>
@@ -229,40 +228,19 @@ flowchart TD
     </div>
 
     <div class="panel">
-      <h2>4) What the evidence artifacts look like</h2>
-      <p>Experiment 006 uses only metadata from the land-use evidence summary file. The examples below show the related text representations used across this experiment family so readers can distinguish summaries, highlights, and retrieved windows.</p>
-      <div class="thirds">
-        <div>
-          <h3>Land-use summary</h3>
-          <p class="foot">Compact no-place synthesis. Useful metadata, but lossy as classifier input.</p>
-          <pre>Le territoire est majoritairement agricole avec des pâturages et des cultures, et une part significative de forêts. Des zones humides, notamment des tourbières, sont présentes et certaines sont protégées. Le relief est montagneux, situé à haute altitude.</pre>
-          <p class="foot">Metadata: relevance = high; uncertainty = low; evidence types = agriculture, forest, pasture, wetland, relief_or_geology.</p>
-        </div>
-        <div>
-          <h3>Evidence highlights</h3>
-          <p class="foot">A deterministic prefix that surfaces extracted evidence before the full article text.</p>
-          <pre>Indices d'occupation du sol extraits, sans nom de lieu.
-
-Pertinence des indices: high
-Incertitude des indices: low
-Types d'indices: agriculture, forêt, prairie ou pâturage, zone humide, relief ou géologie
-
-Phrases d'indices:
-- 70,6 % de la superficie sont utilisés à des fins agricoles, tandis que 23,2 % sont boisés.
-- 10,1 % des terres agricoles sont utilisées pour la culture, 33,1 % pour les pâturages et 27,4 % pour les pâturages alpins.</pre>
-        </div>
-        <div>
-          <h3>Retrieved window</h3>
-          <p class="foot">Raw article sentences around evidence-bearing content. Less compressed than the summary.</p>
-          <pre>Phrases brutes extraites de l'article.
-
-- Le village se trouve à 1 016 mètres d'altitude à la frontière Jura - Berne.
-- Les logements et les bâtiments ont représenté 1,7 % de la surface bâtie et l’infrastructure de transport 1,2 %.
-- Sur les terres forestières, 18,3 % de la superficie totale est fortement boisée et 4,9 % est recouverte de vergers ou de petites grappes d’arbres.
-- 10,1 % des terres agricoles sont utilisées pour la culture, 33,1 % pour les pâturages et 27,4 % pour les pâturages alpins.</pre>
-        </div>
-      </div>
-      <p class="foot">Example pageid: 188561. Source files: <span class="mono">article_landuse_evidence_summaries.json</span>, <span class="mono">article_evidence_highlights.json</span>, and <span class="mono">article_retrieved_evidence_windows.json</span>.</p>
+      <h2>4) Metadata used for filtering</h2>
+      <p>Experiment 006 does not introduce a new text representation. It reuses the land-use evidence metadata introduced in experiment 005 and treats it as a filter over already-frozen predictions.</p>
+      <table>
+        <thead><tr><th>Field</th><th>How it is used here</th></tr></thead>
+        <tbody>
+          <tr><td><span class="mono">landcover_relevance</span></td><td>Builds relevance subsets such as <span class="mono">relevance_medium_high</span>.</td></tr>
+          <tr><td><span class="mono">evidence_types</span></td><td>Builds evidence-type subsets such as forest, agriculture, water, and relief/geology.</td></tr>
+          <tr><td><span class="mono">evidence_sentences_count</span></td><td>Builds count-threshold subsets such as at least one or two evidence sentences.</td></tr>
+          <tr><td><span class="mono">uncertainty</span></td><td>Builds low- and low/medium-uncertainty quality subsets.</td></tr>
+          <tr><td><span class="mono">point_label_share_250m</span></td><td>Combines evidence relevance with the spatial-confidence filter from experiment 002.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">A concrete land-use summary example is shown in the experiment 005 report, where that text source is introduced.</p>
     </div>
 
     <div class="panel">
@@ -414,7 +392,7 @@ Phrases d'indices:
         <li><a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/evidence_metadata_distribution.csv">evidence_metadata_distribution.csv</a></li>
         <li><a href="/Users/noeflandre/georeset/data/experiments/006_relevance_stratified_evaluation/article_text_classification_relevance_stratified_v1/manifest.json">manifest.json</a></li>
       </ul>
-      <p class="foot">This detailed HTML was written from the checked markdown analysis, CSV artifacts, and representative local evidence examples.</p>
+      <p class="foot">This detailed HTML was written from the checked markdown analysis and generated CSV artifacts.</p>
     </div>
   </div>
 </body>
