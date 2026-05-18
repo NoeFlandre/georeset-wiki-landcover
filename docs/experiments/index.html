@@ -121,6 +121,13 @@
       margin-top: 14px;
     }
 
+    .definition-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
     .panel {
       background: var(--paper);
       border: 1px solid var(--line);
@@ -129,6 +136,32 @@
     }
 
     .panel p { color: var(--muted); }
+
+    .term {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .term h3 {
+      font-size: 14px;
+      color: var(--blue);
+      margin-bottom: 7px;
+    }
+
+    .term p {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 0;
+    }
+
+    .mini-list {
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
 
     .flow {
       margin-top: 16px;
@@ -251,7 +284,7 @@
     }
 
     @media (max-width: 860px) {
-      .hero, .chart-wrap, .grid { grid-template-columns: 1fr; }
+      .hero, .chart-wrap, .grid, .definition-grid { grid-template-columns: 1fr; }
       .key-number { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       table { display: block; overflow-x: auto; }
     }
@@ -288,11 +321,11 @@
       <div class="key-number" aria-label="Headline metrics">
         <div class="metric-card">
           <strong>0.281</strong>
-          <span>Qwen raw-content CORINE balanced accuracy on all articles</span>
+          <span>Qwen full-article-text CORINE balanced accuracy on all articles</span>
         </div>
         <div class="metric-card">
           <strong>0.409</strong>
-          <span>Qwen raw-content CORINE balanced accuracy after relevance + spatial filtering</span>
+          <span>Qwen full-article-text CORINE balanced accuracy after relevance + spatial filtering</span>
         </div>
         <div class="metric-card">
           <strong>0.600</strong>
@@ -331,7 +364,7 @@
           <rect x="564" y="38" width="190" height="92" rx="8" fill="#fff7e8" stroke="#e5d2aa"></rect>
           <text x="659" y="68" text-anchor="middle" font-size="15" font-weight="700" fill="#17202a">Better text?</text>
           <text x="659" y="94" text-anchor="middle" font-size="12" fill="#526676">Summaries, cards, highlights</text>
-          <text x="659" y="113" text-anchor="middle" font-size="12" fill="#9a6a14">Raw content still wins</text>
+          <text x="659" y="113" text-anchor="middle" font-size="12" fill="#9a6a14">Full article text still wins</text>
 
           <line x1="754" y1="84" x2="848" y2="84" stroke="#526676" stroke-width="2" marker-end="url(#arrow)"></line>
 
@@ -353,19 +386,19 @@
       <div class="grid">
         <article class="panel">
           <h3>1. Text is informative</h3>
-          <p>Aligned article text beats shuffled controls. For Qwen CORINE raw content, balanced accuracy is 0.281 versus 0.067 shuffled.</p>
+          <p>Aligned article text beats shuffled controls. For Qwen CORINE full article text, balanced accuracy is 0.281 versus 0.067 shuffled.</p>
         </article>
         <article class="panel">
           <h3>2. Ground truth quality matters</h3>
-          <p>Only 646 of 1,251 articles pass point-label share >= 0.8 at 250 m. On that cleaner subset, Qwen raw-content balanced accuracy rises to 0.352.</p>
+          <p>Only 646 of 1,251 articles pass point-label share &gt;= 0.8 at 250 m. On that cleaner subset, Qwen full-article-text balanced accuracy rises to 0.352.</p>
         </article>
         <article class="panel">
           <h3>3. Relevance is the best filter</h3>
-          <p>Medium/high land-cover relevance plus 250 m spatial purity gives the strongest text diagnostic: Qwen raw-content balanced accuracy 0.409.</p>
+          <p>Medium/high land-cover relevance plus 250 m spatial purity gives the strongest text diagnostic: Qwen full-article-text balanced accuracy 0.409.</p>
         </article>
         <article class="panel">
           <h3>4. Compact text is lossy</h3>
-          <p>Evidence cards, highlights, and retrieved windows preserve signal, but none clearly replaces the full raw article for the main benchmark.</p>
+          <p>Evidence cards, highlights, and retrieved windows preserve signal, but none clearly replaces the complete Wikipedia article body for the main benchmark.</p>
         </article>
         <article class="panel">
           <h3>5. Models trade off differently</h3>
@@ -379,11 +412,69 @@
     </section>
 
     <section>
+      <h2>Quick Decoder</h2>
+      <p class="small">
+        The labels below define the project shorthand used in the reports and tables.
+        They are intentionally compact so the experiment logic is readable at a glance.
+      </p>
+      <div class="definition-grid">
+        <article class="term">
+          <h3>Task</h3>
+          <p>Predict land-cover labels for geolocated Wikipedia articles. CORINE is single-label European land cover; OSM is multi-label OpenStreetMap land-use tags.</p>
+        </article>
+        <article class="term">
+          <h3>Full article text</h3>
+          <p>The complete extracted Wikipedia article body used as classifier input. Older tables call this <code>content</code>; this page names it explicitly.</p>
+        </article>
+        <article class="term">
+          <h3>Summary / no-place summary</h3>
+          <p>LLM-compressed article text. The no-place variant removes obvious place names to reduce memorization from names rather than land-cover evidence.</p>
+        </article>
+        <article class="term">
+          <h3>Aligned vs shuffled text</h3>
+          <p>Aligned means the article receives its own text. Shuffled means it receives another article's text; this is the control for text signal.</p>
+        </article>
+        <article class="term">
+          <h3>250 m spatial purity</h3>
+          <p>Share of CORINE pixels/area in a 250 m buffer around the article coordinate that match the point label. A threshold &gt;=0.8 marks cleaner labels.</p>
+        </article>
+        <article class="term">
+          <h3>Land-cover relevance</h3>
+          <p>A deterministic evidence score from article text: none/low/medium/high depending on how much explicit forest, agriculture, water, urban, etc. evidence appears.</p>
+        </article>
+        <article class="term">
+          <h3>Evidence card</h3>
+          <p>A compact, deterministic no-place fact sheet assembled from metadata: relevance, article type, spatial confidence, and land-cover evidence snippets.</p>
+        </article>
+        <article class="term">
+          <h3>Highlights / windows</h3>
+          <p>Highlights prepend matched evidence sentences to the article. Retrieved windows keep raw neighboring sentences around evidence matches; random windows are the control.</p>
+        </article>
+        <article class="term">
+          <h3>Quality score</h3>
+          <p>A deterministic supervision score combining relevance, spatial purity, evidence density, article type, and uncertainty penalties.</p>
+        </article>
+        <article class="term">
+          <h3>Text agreement tier</h3>
+          <p>For CLIP training, this stricter tier keeps examples where Qwen, Gemma, and spatial labels agree. It is cleaner but smaller.</p>
+        </article>
+        <article class="term">
+          <h3>Balanced accuracy</h3>
+          <p>Average recall over classes. It is the main CORINE metric because majority classes can make raw accuracy look better than minority-class behavior.</p>
+        </article>
+        <article class="term">
+          <h3>OSM exact / Jaccard</h3>
+          <p>OSM can have multiple labels. Exact match requires the whole label set; Jaccard gives partial credit for overlapping predicted and target tags.</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
       <h2>Core Metrics</h2>
       <div class="chart-wrap">
         <div class="bar-chart">
-          <h3>CORINE balanced accuracy, Qwen content unless noted</h3>
-          <div class="bar-row"><span>Raw content, all</span><div class="bar-track"><div class="bar" style="width:68.7%"></div></div><span class="num">0.281</span></div>
+          <h3>CORINE balanced accuracy, Qwen full article text unless noted</h3>
+          <div class="bar-row"><span>Full article text, all</span><div class="bar-track"><div class="bar" style="width:68.7%"></div></div><span class="num">0.281</span></div>
           <div class="bar-row"><span>Spatial 250 m clean</span><div class="bar-track"><div class="bar teal" style="width:86.0%"></div></div><span class="num">0.352</span></div>
           <div class="bar-row"><span>Medium/high relevance</span><div class="bar-track"><div class="bar green" style="width:91.3%"></div></div><span class="num">0.374</span></div>
           <div class="bar-row"><span>Relevance + spatial</span><div class="bar-track"><div class="bar green" style="width:100%"></div></div><span class="num">0.409</span></div>
@@ -391,12 +482,19 @@
           <div class="bar-row"><span>Retrieved windows</span><div class="bar-track"><div class="bar violet" style="width:65.1%"></div></div><span class="num">0.266</span></div>
         </div>
         <div class="bar-chart">
-          <h3>Sentinel image probe</h3>
+          <h3>Sentinel-2 RGB image probe</h3>
           <div class="bar-row"><span>Zero-shot CLIP</span><div class="bar-track"><div class="bar red" style="width:33.3%"></div></div><span class="num">0.200</span></div>
           <div class="bar-row"><span>Linear probe, all weak labels</span><div class="bar-track"><div class="bar violet" style="width:100%"></div></div><span class="num">0.600</span></div>
           <div class="bar-row"><span>Linear probe, spatial-only</span><div class="bar-track"><div class="bar teal" style="width:95.2%"></div></div><span class="num">0.571</span></div>
           <div class="bar-row"><span>Linear probe, text agreement</span><div class="bar-track"><div class="bar gold" style="width:66.7%"></div></div><span class="num">0.400</span></div>
           <p class="small">Image metrics use a separate 35-example strict evaluation split, so they are not directly comparable to text-classifier CORINE metrics.</p>
+          <ul class="mini-list">
+            <li>Image source: Sentinel-2 RGB patches around article coordinates.</li>
+            <li>Patch/data: 798 cached patches, 224x224 pixels, cloud cover &lt;=25%, 2022-04-01 to 2022-10-31.</li>
+            <li>Encoder: frozen <code>openai/clip-vit-base-patch32</code>; embeddings are 512-dimensional.</li>
+            <li>Training: linear classifier only, batch size 32, 600 epochs, learning rate 0.1.</li>
+            <li>Split: 5 strict eval examples per class, up to 80 training examples per class.</li>
+          </ul>
         </div>
       </div>
     </section>
@@ -417,42 +515,42 @@
           <tr>
             <td class="num"><a href="001_qwen_e2e_shuffled_control/analysis.md">001</a></td>
             <td>Does article text contain land-cover signal?</td>
-            <td>Qwen CORINE content: 0.281 balanced accuracy vs 0.067 shuffled. OSM content Jaccard: 0.190 vs 0.077 shuffled.</td>
+            <td>Qwen CORINE full article text: 0.281 balanced accuracy vs 0.067 shuffled. OSM full article text Jaccard: 0.190 vs 0.077 shuffled.</td>
             <td>Signal is article-linked, but raw accuracy and exact match can understate it.</td>
             <td><span class="status">Keep</span></td>
           </tr>
           <tr>
             <td class="num"><a href="002_corine_spatial_confidence/README.md">002</a></td>
             <td>How reliable are point-in-polygon CORINE labels?</td>
-            <td>646/1,251 articles pass point-label share >= 0.8 at 250 m; 419 pass at 500 m.</td>
+            <td>646/1,251 articles pass point-label share &gt;= 0.8 at 250 m; 419 pass at 500 m.</td>
             <td>Spatial supervision is noisy and needs filtering or stratification.</td>
             <td><span class="status">Use as filter</span></td>
           </tr>
           <tr>
             <td class="num"><a href="003_qwen_spatial_confidence_reevaluation/analysis.md">003</a></td>
             <td>Does spatial reliability clarify text signal?</td>
-            <td>Qwen CORINE content improves from 0.281 to 0.352 balanced accuracy at 250 m purity >= 0.8.</td>
+            <td>Qwen CORINE full article text improves from 0.281 to 0.352 balanced accuracy at 250 m purity &gt;= 0.8.</td>
             <td>Cleaner spatial labels make the text signal stronger and more credible.</td>
             <td><span class="status">Use</span></td>
           </tr>
           <tr>
             <td class="num"><a href="004_gemma4_model_rerun_and_comparison/analysis.md">004</a></td>
             <td>Does the result survive another local LLM?</td>
-            <td>Gemma CORINE content accuracy 0.357 vs Qwen 0.293, but balanced accuracy 0.271 vs Qwen 0.281.</td>
+            <td>Gemma CORINE full-article-text accuracy 0.357 vs Qwen 0.293, but balanced accuracy 0.271 vs Qwen 0.281.</td>
             <td>Signal is robust across models; model choice shifts majority-class vs balanced behavior.</td>
             <td><span class="status">Replicated</span></td>
           </tr>
           <tr>
             <td class="num"><a href="005_landuse_evidence_summary/analysis.md">005</a></td>
-            <td>Can a short land-use summary replace raw content?</td>
-            <td>Qwen CORINE land-use summary: 0.184 balanced accuracy vs 0.281 raw content.</td>
+            <td>Can a short land-use summary replace full article text?</td>
+            <td>Qwen CORINE land-use summary: 0.184 balanced accuracy vs 0.281 full article text.</td>
             <td>The short summary is too lossy as classifier input.</td>
             <td><span class="status stop">Do not replace</span></td>
           </tr>
           <tr>
             <td class="num"><a href="006_relevance_stratified_evaluation/analysis.md">006</a></td>
             <td>Is the evidence extractor useful as metadata?</td>
-            <td>Qwen content on medium/high relevance: 0.374 balanced accuracy; relevance + spatial: 0.409.</td>
+            <td>Qwen full article text on medium/high relevance: 0.374 balanced accuracy; relevance + spatial: 0.409.</td>
             <td>Relevance is valuable as a quality filter even when summaries are lossy.</td>
             <td><span class="status">Use</span></td>
           </tr>
@@ -466,36 +564,36 @@
           <tr>
             <td class="num"><a href="008_supervision_quality_score/analysis.md">008</a></td>
             <td>Can a deterministic quality score dominate simpler filters?</td>
-            <td>Qwen quality+spatial content: 0.394 balanced accuracy; simpler relevance+spatial reaches 0.409.</td>
+            <td>Qwen quality+spatial full article text: 0.394 balanced accuracy; simpler relevance+spatial reaches 0.409.</td>
             <td>The score is useful for candidate selection but not a clear replacement for simple filters.</td>
             <td><span class="status warn">Use carefully</span></td>
           </tr>
           <tr>
             <td class="num"><a href="009_evidence_card_text_source/analysis.md">009</a></td>
             <td>Can an evidence card improve classifier input?</td>
-            <td>Evidence card alone reaches 0.224 CORINE balanced accuracy; content with card reaches 0.285 but lowers macro-F1.</td>
-            <td>Cards organize signal but lose minority-class evidence versus raw content.</td>
+            <td>Evidence card alone reaches 0.224 CORINE balanced accuracy; full article text plus card reaches 0.285 but lowers macro-F1.</td>
+            <td>Cards organize signal but lose minority-class evidence versus full article text.</td>
             <td><span class="status warn">Diagnostic</span></td>
           </tr>
           <tr>
             <td class="num"><a href="010_evidence_highlighted_content/analysis.md">010</a></td>
             <td>Does prepending deterministic evidence highlights help?</td>
-            <td>Qwen highlighted content: 0.273 CORINE balanced accuracy vs 0.281 raw content; Gemma 0.259 vs 0.271.</td>
-            <td>Highlights are text-linked but generally weaker than raw content.</td>
+            <td>Qwen highlighted article text: 0.273 CORINE balanced accuracy vs 0.281 full article text; Gemma 0.259 vs 0.271.</td>
+            <td>Highlights are text-linked but generally weaker than the complete article body.</td>
             <td><span class="status stop">Do not replace</span></td>
           </tr>
           <tr>
             <td class="num"><a href="011_retrieved_evidence_windows/analysis.md">011</a></td>
             <td>Can retrieved raw evidence windows preserve the signal?</td>
-            <td>Qwen retrieved windows: 0.266 CORINE balanced accuracy vs 0.254 random windows and 0.281 raw content.</td>
-            <td>Best compact raw-text source so far, but not a full-content replacement.</td>
+            <td>Qwen retrieved windows: 0.266 CORINE balanced accuracy vs 0.254 random windows and 0.281 full article text.</td>
+            <td>Best compact source of original article sentences so far, but not a full-article replacement.</td>
             <td><span class="status warn">Cost tool</span></td>
           </tr>
           <tr>
             <td class="num"><a href="012_clip_linear_probe_weak_labels/analysis.md">012</a></td>
             <td>Do weak labels help a Sentinel image classifier?</td>
             <td>Frozen CLIP + linear probe reaches 0.600 accuracy; zero-shot CLIP reaches 0.200 on the same eval split.</td>
-            <td>Broad weak supervision is promising; overly strict filters reduce class coverage too much.</td>
+            <td>Broad weak supervision is promising; the stricter text-agreement tier is cleaner but reduces class coverage too much.</td>
             <td><span class="status">Next path</span></td>
           </tr>
         </tbody>
@@ -507,7 +605,8 @@
       <div class="note">
         <strong>Best concise interpretation:</strong>
         Wikipedia text is useful for land-cover supervision when articles are relevant
-        and point labels are spatially reliable. The best text input remains raw content.
+        and point labels are spatially reliable. The best text input remains the
+        complete Wikipedia article body.
         Deterministic summaries, cards, highlights, and retrieved windows are useful for
         diagnostics, filtering, and cost control, but not as primary replacements. For
         image learning, broader weak-label coverage beats the strictest text-agreement
