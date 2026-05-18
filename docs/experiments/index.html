@@ -410,7 +410,7 @@
         </article>
         <article class="term">
           <h3>Land-cover relevance</h3>
-          <p>A deterministic evidence score from article text: none/low/medium/high depending on how much explicit forest, agriculture, water, urban, etc. evidence appears.</p>
+          <p>An LLM-generated evidence label from article text: none/low/medium/high depending on how much explicit forest, agriculture, water, urban, etc. evidence appears. Later filters use this label deterministically.</p>
         </article>
         <article class="term">
           <h3>Evidence card</h3>
@@ -477,7 +477,7 @@
           <div class="bar-row"><span>Full article text, all</span><div class="bar-track"><div class="bar" style="width:68.7%"></div></div><span class="num">0.281</span></div>
           <div class="bar-row"><span>Spatial 250 m clean</span><div class="bar-track"><div class="bar teal" style="width:86.0%"></div></div><span class="num">0.352</span></div>
           <div class="bar-row"><span>Medium/high relevance</span><div class="bar-track"><div class="bar green" style="width:91.3%"></div></div><span class="num">0.374</span></div>
-          <div class="bar-row"><span>Relevance + spatial</span><div class="bar-track"><div class="bar green" style="width:100%"></div></div><span class="num">0.409</span></div>
+          <div class="bar-row"><span>Medium/high relevance + 250 m purity &gt;=0.8</span><div class="bar-track"><div class="bar green" style="width:100%"></div></div><span class="num">0.409</span></div>
           <div class="bar-row"><span>Evidence card only</span><div class="bar-track"><div class="bar gold" style="width:54.8%"></div></div><span class="num">0.224</span></div>
           <div class="bar-row"><span>Retrieved windows</span><div class="bar-track"><div class="bar violet" style="width:65.1%"></div></div><span class="num">0.266</span></div>
         </div>
@@ -485,7 +485,7 @@
           <h3>Sentinel-2 RGB image probe</h3>
           <div class="bar-row"><span>Zero-shot CLIP</span><div class="bar-track"><div class="bar red" style="width:33.3%"></div></div><span class="num">0.200</span></div>
           <div class="bar-row"><span>Linear probe, all weak labels</span><div class="bar-track"><div class="bar violet" style="width:100%"></div></div><span class="num">0.600</span></div>
-          <div class="bar-row"><span>Linear probe, spatial-only</span><div class="bar-track"><div class="bar teal" style="width:95.2%"></div></div><span class="num">0.571</span></div>
+          <div class="bar-row"><span>Linear probe, 250 m purity &gt;=0.8</span><div class="bar-track"><div class="bar teal" style="width:95.2%"></div></div><span class="num">0.571</span></div>
           <div class="bar-row"><span>Linear probe, text agreement</span><div class="bar-track"><div class="bar gold" style="width:66.7%"></div></div><span class="num">0.400</span></div>
           <p class="small">Image metrics use a separate 35-example strict evaluation split, so they are not directly comparable to text-classifier CORINE metrics.</p>
           <ul class="mini-list">
@@ -550,7 +550,7 @@
           <tr>
             <td class="num"><a href="006_relevance_stratified_evaluation/analysis.md">006</a></td>
             <td>Is the evidence extractor useful as metadata?</td>
-            <td>Qwen full article text on medium/high relevance: 0.374 balanced accuracy; relevance + spatial: 0.409.</td>
+            <td>Qwen full article text on medium/high relevance: 0.374 balanced accuracy; medium/high relevance + 250 m purity &gt;=0.8: 0.409.</td>
             <td>Relevance is valuable as a quality filter even when summaries are lossy.</td>
             <td><span class="status">Use</span></td>
           </tr>
@@ -564,7 +564,7 @@
           <tr>
             <td class="num"><a href="008_supervision_quality_score/analysis.md">008</a></td>
             <td>Can a deterministic quality score dominate simpler filters?</td>
-            <td>Qwen quality+spatial full article text: 0.394 balanced accuracy; simpler relevance+spatial reaches 0.409.</td>
+            <td>Qwen quality+spatial full article text: 0.394 balanced accuracy; simpler medium/high relevance + 250 m purity &gt;=0.8 reaches 0.409.</td>
             <td>The score is useful for candidate selection but not a clear replacement for simple filters.</td>
             <td><span class="status warn">Use carefully</span></td>
           </tr>
@@ -611,24 +611,6 @@
         diagnostics, filtering, and cost control, but not as primary replacements. For
         image learning, broader weak-label coverage beats the strictest text-agreement
         filter at the current data size.
-      </div>
-    </section>
-
-    <section>
-      <h2>Recommended Next Experiment</h2>
-      <div class="grid">
-        <article class="panel">
-          <h3>Train with broad weak labels</h3>
-          <p>Keep the broad `all` or `spatial_only` training pools so rare CORINE classes remain represented.</p>
-        </article>
-        <article class="panel">
-          <h3>Use quality as a soft signal</h3>
-          <p>Use relevance, spatial purity, quality score, and model agreement as weights or sampling controls, not hard exclusions.</p>
-        </article>
-        <article class="panel">
-          <h3>Move beyond generic CLIP</h3>
-          <p>Test a Sentinel-native encoder or fine-tuned vision backbone against the frozen CLIP linear-probe baseline.</p>
-        </article>
       </div>
     </section>
 
