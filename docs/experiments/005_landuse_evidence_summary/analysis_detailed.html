@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment 005 - Land-use Evidence Summary</title>
+  <style>
+    :root {
+      --bg: #f6f7fc;
+      --panel: #ffffff;
+      --line: #d8e0f2;
+      --text: #0f172a;
+      --muted: #54607a;
+      --accent: #1d4ed8;
+      --qwen: #7c3aed;
+      --gemma: #0f766e;
+      --ok: #166534;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: linear-gradient(140deg, #f8fbff 0%, var(--bg) 46%, #edf3ff 100%);
+      color: var(--text);
+      font: 14px/1.5 "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    .container { width: min(1180px, calc(100% - 44px)); margin: 18px auto 42px; }
+    h1 { margin: 0 0 6px; font-size: 38px; line-height: 1.08; letter-spacing: -0.35px; }
+    h2 {
+      margin: 22px 0 10px;
+      font-size: 26px;
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+      line-height: 1.15;
+    }
+    h3 { margin: 10px 0 8px; font-size: 18px; }
+    p { margin: 0.25rem 0 0.85rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { margin: 0.35rem 0 0.8rem 1.2rem; padding: 0; }
+    .subtitle { color: var(--muted); margin-bottom: 14px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfdff;
+      padding: 10px;
+      min-width: 0;
+    }
+    .kpi .k { color: var(--muted); font-size: 11px; }
+    .kpi .v {
+      font-size: 24px;
+      font-weight: 750;
+      margin-top: 3px;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+    .badge {
+      display: inline-block;
+      margin: 0 4px 4px 0;
+      padding: 2px 8px;
+      border: 1px solid #c9d6f2;
+      border-radius: 999px;
+      background: #f0f5ff;
+      font-size: 11px;
+      color: #25395f;
+    }
+    code, pre, .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+    pre {
+      border: 1px solid #dbe6ff;
+      border-radius: 8px;
+      padding: 10px;
+      background: #f6f8ff;
+      overflow: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+      background: #fff;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 7px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #eff4ff; }
+    .callout {
+      border-left: 4px solid #8b5cf6;
+      background: #f4efff;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      color: #341d66;
+      font-size: 13px;
+    }
+    .warn-box {
+      border-left: 4px solid var(--warn);
+      background: #fff7ed;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      color: #7c2d12;
+      font-size: 13px;
+    }
+    .foot { margin-top: 8px; color: var(--muted); font-size: 11px; }
+    .positive { color: var(--ok); font-weight: 650; }
+    .negative { color: var(--bad); font-weight: 650; }
+    .neutral { color: #0f766e; font-weight: 650; }
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .bars {
+      margin-top: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfdff;
+      padding: 8px;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 340px 1fr 76px;
+      gap: 9px;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 12px;
+    }
+    .bar-label { color: #36435f; overflow-wrap: anywhere; }
+    .bar-shell {
+      height: 16px;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #e9efff, #f2f6ff);
+      border: 1px solid #c8d4f2;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 7px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding-right: 6px;
+      white-space: nowrap;
+    }
+    .bar-qwen { background: linear-gradient(90deg, #8b5cf6, #6d28d9); }
+    .bar-gemma { background: linear-gradient(90deg, #0d9488, #0f766e); }
+    .bar-bad { background: linear-gradient(90deg, #f97316, #db2777); }
+    .mermaid {
+      overflow-x: auto;
+      margin-top: 6px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fcfdff;
+    }
+    @media (max-width: 980px) {
+      .split { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 1fr 80px; }
+      .bar-shell { grid-column: 1 / -1; }
+      h1 { font-size: 30px; }
+    }
+  </style>
+  <script type="module">
+    const loadMermaid = async () => {
+      if (document.getElementById('mermaid-script')) return;
+      const s = document.createElement('script');
+      s.id = 'mermaid-script';
+      s.src = 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';
+      s.onload = () => {
+        window.mermaid?.initialize({
+          startOnLoad: false,
+          securityLevel: 'loose',
+          theme: 'default',
+          flowchart: { useMaxWidth: true, nodeSpacing: 56, rankSpacing: 50, curve: 'basis' },
+          themeVariables: { fontSize: '13px' },
+        });
+        window.mermaid?.run({ nodes: document.querySelectorAll('.mermaid') });
+      };
+      document.head.appendChild(s);
+    };
+    loadMermaid();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Experiment 005: Land-use Evidence Summary</h1>
+    <div class="subtitle">Detailed implementation and result audit for using compact no-place land-use evidence summaries as classifier input for Qwen and Gemma.</div>
+
+    <div class="panel">
+      <div class="section-title">
+        <h2>1) Executive summary</h2>
+        <span class="badge">Evidence text experiment</span>
+      </div>
+      <p>
+        Experiment 005 tests whether a compact <span class="mono">landuse_evidence_summary</span> can replace generic summaries or raw article content as the classifier text source. The summaries are generated once from raw articles, stripped of place names, then classified by Qwen and Gemma with aligned and shuffled controls.
+      </p>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="k">Evidence artifact</div><div class="v">1,251 records</div></div>
+        <div class="kpi"><div class="k">Evidence generator</div><div class="v">Qwen3.6-27B-Q4_0</div></div>
+        <div class="kpi"><div class="k">Prompt version</div><div class="v">2</div></div>
+        <div class="kpi"><div class="k">Classifier models</div><div class="v">Qwen + Gemma</div></div>
+        <div class="kpi"><div class="k">Land-use runs</div><div class="v">8 total</div></div>
+        <div class="kpi"><div class="k">Parse errors</div><div class="v">0</div></div>
+      </div>
+      <p class="warn-box">Main result: the land-use summaries contain real signal because aligned runs beat shuffled controls, but they do not replace raw content or the prior generic summaries. The extraction is too lossy for this classifier input.</p>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h2>2) Source artifacts</h2>
+        <ul>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0">Qwen land-use classification</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__gemma4_31b_it_q4_0">Gemma land-use classification</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_spatial_confidence_v1__qwen3_6_27b_q4_0">Qwen spatial reevaluation</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_spatial_confidence_v1__gemma4_31b_it_q4_0">Gemma spatial reevaluation</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1">Consolidated comparison tables</a></li>
+        </ul>
+        <p>Canonical paths are registered in <a href="/Users/noeflandre/georeset/src/georeset/experiment_paths.py">src/georeset/experiment_paths.py</a>.</p>
+      </div>
+
+      <div class="panel">
+        <h2>3) Processing flow</h2>
+        <div class="mermaid">
+flowchart TD
+  A["Raw article content"] --> B["LandUseEvidenceSummarizer<br/>schema-constrained JSON"]
+  B --> C["article_landuse_evidence_summaries.json<br/>no-place evidence summaries"]
+  C --> D["Classifier text source<br/>landuse_evidence_summary"]
+  C --> E["Deterministic shuffled control"]
+  D --> F["Qwen + Gemma classification"]
+  E --> F
+  F --> G["overview.csv + shuffled_delta.csv"]
+  G --> H["Spatial-confidence reevaluation<br/>six subsets"]
+  H --> I["landuse_evidence_comparison_v1"]
+        </div>
+        <p class="foot">Spatial reevaluation reuses frozen predictions and experiment 002 spatial-confidence subsets.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>4) Implementation details</h2>
+      <div class="split">
+        <div>
+          <h3>Evidence summarization</h3>
+          <ul>
+            <li>Generator: <a href="/Users/noeflandre/georeset/src/georeset/fetchers/landuse_evidence_summarizer.py">LandUseEvidenceSummarizer</a>.</li>
+            <li>Output schema includes summary, relevance, evidence types, no-place evidence sentences, and uncertainty.</li>
+            <li>Prompt version is <span class="mono">LANDUSE_EVIDENCE_PROMPT_VERSION = 2</span>.</li>
+            <li>Output is normalized for whitespace and rejected if it leaks private markers or place-title variants.</li>
+            <li>The evidence artifact records <span class="mono">summary_no_place: true</span>, seed 42, temperature 0.0.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Classification and evaluation</h3>
+          <ul>
+            <li>Text loading happens in <a href="/Users/noeflandre/georeset/src/georeset/classification/runner.py">classification/runner.py</a> by reading <span class="mono">landuse_evidence_summary</span> from the evidence JSON.</li>
+            <li>Shuffled control uses <span class="mono">landuse_evidence_summary_shuffled</span> mapped to the same base text source.</li>
+            <li>Non-spatial metrics are produced by <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/summarize_classification_experiment.py">summarize_classification_experiment.py</a>.</li>
+            <li>Spatial metrics are produced by <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_predictions_with_spatial_confidence.py">evaluate_predictions_with_spatial_confidence.py</a>.</li>
+            <li>Comparison outputs are collected in <span class="mono">landuse_evidence_comparison_v1</span>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>5) Land-use summary non-spatial results</h2>
+      <p>Primary metric is macro recall for CORINE and exact-match accuracy for OSM. All rows have coverage 1.0 and zero parse errors.</p>
+      <table>
+        <thead>
+          <tr><th>Model</th><th>Task</th><th>Text source</th><th>n</th><th>Primary score</th><th>Accuracy</th><th>Exact match</th><th>Macro recall</th><th>Macro F1</th><th>Micro F1</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Qwen</td><td>CORINE</td><td>landuse_evidence_summary</td><td>1251</td><td>0.1842</td><td>0.2366</td><td></td><td>0.1842</td><td>0.2032</td><td></td></tr>
+          <tr><td>Qwen</td><td>OSM</td><td>landuse_evidence_summary</td><td>275</td><td>0.1091</td><td></td><td>0.1091</td><td>0.2598</td><td>0.1204</td><td>0.1949</td></tr>
+          <tr><td>Gemma</td><td>CORINE</td><td>landuse_evidence_summary</td><td>1251</td><td class="positive">0.2181</td><td>0.2590</td><td></td><td>0.2181</td><td>0.2192</td><td></td></tr>
+          <tr><td>Gemma</td><td>OSM</td><td>landuse_evidence_summary</td><td>275</td><td>0.1018</td><td></td><td>0.1018</td><td>0.2234</td><td>0.0926</td><td>0.1780</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Sources: Qwen and Gemma <span class="mono">overview.csv</span> files in their land-use experiment directories.</p>
+    </div>
+
+    <div class="panel">
+      <h2>6) Aligned vs shuffled control</h2>
+      <p>Aligned land-use summaries beat shuffled land-use summaries in every model/task pair. This means the extracted evidence text still carries article-specific signal.</p>
+      <table>
+        <thead>
+          <tr><th>Model</th><th>Task</th><th>Primary metric</th><th>Aligned</th><th>Shuffled</th><th>Delta</th><th>Macro F1 delta</th><th>Micro F1 delta</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Qwen</td><td>CORINE</td><td>macro recall</td><td>0.1842</td><td>0.0472</td><td class="positive">+0.1370</td><td>+0.1447</td><td></td></tr>
+          <tr><td>Qwen</td><td>OSM</td><td>exact match</td><td>0.1091</td><td>0.0618</td><td class="positive">+0.0473</td><td>+0.0680</td><td>+0.0637</td></tr>
+          <tr><td>Gemma</td><td>CORINE</td><td>macro recall</td><td>0.2181</td><td>0.0524</td><td class="positive">+0.1657</td><td>+0.1604</td><td></td></tr>
+          <tr><td>Gemma</td><td>OSM</td><td>exact match</td><td>0.1018</td><td>0.0873</td><td class="positive">+0.0145</td><td>+0.0496</td><td>+0.0511</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_aligned_vs_shuffled.csv">landuse_aligned_vs_shuffled.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>7) Land-use summary vs generic text sources</h2>
+      <p>The compact evidence summary underperforms the earlier generic text sources on the primary metric in every model/task comparison.</p>
+      <table>
+        <thead>
+          <tr><th>Model</th><th>Task</th><th>Baseline source</th><th>Baseline primary</th><th>Land-use primary</th><th>Delta</th><th>Macro F1 delta</th><th>Micro F1 delta</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Qwen</td><td>CORINE</td><td>content</td><td>0.2807</td><td>0.1842</td><td class="negative">-0.0965</td><td>-0.0667</td><td></td></tr>
+          <tr><td>Qwen</td><td>CORINE</td><td>summary</td><td>0.2548</td><td>0.1842</td><td class="negative">-0.0706</td><td>-0.0409</td><td></td></tr>
+          <tr><td>Qwen</td><td>CORINE</td><td>summary_no_place</td><td>0.2426</td><td>0.1842</td><td class="negative">-0.0584</td><td>-0.0321</td><td></td></tr>
+          <tr><td>Qwen</td><td>OSM</td><td>content</td><td>0.1636</td><td>0.1091</td><td class="negative">-0.0545</td><td>-0.0381</td><td>-0.0016</td></tr>
+          <tr><td>Gemma</td><td>CORINE</td><td>content</td><td>0.2714</td><td>0.2181</td><td class="negative">-0.0533</td><td>-0.0352</td><td></td></tr>
+          <tr><td>Gemma</td><td>CORINE</td><td>summary_no_place</td><td>0.2232</td><td>0.2181</td><td class="negative">-0.0051</td><td class="positive">+0.0106</td><td></td></tr>
+          <tr><td>Gemma</td><td>OSM</td><td>content</td><td>0.2145</td><td>0.1018</td><td class="negative">-0.1127</td><td>-0.0657</td><td>-0.0692</td></tr>
+          <tr><td>Gemma</td><td>OSM</td><td>summary_no_place</td><td>0.2436</td><td>0.1018</td><td class="negative">-0.1418</td><td>-0.0603</td><td>-0.0805</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_vs_generic_nonspatial.csv">landuse_vs_generic_nonspatial.csv</a>.</p>
+      <div class="warn-box">The evidence extractor helps remove location leakage and compresses the input, but it appears to discard cues that the classifier needs. It is better as metadata or a quality signal than as a drop-in replacement for article text.</div>
+    </div>
+
+    <div class="panel">
+      <h2>8) Spatial reliability still helps</h2>
+      <p>Filtering to <span class="mono">point_label_share_250m_ge_0.8</span> improves land-use-summary results for both models and tasks, even though the absolute scores remain below raw content baselines.</p>
+      <table>
+        <thead>
+          <tr><th>Model</th><th>Task</th><th>All n</th><th>250m n</th><th>All primary</th><th>250m primary</th><th>Primary delta</th><th>Macro F1 delta</th><th>Jaccard delta</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Qwen</td><td>CORINE</td><td>1251</td><td>646</td><td>0.1842</td><td>0.2503</td><td class="positive">+0.0661</td><td>+0.0287</td><td></td></tr>
+          <tr><td>Qwen</td><td>OSM</td><td>275</td><td>160</td><td>0.1091</td><td>0.1438</td><td class="positive">+0.0347</td><td>+0.0077</td><td>+0.0398</td></tr>
+          <tr><td>Gemma</td><td>CORINE</td><td>1251</td><td>646</td><td>0.2181</td><td>0.2675</td><td class="positive">+0.0494</td><td>+0.0052</td><td></td></tr>
+          <tr><td>Gemma</td><td>OSM</td><td>275</td><td>160</td><td>0.1018</td><td>0.1125</td><td class="positive">+0.0107</td><td>+0.0081</td><td>+0.0160</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_spatial_all_vs_point250.csv">landuse_spatial_all_vs_point250.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>9) Qwen vs Gemma on land-use summaries</h2>
+      <div class="split">
+        <div>
+          <h3>Non-spatial</h3>
+          <table>
+            <thead>
+              <tr><th>Task</th><th>Qwen primary</th><th>Gemma primary</th><th>Gemma - Qwen</th><th>Macro F1 delta</th><th>Micro F1 delta</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>CORINE</td><td>0.1842</td><td>0.2181</td><td class="positive">+0.0339</td><td>+0.0160</td><td></td></tr>
+              <tr><td>OSM</td><td>0.1091</td><td>0.1018</td><td class="negative">-0.0073</td><td>-0.0277</td><td>-0.0170</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3>250m high-confidence subset</h3>
+          <table>
+            <thead>
+              <tr><th>Task</th><th>Qwen primary</th><th>Gemma primary</th><th>Gemma - Qwen</th><th>Macro F1 delta</th><th>Jaccard delta</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>CORINE</td><td>0.2503</td><td>0.2675</td><td class="positive">+0.0171</td><td class="negative">-0.0075</td><td></td></tr>
+              <tr><td>OSM</td><td>0.1438</td><td>0.1125</td><td class="negative">-0.0312</td><td>-0.0274</td><td>-0.0389</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="foot">Sources: <a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/qwen_vs_gemma_landuse_nonspatial.csv">qwen_vs_gemma_landuse_nonspatial.csv</a> and <a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/qwen_vs_gemma_landuse_spatial.csv">qwen_vs_gemma_landuse_spatial.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>10) CORINE per-class behavior</h2>
+      <p>On the 250m high-confidence subset, both models preserve strong performance on permanent crops and forests, while pastures and heterogeneous agriculture remain weak.</p>
+      <table>
+        <thead>
+          <tr><th>Label</th><th>Support</th><th>Qwen F1</th><th>Gemma F1</th><th>Qwen - Gemma</th><th>Interpretation</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>21</td><td>100</td><td>0.1955</td><td>0.1379</td><td class="positive">+0.0576</td><td>Qwen stronger on arable land.</td></tr>
+          <tr><td>22</td><td>81</td><td>0.7838</td><td>0.7891</td><td class="negative">-0.0053</td><td>Both strong on permanent crops.</td></tr>
+          <tr><td>23</td><td>50</td><td>0.0278</td><td>0.0312</td><td class="negative">-0.0035</td><td>Pastures remain very weak.</td></tr>
+          <tr><td>24</td><td>65</td><td>0.0759</td><td>0.1163</td><td class="negative">-0.0403</td><td>Gemma somewhat better, but still low.</td></tr>
+          <tr><td>31</td><td>324</td><td>0.5214</td><td>0.5344</td><td class="negative">-0.0131</td><td>Both recover forest signal.</td></tr>
+          <tr><td>32</td><td>14</td><td>0.2222</td><td>0.1509</td><td class="positive">+0.0713</td><td>Qwen stronger on small shrub/herbaceous support.</td></tr>
+          <tr><td>51</td><td>12</td><td>0.2609</td><td>0.2597</td><td class="neutral">+0.0011</td><td>Essentially tied on low-support inland waters.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/corine_per_class_landuse_point250m_delta.csv">corine_per_class_landuse_point250m_delta.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>11) Interpretation and next step</h2>
+      <ul>
+        <li><strong>Signal survives extraction:</strong> aligned evidence summaries beat shuffled controls for both models and tasks.</li>
+        <li><strong>Extraction is lossy:</strong> the compact no-place summaries underperform raw content and generic summaries on primary metrics.</li>
+        <li><strong>Spatial filtering remains useful:</strong> the 250m high-confidence subset improves results even for lossy evidence summaries.</li>
+        <li><strong>Model split changes by task:</strong> Gemma is better on CORINE primary score, while Qwen is better on OSM and some minority CORINE classes.</li>
+        <li><strong>Better use:</strong> keep land-use evidence as metadata, filtering, highlighting, or retrieval scaffolding rather than as a standalone classifier input.</li>
+      </ul>
+      <p class="callout">The natural follow-up is not to replace content with summaries, but to combine evidence extraction with raw text: evidence cards, highlighted content, or retrieved evidence windows can preserve context while steering the classifier toward land-cover cues.</p>
+    </div>
+
+    <div class="panel">
+      <h2>12) Artifact index</h2>
+      <ul>
+        <li><a href="/Users/noeflandre/georeset/docs/experiments/005_landuse_evidence_summary/analysis.md">Original experiment 005 analysis.md</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0/overview.csv">Qwen overview.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__gemma4_31b_it_q4_0/overview.csv">Gemma overview.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_aligned_vs_shuffled.csv">landuse_aligned_vs_shuffled.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_vs_generic_nonspatial.csv">landuse_vs_generic_nonspatial.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_spatial_all_vs_point250.csv">landuse_spatial_all_vs_point250.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/qwen_vs_gemma_landuse_nonspatial.csv">qwen_vs_gemma_landuse_nonspatial.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/qwen_vs_gemma_landuse_spatial.csv">qwen_vs_gemma_landuse_spatial.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/corine_per_class_landuse_point250m_delta.csv">corine_per_class_landuse_point250m_delta.csv</a></li>
+      </ul>
+      <p class="foot">This detailed HTML was written from the checked markdown analysis and revalidated against generated CSV artifacts in the local workspace.</p>
+    </div>
+  </div>
+</body>
+</html>
