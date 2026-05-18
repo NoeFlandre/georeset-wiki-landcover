@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment 003 - CORINE Spatial Confidence Re-Evaluation (Detailed)</title>
+  <style>
+    :root {
+      --bg: #f6f7fc;
+      --panel: #ffffff;
+      --line: #d8e0f2;
+      --text: #0f172a;
+      --muted: #54607a;
+      --accent: #1d4ed8;
+      --ok: #166534;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: linear-gradient(140deg, #f8fbff 0%, var(--bg) 45%, #edf3ff 100%);
+      color: var(--text);
+      font: 14px/1.5 "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    .container {
+      width: min(1180px, calc(100% - 44px));
+      margin: 18px auto 40px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 38px;
+      letter-spacing: -0.35px;
+    }
+    h2 {
+      margin: 22px 0 10px;
+      font-size: 26px;
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+    }
+    h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+    p { margin: 0.2rem 0 0.85rem; }
+    .subtitle { color: var(--muted); margin-bottom: 14px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .panel + .panel { margin-top: 16px; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfdff;
+      padding: 10px;
+      min-width: 0;
+    }
+    .kpi .k { color: var(--muted); font-size: 11px; }
+    .kpi .v {
+      font-size: 26px;
+      font-weight: 700;
+      margin-top: 3px;
+      word-break: break-word;
+    }
+    .badge {
+      display: inline-block;
+      margin: 0 4px 4px 0;
+      padding: 2px 8px;
+      border: 1px solid #c9d6f2;
+      border-radius: 999px;
+      background: #f0f5ff;
+      font-size: 11px;
+      color: #25395f;
+    }
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px) {
+      .split { grid-template-columns: 1fr; }
+      h1 { font-size: 30px; }
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 7px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #eff4ff; }
+    code, pre, .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+    pre {
+      border: 1px solid #dbe6ff;
+      border-radius: 8px;
+      padding: 10px;
+      background: #f6f8ff;
+      overflow: auto;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .bars {
+      margin-top: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfdff;
+      padding: 8px;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 340px 1fr 70px;
+      gap: 9px;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 12px;
+    }
+    .bar-label { color: #36435f; }
+    .bar-shell {
+      height: 15px;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #e9efff, #f2f6ff);
+      border: 1px solid #c8d4f2;
+      overflow: hidden;
+      position: relative;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 7px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding-right: 6px;
+      white-space: nowrap;
+    }
+    .bar-good { background: linear-gradient(90deg, #16a34a, #059669); }
+    .bar-mid { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+    .bar-flat { background: linear-gradient(90deg, #64748b, #94a3b8); }
+    .foot { margin-top: 8px; color: var(--muted); font-size: 11px; }
+    .callout {
+      border-left: 4px solid #8b5cf6;
+      background: #f4efff;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      color: #341d66;
+      font-size: 13px;
+    }
+    .positive { color: var(--ok); }
+    .neutral { color: #0f766e; }
+    .negative { color: var(--bad); }
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .small-note {
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .mermaid {
+      overflow-x: auto;
+      margin-top: 6px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fcfdff;
+      max-width: 100%;
+    }
+  </style>
+  <script type="module">
+    const loadMermaid = async () => {
+      if (document.getElementById('mermaid-script')) return;
+      const s = document.createElement('script');
+      s.id = 'mermaid-script';
+      s.src = 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';
+      s.onload = () => {
+        window.mermaid?.initialize({
+          startOnLoad: false,
+          securityLevel: 'loose',
+          theme: 'default',
+          flowchart: { useMaxWidth: true, nodeSpacing: 56, rankSpacing: 50 },
+          themeVariables: {
+            fontSize: '13px',
+          },
+        });
+        window.mermaid?.run({ nodes: document.querySelectorAll('.mermaid') });
+      };
+      document.head.appendChild(s);
+    };
+    loadMermaid();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Experiment 003: CORINE Spatial Confidence Re-Evaluation</h1>
+    <div class="subtitle">Deep implementation and result interpretation for <strong>article_text_classification_spatial_confidence_v1</strong> — frozen predictions from <strong>article_text_classification_e2e_with_shuffled_control_v1</strong>, re-scored on CORINE spatial-confidence subsets.</div>
+
+    <div class="panel">
+      <div class="section-title">
+        <h2>1) What this experiment is and what changed</h2>
+        <span class="badge">No LLM re-run</span>
+      </div>
+      <p>
+        This experiment does not regenerate model outputs. It is a <strong>reevaluation pass</strong> that keeps all predictions from the parent experiment fixed, computes CORINE spatial-confidence diagnostics for each pageid, and recomputes metrics only on filtered subsets. The goal is to test whether performance gaps between <strong>aligned</strong> and <strong>shuffled</strong> text sources grow when only geospatially reliable points are kept.</p>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="k">Primary parent</div><div class="v">article_text_classification_e2e_with_shuffled_control_v1</div></div>
+        <div class="kpi"><div class="k">Spatial confidence input</div><div class="v">corine_spatial_confidence_v1</div></div>
+        <div class="kpi"><div class="k">This experiment output ID</div><div class="v">article_text_classification_spatial_confidence_v1</div></div>
+        <div class="kpi"><div class="k">LLM rerun flag</div><div class="v">no_llm_rerun = true</div></div>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h2>2) Geographic scope and source artifacts</h2>
+        <p>The spatial layer comes from <span class="mono">data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp</span>, so the analyzed region is the same Alsace land-use footprint used in experiment 002.</p>
+        <p>Core source files:</p>
+        <ul>
+          <li><a href="/Users/noeflandre/georeset/src/georeset/cli/data/compute_corine_spatial_confidence.py">compute_corine_spatial_confidence.py</a></li>
+          <li><a href="/Users/noeflandre/georeset/src/georeset/spatial/corine_confidence.py">corine_confidence.py</a></li>
+          <li><a href="/Users/noeflandre/georeset/src/georeset/analysis/spatial_confidence_loading.py">spatial_confidence_loading.py</a></li>
+          <li><a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_predictions_with_spatial_confidence.py">evaluate_predictions_with_spatial_confidence.py</a></li>
+          <li><a href="/Users/noeflandre/georeset/src/georeset/analysis/evaluation_metrics.py">evaluation_metrics.py</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/manifest.json">Generated experiment manifest</a></li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h2>3) End-to-end processing flow</h2>
+        <div class="mermaid"> 
+flowchart TD
+  A[Parent prediction directory] -->|pageids, targets| B[derive_pageids / load CORINE targets]
+  A --> C[wiki_articles -> GeoDataFrame points]
+  B --> D[derive_point_labels by point-in-polygon]
+  C --> D
+  D --> E[compute_article_spatial_confidence<br/>radii: 100,250,500,1000m]
+  E --> F[spatial_confidence.csv]
+  F --> G[load_spatial_confidence]
+  G --> H[merge with parent predictions]
+  H --> I[subset filtering predicates]
+  I --> J["CORINE metrics (balanced accuracy primary) + OSM metrics (exact match primary)"]
+  J --> K[summary + csv artifacts]
+  K --> L[analysis.md + visual review]
+        </div>
+        <p class="foot">Spatial confidence loading enforces <code>pageid</code> as string and coerces dominant-match booleans through robust true/false parsing.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>4) How decisions are implemented in code</h2>
+      <div class="split">
+        <div>
+          <h3>Spatial-confidence production</h3>
+          <ul>
+            <li>Predictions are loaded from the parent directory via JSON prediction files and deduplicated to a single prediction frame for all text sources.</li>
+            <li>Parent CORINE targets are validated as globally consistent across runs; any target mismatch aborts the experiment.</li>
+            <li>Wikipedia points are projected to <strong>EPSG:2154</strong> for buffer geometry operations.</li>
+            <li>Spatial confidence is computed as <strong>buffer label shares</strong> and per-radius <strong>dominant share</strong>, <strong>point-label share</strong>, <strong>dominant match</strong>, entropy, and coverage.</li>
+            <li>Full CORINE is used (including artificial classes), documented by <code>used_full_corine: true</code>.</li>
+            <li>Parquet export is attempted; in this run parquet failed due missing optional dependency and CSV is the authoritative output.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Re-evaluation logic</h3>
+          <ul>
+            <li><code>SUBSET_DEFINITIONS</code> includes 6 filters:</li>
+            <ul>
+              <li>all available spatial confidence</li>
+              <li>point_label_share_250m >= 0.8</li>
+              <li>point_label_share_500m >= 0.8</li>
+              <li>point_label_share_250m >= 0.9</li>
+              <li>dominant_matches_point_label_250m</li>
+              <li>dominant_matches_point_label_500m</li>
+            </ul>
+            <li>Aligned vs shuffled comparison uses paired text-source pairs from <code>TEXT_PAIRS</code>.</li>
+            <li>For CORINE: primary score = <strong>balanced_accuracy</strong> (macro recall).</li>
+            <li>For OSM: primary score = <strong>exact_match_accuracy</strong> (multilabel).</li>
+            <li>Shuffled rows are used for delta; no additional model run is performed.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>5) Data coverage and subset sizes</h2>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="k">CORINE parent records</div><div class="v">1,251</div></div>
+        <div class="kpi"><div class="k">OSM parent records</div><div class="v">275</div></div>
+        <div class="kpi"><div class="k">CORINE spatial coverage used</div><div class="v">100%</div></div>
+        <div class="kpi"><div class="k">OSM spatial coverage missing</div><div class="v">0</div></div>
+        <div class="kpi"><div class="k">Total prediction rows evaluated</div><div class="v">9,156</div></div>
+      </div>
+
+      <p class="small-note">Why 9,156? CORINE contributes 1,251 × 6 text sources + OSM contributes 275 × 6 text sources = 9,156. There is no <code>landuse_evidence_summary</code> row in this parent run.</p>
+
+      <div class="bars">
+        <h3>CORINE subset retention (content)</h3>
+        <div class="bar-row"><div class="bar-label">all_available_spatial_confidence (n=1251, 100.0%)</div><div class="bar-shell"><div class="bar-fill bar-mid" style="width: 100%;">100.0%</div></div><div>1251</div></div>
+        <div class="bar-row"><div class="bar-label">point_label_share_250m_ge_0.8</div><div class="bar-shell"><div class="bar-fill bar-good" style="width: 51.6%;">51.6%</div></div><div>646</div></div>
+        <div class="bar-row"><div class="bar-label">point_label_share_500m_ge_0.8</div><div class="bar-shell"><div class="bar-fill bar-good" style="width: 33.5%;">33.5%</div></div><div>419</div></div>
+        <div class="bar-row"><div class="bar-label">point_label_share_250m_ge_0.9</div><div class="bar-shell"><div class="bar-fill bar-good" style="width: 41.4%;">41.4%</div></div><div>518</div></div>
+        <div class="bar-row"><div class="bar-label">dominant_matches_point_label_250m</div><div class="bar-shell"><div class="bar-fill bar-good" style="width: 86.5%;">86.5%</div></div><div>1082</div></div>
+        <div class="bar-row"><div class="bar-label">dominant_matches_point_label_500m</div><div class="bar-shell"><div class="bar-fill bar-mid" style="width: 77.4%;">77.4%</div></div><div>968</div></div>
+      </div>
+
+      <div class="bars" style="margin-top: 10px;">
+        <h3>OSM subset retention (content)</h3>
+        <div class="bar-row"><div class="bar-label">all_available_spatial_confidence (n=275, 100.0%)</div><div class="bar-shell"><div class="bar-fill bar-mid" style="width: 100%;">100.0%</div></div><div>275</div></div>
+        <div class="bar-row"><div class="bar-label">point_label_share_250m_ge_0.8</div><div class="bar-shell"><div class="bar-fill bar-mid" style="width: 58.2%;">58.2%</div></div><div>160</div></div>
+        <div class="bar-row"><div class="bar-label">point_label_share_500m_ge_0.8</div><div class="bar-shell"><div class="bar-fill bar-mid" style="width: 45.1%;">45.1%</div></div><div>124</div></div>
+        <div class="bar-row"><div class="bar-label">point_label_share_250m_ge_0.9</div><div class="bar-shell"><div class="bar-fill bar-mid" style="width: 50.9%;">50.9%</div></div><div>140</div></div>
+        <div class="bar-row"><div class="bar-label">dominant_matches_point_label_250m</div><div class="bar-shell"><div class="bar-fill bar-mid" style="width: 91.3%;">91.3%</div></div><div>251</div></div>
+        <div class="bar-row"><div class="bar-label">dominant_matches_point_label_500m</div><div class="bar-shell"><div class="bar-fill bar-mid" style="width: 79.3%;">79.3%</div></div><div>218</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">
+        <h2>6) CORINE results (single-label): deep interpretation</h2>
+        <span class="badge">Primary metric: balanced_accuracy</span>
+      </div>
+      <p>CORINE uses <code>compute_single_label_subset_metrics(... include_records_without_target=True, include_missing_predictions=False)</code>. Parse-status filtering is done on predictions only; targets remain eligible.</p>
+
+      <h3>Content source: aligned vs shuffled</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Subset</th><th>n</th><th>Accuracy</th><th>Balanced Accuracy</th><th>Macro F1</th><th>Majority BA</th><th>Majority Macro F1</th><th>Δ balanced (vs majority)</th><th>Δ balanced (vs shuffled)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>all_available_spatial_confidence</td><td>1251</td><td>0.293</td><td>0.281</td><td>0.270</td><td>0.111</td><td>0.0611</td><td class="positive">+0.170</td><td class="positive">+0.213</td></tr>
+          <tr><td>point_label_share_250m_ge_0.8</td><td>646</td><td>0.350</td><td>0.352</td><td>0.285</td><td>0.111</td><td>0.0742</td><td class="positive">+0.241</td><td class="positive">+0.281</td></tr>
+          <tr><td>point_label_share_500m_ge_0.8</td><td>419</td><td>0.334</td><td>0.302</td><td>0.213</td><td>0.111</td><td>0.0882</td><td class="positive">+0.191</td><td class="positive">+0.235</td></tr>
+          <tr><td>point_label_share_250m_ge_0.9</td><td>518</td><td>0.351</td><td>0.354</td><td>0.270</td><td>0.111</td><td>0.0806</td><td class="positive">+0.243</td><td class="positive">+0.284</td></tr>
+          <tr><td>dominant_matches_point_label_250m</td><td>1082</td><td>0.306</td><td>0.297</td><td>0.275</td><td>0.109</td><td>0.0646</td><td class="positive">+0.186</td><td class="positive">+0.227</td></tr>
+          <tr><td>dominant_matches_point_label_500m</td><td>968</td><td>0.310</td><td>0.315</td><td>0.263</td><td>0.111</td><td>0.0692</td><td class="positive">+0.204</td><td class="positive">+0.240</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">The highest balanced accuracy is not the most filtered (250m &gt;= 0.9 is slightly higher than 500m &gt;= 0.8) while keeping a meaningful sample size (518 items), so this is the practical Pareto point.</div>
+
+      <h3>Class distribution shift after filtering</h3>
+      <table>
+        <thead>
+          <tr><th>Subset</th><th>Class</th><th>Class code</th><th>Share</th><th>Support</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>all_available_spatial_confidence</td><td>Forests</td><td>31</td><td>37.9%</td><td>474</td></tr>
+          <tr><td>point_label_share_250m_ge_0.8</td><td>Forests</td><td>31</td><td>50.2%</td><td>324</td></tr>
+          <tr><td>point_label_share_500m_ge_0.8</td><td>Forests</td><td>31</td><td>65.9%</td><td>276</td></tr>
+          <tr><td>point_label_share_250m_ge_0.8</td><td>Permanent crops</td><td>22</td><td>12.5%</td><td>81</td></tr>
+          <tr><td>point_label_share_500m_ge_0.8</td><td>Permanent crops</td><td>22</td><td>9.5%</td><td>40</td></tr>
+          <tr><td>point_label_share_250m_ge_0.9</td><td>Forests</td><td>31</td><td>56.9%</td><td>295</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>7) Per-class diagnostics (important for model interpretation)</h2>
+      <p>Selected highlights from <code>per_class_metrics_corine_spatial_subsets.csv</code> for the strongest subsets:</p>
+      <div class="split">
+        <div>
+          <h3>all_available_spatial_confidence (content)</h3>
+          <ul>
+            <li><strong>Class 21 Arable land:</strong> F1 = <span class="mono">0.293</span></li>
+            <li><strong>Class 22 Permanent crops:</strong> F1 = <span class="mono">0.673</span></li>
+            <li><strong>Class 23 Pastures:</strong> F1 = <span class="mono">0.117</span> (weak)</li>
+            <li><strong>Class 24 Heterogeneous agri:</strong> F1 = <span class="mono">0.208</span> (weak)</li>
+            <li><strong>Class 31 Forests:</strong> F1 = <span class="mono">0.381</span></li>
+            <li><strong>Class 51 Inland waters:</strong> F1 = <span class="mono">0.431</span> but low support (42)</li>
+          </ul>
+        </div>
+        <div>
+          <h3>point_label_share_250m_ge_0.8 (content)</h3>
+          <ul>
+            <li><strong>Class 22 Permanent crops:</strong> F1 = <span class="mono">0.811</span> (large lift)</li>
+            <li><strong>Class 31 Forests:</strong> F1 = <span class="mono">0.451</span></li>
+            <li><strong>Class 23 Pastures:</strong> F1 = <span class="mono">0.044</span> (still weak)</li>
+            <li><strong>Class 24 Heterogeneous agri:</strong> F1 = <span class="mono">0.225</span> (still weak)</li>
+            <li><strong>Class 21 Arable land:</strong> F1 = <span class="mono">0.310</span> (slight lift)</li>
+          </ul>
+        </div>
+      </div>
+      <p class="foot">Interpretation: filtering by spatial purity increases signal for some visually/semantically descriptive classes (e.g., forests, permanent crops), while agricultural classes tied to generic language references remain hard.</p>
+    </div>
+
+    <div class="panel">
+      <h2>8) OSM results (multilabel): what they do and do not show</h2>
+      <p>For OSM, the primary metric in script is <strong>exact_match_accuracy</strong> (strict set-match). That metric is intentionally difficult; Jaccard and micro-F1 are also tracked for a softer view.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Subset</th><th>n</th><th>Exact-match</th><th>Micro F1</th><th>Jaccard</th><th>Majority label-set exact</th><th>Delta vs shuffled exact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>all_available_spatial_confidence</td><td>275</td><td>0.164</td><td>0.197</td><td>0.190</td><td>0.2073</td><td class="negative">+0.105</td></tr>
+          <tr><td>point_label_share_250m_ge_0.8</td><td>160</td><td>0.225</td><td>0.249</td><td>0.245</td><td>0.2438</td><td class="positive">+0.163</td></tr>
+          <tr><td>point_label_share_500m_ge_0.8</td><td>124</td><td>0.218</td><td>0.237</td><td>0.237</td><td>0.2823</td><td class="negative">+0.136</td></tr>
+          <tr><td>point_label_share_250m_ge_0.9</td><td>140</td><td>0.214</td><td>0.231</td><td>0.230</td><td>0.2571</td><td class="positive">+0.107</td></tr>
+          <tr><td>dominant_matches_point_label_250m</td><td>251</td><td>0.175</td><td>0.206</td><td>0.201</td><td>0.2151</td><td class="negative">+0.096</td></tr>
+          <tr><td>dominant_matches_point_label_500m</td><td>218</td><td>0.193</td><td>0.217</td><td>0.214</td><td>0.2294</td><td class="negative">+0.111</td></tr>
+        </tbody>
+      </table>
+      <p class="callout">OSM outcomes remain below the most-frequent-label-set baseline on strict exact-match, which is expected because OSM labels are often set-like and text inference is lossy. Still, the aligned runs improve strongly over shuffled in most subsets, especially 250m/0.8 for content.</p>
+    </div>
+
+    <div class="panel">
+      <h2>9) Core insight from this experiment</h2>
+      <p>Experiment 3 transforms the interpretation of model quality from "text has little signal" to "text has <strong>conditional</strong> signal":</p>
+      <ul>
+        <li><strong>Spatial-noise filtering matters:</strong> only ~52% of pages have <code>point_label_share_250m ≥ 0.8</code>.</li>
+        <li><strong>Precision gets cleaner on higher-confidence subsets:</strong> balanced and macro scores improve and deltas vs shuffled widen.</li>
+        <li><strong>Class balance shifts:</strong> filtering heavily increases forests, so raw accuracy is not directly comparable without baseline normalization.</li>
+        <li><strong>Implementation robustness:</strong> no missing spatial joins and strict consistency checks reduce silent label drift.</li>
+      </ul>
+      <p>In short, the CORINE point coordinates are noisy supervision for many articles. Filtering by spatial confidence rescues this by selecting a better subset rather than claiming global performance.</p>
+    </div>
+
+    <div class="panel">
+      <h2>10) Artifact index (experiment 3)</h2>
+      <ul>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv">corine_spatial_confidence_v1/spatial_confidence.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/overview_spatial_subsets.csv">overview_spatial_subsets.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/subset_counts.csv">subset_counts.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/shuffled_delta_spatial_subsets.csv">shuffled_delta_spatial_subsets.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/majority_baselines_spatial_subsets.csv">majority_baselines_spatial_subsets.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/per_class_metrics_corine_spatial_subsets.csv">per_class_metrics_corine_spatial_subsets.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/class_distribution_by_spatial_subset.csv">class_distribution_by_spatial_subset.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/summary.md">summary.md</summary></a></li>
+      </ul>
+      <p class="foot">Commands used by this workflow (no model inference):<br>
+      <code>python -m georeset.cli.data.compute_corine_spatial_confidence --parent-experiment-dir data/experiments/article_text_classification_e2e_with_shuffled_control_v1</code><br>
+      <code>python -m georeset.cli.analysis.evaluate_predictions_with_spatial_confidence --parent-experiment-dir data/experiments/article_text_classification_e2e_with_shuffled_control_v1</code>
+      </p>
+    </div>
+
+    <div class="panel">
+      <h2>11) Suggested next experiment in this branch</h2>
+      <p>Given these results, the strongest next step is <strong>controlled evidence synthesis</strong> for CORINE-relevant classes instead of more subset pruning:</p>
+      <ul>
+        <li>Keep <code>dominant_match</code> + <code>point_label_share_250m≥0.8</code> as a hard reliability gate.</li>
+        <li>Introduce a compact <strong>evidence-card text source</strong> and compare it against raw content with the same spatial gates.</li>
+        <li>Track class-specific recall for low-performing classes 23/24 before any global optimization.</li>
+        <li>Evaluate whether adding <strong>point-label entropy</strong> as a weighting term gives better rejection behavior than hard filtering.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

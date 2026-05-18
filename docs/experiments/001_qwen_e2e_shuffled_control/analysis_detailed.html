@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment 001 Deep Dive - Qwen E2E + Deterministic Shuffled Controls</title>
+  <style>
+    :root {
+      --bg: #f3f6ff;
+      --panel: #ffffff;
+      --line: #d7dff2;
+      --text: #0f172a;
+      --muted: #53607b;
+      --good: #15803d;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --accent: #1d4ed8;
+      --shadow: 0 12px 30px rgba(15,23,42,.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: linear-gradient(145deg, #f9fbff 0%, var(--bg) 45%, #edf2ff 100%);
+      color: var(--text);
+      font-family: Inter, "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+      line-height: 1.45;
+    }
+    .container {
+      width: min(1240px, calc(100% - 46px));
+      margin: 18px auto 36px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 38px;
+      line-height: 1.08;
+      letter-spacing: -0.3px;
+    }
+    h2 {
+      margin: 18px 0 10px;
+      font-size: 28px;
+      line-height: 1.1;
+      border-left: 4px solid #4f46e5;
+      padding-left: 10px;
+    }
+    h3 {
+      margin: 10px 0 7px;
+      font-size: 20px;
+    }
+    p { margin: 0.3rem 0 0.9rem; }
+    .subtitle { color: var(--muted); margin-bottom: 16px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 10px;
+      background: #fbfdff;
+    }
+    .kpi .label { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .kpi .value {
+      font-size: 22px;
+      font-weight: 750;
+      line-height: 1.15;
+      margin-bottom: 2px;
+      word-wrap: break-word;
+    }
+    .small { color: var(--muted); font-size: 11px; }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eff3ff;
+      border: 1px solid #c8d4f2;
+      margin: 0 5px 5px 0;
+      color: #2f3d6a;
+      font-size: 11px;
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .split > div { min-width: 0; }
+    .flow {
+      display: grid;
+      gap: 9px;
+    }
+    .flow .item {
+      border: 1px dashed #c6d4ef;
+      border-radius: 9px;
+      background: #fbfdff;
+      padding: 8px 9px;
+    }
+    ul, ol { margin: 0.35rem 0 0.8rem 1.2rem; padding: 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      margin-top: 9px;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 7px 6px;
+      vertical-align: top;
+    }
+    th {
+      background: #eef2ff;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      border: 1px solid #d5e1ff;
+      background: #f5f7ff;
+      border-radius: 8px;
+      padding: 2px 6px;
+    }
+    pre { padding: 10px; overflow: auto; font-size: 12px; }
+    .bars {
+      display: grid;
+      gap: 7px;
+      margin-top: 6px;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 320px 1fr 72px;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+    }
+    .bar-label {
+      color: #374151;
+      overflow-wrap: anywhere;
+    }
+    .bar-shell {
+      background: linear-gradient(90deg, #f1f5ff, #eef2ff);
+      border: 1px solid #cfdbf5;
+      border-radius: 8px;
+      height: 17px;
+      overflow: hidden;
+      position: relative;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 7px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      font-size: 10px;
+      font-weight: 700;
+      padding-right: 6px;
+      white-space: nowrap;
+    }
+    .bar-good { background: linear-gradient(90deg, #0ea5e9, #2563eb); }
+    .bar-bad { background: linear-gradient(90deg, #f97316, #db2777); }
+    .bar-flat { background: linear-gradient(90deg, #94a3b8, #64748b); }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 5px;
+      font-size: 11px;
+      color: #42506b;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+    }
+    .dot-good { background: #2563eb; }
+    .dot-bad { background: #db2777; }
+    .dot-flat { background: #64748b; }
+    .note {
+      border-left: 4px solid #8b5cf6;
+      background: #f4efff;
+      padding: 9px 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      color: #352f81;
+      font-size: 13px;
+    }
+    .metric-card {
+      border: 1px solid #cfdcf5;
+      border-radius: 10px;
+      background: #f8fbff;
+      padding: 9px 11px;
+      min-width: 0;
+    }
+    .metric-card .k { color: #51607d; font-size: 11px; }
+    .metric-card .v { 
+      font-size: 22px; 
+      font-weight: 700; 
+      margin: 3px 0; 
+      line-height: 1.2; 
+      overflow-wrap: anywhere; 
+      word-break: break-word; 
+    }
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 10px; margin-top: 8px; }
+    .mermaid { overflow-x: auto; }
+    .footnote { color: #5f6d87; font-size: 11px; margin-top: 8px; }
+    .caption { color: #334155; margin: 6px 0 4px; font-size: 12px; }
+    .mini-table {
+      font-size: 12px;
+      max-height: 280px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fff;
+      margin: 8px 0 10px;
+    }
+    .mini-table table { margin: 0; font-size: 12px; }
+    .warning-box {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      padding: 8px;
+      border-radius: 8px;
+      margin: 8px 0;
+      color: #7c2d12;
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .split { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 1fr 1fr; }
+      .bar-shell { grid-column: 1 / -1; }
+    }
+  </style>
+  <script type="module">
+    const loadMermaid = async () => {
+      if (!document.getElementById('mermaid-script')) {
+        const s = document.createElement('script');
+        s.id = 'mermaid-script';
+        s.src = 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';
+        s.onload = () => renderMermaid();
+        document.head.appendChild(s);
+      } else {
+        renderMermaid();
+      }
+    };
+    const renderMermaid = () => {
+      if (!window.mermaid) return;
+      window.mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        theme: 'default',
+        flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+      });
+      window.mermaid.run({ nodes: document.querySelectorAll('.mermaid') });
+    };
+    loadMermaid();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Experiment 001 Deep Dive: Qwen e2e with Deterministic Shuffled Controls</h1>
+    <div class="subtitle">
+      Full implementation and result audit for <span class="mono">article_text_classification_e2e_with_shuffled_control_v1</span>.
+      All computations are inside <span class="mono">/Users/noeflandre/georeset</span>.
+    </div>
+
+    <div class="panel">
+      <h2>1) Executive summary</h2>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="label">Run family</div>
+          <div class="value">3 frozen artifacts</div>
+          <div class="small">aligned: 6 + shuffled: 6 + combined: 12</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Tasks</div>
+          <div class="value">2</div>
+          <div class="small">CORINE single-label + OSM multi-label</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Text sources</div>
+          <div class="value">summary, summary_no_place, content</div>
+          <div class="small">plus deterministic shuffled variants</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Model + decoding</div>
+          <div class="value">Qwen3.6-27B-Q4_0</div>
+          <div class="small">seed=42, temperature=0.0</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Area</div>
+          <div class="value">Alsace (CORINE polygon + bounds)</div>
+          <div class="small">lon [6.8407932, 8.8945186], lat [47.074341996, 49.344381497]</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Coverage quality</div>
+          <div class="value">perfect</div>
+          <div class="small">CORINE: 1251/1251, OSM: 275/275, parse errors: 0</div>
+        </div>
+      </div>
+      <p><strong>What the experiment shows:</strong> aligned text materially improves performance over shuffled control for both tasks, meaning the signal is driven by article content rather than random priors only.</p>
+      <p>However, task interpretation differs:</p>
+      <ul>
+        <li>CORINE: aligned runs beat a balanced macro-recall baseline even when raw accuracy stays below raw-majority accuracy.</li>
+        <li>OSM: aligned runs beat shuffled controls but remain below strict exact-set majority baseline.</li>
+      </ul>
+      <div class="note">The strongest aligned source in both tasks is raw <span class="mono">content</span>, and the most consistent control signal pattern is that shuffled runs collapse toward near-random behavior.</div>
+    </div>
+
+    <div class="panel">
+      <h2>2) What was done: experiment topology and area</h2>
+      <div class="split">
+        <div>
+          <h3>2.1 Artifact layout</h3>
+          <div class="metric-grid">
+            <div class="metric-card">
+              <div class="k">Aligned only</div>
+              <div class="v mono">article_text_classification_e2e_v1</div>
+              <div class="small">6 runs: summary / no_place / content</div>
+            </div>
+            <div class="metric-card">
+              <div class="k">Shuffled only</div>
+              <div class="v mono">article_text_classification_shuffled_control_v1</div>
+              <div class="small">6 runs: summary_shuffled / no_place_shuffled / content_shuffled</div>
+            </div>
+            <div class="metric-card">
+              <div class="k">Combined overview</div>
+              <div class="v mono">article_text_classification_e2e_with_shuffled_control_v1</div>
+              <div class="small">12 runs + cross-table deltas</div>
+            </div>
+          </div>
+          <p class="caption">Mapping is centralized in <a href="/Users/noeflandre/georeset/src/georeset/experiment_paths.py">src/georeset/experiment_paths.py</a>.</p>
+        </div>
+        <div>
+          <h3>2.2 Area selection</h3>
+          <ul>
+            <li><span class="mono">data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp</span> is the CORINE geometry source.</li>
+            <li><span class="mono">data/corine/bounds.json</span> stores Alsace bounds used during preprocessing.</li>
+            <li>Ground-truth points are built by joining article coordinates with polygons.</li>
+            <li>Join policy is fixed to <span class="mono">intersects</span> in <span class="mono">src/georeset/spatial/policy.py</span>.</li>
+          </ul>
+          <div class="metric-grid">
+            <div class="metric-card"><div class="k">DataPaths default</div><div class="v mono">data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp</div></div>
+            <div class="metric-card"><div class="k">Join predicate</div><div class="v mono">POINT_POLYGON_JOIN_PREDICATE = "intersects"</div></div>
+            <div class="metric-card"><div class="k">Area filter</div><div class="v">Input corpus + geometry bounds</div></div>
+          </div>
+          <div class="warning-box"><strong>Important:</strong> classification runner itself does not hard-code bbox filters; filtering is inherited from the prepared <span class="mono">data/wiki</span> and <span class="mono">data/corine</span> inputs.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>3) Implementation walkthrough (exact code path)</h2>
+      <p>Entry point for reruns is <a href="/Users/noeflandre/georeset/pyproject.toml">pyproject.toml</a> entrypoint <span class="mono">georeset-classify-articles</span> -> <span class="mono">src/georeset/cli/data/classify_articles.py</span> -> <span class="mono">src/georeset/classification/runner.py</span>.</p>
+      <div class="mermaid"> 
+        flowchart LR
+          A["CLI entrypoint: georeset-classify-articles"] --> B["parse_args: task + text_source"]
+          B --> C["Load wiki/articles and model config<br/>(DataPaths + ModelSettings.from_env)"]
+          C --> D["load_text_source(text_source)<br/>and optional file-specific fallback checks"]
+          D --> E["load_task_setup(task)<br/>CORINE/Osm ground truth"]
+          E --> F["Compute eligible records and optional shuffle"]
+          F --> G["For each pageid:<br/>classify_single_label or classify_multilabel"]
+          G --> H["Build prediction record with metadata<br/>+ fingerprint"]
+          H --> I["Persist *_predictions.json incrementally"]
+          I --> J["Build y_true/y_pred and compute metrics<br/>(single_label_metrics or multilabel_metrics)"]
+          J --> K["Persist *_metrics.json"]
+          K --> L["summarize_classification_experiment.py<br/>over *_metrics and *_predictions"]
+          L --> M["overview.csv/overview.md + shuffled_delta.csv"]
+      </div>
+      <div class="flow">
+        <div class="item"><strong>3.1 Defaults and configuration:</strong> <span class="mono">src/georeset/config.py</span> sets model path to <span class="mono">Qwen3.6-27B-Q4_0.gguf</span>, seed 42, temperature 0.0. Environment is only used for model path and repo id in current code.</div>
+        <div class="item"><strong>3.2 Text sources:</strong> in <span class="mono">src/georeset/classification/text_sources.py</span>, <span class="mono">load_text_source</span> supports summaries, no-place summaries, content, landuse evidence, evidence cards, highlighted windows, etc. This experiment uses only <span class="mono">summary</span>, <span class="mono">summary_no_place</span>, and <span class="mono">content</span> plus shuffled variants.</div>
+        <div class="item"><strong>3.3 Ground truth setup:</strong> <span class="mono">load_task_setup</span> dispatches two pipelines:
+          <ul>
+            <li><strong>corine_level2:</strong> <a href="/Users/noeflandre/georeset/src/georeset/classification/ground_truth.py">build_corine_ground_truth</a></li>
+            <li><strong>osm:</strong> <a href="/Users/noeflandre/georeset/src/georeset/classification/ground_truth.py">build_osm_ground_truth</a></li>
+          </ul>
+        </div>
+        <div class="item"><strong>3.4 LLM prompting and parsing:</strong> <a href="/Users/noeflandre/georeset/src/georeset/classification/llm_classifier.py">LLMClassifier</a> builds schema-constrained JSON prompts, calls <span class="mono">complete_json</span> with <span class="mono">SINGLE_SCHEMA</span> or <span class="mono">MULTI_SCHEMA</span>, then parses via <a href="/Users/noeflandre/georeset/src/georeset/classification/prediction_parser.py">prediction_parser</a>. Unknown labels in OSM JSON can be filtered without failing if all extracted labels are still valid.</div>
+        <div class="item"><strong>3.5 Reproducible shuffled control:</strong> <span class="mono">apply_shuffled_text_control</span> does a deterministic permutation on eligible IDs using <span class="mono">random.Random(seed)</span>, tries 100 swaps to avoid self-maps, and then applies a full rotation fallback.</div>
+        <div class="item"><strong>3.6 Resume-safe writes:</strong> existing prediction files are read and fingerprint-skipped unless <span class="mono">--retry-failed</span> is set. Metrics use only <span class="mono">parse_status == ok</span> predictions as evaluated rows.</div>
+      </div>
+      <div class="split" style="margin-top: 8px;">
+        <div>
+          <h3>3.7 CORINE ground-truth exact logic</h3>
+          <ul>
+            <li>Lat/Lon to WGS84 points via ArticleMeta.</li>
+            <li><a href="/Users/noeflandre/georeset/src/georeset/classification/ground_truth.py">Exclude artificial classes</a> with code prefix <span class="mono">1</span>.</li>
+            <li>Convert <span class="mono">code_18</span> to first two digits as level-2 label.</li>
+            <li>Intersect each point with polygons; keep only rows with exactly one unique label for that page.</li>
+            <li>Examples with multi-label or no-label are excluded from target set.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>3.8 OSM ground-truth exact logic</h3>
+          <ul>
+            <li>Derive labels from <span class="mono">landuse</span> and <span class="mono">natural</span> tags.</li>
+            <li>Keep only polygons with at least one allowed label.</li>
+            <li>Explode multi-label polygons and intersect points.</li>
+            <li>Collect sorted unique labels per page as true target list.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>4) Metric definition and what each number means</h2>
+      <div class="split">
+        <div>
+          <h3>Single-label CORINE</h3>
+          <ul>
+            <li>Primary metric is <span class="mono">macro_recall</span> computed equally across labels.</li>
+            <li>Primary baseline is <span class="mono">1 / n_unique_labels</span> for CORINE macro recall (0.1111 with 9 labels).</li>
+            <li><span class="mono">accuracy</span> is raw exact-label hit rate.</li>
+            <li><span class="mono">macro_precision / macro_recall / macro_f1</span> are macro-averages.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Multi-label OSM</h3>
+          <ul>
+            <li>Primary metric is <span class="mono">exact_match_accuracy</span> (full set equality).</li>
+            <li>Macro and micro <span class="mono">precision/recall/F1</span> are also emitted.</li>
+            <li>Per-label values are computed by one-vs-rest binary overlap with support equal to true occurrence count.</li>
+            <li>Majority baseline = most frequent true label-set for exact match, and 1/|labels| for CORINE macro baseline.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="caption">Implementation in <span class="mono">src/georeset/classification/metrics.py</span>.</p>
+      <div class="split">
+        <div>
+          <h3>Important safety / robustness details</h3>
+          <ul>
+            <li><span class="mono">coverage</span> = number parsed ok / n_eligible.</li>
+            <li>Evaluation labels = union of true and predicted labels (for macro class list).</li>
+            <li>If parser cannot extract allowed labels, parse status is error and row exits coverage.</li>
+            <li>The pipeline writes each prediction update during iteration, which supports interruption resilience.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Decision artifact</h3>
+          <ul>
+            <li><span class="mono">classification_policy_version</span> is pinned to 4 in runner fingerprint.</li>
+            <li>Fingerprint includes task, text source, model, seed, temperature, and allowed labels, then SHA-256 hashes into metadata.</li>
+            <li>Summary deltas are computed by pairing aligned/shuffled runs through stable shuffle maps in <span class="mono">shuffled_text_source_pairs</span>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>5) Artifact links and run protocol</h2>
+      <div class="mini-table">
+        <table>
+          <thead>
+            <tr><th>Kind</th><th>Path</th><th>Details</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Aligned experiment</td>
+              <td><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_v1">data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_v1</a></td>
+              <td>6 aligned runs (summary/no_place/content for CORINE and OSM)</td>
+            </tr>
+            <tr>
+              <td>Shuffled control</td>
+              <td><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_shuffled_control_v1">data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_shuffled_control_v1</a></td>
+              <td>6 shuffled-only runs</td>
+            </tr>
+            <tr>
+              <td>Combined report</td>
+              <td><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1">data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1</a></td>
+              <td>12 runs + combined overview + shuffled deltas</td>
+            </tr>
+            <tr>
+              <td>CLI entry point</td>
+              <td><a href="/Users/noeflandre/georeset/src/georeset/cli/data/classify_articles.py">src/georeset/cli/data/classify_articles.py</a></td>
+              <td>maps to <span class="mono">uv run georeset-classify-articles</span></td>
+            </tr>
+            <tr>
+              <td>Runner</td>
+              <td><a href="/Users/noeflandre/georeset/src/georeset/classification/runner.py">src/georeset/classification/runner.py</a></td>
+              <td>core orchestration + metrics + serialization</td>
+            </tr>
+            <tr>
+              <td>Summarization script</td>
+              <td><a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/summarize_classification_experiment.py">src/georeset/cli/analysis/summarize_classification_experiment.py</a></td>
+              <td>creates overview.csv / overview.md</td>
+            </tr>
+            <tr>
+              <td>Cluster launcher</td>
+              <td><a href="/Users/noeflandre/georeset/scripts/cluster/submit_classification.sh">scripts/cluster/submit_classification.sh</a></td>
+              <td>submits OAR job with uv + <span class="mono">GEORESET_CLASSIFICATION_*</span> env</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Typical command shape: <span class="mono">GEORESET_CLASSIFICATION_TASK=corine_level2 GEORESET_CLASSIFICATION_TEXT_SOURCE=content uv run georeset-classify-articles --task ... --text-source ...</span>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>6) Full result table (12 runs)</h2>
+      <p>Primary score, baseline and sample size for each task/source pair from <span class="mono">overview.csv</span>.</p>
+      <div class="mini-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Text source</th>
+              <th>Primary metric</th>
+              <th>Primary score</th>
+              <th>Majority baseline</th>
+              <th>Delta vs majority</th>
+              <th>Accuracy / Exact-match</th>
+              <th>Macro-F1</th>
+              <th>Micro-F1</th>
+              <th>n</th>
+              <th>Coverage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>corine_level2</td><td>summary</td><td>macro_recall</td><td>0.2548</td><td>0.1111</td><td class="good">+0.1437</td><td>0.2374</td><td>0.2441</td><td></td><td>1251</td><td>1.0000</td></tr>
+            <tr><td>corine_level2</td><td>summary_shuffled</td><td>macro_recall</td><td>0.0633</td><td>0.1111</td><td class="bad">-0.0478</td><td>0.1079</td><td>0.0705</td><td></td><td>1251</td><td>1.0000</td></tr>
+            <tr><td>corine_level2</td><td>summary_no_place</td><td>macro_recall</td><td>0.2426</td><td>0.1111</td><td class="good">+0.1315</td><td>0.2318</td><td>0.2353</td><td></td><td>1251</td><td>1.0000</td></tr>
+            <tr><td>corine_level2</td><td>summary_no_place_shuffled</td><td>macro_recall</td><td>0.0583</td><td>0.1111</td><td class="bad">-0.0528</td><td>0.0967</td><td>0.0678</td><td></td><td>1251</td><td>1.0000</td></tr>
+            <tr><td>corine_level2</td><td>content</td><td>macro_recall</td><td>0.2807</td><td>0.1111</td><td class="good">+0.1696</td><td>0.2934</td><td>0.2699</td><td></td><td>1251</td><td>1.0000</td></tr>
+            <tr><td>corine_level2</td><td>content_shuffled</td><td>macro_recall</td><td>0.0673</td><td>0.1111</td><td class="bad">-0.0438</td><td>0.1183</td><td>0.0712</td><td></td><td>1251</td><td>1.0000</td></tr>
+            <tr><td>osm</td><td>summary</td><td>exact_match_accuracy</td><td>0.1455</td><td>0.2073</td><td class="bad">-0.0618</td><td>0.1455</td><td>0.1125</td><td>0.1606</td><td>275</td><td>1.0000</td></tr>
+            <tr><td>osm</td><td>summary_shuffled</td><td>exact_match_accuracy</td><td>0.0764</td><td>0.2073</td><td class="bad">-0.1309</td><td>0.0764</td><td>0.0395</td><td>0.0871</td><td>275</td><td>1.0000</td></tr>
+            <tr><td>osm</td><td>summary_no_place</td><td>exact_match_accuracy</td><td>0.1636</td><td>0.2073</td><td class="bad">-0.0436</td><td>0.1636</td><td>0.1223</td><td>0.1885</td><td>275</td><td>1.0000</td></tr>
+            <tr><td>osm</td><td>summary_no_place_shuffled</td><td>exact_match_accuracy</td><td>0.0800</td><td>0.2073</td><td class="bad">-0.1273</td><td>0.0800</td><td>0.0454</td><td>0.0976</td><td>275</td><td>1.0000</td></tr>
+            <tr><td>osm</td><td>content</td><td>exact_match_accuracy</td><td>0.1636</td><td>0.2073</td><td class="bad">-0.0436</td><td>0.1636</td><td>0.1584</td><td>0.1966</td><td>275</td><td>1.0000</td></tr>
+            <tr><td>osm</td><td>content_shuffled</td><td>exact_match_accuracy</td><td>0.0582</td><td>0.2073</td><td class="bad">-0.1491</td><td>0.0582</td><td>0.0460</td><td>0.0969</td><td>275</td><td>1.0000</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="dot dot-good"></span> Positive above baseline</span>
+        <span class="legend-item"><span class="dot dot-bad"></span> Below baseline</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>7) Visual interpretation</h2>
+      <h3>CORINE: Macro-recall (aligned vs shuffled)</h3>
+      <div class="bars">
+        <div class="bar-row"><div class="bar-label">summary</div><div class="bar-shell"><div class="bar-fill bar-good" style="width:25.48%">0.2548</div></div><div class="small">25.48%</div></div>
+        <div class="bar-row"><div class="bar-label">summary_shuffled</div><div class="bar-shell"><div class="bar-fill bar-bad" style="width:6.33%">0.0633</div></div><div class="small">6.33%</div></div>
+        <div class="bar-row"><div class="bar-label">summary_no_place</div><div class="bar-shell"><div class="bar-fill bar-good" style="width:24.26%">0.2426</div></div><div class="small">24.26%</div></div>
+        <div class="bar-row"><div class="bar-label">summary_no_place_shuffled</div><div class="bar-shell"><div class="bar-fill bar-bad" style="width:5.83%">0.0583</div></div><div class="small">5.83%</div></div>
+        <div class="bar-row"><div class="bar-label">content</div><div class="bar-shell"><div class="bar-fill bar-good" style="width:28.07%">0.2807</div></div><div class="small">28.07%</div></div>
+        <div class="bar-row"><div class="bar-label">content_shuffled</div><div class="bar-shell"><div class="bar-fill bar-bad" style="width:6.73%">0.0673</div></div><div class="small">6.73%</div></div>
+      </div>
+      <h3>OSM: Exact-match (aligned vs shuffled)</h3>
+      <div class="bars">
+        <div class="bar-row"><div class="bar-label">summary</div><div class="bar-shell"><div class="bar-fill bar-flat" style="width:14.55%">0.1455</div></div><div class="small">14.55%</div></div>
+        <div class="bar-row"><div class="bar-label">summary_shuffled</div><div class="bar-shell"><div class="bar-fill bar-bad" style="width:7.64%">0.0764</div></div><div class="small">7.64%</div></div>
+        <div class="bar-row"><div class="bar-label">summary_no_place</div><div class="bar-shell"><div class="bar-fill bar-flat" style="width:16.36%">0.1636</div></div><div class="small">16.36%</div></div>
+        <div class="bar-row"><div class="bar-label">summary_no_place_shuffled</div><div class="bar-shell"><div class="bar-fill bar-bad" style="width:8.00%">0.0800</div></div><div class="small">8.00%</div></div>
+        <div class="bar-row"><div class="bar-label">content</div><div class="bar-shell"><div class="bar-fill bar-flat" style="width:16.36%">0.1636</div></div><div class="small">16.36%</div></div>
+        <div class="bar-row"><div class="bar-label">content_shuffled</div><div class="bar-shell"><div class="bar-fill bar-bad" style="width:5.82%">0.0582</div></div><div class="small">5.82%</div></div>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="dot dot-good"></span> strong/aligned</span>
+        <span class="legend-item"><span class="dot dot-flat"></span> moderate</span>
+        <span class="legend-item"><span class="dot dot-bad"></span> shuffled-like</span>
+      </div>
+      <h3>Shuffled-control deltas (aligned - shuffled)</h3>
+      <div class="bars">
+        <div class="bar-row"><div class="bar-label">corine summary</div><div class="bar-shell"><div class="bar-fill bar-good" style="width:19.15%">+0.1915</div></div><div class="small">0.1915</div></div>
+        <div class="bar-row"><div class="bar-label">corine summary_no_place</div><div class="bar-shell"><div class="bar-fill bar-good" style="width:18.43%">+0.1843</div></div><div class="small">0.1843</div></div>
+        <div class="bar-row"><div class="bar-label">corine content</div><div class="bar-shell"><div class="bar-fill bar-good" style="width:21.34%">+0.2134</div></div><div class="small">0.2134</div></div>
+        <div class="bar-row"><div class="bar-label">osm summary</div><div class="bar-shell"><div class="bar-fill bar-flat" style="width:6.91%">+0.0691</div></div><div class="small">0.0691</div></div>
+        <div class="bar-row"><div class="bar-label">osm summary_no_place</div><div class="bar-shell"><div class="bar-fill bar-flat" style="width:8.36%">+0.0836</div></div><div class="small">0.0836</div></div>
+        <div class="bar-row"><div class="bar-label">osm content</div><div class="bar-shell"><div class="bar-fill bar-flat" style="width:10.55%">+0.1055</div></div><div class="small">0.1055</div></div>
+      </div>
+      <p class="caption">From <a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1/shuffled_delta.csv">shuffled_delta.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>8) Per-class behavior</h2>
+      <div class="split">
+        <div>
+          <h3>CORINE (content, content vs shuffled pattern)</h3>
+          <div class="mini-table">
+            <table>
+              <thead>
+                <tr><th>Label</th><th>Description</th><th>Support</th><th>Precision</th><th>Recall</th><th>F1</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>22</td><td>Permanent crops</td><td>137</td><td>0.8916</td><td>0.5401</td><td>0.6727</td></tr>
+                <tr><td>51</td><td>Inland waters</td><td>42</td><td>0.2973</td><td>0.7857</td><td>0.4314</td></tr>
+                <tr><td>31</td><td>Forests</td><td>474</td><td>0.5938</td><td>0.2806</td><td>0.3811</td></tr>
+                <tr><td>32</td><td>Shrub/herbaceous vegetation</td><td>50</td><td>0.3148</td><td>0.3400</td><td>0.3269</td></tr>
+                <tr><td>21</td><td>Arable land</td><td>209</td><td>0.3537</td><td>0.2488</td><td>0.2921</td></tr>
+                <tr><td>24</td><td>Heterogeneous agriculture</td><td>183</td><td>0.1861</td><td>0.2350</td><td>0.2077</td></tr>
+                <tr><td>23</td><td>Pastures</td><td>156</td><td>0.1485</td><td>0.0962</td><td>0.1167</td></tr>
+                <tr><td>33</td><td>Open spaces with little/no vegetation</td><td>0</td><td>0.0000</td><td>0.0000</td><td>0.0000</td></tr>
+                <tr><td>41</td><td>Inland wetlands</td><td>0</td><td>0.0000</td><td>0.0000</td><td>0.0000</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="caption">From <span class="mono">corine_level2_content_metrics.json</span>. Strong classes are semantically explicit; classes with low support are weak or absent.</p>
+        </div>
+        <div>
+          <h3>OSM (content, single strict multi-label)</h3>
+          <div class="mini-table">
+            <table>
+              <thead>
+                <tr><th>Label</th><th>Support</th><th>Precision</th><th>Recall</th><th>F1</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>water</td><td>21</td><td>0.4634</td><td>0.9048</td><td>0.6129</td></tr>
+                <tr><td>farmyard</td><td>5</td><td>0.4000</td><td>0.4000</td><td>0.4000</td></tr>
+                <tr><td>vineyard</td><td>4</td><td>0.2000</td><td>0.5000</td><td>0.2857</td></tr>
+                <tr><td>grassland</td><td>43</td><td>0.3333</td><td>0.2093</td><td>0.2571</td></tr>
+                <tr><td>forest</td><td>44</td><td>0.1867</td><td>0.3182</td><td>0.2353</td></tr>
+                <tr><td>wetland</td><td>1</td><td>0.1000</td><td>1.0000</td><td>0.1818</td></tr>
+                <tr><td>bare_rock</td><td>9</td><td>0.0574</td><td>0.7778</td><td>0.1069</td></tr>
+                <tr><td>grass</td><td>59</td><td>0.3333</td><td>0.0847</td><td>0.1351</td></tr>
+                <tr><td>orchard</td><td>12</td><td>0.0000</td><td>0.0000</td><td>0.0000</td></tr>
+                <tr><td>scrub</td><td>15</td><td>0.0000</td><td>0.0000</td><td>0.0000</td></tr>
+                <tr><td>scree</td><td>2</td><td>0.0000</td><td>0.0000</td><td>0.0000</td></tr>
+                <tr><td>meadow</td><td>48</td><td>0.3333</td><td>0.0208</td><td>0.0392</td></tr>
+                <tr><td>wood</td><td>6</td><td>0.0000</td><td>0.0000</td><td>0.0000</td></tr>
+                <tr><td>heath</td><td>7</td><td>0.0000</td><td>0.0000</td><td>0.0000</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="caption">From <span class="mono">osm_content_metrics.json</span>.</p>
+          <div class="warning-box">OSM run has 15 evaluated labels in aligned content run, versus 16 in summary runs because only labels that appear in true/predicted sets for that run are included.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>9) Interpretation notes and design decisions</h2>
+      <ol>
+        <li><strong>Signal is real, not only priors.</strong> For every aligned source and both tasks, aligned score beats shuffled counterpart by large margins (especially CORINE). The control is therefore functioning as an ablation.</li>
+        <li><strong>CORINE requires imbalance-aware reading.</strong> Raw accuracy is below majority accuracy (0.379), but macro-recall is above balanced baseline because minority classes improve, showing better class balance capture.</li>
+        <li><strong>OSM remains difficult under strict exact-match.</strong> Exact-match requires the whole label set to match; this is harsh for open, potentially incomplete label descriptions. Improvements over shuffled indicate signal, but still below majority baseline indicates remaining difficulty in precise set reconstruction.</li>
+        <li><strong>Why content wins.</strong> Removing summaries improves CORINE significantly in this batch, implying generic summarization removes useful land-cover cues.</li>
+        <li><strong>Class behavior is uneven.</strong> Semantically direct classes (e.g., CORINE 22/31/51; OSM water) are recovered better than diffuse classes (pastures, scrub, meadow, orchard).</li>
+      </ol>
+      <div class="note">A major methodological constraint is that model seed and temperature values are effectively static in this experiment path because <span class="mono">ModelSettings.from_env()</span> only reads path/repo_id from environment. If you need full parameter search, this is a target for an explicit rerun wrapper.</div>
+    </div>
+
+    <div class="panel">
+      <h2>10) Reconstructable pipeline checklist</h2>
+      <h3>If reproducing locally</h3>
+      <pre>
+1. Ensure model files and inputs under data/wiki, data/corine, data/osm.
+2. Run command: uv run georeset-classify-articles \
+   --task corine_level2 --text-source content --temperature 0.0 \
+   --output-dir data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1
+3. Repeat all needed combinations: six aligned + six shuffled.
+4. Run summary + deltas:
+   uv run georeset-summarize-classification-experiment \
+     data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1
+      </pre>
+      <p class="caption">For exact command signatures and defaults, see runner/CLI modules linked above; for cluster runs, use <a href="/Users/noeflandre/georeset/scripts/cluster/submit_classification.sh">submit_classification.sh</a> and <a href="/Users/noeflandre/georeset/scripts/cluster/run_classification_job.sh">run_classification_job.sh</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>11) Direct file references</h2>
+      <div class="mini-table">
+        <table>
+          <thead>
+            <tr><th>What</th><th>Absolute path</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Experiment directory</td><td><a href="/Users/noeflandre/georeset/docs/experiments/001_qwen_e2e_shuffled_control">docs/experiments/001_qwen_e2e_shuffled_control</a></td></tr>
+            <tr><td>Detailed HTML output (this file)</td><td><a href="/Users/noeflandre/georeset/docs/experiments/001_qwen_e2e_shuffled_control/analysis_detailed.html">docs/experiments/001_qwen_e2e_shuffled_control/analysis_detailed.html</a></td></tr>
+            <tr><td>Combined artifact</td><td><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1">data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1</a></td></tr>
+            <tr><td>Combined overview.csv</td><td><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1/overview.csv">overview.csv</a></td></tr>
+            <tr><td>Combined shuffled_delta.csv</td><td><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1/shuffled_delta.csv">shuffled_delta.csv</a></td></tr>
+            <tr><td>Runner</td><td><a href="/Users/noeflandre/georeset/src/georeset/classification/runner.py">src/georeset/classification/runner.py</a></td></tr>
+            <tr><td>LLM classifier</td><td><a href="/Users/noeflandre/georeset/src/georeset/classification/llm_classifier.py">src/georeset/classification/llm_classifier.py</a></td></tr>
+            <tr><td>Text source control</td><td><a href="/Users/noeflandre/georeset/src/georeset/classification/text_sources.py">src/georeset/classification/text_sources.py</a></td></tr>
+            <tr><td>Ground truth logic</td><td><a href="/Users/noeflandre/georeset/src/georeset/classification/ground_truth.py">src/georeset/classification/ground_truth.py</a></td></tr>
+            <tr><td>Prediction parser</td><td><a href="/Users/noeflandre/georeset/src/georeset/classification/prediction_parser.py">src/georeset/classification/prediction_parser.py</a></td></tr>
+            <tr><td>Metrics</td><td><a href="/Users/noeflandre/georeset/src/georeset/classification/metrics.py">src/georeset/classification/metrics.py</a></td></tr>
+            <tr><td>Summarizer</td><td><a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/summarize_classification_experiment.py">src/georeset/cli/analysis/summarize_classification_experiment.py</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="footnote">Created by combining implementation tracing with output artifacts. All values and file paths are directly from the repository snapshot at /Users/noeflandre/georeset.</div>
+    </div>
+  </div>
+</body>
+</html>
