@@ -142,9 +142,15 @@ def test_quality_weighted_image_probe_cluster_scripts_are_staged_for_grid5000():
     assert 'WINDOWS="${IMAGE_PROBE_WINDOWS:-320,2240}"' in run_script
     assert 'ENCODERS="${IMAGE_PROBE_ENCODERS:-clip_base}"' in run_script
     assert 'RUN_CONTROLS="${IMAGE_PROBE_RUN_CONTROLS:-0}"' in run_script
+    assert (
+        'STOP_AFTER_PATCH_VALIDATION="${IMAGE_PROBE_STOP_AFTER_PATCH_VALIDATION:-0}"' in run_script
+    )
     assert "georeset-fetch-sentinel-multiscale-patches" in run_script
+    assert "IMAGE_PROBE_STOP_AFTER_PATCH_VALIDATION=1" in run_script
+    assert "georeset-run-quality-weighted-image-zero-shot" in run_script
     assert "georeset-run-quality-weighted-image-probe" in run_script
     assert "georeset-evaluate-image-probe-training-policy-controls" in run_script
     assert "oarsub" in submit_script
+    assert "IMAGE_PROBE_STOP_AFTER_PATCH_VALIDATION" in submit_script
     assert "rsync" in submit_script
     assert "014_quality_weighted_multiscale_image_probe" in submit_script

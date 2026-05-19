@@ -5,6 +5,7 @@ import pandas as pd
 
 from georeset.cli.analysis.evaluate_image_probe_training_policy_controls import evaluate_controls
 from georeset.cli.analysis.run_quality_weighted_image_probe import run_probe
+from georeset.cli.analysis.run_quality_weighted_image_zero_shot import run_zero_shot_image_probe
 
 
 def _write_probe_fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
@@ -12,18 +13,18 @@ def _write_probe_fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
     weights_path = tmp_path / "weights.csv"
     embeddings_path = tmp_path / "embeddings_clip_base_window_0320m.npz"
     rows = [
-        {"pageid": "1", "split": "train", "tier": "all", "label": "a"},
-        {"pageid": "2", "split": "train", "tier": "all", "label": "a"},
-        {"pageid": "3", "split": "train", "tier": "all", "label": "b"},
-        {"pageid": "4", "split": "train", "tier": "all", "label": "b"},
-        {"pageid": "1", "split": "train", "tier": "quality_spatial", "label": "a"},
-        {"pageid": "2", "split": "train", "tier": "quality_spatial", "label": "a"},
-        {"pageid": "3", "split": "train", "tier": "quality_spatial", "label": "b"},
-        {"pageid": "4", "split": "train", "tier": "quality_spatial", "label": "b"},
-        {"pageid": "1", "split": "train", "tier": "text_spatial_agreement", "label": "a"},
-        {"pageid": "3", "split": "train", "tier": "text_spatial_agreement", "label": "b"},
-        {"pageid": "5", "split": "eval_strict", "tier": "eval_strict", "label": "a"},
-        {"pageid": "6", "split": "eval_strict", "tier": "eval_strict", "label": "b"},
+        {"pageid": "1", "split": "train", "tier": "all", "label": "31"},
+        {"pageid": "2", "split": "train", "tier": "all", "label": "31"},
+        {"pageid": "3", "split": "train", "tier": "all", "label": "22"},
+        {"pageid": "4", "split": "train", "tier": "all", "label": "22"},
+        {"pageid": "1", "split": "train", "tier": "quality_spatial", "label": "31"},
+        {"pageid": "2", "split": "train", "tier": "quality_spatial", "label": "31"},
+        {"pageid": "3", "split": "train", "tier": "quality_spatial", "label": "22"},
+        {"pageid": "4", "split": "train", "tier": "quality_spatial", "label": "22"},
+        {"pageid": "1", "split": "train", "tier": "text_spatial_agreement", "label": "31"},
+        {"pageid": "3", "split": "train", "tier": "text_spatial_agreement", "label": "22"},
+        {"pageid": "5", "split": "eval_strict", "tier": "eval_strict", "label": "31"},
+        {"pageid": "6", "split": "eval_strict", "tier": "eval_strict", "label": "22"},
     ]
     for row in rows:
         row.update(
@@ -41,7 +42,7 @@ def _write_probe_fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
         [
             {
                 "pageid": str(index),
-                "label": "a" if index in {1, 2, 5} else "b",
+                "label": "31" if index in {1, 2, 5} else "22",
                 "relevance_component": 1.0,
                 "uncertainty_component": 1.0,
                 "spatial_component": 1.0,
@@ -111,3 +112,38 @@ def test_evaluate_image_probe_training_policy_controls_writes_required_outputs(
     assert (output_dir / "image_probe_random_training_controls.csv").exists()
     assert (output_dir / "image_probe_random_training_controls.md").exists()
     assert (output_dir / "control_manifest.json").exists()
+
+
+def test_run_quality_weighted_image_zero_shot_writes_window_aware_outputs(
+    tmp_path: Path,
+) -> None:
+    splits_path, _, embeddings_path = _write_probe_fixture(tmp_path)
+    output_dir = tmp_path / "zero-shot"
+
+    def text_encoder_factory(model_name: str, device: str):
+        assert model_name == "openai/clip-vit-base-patch32"
+        assert device == "cpu"
+
+        def encode(prompts: list[str]) -> np.ndarray:
+            return np.array(
+                [[1.0, 0.0] if "forests" in prompt else [0.0, 1.0] for prompt in prompts],
+                dtype=np.float32,
+            )
+
+        return encode
+
+    run_zero_shot_image_probe(
+        splits_path=splits_path,
+        embeddings_paths=[embeddings_path],
+        output_dir=output_dir,
+        device="cpu",
+        text_encoder_factory=text_encoder_factory,
+    )
+
+    metrics = pd.read_csv(output_dir / "zero_shot_image_probe_metrics.csv")
+    predictions = pd.read_csv(output_dir / "zero_shot_image_probe_predictions.csv")
+    assert metrics.loc[0, "baseline"] == "zero_shot_clip"
+    assert metrics.loc[0, "encoder"] == "clip_base"
+    assert metrics.loc[0, "window_m"] == 320
+    assert {"balanced_accuracy_supported", "macro_f1_supported"}.issubset(metrics.columns)
+    assert predictions["window_m"].tolist() == [320, 320]

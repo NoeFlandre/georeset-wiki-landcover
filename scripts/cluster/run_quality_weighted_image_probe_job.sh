@@ -13,6 +13,7 @@ OUTPUT_DIR="${IMAGE_PROBE_OUTPUT_DIR:-data/experiments/014_quality_weighted_mult
 WINDOWS="${IMAGE_PROBE_WINDOWS:-320,2240}"
 ENCODERS="${IMAGE_PROBE_ENCODERS:-clip_base}"
 RUN_CONTROLS="${IMAGE_PROBE_RUN_CONTROLS:-0}"
+STOP_AFTER_PATCH_VALIDATION="${IMAGE_PROBE_STOP_AFTER_PATCH_VALIDATION:-0}"
 DEVICE="${IMAGE_PROBE_DEVICE:-cuda}"
 BATCH_SIZE="${IMAGE_PROBE_BATCH_SIZE:-32}"
 EPOCHS="${IMAGE_PROBE_EPOCHS:-600}"
@@ -42,6 +43,11 @@ uv sync --group dev --group vision
 uv run georeset-build-image-probe-splits-v2 --output-dir "${OUTPUT_DIR}"
 uv run georeset-fetch-sentinel-multiscale-patches --output-dir "${OUTPUT_DIR}" --window-m "${WINDOWS}"
 
+if [[ "${STOP_AFTER_PATCH_VALIDATION}" == "1" ]]; then
+  echo "IMAGE_PROBE_STOP_AFTER_PATCH_VALIDATION=1; stopping after patch validation artifacts."
+  exit 0
+fi
+
 IFS=',' read -r -a WINDOW_ARRAY <<< "${WINDOWS}"
 IFS=',' read -r -a ENCODER_ARRAY <<< "${ENCODERS}"
 for window_m in "${WINDOW_ARRAY[@]}"; do
@@ -56,6 +62,12 @@ for window_m in "${WINDOW_ARRAY[@]}"; do
       --batch-size "${BATCH_SIZE}"
   done
 done
+
+uv run georeset-run-quality-weighted-image-zero-shot \
+  --output-dir "${OUTPUT_DIR}" \
+  --encoders "${ENCODERS}" \
+  --windows "${WINDOWS}" \
+  --device "${DEVICE}"
 
 uv run georeset-run-quality-weighted-image-probe \
   --output-dir "${OUTPUT_DIR}" \

@@ -65,6 +65,7 @@ SUBMIT_OUTPUT="$(
     \"env IMAGE_PROBE_ENCODERS=\\\"${IMAGE_PROBE_ENCODERS:-clip_base}\\\" \
     IMAGE_PROBE_WINDOWS=\\\"${IMAGE_PROBE_WINDOWS:-320,2240}\\\" \
     IMAGE_PROBE_RUN_CONTROLS=\\\"${IMAGE_PROBE_RUN_CONTROLS:-0}\\\" \
+    IMAGE_PROBE_STOP_AFTER_PATCH_VALIDATION=\\\"${IMAGE_PROBE_STOP_AFTER_PATCH_VALIDATION:-0}\\\" \
     IMAGE_PROBE_OUTPUT_DIR=\\\"${OUTPUT_DIR}\\\" \
     G5K_REMOTE_PROJECT_DIR=\\\"${REMOTE_PROJECT_DIR}\\\" \
     bash ./scripts/cluster/run_quality_weighted_image_probe_job.sh\"'"
@@ -85,9 +86,13 @@ MVP defaults:
   IMAGE_PROBE_ENCODERS=clip_base
   IMAGE_PROBE_WINDOWS=320,2240
   IMAGE_PROBE_RUN_CONTROLS=0
+  IMAGE_PROBE_STOP_AFTER_PATCH_VALIDATION=0
 
 Full run example:
   IMAGE_PROBE_ENCODERS=clip_base,clip_large,dinov2_base IMAGE_PROBE_WINDOWS=320,640,1280,2240 ./scripts/cluster/submit_quality_weighted_image_probe.sh
+
+Patch-validation-only example:
+  IMAGE_PROBE_STOP_AFTER_PATCH_VALIDATION=1 ./scripts/cluster/submit_quality_weighted_image_probe.sh
 
 Controls run example:
   IMAGE_PROBE_RUN_CONTROLS=1 ./scripts/cluster/submit_quality_weighted_image_probe.sh

@@ -75,6 +75,7 @@ georeset-build-image-probe-splits-v2 = "georeset.cli.data.build_image_probe_spli
 georeset-fetch-sentinel-multiscale-patches = "georeset.cli.data.fetch_sentinel_multiscale_patches:main"
 georeset-embed-image-patches = "georeset.cli.data.embed_image_patches:main"
 georeset-run-quality-weighted-image-probe = "georeset.cli.analysis.run_quality_weighted_image_probe:main"
+georeset-run-quality-weighted-image-zero-shot = "georeset.cli.analysis.run_quality_weighted_image_zero_shot:main"
 georeset-evaluate-image-probe-training-policy-controls = "georeset.cli.analysis.evaluate_image_probe_training_policy_controls:main"
 
 [tool.ruff]
