@@ -50,6 +50,14 @@ TEXT_PAIRS = {
 }
 
 
+def spatial_eval_manifest_path(output_dir: Path) -> Path:
+    return output_dir / "manifest.json"
+
+
+def spatial_eval_summary_path(output_dir: Path) -> Path:
+    return output_dir / "summary.md"
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--parent-experiment-dir", type=Path, default=DEFAULT_PARENT_DIR)
@@ -267,9 +275,9 @@ def evaluate(
         ],
         "osm_spatial_join_coverage": osm_coverage,
     }
-    write_json_atomic(output_dir / "manifest.json", manifest, indent=2)
+    write_json_atomic(spatial_eval_manifest_path(output_dir), manifest, indent=2)
     _write_summary(
-        output_dir / "summary.md",
+        spatial_eval_summary_path(output_dir),
         overview_rows,
         osm_coverage,
         experiment_id=experiment_id,

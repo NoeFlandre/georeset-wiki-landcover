@@ -9,6 +9,8 @@ from georeset.cli.analysis import evaluate_predictions_with_spatial_confidence a
 from georeset.cli.analysis.evaluate_predictions_with_spatial_confidence import (
     _subset_mask,
     main,
+    spatial_eval_manifest_path,
+    spatial_eval_summary_path,
 )
 
 
@@ -87,6 +89,11 @@ def test_subset_mask_preserves_subset_semantics_for_all_and_numeric_and_dominant
     assert dominant_500_mask.tolist() == [True, True, False, False]
     assert share_250_mask.dtype == bool
     assert dominant_500_mask.dtype == bool
+
+
+def test_spatial_eval_output_paths_use_expected_names(tmp_path: Path):
+    assert spatial_eval_manifest_path(tmp_path) == tmp_path / "manifest.json"
+    assert spatial_eval_summary_path(tmp_path) == tmp_path / "summary.md"
 
 
 def _write_prediction(path: Path, records: dict[str, dict[str, object]]) -> None:
