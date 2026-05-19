@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment 011 - Retrieved Evidence Windows</title>
+  <style>
+    :root{--bg:#f6f7fc;--panel:#fff;--line:#d8e0f2;--text:#0f172a;--muted:#54607a;--accent:#1d4ed8;--ok:#166534;--warn:#b45309;--bad:#b91c1c;--shadow:0 10px 30px rgba(15,23,42,.08)}
+    *{box-sizing:border-box}
+    html,body{margin:0;background:linear-gradient(140deg,#f8fbff 0%,var(--bg) 46%,#edf3ff 100%);color:var(--text);font:14px/1.5 "Inter","Segoe UI",Roboto,Arial,sans-serif}
+    .container{width:min(1180px,calc(100% - 44px));margin:18px auto 42px}
+    h1{margin:0 0 6px;font-size:38px;line-height:1.08;letter-spacing:-.35px}
+    h2{margin:22px 0 10px;font-size:26px;border-left:4px solid var(--accent);padding-left:12px;line-height:1.15}
+    h3{margin:10px 0 8px;font-size:18px}
+    p{margin:.25rem 0 .85rem}
+    a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+    ul{margin:.35rem 0 .8rem 1.2rem;padding:0}
+    .subtitle{color:var(--muted);margin-bottom:14px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow);min-width:0}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px}
+    .kpi{border:1px solid var(--line);border-radius:10px;background:#fbfdff;padding:10px;min-width:0}
+    .kpi .k{color:var(--muted);font-size:11px}.kpi .v{font-size:24px;font-weight:750;margin-top:3px;line-height:1.15;overflow-wrap:anywhere}
+    .badge{display:inline-block;margin:0 4px 4px 0;padding:2px 8px;border:1px solid #c9d6f2;border-radius:999px;background:#f0f5ff;font-size:11px;color:#25395f}
+    code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+    pre{border:1px solid #dbe6ff;border-radius:8px;padding:10px;background:#f6f8ff;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;background:#fff}
+    th,td{border-bottom:1px solid var(--line);padding:8px 7px;text-align:left;vertical-align:top}
+    th{background:#eff4ff}
+    .callout{border-left:4px solid #8b5cf6;background:#f4efff;padding:8px 10px;border-radius:8px;margin-top:8px;color:#341d66;font-size:13px}
+    .warn-box{border-left:4px solid var(--warn);background:#fff7ed;padding:8px 10px;border-radius:8px;margin-top:8px;color:#7c2d12;font-size:13px}
+    .foot{margin-top:8px;color:var(--muted);font-size:11px}.positive{color:var(--ok);font-weight:650}.negative{color:var(--bad);font-weight:650}
+    .section-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+    .mermaid{overflow-x:auto;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fcfdff}
+    @media(max-width:980px){.split{grid-template-columns:1fr}h1{font-size:30px}}
+  </style>
+  <script type="module">
+    const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';s.onload=()=>{window.mermaid?.initialize({startOnLoad:false,securityLevel:'loose',theme:'default',flowchart:{useMaxWidth:true,nodeSpacing:56,rankSpacing:50,curve:'basis'},themeVariables:{fontSize:'13px'}});window.mermaid?.run({nodes:document.querySelectorAll('.mermaid')});};document.head.appendChild(s);
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Experiment 011: Retrieved Evidence Windows</h1>
+    <div class="subtitle">Detailed implementation and result audit for raw sentence windows around matched land-cover evidence.</div>
+
+    <div class="panel">
+      <div class="section-title"><h2>1) Executive summary</h2><span class="badge">Qwen + Gemma rerun</span></div>
+      <p>Experiment 011 tests whether keeping only raw article sentences around evidence matches preserves most of the full-article signal. It is the strongest compact raw-text representation so far for CORINE, but it still does not replace full raw content.</p>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="k">Article records</div><div class="v">1,251</div></div>
+        <div class="kpi"><div class="k">Evidence matched</div><div class="v">752 articles</div></div>
+        <div class="kpi"><div class="k">Mean matched evidence sentences</div><div class="v">4.948</div></div>
+        <div class="kpi"><div class="k">Mean retrieved sentences</div><div class="v">10.297</div></div>
+        <div class="kpi"><div class="k">Qwen retrieved CORINE BA</div><div class="v">0.266</div></div>
+        <div class="kpi"><div class="k">Main conclusion</div><div class="v">compact diagnostic, not replacement</div></div>
+      </div>
+      <p class="callout">Main result: retrieved windows beat random and shuffled controls on CORINE, showing real selection signal, but full raw content remains stronger for the main benchmark.</p>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h2>2) Source artifacts</h2>
+        <ul>
+          <li><a href="/Users/noeflandre/georeset/data/wiki/article_retrieved_evidence_windows.json">article_retrieved_evidence_windows.json</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/article_text_retrieved_evidence_windows_v1__qwen3_6_27b_q4_0">Qwen retrieved-window run</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/article_text_retrieved_evidence_windows_v1__gemma4_31b_it_q4_0">Gemma retrieved-window run</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/retrieved_evidence_windows_quality_subsets.csv">quality subset metrics</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/retrieved_evidence_windows_shuffled_deltas.csv">shuffled deltas</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/retrieved_evidence_windows_pairwise_deltas.csv">pairwise deltas</a></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h2>3) Processing flow</h2>
+        <div class="mermaid">
+flowchart TD
+  A["raw article sentences"] --> C["exact evidence sentence match"]
+  B["evidence metadata"] --> C
+  C --> D["keyword fallback by evidence type"]
+  D --> E["matched sentence indices"]
+  E --> F["add neighbor context"]
+  F --> G["retrieved windows"]
+  F --> H["sentence-only variant"]
+  F --> I["no-place variant"]
+  F --> J["random-window control"]
+  G --> K["Qwen + Gemma CORINE/OSM rerun"]
+        </div>
+        <p class="foot">Articles without matched evidence fall back to the first sentence so coverage remains complete.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>4) What a retrieved evidence window looks like</h2>
+      <p>Experiment 011 introduces retrieved windows: original article sentences around evidence matches, not a summary. This keeps raw wording and nearby context while shrinking the prompt.</p>
+      <pre>Phrases brutes extraites de l'article.
+
+- Le site du Wasserwald est un site archéologique gallo-romain situé à Haegen, dans le département français du Bas-Rhin.
+- == Localisation == Ce site est situé dans la forêt sur le territoire de la commune de Haegen.
+- == Historique == Il fait l'objet d'une inscription au titre des monuments historiques depuis 2015.
+- == Architecture == Sur ce site, témoignant de l’intensification agricole dans quatre terroirs du nord des Gaules, les murets parcellaires se rattachent, à peu près perpendiculairement, à un chemin de près de 800 m de longueur (Viechweg, chemin du bétail) qui traverse la partie sommitale du méplat.
+- == Références == == Voir aussi == === Bibliographie === Occupation gallo-romaine.
+- Une partie de la campagne gallo-romaine du Haut-Empire des cités des Médiomatriques et des Triboques préservée par la forêt : les habitats et parcellaires des Vosges du Nord (Moselle et Bas-Rhin) de part et d’autre du seuil de Saverne, par Nicolas Meyer, Antonin Nüsslein, p.4.</pre>
+      <p class="foot">Example source: <a href="/Users/noeflandre/georeset/data/wiki/article_retrieved_evidence_windows.json">article_retrieved_evidence_windows.json</a>, article “Site du Wasserwald”.</p>
+    </div>
+
+    <div class="panel">
+      <h2>5) Window variants</h2>
+      <table>
+        <thead><tr><th>Variant</th><th>Definition</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>retrieved_evidence_windows</td><td>Matched evidence sentences plus neighboring context sentences.</td><td>Main compact raw-text source.</td></tr>
+          <tr><td>retrieved_evidence_sentences_only</td><td>Matched evidence sentences without neighbor context.</td><td>Tests whether context matters.</td></tr>
+          <tr><td>random_sentence_windows</td><td>Deterministic random sentences with the same article-level budget.</td><td>Controls for shorter raw text.</td></tr>
+          <tr><td>retrieved_evidence_windows_no_place</td><td>Retrieved windows with article-title variants masked.</td><td>Tests place-name memorization.</td></tr>
+          <tr><td>retrieved_evidence_windows_shuffled</td><td>Retrieved windows assigned to another article at load time.</td><td>Aligned-vs-shuffled control.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Implementation source: <a href="/Users/noeflandre/georeset/src/georeset/text/retrieved_evidence_windows.py">retrieved_evidence_windows.py</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>6) CORINE: all articles</h2>
+      <p>Retrieved windows are close to raw content for Qwen and better than random windows for both models, but raw content still wins balanced accuracy.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Source</th><th>Accuracy</th><th>Balanced accuracy</th><th>Macro F1</th><th>Readout</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>content</td><td>0.293</td><td class="positive">0.281</td><td class="positive">0.270</td><td>Full raw article remains best.</td></tr>
+          <tr><td>Qwen</td><td>retrieved windows</td><td>0.290</td><td>0.266</td><td>0.255</td><td>Best compact raw-text Qwen source.</td></tr>
+          <tr><td>Qwen</td><td>random windows</td><td>0.277</td><td>0.254</td><td>0.237</td><td>Retrieval beats random.</td></tr>
+          <tr><td>Gemma</td><td>content</td><td class="positive">0.357</td><td class="positive">0.271</td><td class="positive">0.254</td><td>Full raw article remains best.</td></tr>
+          <tr><td>Gemma</td><td>retrieved windows</td><td>0.309</td><td>0.245</td><td>0.234</td><td>Signal is meaningful but lower than content.</td></tr>
+          <tr><td>Gemma</td><td>random windows</td><td>0.237</td><td>0.214</td><td>0.212</td><td>Retrieval clearly beats random.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/retrieved_evidence_windows_quality_subsets.csv">retrieved_evidence_windows_quality_subsets.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>7) Shuffled controls</h2>
+      <p>Retrieved windows beat shuffled retrieved windows by a wide margin. That confirms the selected windows carry article-specific signal.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Task</th><th>Metric</th><th>Aligned</th><th>Shuffled</th><th>Delta</th><th>n</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>CORINE</td><td>balanced accuracy</td><td>0.266</td><td>0.087</td><td class="positive">+0.179</td><td>1,251</td></tr>
+          <tr><td>Gemma</td><td>CORINE</td><td>balanced accuracy</td><td>0.245</td><td>0.077</td><td class="positive">+0.168</td><td>1,251</td></tr>
+          <tr><td>Qwen</td><td>OSM</td><td>Jaccard</td><td>0.157</td><td>0.080</td><td class="positive">+0.077</td><td>275</td></tr>
+          <tr><td>Gemma</td><td>OSM</td><td>Jaccard</td><td>0.208</td><td>0.115</td><td class="positive">+0.094</td><td>275</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/retrieved_evidence_windows_shuffled_deltas.csv">retrieved_evidence_windows_shuffled_deltas.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>8) Sentence-only and no-place variants</h2>
+      <p>Context usually helps compared with sentence-only retrieval. The no-place variant does not collapse, which argues against simple place-name memorization.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Source</th><th>CORINE BA</th><th>CORINE macro F1</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>sentences only</td><td>0.249</td><td>0.235</td><td>Weaker than windows with context.</td></tr>
+          <tr><td>Qwen</td><td>retrieved windows</td><td>0.266</td><td>0.255</td><td>Context helps.</td></tr>
+          <tr><td>Qwen</td><td>retrieved no-place</td><td class="positive">0.273</td><td>0.255</td><td>No-place remains strong.</td></tr>
+          <tr><td>Gemma</td><td>sentences only</td><td>0.237</td><td>0.230</td><td>Weaker than windows with context.</td></tr>
+          <tr><td>Gemma</td><td>retrieved windows</td><td>0.245</td><td>0.234</td><td>Context helps modestly.</td></tr>
+          <tr><td>Gemma</td><td>retrieved no-place</td><td class="positive">0.251</td><td>0.238</td><td>No-place slightly improves BA.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>9) Best quality + spatial subset</h2>
+      <p>On the strongest subset, retrieved windows are competitive, especially Gemma no-place, but raw content still has the best balanced accuracy.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Source</th><th>n</th><th>Accuracy</th><th>Balanced accuracy</th><th>Macro F1</th></tr></thead>
+        <tbody>
+          <tr><td>Gemma</td><td>content</td><td>388</td><td>0.629</td><td class="positive">0.375</td><td class="positive">0.334</td></tr>
+          <tr><td>Gemma</td><td>retrieved windows</td><td>388</td><td>0.531</td><td>0.358</td><td>0.305</td></tr>
+          <tr><td>Gemma</td><td>retrieved no-place</td><td>388</td><td>0.536</td><td>0.362</td><td>0.318</td></tr>
+          <tr><td>Qwen</td><td>content</td><td>388</td><td>0.490</td><td class="positive">0.394</td><td class="positive">0.332</td></tr>
+          <tr><td>Qwen</td><td>retrieved windows</td><td>388</td><td>0.451</td><td>0.341</td><td>0.296</td></tr>
+          <tr><td>Qwen</td><td>retrieved no-place</td><td>388</td><td>0.423</td><td>0.340</td><td>0.282</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Subset: <span class="mono">quality_high_or_very_high_and_spatial_250m_ge_0.8</span>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>10) OSM result</h2>
+      <p>OSM does not benefit from retrieved windows. Raw content remains stronger on all-article Jaccard for both models, and random windows can even beat retrieved windows on some OSM subsets.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Source</th><th>Exact match</th><th>Micro F1</th><th>Macro F1</th><th>Jaccard</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>content</td><td>0.164</td><td>0.197</td><td>0.158</td><td class="positive">0.190</td></tr>
+          <tr><td>Qwen</td><td>retrieved windows</td><td>0.131</td><td>0.169</td><td>0.114</td><td>0.157</td></tr>
+          <tr><td>Qwen</td><td>retrieved no-place</td><td>0.135</td><td>0.176</td><td>0.103</td><td>0.163</td></tr>
+          <tr><td>Gemma</td><td>content</td><td>0.215</td><td>0.247</td><td>0.158</td><td class="positive">0.252</td></tr>
+          <tr><td>Gemma</td><td>retrieved windows</td><td>0.178</td><td>0.214</td><td>0.144</td><td>0.208</td></tr>
+          <tr><td>Gemma</td><td>retrieved no-place</td><td>0.175</td><td>0.216</td><td>0.118</td><td>0.207</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/retrieved_evidence_windows_quality_subsets.csv">retrieved_evidence_windows_quality_subsets.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>11) Interpretation</h2>
+      <ul>
+        <li><strong>Retrieval is meaningful:</strong> retrieved windows beat random windows and shuffled windows on CORINE.</li>
+        <li><strong>Context matters:</strong> sentence-only retrieval is usually weaker than retrieved windows with neighboring sentences.</li>
+        <li><strong>Place names are not the whole story:</strong> no-place retrieved windows remain competitive and sometimes improve balanced accuracy.</li>
+        <li><strong>Raw content still wins:</strong> full articles contain useful indirect cues outside matched evidence sentences.</li>
+      </ul>
+      <p class="warn-box">The experiment supports using retrieved windows for compact diagnostics or prompt-cost reduction, not as the primary weak-label text source.</p>
+    </div>
+
+    <div class="panel">
+      <h2>12) Implementation notes</h2>
+      <ul>
+        <li>Window builder: <a href="/Users/noeflandre/georeset/src/georeset/text/retrieved_evidence_windows.py">retrieved_evidence_windows.py</a>.</li>
+        <li>Build CLI: <a href="/Users/noeflandre/georeset/src/georeset/cli/data/build_retrieved_evidence_windows.py">build_retrieved_evidence_windows.py</a>.</li>
+        <li>Evaluator: <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_retrieved_evidence_windows_experiment.py">evaluate_retrieved_evidence_windows_experiment.py</a>.</li>
+        <li>Exact sentence matching is attempted first; typed keyword fallback is used when exact evidence sentence matching fails.</li>
+        <li>No classifier labels, predictions, coordinates, spatial scores, or quality scores are injected into classifier text.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>13) Next step</h2>
+      <p>The text-source conclusion is now stable across summaries, cards, highlights, and retrieved windows: deterministic evidence artifacts are valuable for diagnostics and cost reduction, while raw content remains strongest for classification.</p>
+      <p class="callout">Recommended next step: freeze candidate weak-supervision article-location pairs using quality, relevance, spatial confidence, and model agreement, then evaluate downstream Sentinel patch training or held-out evaluation.</p>
+    </div>
+
+    <div class="panel">
+      <h2>14) Artifact index</h2>
+      <ul>
+        <li><a href="/Users/noeflandre/georeset/docs/experiments/011_retrieved_evidence_windows/analysis.md">Original experiment 011 analysis.md</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/wiki/article_retrieved_evidence_windows.json">article_retrieved_evidence_windows.json</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/retrieved_evidence_windows_quality_subsets.csv">retrieved_evidence_windows_quality_subsets.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/retrieved_evidence_windows_shuffled_deltas.csv">retrieved_evidence_windows_shuffled_deltas.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/retrieved_evidence_windows_pairwise_deltas.csv">retrieved_evidence_windows_pairwise_deltas.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/retrieved_evidence_windows_per_class_corine.csv">retrieved_evidence_windows_per_class_corine.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/retrieved_evidence_windows_model_agreement.csv">retrieved_evidence_windows_model_agreement.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/011_retrieved_evidence_windows/retrieved_evidence_windows_comparison_v1/manifest.json">manifest.json</a></li>
+      </ul>
+      <p class="foot">This detailed HTML was written from the checked markdown analysis, generated comparison CSVs, retrieved-window JSON, and deterministic retrieval code path.</p>
+    </div>
+  </div>
+</body>
+</html>
