@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment 012 - CLIP Linear Probe Weak Labels</title>
+  <style>
+    :root{--bg:#f6f7fc;--panel:#fff;--line:#d8e0f2;--text:#0f172a;--muted:#54607a;--accent:#1d4ed8;--ok:#166534;--warn:#b45309;--bad:#b91c1c;--shadow:0 10px 30px rgba(15,23,42,.08)}
+    *{box-sizing:border-box}
+    html,body{margin:0;background:linear-gradient(140deg,#f8fbff 0%,var(--bg) 46%,#edf3ff 100%);color:var(--text);font:14px/1.5 "Inter","Segoe UI",Roboto,Arial,sans-serif}
+    .container{width:min(1180px,calc(100% - 44px));margin:18px auto 42px}
+    h1{margin:0 0 6px;font-size:38px;line-height:1.08;letter-spacing:-.35px}
+    h2{margin:22px 0 10px;font-size:26px;border-left:4px solid var(--accent);padding-left:12px;line-height:1.15}
+    h3{margin:10px 0 8px;font-size:18px}
+    p{margin:.25rem 0 .85rem}
+    a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+    ul{margin:.35rem 0 .8rem 1.2rem;padding:0}
+    .subtitle{color:var(--muted);margin-bottom:14px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow);min-width:0}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px}
+    .kpi{border:1px solid var(--line);border-radius:10px;background:#fbfdff;padding:10px;min-width:0}
+    .kpi .k{color:var(--muted);font-size:11px}.kpi .v{font-size:24px;font-weight:750;margin-top:3px;line-height:1.15;overflow-wrap:anywhere}
+    .badge{display:inline-block;margin:0 4px 4px 0;padding:2px 8px;border:1px solid #c9d6f2;border-radius:999px;background:#f0f5ff;font-size:11px;color:#25395f}
+    code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+    pre{border:1px solid #dbe6ff;border-radius:8px;padding:10px;background:#f6f8ff;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;background:#fff}
+    th,td{border-bottom:1px solid var(--line);padding:8px 7px;text-align:left;vertical-align:top}
+    th{background:#eff4ff}
+    .callout{border-left:4px solid #8b5cf6;background:#f4efff;padding:8px 10px;border-radius:8px;margin-top:8px;color:#341d66;font-size:13px}
+    .warn-box{border-left:4px solid var(--warn);background:#fff7ed;padding:8px 10px;border-radius:8px;margin-top:8px;color:#7c2d12;font-size:13px}
+    .foot{margin-top:8px;color:var(--muted);font-size:11px}.positive{color:var(--ok);font-weight:650}.negative{color:var(--bad);font-weight:650}
+    .section-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+    .mermaid{overflow-x:auto;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fcfdff}
+    @media(max-width:980px){.split{grid-template-columns:1fr}h1{font-size:30px}}
+  </style>
+  <script type="module">
+    const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';s.onload=()=>{window.mermaid?.initialize({startOnLoad:false,securityLevel:'loose',theme:'default',flowchart:{useMaxWidth:true,nodeSpacing:56,rankSpacing:50,curve:'basis'},themeVariables:{fontSize:'13px'}});window.mermaid?.run({nodes:document.querySelectorAll('.mermaid')});};document.head.appendChild(s);
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Experiment 012: CLIP Linear Probe Weak Labels</h1>
+    <div class="subtitle">Detailed implementation and result audit for training a simple image classifier from GeoReset weak CORINE labels.</div>
+
+    <div class="panel">
+      <div class="section-title"><h2>1) Executive summary</h2><span class="badge">First image experiment</span></div>
+      <p>Experiment 012 moves from text-only diagnostics to satellite-image classification. It fetches Sentinel-2 RGB patches at article coordinates, embeds them with frozen CLIP image features, and trains a small NumPy linear probe to predict CORINE level-2 labels.</p>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="k">Sentinel patches</div><div class="v">798</div></div>
+        <div class="kpi"><div class="k">Patch shape</div><div class="v">224 x 224 x 3</div></div>
+        <div class="kpi"><div class="k">CLIP embedding shape</div><div class="v">798 x 512</div></div>
+        <div class="kpi"><div class="k">Strict eval split</div><div class="v">35 images</div></div>
+        <div class="kpi"><div class="k">Best linear probe accuracy</div><div class="v">0.600</div></div>
+        <div class="kpi"><div class="k">Zero-shot CLIP accuracy</div><div class="v">0.200</div></div>
+      </div>
+      <p class="callout">Main result: broad weak labels train a useful frozen-CLIP linear probe. Stricter quality and text-agreement filters are too expensive as hard filters at this data size.</p>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h2>2) Source artifacts</h2>
+        <ul>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv">label_splits.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/sentinel_patches_rgb.npz">sentinel_patches_rgb.npz</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/clip_embeddings.npz">clip_embeddings.npz</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv">linear_probe_metrics.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_metrics.csv">zero_shot_clip_metrics.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/summary.md">summary.md</a></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h2>3) Processing flow</h2>
+        <div class="mermaid">
+flowchart TD
+  A["quality scores + CORINE labels"] --> B["fixed weak-label split tiers"]
+  C["Qwen + Gemma text predictions"] --> B
+  B --> D["fetch Sentinel-2 RGB patches"]
+  D --> E["frozen CLIP image embeddings"]
+  E --> F["NumPy softmax linear probe"]
+  E --> G["zero-shot CLIP baseline"]
+  F --> H["strict 35-image eval"]
+  G --> H
+        </div>
+        <p class="foot">The encoder is frozen <span class="mono">openai/clip-vit-base-patch32</span>; only the linear head is trained.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>4) What a weak-label split row looks like</h2>
+      <p>Experiment 12 introduces fixed weak-label split rows for image training. Each row ties an article coordinate to a CORINE label, quality metadata, spatial confidence, and Qwen/Gemma agreement information.</p>
+      <pre>{
+  "pageid": "297299",
+  "title": "Maennolsheim",
+  "lat": 48.7003,
+  "lon": 7.4633,
+  "label": "21",
+  "split": "eval_strict",
+  "tier": "eval_strict",
+  "quality_score": 9.0,
+  "quality_bin": "quality_very_high",
+  "recommended_use": "use_for_evaluation_only",
+  "landcover_relevance": "high",
+  "uncertainty": "low",
+  "point_label_share_250m": 1.0,
+  "dominant_matches_point_label_250m": true,
+  "qwen_prediction": "21",
+  "gemma_prediction": "21",
+  "models_agree_with_label": true
+}</pre>
+      <p class="foot">Example source: <a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv">label_splits.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>5) Image and model setup</h2>
+      <table>
+        <thead><tr><th>Component</th><th>Setting</th><th>Why it matters</th></tr></thead>
+        <tbody>
+          <tr><td>Imagery</td><td>Sentinel-2 L2A RGB, Microsoft Planetary Computer</td><td>Moves evaluation from Wikipedia text to satellite patches.</td></tr>
+          <tr><td>Date range</td><td>2022-04-01 to 2022-10-31</td><td>Vegetation season window.</td></tr>
+          <tr><td>Cloud filter</td><td>&lt; 25</td><td>Controls obvious patch noise.</td></tr>
+          <tr><td>Patch size</td><td>224 x 224 RGB</td><td>Matches CLIP image input size.</td></tr>
+          <tr><td>Image encoder</td><td>openai/clip-vit-base-patch32, frozen</td><td>Cheap, deterministic baseline.</td></tr>
+          <tr><td>Classifier</td><td>NumPy softmax linear probe</td><td>Tests data-policy value without fine-tuning the encoder.</td></tr>
+          <tr><td>Zero-shot baseline</td><td>Frozen CLIP with averaged CORINE text prompts</td><td>Checks out-of-the-box CLIP alignment.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>6) Split tiers</h2>
+      <p>The eval split is fixed and excluded from every training tier. This keeps the comparison focused on the training-label policy.</p>
+      <table>
+        <thead><tr><th>Split</th><th>Tier</th><th>Examples</th><th>Definition</th></tr></thead>
+        <tbody>
+          <tr><td>eval</td><td>eval_strict</td><td>35</td><td>5 examples per class from quality-spatial pool.</td></tr>
+          <tr><td>train</td><td>all</td><td>482</td><td>All available CORINE weak labels after excluding eval pageids.</td></tr>
+          <tr><td>train</td><td>spatial_only</td><td>357</td><td>250 m point-label share >= 0.8 and dominant 250 m label matches point label.</td></tr>
+          <tr><td>train</td><td>quality_spatial</td><td>184</td><td>Spatial-only plus medium/high relevance, high/very-high quality, and no high uncertainty.</td></tr>
+          <tr><td>train</td><td>text_spatial_agreement</td><td>142</td><td>Quality-spatial plus Qwen and Gemma both agree with the CORINE point label.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Split builder: <a href="/Users/noeflandre/georeset/src/georeset/vision/clip_weak_labels.py">clip_weak_labels.py</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>7) Class coverage problem</h2>
+      <p>The strictest tier is small and class-starved. That turns out to matter more than expected label cleaning for this downstream image model.</p>
+      <table>
+        <thead><tr><th>Tier</th><th>21</th><th>22</th><th>23</th><th>24</th><th>31</th><th>32</th><th>51</th><th>Readout</th></tr></thead>
+        <tbody>
+          <tr><td>all</td><td>80</td><td>80</td><td>80</td><td>80</td><td>80</td><td>45</td><td>37</td><td>Broadest coverage.</td></tr>
+          <tr><td>spatial_only</td><td>80</td><td>76</td><td>45</td><td>60</td><td>80</td><td>9</td><td>7</td><td>Still broad enough for a simple probe.</td></tr>
+          <tr><td>quality_spatial</td><td>18</td><td>53</td><td>4</td><td>17</td><td>80</td><td>6</td><td>6</td><td>Rare classes are thin.</td></tr>
+          <tr><td>text_spatial_agreement</td><td>2</td><td>51</td><td>1</td><td>2</td><td>80</td><td>2</td><td>4</td><td class="negative">Too few non-forest examples.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: class counts from <a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv">label_splits.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>8) Linear probe results</h2>
+      <p>The permissive <span class="mono">all</span> tier wins accuracy and balanced accuracy. <span class="mono">spatial_only</span> is nearly tied on macro-F1 while using fewer examples. The strict tiers underperform.</p>
+      <table>
+        <thead><tr><th>Tier</th><th>Train</th><th>Eval</th><th>Accuracy</th><th>Balanced accuracy</th><th>Macro F1</th></tr></thead>
+        <tbody>
+          <tr><td>all</td><td>482</td><td>35</td><td class="positive">0.600</td><td class="positive">0.600</td><td>0.586</td></tr>
+          <tr><td>spatial_only</td><td>357</td><td>35</td><td>0.571</td><td>0.571</td><td class="positive">0.589</td></tr>
+          <tr><td>quality_spatial</td><td>184</td><td>35</td><td>0.514</td><td>0.514</td><td>0.490</td></tr>
+          <tr><td>text_spatial_agreement</td><td>142</td><td>35</td><td>0.400</td><td>0.400</td><td>0.363</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv">linear_probe_metrics.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>9) Zero-shot comparison</h2>
+      <p>Generic CLIP alignment does not map cleanly onto Sentinel-2 CORINE classes without local supervision. The trained probe adds a large gain over zero-shot CLIP on the same frozen embeddings and eval split.</p>
+      <table>
+        <thead><tr><th>Method</th><th>Train examples</th><th>Eval</th><th>Accuracy</th><th>Balanced accuracy</th><th>Macro F1</th></tr></thead>
+        <tbody>
+          <tr><td>zero-shot CLIP</td><td>0</td><td>35</td><td>0.200</td><td>0.200</td><td>0.224</td></tr>
+          <tr><td>frozen CLIP + linear probe, all weak labels</td><td>482</td><td>35</td><td class="positive">0.600</td><td class="positive">0.600</td><td class="positive">0.586</td></tr>
+          <tr><td>frozen CLIP + linear probe, spatial-only labels</td><td>357</td><td>35</td><td>0.571</td><td>0.571</td><td class="positive">0.589</td></tr>
+        </tbody>
+      </table>
+      <p class="callout">Best linear probe gain over zero-shot: +0.400 balanced accuracy and +0.362 macro-F1.</p>
+    </div>
+
+    <div class="panel">
+      <h2>10) Prediction examples</h2>
+      <p>The same eval examples are used for zero-shot and all probe tiers. These rows show why local supervision helps: zero-shot often maps land-cover classes to plausible but wrong nearby classes.</p>
+      <table>
+        <thead><tr><th>Pageid</th><th>Target</th><th>Zero-shot prediction</th><th>Linear probe all-tier prediction</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr><td>297299</td><td>21</td><td>21</td><td>24</td><td>Zero-shot gets this arable example right; probe misses.</td></tr>
+          <tr><td>13438882</td><td>22</td><td>24</td><td>22</td><td>Probe fixes a permanent-crop example.</td></tr>
+          <tr><td>2809909</td><td>22</td><td>24</td><td>22</td><td>Probe fixes another permanent-crop example.</td></tr>
+          <tr><td>4341269</td><td>23</td><td>31</td><td>23</td><td>Probe recovers one pasture example.</td></tr>
+          <tr><td>11139252</td><td>51</td><td>51</td><td>51</td><td>Both methods can identify some inland-water examples.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Sources: <a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_predictions.csv">zero_shot_clip_predictions.csv</a> and <a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_predictions.csv">linear_probe_predictions.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>11) Artifact inventory</h2>
+      <table>
+        <thead><tr><th>Artifact</th><th>Size</th><th>SHA-256</th></tr></thead>
+        <tbody>
+          <tr><td>sentinel_patches_rgb.npz</td><td>120,147,394 bytes</td><td><span class="mono">797dd39a8ddd5709c59b7c8844c1c5d58163ac6f297ebd609beb3a1012085f49</span></td></tr>
+          <tr><td>clip_embeddings.npz</td><td>1,660,360 bytes</td><td><span class="mono">fb8932e791888752b045ddec3a112b5bae5b1ff760ed9e68e7c8cfb5f8c53e52</span></td></tr>
+          <tr><td>label_splits.csv</td><td>192,574 bytes</td><td><span class="mono">16a56c1c6ce2afc7a95c84ff0a3e016004d49cc4ed93e163886ae184b4b8fcf5</span></td></tr>
+          <tr><td>linear_probe_metrics.csv</td><td>332 bytes</td><td><span class="mono">97ea65d30715b6290d438939cd59426d44db89187d144737c063c479af4ad723</span></td></tr>
+          <tr><td>zero_shot_clip_metrics.csv</td><td>109 bytes</td><td><span class="mono">6dffedd6396d4387a02107b9f1569ede2eae351e2201083b5d4b09853a6436fa</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>12) Implementation notes</h2>
+      <ul>
+        <li>Split builder: <a href="/Users/noeflandre/georeset/src/georeset/vision/clip_weak_labels.py">clip_weak_labels.py</a>.</li>
+        <li>Sentinel patch fetcher: <a href="/Users/noeflandre/georeset/src/georeset/vision/sentinel_patches.py">sentinel_patches.py</a>.</li>
+        <li>CLIP embedding code: <a href="/Users/noeflandre/georeset/src/georeset/vision/clip_embeddings.py">clip_embeddings.py</a>.</li>
+        <li>Linear probe: <a href="/Users/noeflandre/georeset/src/georeset/vision/linear_probe.py">linear_probe.py</a>.</li>
+        <li>Zero-shot evaluator: <a href="/Users/noeflandre/georeset/src/georeset/vision/clip_zero_shot.py">clip_zero_shot.py</a>.</li>
+        <li>Training runner: <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/run_clip_linear_probe_experiment.py">run_clip_linear_probe_experiment.py</a>.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>13) Interpretation</h2>
+      <ul>
+        <li><strong>Weak labels are useful:</strong> the best linear probe triples zero-shot accuracy on the strict eval split.</li>
+        <li><strong>Hard quality filtering is too costly here:</strong> strict tiers remove rare-class examples that the probe needs.</li>
+        <li><strong>Spatial-only is a strong compromise:</strong> it keeps fewer examples than all while nearly matching or beating macro-F1.</li>
+        <li><strong>This is a data-policy test:</strong> frozen CLIP plus a linear head is intentionally simple and not the ceiling for Sentinel classification.</li>
+      </ul>
+      <p class="warn-box">The result does not say quality and agreement signals are useless. It says they should be soft weights, sampling controls, calibration signals, or evaluation filters rather than hard training filters at this scale.</p>
+    </div>
+
+    <div class="panel">
+      <h2>14) Next step</h2>
+      <p>Do not train only on <span class="mono">text_spatial_agreement</span>. Keep broad training coverage, use quality signals softly, and reserve stricter rows for evaluation or calibration.</p>
+      <p class="callout">Recommended next experiment: use a broader weak-label training set with quality-aware sampling or loss weights, ideally with a Sentinel-native encoder rather than generic RGB CLIP.</p>
+    </div>
+
+    <div class="panel">
+      <h2>15) Artifact index</h2>
+      <ul>
+        <li><a href="/Users/noeflandre/georeset/docs/experiments/012_clip_linear_probe_weak_labels/analysis.md">Original experiment 012 analysis.md</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv">label_splits.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/sentinel_patches_rgb.npz">sentinel_patches_rgb.npz</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/clip_embeddings.npz">clip_embeddings.npz</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv">linear_probe_metrics.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_predictions.csv">linear_probe_predictions.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_metrics.csv">zero_shot_clip_metrics.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_predictions.csv">zero_shot_clip_predictions.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_summary.md">zero_shot_clip_summary.md</a></li>
+      </ul>
+      <p class="foot">This detailed HTML was written from the checked markdown analysis, generated split/metric artifacts, cached artifact metadata, and the CLIP weak-label code path.</p>
+    </div>
+  </div>
+</body>
+</html>
