@@ -5,6 +5,12 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from georeset.cli.image_probe_args import (
+    image_probe_splits_path,
+    sample_weights_path,
+    split_manifest_path,
+    split_summary_path,
+)
 from georeset.experiment_paths import experiment_artifact_dir, experiment_artifact_file
 from georeset.utils.json_io import (
     markdown_table,
@@ -60,10 +66,10 @@ def main(argv: list[str] | None = None) -> None:
         n_repeated_splits=args.n_repeated_splits,
     )
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    write_csv_atomic(args.output_dir / "image_probe_splits_v2.csv", splits, index=False)
-    write_csv_atomic(args.output_dir / "sample_weights.csv", weights, index=False)
+    write_csv_atomic(image_probe_splits_path(args.output_dir), splits, index=False)
+    write_csv_atomic(sample_weights_path(args.output_dir), weights, index=False)
     write_json_atomic(
-        args.output_dir / "split_manifest.json",
+        split_manifest_path(args.output_dir),
         {
             **manifest,
             "quality_scores_path": str(args.quality_scores_path),
@@ -73,7 +79,7 @@ def main(argv: list[str] | None = None) -> None:
     )
     tier_counts = splits.groupby(["split", "tier"]).size().reset_index(name="n")
     write_text_atomic(
-        args.output_dir / "split_summary.md",
+        split_summary_path(args.output_dir),
         "# quality_weighted_multiscale_image_probe_v1 splits\n\n"
         "Evaluation rows are selected from `quality_spatial`; Qwen/Gemma agreement is used only "
         "for training weights and the `text_spatial_agreement` training tier.\n\n"

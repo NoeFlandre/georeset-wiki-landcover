@@ -15,6 +15,16 @@ def sample_weights_path(output_dir: Path) -> Path:
     return output_dir / "sample_weights.csv"
 
 
+def split_manifest_path(output_dir: Path) -> Path:
+    """Return the canonical Experiment 014 split manifest path."""
+    return output_dir / "split_manifest.json"
+
+
+def split_summary_path(output_dir: Path) -> Path:
+    """Return the canonical Experiment 014 split summary path."""
+    return output_dir / "split_summary.md"
+
+
 def embedding_cache_paths(
     output_dir: Path, *, encoders: list[str], windows: list[str]
 ) -> list[Path]:

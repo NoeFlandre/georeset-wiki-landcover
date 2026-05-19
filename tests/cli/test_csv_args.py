@@ -5,6 +5,8 @@ from georeset.cli.image_probe_args import (
     embedding_cache_paths,
     image_probe_splits_path,
     sample_weights_path,
+    split_manifest_path,
+    split_summary_path,
 )
 
 
@@ -41,3 +43,5 @@ def test_embedding_cache_paths_uses_experiment_filename_convention(tmp_path) -> 
 def test_image_probe_metadata_paths_use_experiment_filename_convention(tmp_path) -> None:
     assert image_probe_splits_path(tmp_path) == tmp_path / "image_probe_splits_v2.csv"
     assert sample_weights_path(tmp_path) == tmp_path / "sample_weights.csv"
+    assert split_manifest_path(tmp_path) == tmp_path / "split_manifest.json"
+    assert split_summary_path(tmp_path) == tmp_path / "split_summary.md"
