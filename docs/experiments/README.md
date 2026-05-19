@@ -74,6 +74,13 @@ and next steps.
     - Tests whether relevance, spatial, quality, article-type, and
       recommended-use subset gains beat same-size and target-matched random
       controls.
+14. [`014_quality_weighted_multiscale_image_probe/analysis.md`](014_quality_weighted_multiscale_image_probe/analysis.md)
+    - Extends the image-probe path with multiscale Sentinel-2 crops, soft
+      quality/relevance/spatial/text-agreement sample weights, and supported-label
+      metrics.
+    - Uses a staged Grid5000 workflow: first `clip_base` at 320m and 2240m, then
+      all planned encoders/windows, with random training controls after the main
+      probe works.
 
 ## Data Artifact Map
 
@@ -83,6 +90,8 @@ The reports cite artifacts under matching numbered folders in
 `data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/`.
 `docs/experiments/013_subset_randomization_controls/analysis.md` cites
 `data/experiments/013_subset_randomization_controls/article_text_subset_randomization_controls_v1/`.
+`docs/experiments/014_quality_weighted_multiscale_image_probe/analysis.md` cites
+`data/experiments/014_quality_weighted_multiscale_image_probe/quality_weighted_multiscale_image_probe_v1/`.
 
 Working classifier checkpoints live separately under `data/classification/runs/`.
 Those are useful for resumability, but the stable research outputs are the

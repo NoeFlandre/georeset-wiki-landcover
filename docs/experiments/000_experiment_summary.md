@@ -353,3 +353,17 @@ predictive when article relevance and spatial label reliability are credible,
 and that effect is not explained away by sample size or class composition. For
 OSM, the evidence remains useful but should be framed more carefully because
 target composition and small support explain more of the apparent gains.
+
+Experiment `014_quality_weighted_multiscale_image_probe` is the planned
+follow-up to the first image probe. It keeps the broad weak-label training
+coverage that worked best in Experiment 012, but turns quality, relevance,
+spatial purity, and Qwen/Gemma agreement into soft sample weights instead of
+hard filters. It also tests physical Sentinel-2 crop scale explicitly by
+comparing 320 m, 640 m, 1280 m, and 2240 m windows resized to the same encoder
+input size.
+
+The experiment is staged for Grid5000: first a small `clip_base` MVP run on
+320 m and 2240 m windows, then the full encoder/window grid, and finally random
+training controls once the main probe results identify the meaningful
+comparisons. Its headline metric is supported-label balanced accuracy, while
+allowed-label balanced accuracy is retained for continuity with prior reports.

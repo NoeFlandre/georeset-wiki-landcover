@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from georeset.utils.boolish import parse_boolish
 from georeset.utils.json_io import write_csv_atomic
 
 TRAIN_TIERS = (
@@ -36,7 +37,11 @@ def _sample_per_class(
     sampled = []
     for _, group in frame.sort_values(["label", "pageid"]).groupby("label", sort=True):
         sampled.append(group.sample(n=min(len(group), per_class), random_state=seed))
-    return pd.concat(sampled, ignore_index=True).sort_values(["label", "pageid"]).reset_index(drop=True)
+    return (
+        pd.concat(sampled, ignore_index=True)
+        .sort_values(["label", "pageid"])
+        .reset_index(drop=True)
+    )
 
 
 def _base_frame(
@@ -53,17 +58,16 @@ def _base_frame(
     frame["label"] = frame["label"].astype(str)
     frame["qwen_prediction"] = frame["pageid"].map(qwen)
     frame["gemma_prediction"] = frame["pageid"].map(gemma)
-    frame["models_agree_with_label"] = (
-        frame["qwen_prediction"].eq(frame["gemma_prediction"])
-        & frame["qwen_prediction"].eq(frame["label"])
-    )
+    frame["models_agree_with_label"] = frame["qwen_prediction"].eq(
+        frame["gemma_prediction"]
+    ) & frame["qwen_prediction"].eq(frame["label"])
     return frame
 
 
 def _tier_mask(frame: pd.DataFrame, tier: str) -> pd.Series:
     spatial = frame["point_label_share_250m"].ge(0.8) & frame[
         "dominant_matches_point_label_250m"
-    ].astype(bool)
+    ].map(lambda value: parse_boolish(value) is True)
     relevance = frame["landcover_relevance"].isin(["medium", "high"])
     quality = frame["quality_bin"].isin(["quality_high", "quality_very_high"])
     low_uncertainty = ~frame["uncertainty"].eq("high")

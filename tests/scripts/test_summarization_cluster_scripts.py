@@ -95,7 +95,10 @@ def test_submit_landuse_evidence_script_uses_safe_default_sync_path():
 def test_classification_job_uses_job_local_caches_to_protect_home_quota():
     script = Path("scripts/cluster/run_classification_job.sh").read_text()
 
-    assert 'JOB_CACHE_DIR="${GEORESET_JOB_CACHE_DIR:-${TMPDIR:-/tmp}/georeset_${OAR_JOB_ID:-manual}}"' in script
+    assert (
+        'JOB_CACHE_DIR="${GEORESET_JOB_CACHE_DIR:-${TMPDIR:-/tmp}/georeset_${OAR_JOB_ID:-manual}}"'
+        in script
+    )
     assert 'export HF_HOME="${HF_HOME:-${JOB_CACHE_DIR}/hf}"' in script
     assert 'export UV_CACHE_DIR="${UV_CACHE_DIR:-${JOB_CACHE_DIR}/uv}"' in script
     assert 'mkdir -p "${HF_HOME}" "${UV_CACHE_DIR}"' in script
@@ -129,3 +132,19 @@ def test_submit_clip_linear_probe_syncs_outputs_safely():
     assert "sentinel_patches_rgb.npz" in script
     assert "clip_embeddings.npz" in script
     assert "zero_shot_clip_metrics.csv" in script
+
+
+def test_quality_weighted_image_probe_cluster_scripts_are_staged_for_grid5000():
+    run_script = Path("scripts/cluster/run_quality_weighted_image_probe_job.sh").read_text()
+    submit_script = Path("scripts/cluster/submit_quality_weighted_image_probe.sh").read_text()
+
+    assert "uv sync --group dev --group vision" in run_script
+    assert 'WINDOWS="${IMAGE_PROBE_WINDOWS:-320,2240}"' in run_script
+    assert 'ENCODERS="${IMAGE_PROBE_ENCODERS:-clip_base}"' in run_script
+    assert 'RUN_CONTROLS="${IMAGE_PROBE_RUN_CONTROLS:-0}"' in run_script
+    assert "georeset-fetch-sentinel-multiscale-patches" in run_script
+    assert "georeset-run-quality-weighted-image-probe" in run_script
+    assert "georeset-evaluate-image-probe-training-policy-controls" in run_script
+    assert "oarsub" in submit_script
+    assert "rsync" in submit_script
+    assert "014_quality_weighted_multiscale_image_probe" in submit_script

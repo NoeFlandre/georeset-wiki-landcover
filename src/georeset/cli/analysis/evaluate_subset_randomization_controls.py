@@ -26,6 +26,7 @@ from georeset.analysis.prediction_loading import infer_model_for_records, load_p
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.text_sources import shuffled_text_source_pairs
 from georeset.experiment_paths import experiment_artifact_dir, experiment_artifact_file
+from georeset.utils.boolish import parse_boolish
 from georeset.utils.json_io import (
     markdown_table,
     resolve_table_columns,
@@ -118,7 +119,9 @@ class PrimaryMetricScorer:
         elif task == "osm":
             self.row_jaccard = np.asarray(
                 [
-                    _row_jaccard(row["target"], row["prediction"] if row["parse_status"] == "ok" else [])
+                    _row_jaccard(
+                        row["target"], row["prediction"] if row["parse_status"] == "ok" else []
+                    )
                     for _, row in records.iterrows()
                 ],
                 dtype=float,
@@ -146,7 +149,11 @@ class PrimaryMetricScorer:
 
     def score_pageids(self, pageids: Sequence[str]) -> float:
         return self.score_indices(
-            [self.pageid_to_index[str(pageid)] for pageid in pageids if str(pageid) in self.pageid_to_index]
+            [
+                self.pageid_to_index[str(pageid)]
+                for pageid in pageids
+                if str(pageid) in self.pageid_to_index
+            ]
         )
 
 
@@ -175,9 +182,7 @@ def _numeric(frame: pd.DataFrame, column: str) -> pd.Series:
 
 def _boolish(frame: pd.DataFrame, column: str) -> pd.Series:
     values = _series(frame, column)
-    if str(values.dtype) == "boolean" or values.dtype == bool:
-        return values.fillna(False).astype(bool)
-    return values.map(lambda value: bool(value) if not pd.isna(value) else False).astype(bool)
+    return values.map(lambda value: parse_boolish(value) is True).astype(bool)
 
 
 def _is_article_type(frame: pd.DataFrame, values: set[str]) -> pd.Series:
@@ -259,20 +264,26 @@ SUBSET_REGISTRY: dict[str, SubsetDefinition] = {
     "relevance_medium_high_and_spatial_250m_ge_0.8": _definition(
         "relevance_medium_high_and_spatial_250m_ge_0.8",
         ("landcover_relevance", "point_label_share_250m"),
-        lambda df: SUBSET_REGISTRY["relevance_medium_high"].mask(df)
-        & SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(df),
+        lambda df: (
+            SUBSET_REGISTRY["relevance_medium_high"].mask(df)
+            & SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(df)
+        ),
     ),
     "relevance_high_and_spatial_250m_ge_0.8": _definition(
         "relevance_high_and_spatial_250m_ge_0.8",
         ("landcover_relevance", "point_label_share_250m"),
-        lambda df: SUBSET_REGISTRY["relevance_high"].mask(df)
-        & SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(df),
+        lambda df: (
+            SUBSET_REGISTRY["relevance_high"].mask(df)
+            & SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(df)
+        ),
     ),
     "evidence_sentences_count_ge_1_and_spatial_250m_ge_0.8": _definition(
         "evidence_sentences_count_ge_1_and_spatial_250m_ge_0.8",
         ("evidence_sentences_count", "point_label_share_250m"),
-        lambda df: SUBSET_REGISTRY["evidence_sentences_count_ge_1"].mask(df)
-        & SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(df),
+        lambda df: (
+            SUBSET_REGISTRY["evidence_sentences_count_ge_1"].mask(df)
+            & SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(df)
+        ),
     ),
     "quality_high_or_very_high": _definition(
         "quality_high_or_very_high",
@@ -287,8 +298,10 @@ SUBSET_REGISTRY: dict[str, SubsetDefinition] = {
     "quality_high_or_very_high_and_spatial_250m_ge_0.8": _definition(
         "quality_high_or_very_high_and_spatial_250m_ge_0.8",
         ("quality_bin", "point_label_share_250m"),
-        lambda df: SUBSET_REGISTRY["quality_high_or_very_high"].mask(df)
-        & SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(df),
+        lambda df: (
+            SUBSET_REGISTRY["quality_high_or_very_high"].mask(df)
+            & SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(df)
+        ),
     ),
     "recommended_use_training": _definition(
         "recommended_use_training",
@@ -343,26 +356,34 @@ SUBSET_REGISTRY: dict[str, SubsetDefinition] = {
     "article_type_high_prior_and_relevance_medium_high": _definition(
         "article_type_high_prior_and_relevance_medium_high",
         ("primary_article_type", "landcover_relevance"),
-        lambda df: SUBSET_REGISTRY["article_type_high_prior"].mask(df)
-        & SUBSET_REGISTRY["relevance_medium_high"].mask(df),
+        lambda df: (
+            SUBSET_REGISTRY["article_type_high_prior"].mask(df)
+            & SUBSET_REGISTRY["relevance_medium_high"].mask(df)
+        ),
     ),
     "other_or_unclear_and_relevance_medium_high": _definition(
         "other_or_unclear_and_relevance_medium_high",
         ("primary_article_type", "landcover_relevance"),
-        lambda df: SUBSET_REGISTRY["article_type_other_or_unclear"].mask(df)
-        & SUBSET_REGISTRY["relevance_medium_high"].mask(df),
+        lambda df: (
+            SUBSET_REGISTRY["article_type_other_or_unclear"].mask(df)
+            & SUBSET_REGISTRY["relevance_medium_high"].mask(df)
+        ),
     ),
     "article_type_high_prior_and_relevance_medium_high_and_spatial_250m_ge_0.8": _definition(
         "article_type_high_prior_and_relevance_medium_high_and_spatial_250m_ge_0.8",
         ("primary_article_type", "landcover_relevance", "point_label_share_250m"),
-        lambda df: SUBSET_REGISTRY["article_type_high_prior_and_relevance_medium_high"].mask(df)
-        & SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(df),
+        lambda df: (
+            SUBSET_REGISTRY["article_type_high_prior_and_relevance_medium_high"].mask(df)
+            & SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(df)
+        ),
     ),
     "other_or_unclear_and_relevance_medium_high_and_spatial_250m_ge_0.8": _definition(
         "other_or_unclear_and_relevance_medium_high_and_spatial_250m_ge_0.8",
         ("primary_article_type", "landcover_relevance", "point_label_share_250m"),
-        lambda df: SUBSET_REGISTRY["other_or_unclear_and_relevance_medium_high"].mask(df)
-        & SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(df),
+        lambda df: (
+            SUBSET_REGISTRY["other_or_unclear_and_relevance_medium_high"].mask(df)
+            & SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(df)
+        ),
     ),
 }
 
@@ -448,7 +469,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=DEFAULT_SPATIAL_CONFIDENCE_PATH,
     )
-    parser.add_argument("--evidence-metadata-path", type=Path, default=DEFAULT_EVIDENCE_METADATA_PATH)
+    parser.add_argument(
+        "--evidence-metadata-path", type=Path, default=DEFAULT_EVIDENCE_METADATA_PATH
+    )
     parser.add_argument(
         "--article-type-assignments-path",
         type=Path,
@@ -815,7 +838,9 @@ def _distribution_rows(
     ]
 
 
-def _conclusion_flag(same_n: Mapping[str, Any] | None, target_matched: Mapping[str, Any] | None) -> str:
+def _conclusion_flag(
+    same_n: Mapping[str, Any] | None, target_matched: Mapping[str, Any] | None
+) -> str:
     if not same_n or same_n.get("observed_score") == "":
         return "not_distinguishable"
     observed = float(same_n["observed_score"])
@@ -901,9 +926,21 @@ def write_outputs(
         random_target_rows,
         CONTROL_COLUMNS,
     )
-    _write_table_pair(output_dir, "shuffled_delta_random_controls", "Shuffled Delta Random Controls", shuffled_delta_rows)
-    _write_table_pair(output_dir, "subset_class_distribution", "Subset Class Distribution", class_distribution_rows)
-    _write_table_pair(output_dir, "significant_filter_summary", "Significant Filter Summary", significant_rows)
+    _write_table_pair(
+        output_dir,
+        "shuffled_delta_random_controls",
+        "Shuffled Delta Random Controls",
+        shuffled_delta_rows,
+    )
+    _write_table_pair(
+        output_dir,
+        "subset_class_distribution",
+        "Subset Class Distribution",
+        class_distribution_rows,
+    )
+    _write_table_pair(
+        output_dir, "significant_filter_summary", "Significant Filter Summary", significant_rows
+    )
     write_json_atomic(output_dir / "manifest.json", manifest, indent=2)
     write_text_atomic(output_dir / "summary.md", summary_text)
 
@@ -1008,7 +1045,9 @@ def evaluate(
                     output_rows.append({**base, "subset_name": subset_name, **control})
                 continue
 
-            same_seed = stable_seed(seed, parent_id, model_key, task, text_source, subset_name, "random_same_n")
+            same_seed = stable_seed(
+                seed, parent_id, model_key, task, text_source, subset_name, "random_same_n"
+            )
             same_scores = _random_scores_same_n(
                 universe,
                 n=n,
@@ -1063,7 +1102,9 @@ def evaluate(
                 }
             )
 
-    shuffled_rows = _compute_shuffled_rows(records, observed_rows, n_draws=n_draws, seed=seed, min_subset_size=min_subset_size)
+    shuffled_rows = _compute_shuffled_rows(
+        records, observed_rows, n_draws=n_draws, seed=seed, min_subset_size=min_subset_size
+    )
     significant_rows = _significant_summary(observed_rows, same_n_rows, target_rows)
     manifest = _manifest(
         parent_experiment_dirs=parent_experiment_dirs,
@@ -1113,7 +1154,9 @@ def _compute_shuffled_rows(
         ["parent_experiment_id", "model_key", "task"], dropna=False
     ):
         available_sources = set(group["text_source"].astype(str))
-        for aligned_source, shuffled_source in shuffled_text_source_pairs(available_sources).items():
+        for aligned_source, shuffled_source in shuffled_text_source_pairs(
+            available_sources
+        ).items():
             if aligned_source not in SHUFFLED_PAIRS:
                 continue
             aligned_records = group[group["text_source"] == aligned_source]
@@ -1123,11 +1166,25 @@ def _compute_shuffled_rows(
             aligned_scorer = PrimaryMetricScorer(aligned_records, task=str(task), labels=labels)
             shuffled_scorer = PrimaryMetricScorer(shuffled_records, task=str(task), labels=labels)
             for subset_name, subset_def in SUBSET_REGISTRY.items():
-                aligned_key = (str(parent_id), str(model_key), str(task), aligned_source, subset_name)
-                shuffled_key = (str(parent_id), str(model_key), str(task), shuffled_source, subset_name)
+                aligned_key = (
+                    str(parent_id),
+                    str(model_key),
+                    str(task),
+                    aligned_source,
+                    subset_name,
+                )
+                shuffled_key = (
+                    str(parent_id),
+                    str(model_key),
+                    str(task),
+                    shuffled_source,
+                    subset_name,
+                )
                 if aligned_key not in observed_by_key or shuffled_key not in observed_by_key:
                     continue
-                universe = aligned_records[_metadata_available_mask(aligned_records, subset_def)].copy()
+                universe = aligned_records[
+                    _metadata_available_mask(aligned_records, subset_def)
+                ].copy()
                 if universe.empty:
                     continue
                 observed = universe[subset_def.mask(universe)].copy()
@@ -1165,8 +1222,12 @@ def _compute_shuffled_rows(
                     )
                     for draw_index in range(n_draws):
                         rng = np.random.default_rng(random_seed + draw_index)
-                        positions = rng.choice(len(aligned_candidate_indices), size=n, replace=False)
-                        aligned_indices = [aligned_candidate_indices[int(position)] for position in positions]
+                        positions = rng.choice(
+                            len(aligned_candidate_indices), size=n, replace=False
+                        )
+                        aligned_indices = [
+                            aligned_candidate_indices[int(position)] for position in positions
+                        ]
                         shuffled_indices = [
                             shuffled_candidate_indices[int(position)] for position in positions
                         ]
@@ -1216,11 +1277,23 @@ def _significant_summary(
     target_rows: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     same_by_key = {
-        (row["parent_experiment_id"], row["model_key"], row["task"], row["text_source"], row["subset_name"]): row
+        (
+            row["parent_experiment_id"],
+            row["model_key"],
+            row["task"],
+            row["text_source"],
+            row["subset_name"],
+        ): row
         for row in same_n_rows
     }
     target_by_key = {
-        (row["parent_experiment_id"], row["model_key"], row["task"], row["text_source"], row["subset_name"]): row
+        (
+            row["parent_experiment_id"],
+            row["model_key"],
+            row["task"],
+            row["text_source"],
+            row["subset_name"],
+        ): row
         for row in target_rows
     }
     rows: list[dict[str, Any]] = []
@@ -1229,9 +1302,15 @@ def _significant_summary(
             continue
         if observed["subset_name"] not in HEADLINE_SUBSETS:
             continue
-        if observed["task"] == "corine_level2" and observed["primary_metric"] != "balanced_accuracy":
+        if (
+            observed["task"] == "corine_level2"
+            and observed["primary_metric"] != "balanced_accuracy"
+        ):
             continue
-        if observed["task"] == "osm" and observed["primary_metric"] not in {"jaccard", "exact_match_accuracy"}:
+        if observed["task"] == "osm" and observed["primary_metric"] not in {
+            "jaccard",
+            "exact_match_accuracy",
+        }:
             continue
         key = (
             observed["parent_experiment_id"],
@@ -1259,7 +1338,9 @@ def _significant_summary(
                 "random_same_n_percentile": same.get("observed_percentile", "") if same else "",
                 "random_target_matched_mean": target.get("random_mean", "") if target else "",
                 "random_target_matched_95_interval": _interval(target),
-                "random_target_matched_percentile": target.get("observed_percentile", "") if target else "",
+                "random_target_matched_percentile": target.get("observed_percentile", "")
+                if target
+                else "",
                 "conclusion_flag": _conclusion_flag(same, target),
             }
         )
@@ -1366,9 +1447,7 @@ def _summary_text(significant_rows: list[dict[str, Any]], manifest: Mapping[str,
     qwen_corine_combined = _score(
         _find("qwen", "corine_level2", "relevance_medium_high_and_spatial_250m_ge_0.8")
     )
-    gemma_corine_relevance = _score(
-        _find("gemma", "corine_level2", "relevance_medium_high")
-    )
+    gemma_corine_relevance = _score(_find("gemma", "corine_level2", "relevance_medium_high"))
     gemma_corine_combined = _score(
         _find("gemma", "corine_level2", "relevance_medium_high_and_spatial_250m_ge_0.8")
     )

@@ -71,6 +71,11 @@ georeset-evaluate-retrieved-evidence-windows-experiment = "georeset.cli.analysis
 georeset-run-clip-linear-probe-experiment = "georeset.cli.analysis.run_clip_linear_probe_experiment:main"
 georeset-run-clip-zero-shot-experiment = "georeset.cli.analysis.run_clip_zero_shot_experiment:main"
 georeset-evaluate-subset-randomization-controls = "georeset.cli.analysis.evaluate_subset_randomization_controls:main"
+georeset-build-image-probe-splits-v2 = "georeset.cli.data.build_image_probe_splits_v2:main"
+georeset-fetch-sentinel-multiscale-patches = "georeset.cli.data.fetch_sentinel_multiscale_patches:main"
+georeset-embed-image-patches = "georeset.cli.data.embed_image_patches:main"
+georeset-run-quality-weighted-image-probe = "georeset.cli.analysis.run_quality_weighted_image_probe:main"
+georeset-evaluate-image-probe-training-policy-controls = "georeset.cli.analysis.evaluate_image_probe_training_policy_controls:main"
 
 [tool.ruff]
 target-version = "py310"
