@@ -3,7 +3,18 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from georeset.cli.analysis.run_clip_linear_probe_experiment import main
+from georeset.cli.analysis.run_clip_linear_probe_experiment import (
+    linear_probe_metrics_path,
+    linear_probe_predictions_path,
+    linear_probe_summary_path,
+    main,
+)
+
+
+def test_clip_linear_probe_output_paths_use_expected_names(tmp_path: Path) -> None:
+    assert linear_probe_metrics_path(tmp_path) == tmp_path / "linear_probe_metrics.csv"
+    assert linear_probe_predictions_path(tmp_path) == tmp_path / "linear_probe_predictions.csv"
+    assert linear_probe_summary_path(tmp_path) == tmp_path / "summary.md"
 
 
 def test_clip_linear_probe_experiment_trains_tiers_from_cached_embeddings(

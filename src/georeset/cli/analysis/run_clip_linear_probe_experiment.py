@@ -17,6 +17,18 @@ from georeset.vision.linear_probe import (
 )
 
 
+def linear_probe_metrics_path(output_dir: Path) -> Path:
+    return output_dir / "linear_probe_metrics.csv"
+
+
+def linear_probe_predictions_path(output_dir: Path) -> Path:
+    return output_dir / "linear_probe_predictions.csv"
+
+
+def linear_probe_summary_path(output_dir: Path) -> Path:
+    return output_dir / "summary.md"
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--splits-path", type=Path, required=True)
@@ -52,7 +64,9 @@ def run_experiment(
         train_rows = train_rows[train_rows["pageid"].isin(embeddings)]
         if train_rows["label"].nunique() < 2:
             continue
-        train_rows, train_x = stack_embeddings_for_rows(train_rows, embeddings, context=f"train/{tier}")
+        train_rows, train_x = stack_embeddings_for_rows(
+            train_rows, embeddings, context=f"train/{tier}"
+        )
         train_y = train_rows["label"].to_numpy()
         model = fit_linear_probe(
             train_x,
@@ -84,15 +98,15 @@ def run_experiment(
             )
         )
     output_dir.mkdir(parents=True, exist_ok=True)
-    write_csv_atomic(output_dir / "linear_probe_metrics.csv", pd.DataFrame(metric_rows), index=False)
+    write_csv_atomic(linear_probe_metrics_path(output_dir), pd.DataFrame(metric_rows), index=False)
     write_csv_atomic(
-        output_dir / "linear_probe_predictions.csv",
+        linear_probe_predictions_path(output_dir),
         pd.DataFrame(prediction_rows),
         index=False,
     )
     summary = pd.DataFrame(metric_rows).sort_values("balanced_accuracy", ascending=False)
     write_text_atomic(
-        output_dir / "summary.md",
+        linear_probe_summary_path(output_dir),
         "# clip_linear_probe_weak_labels_v1\n\n"
         + markdown_table(
             rows=summary.to_dict("records"),
