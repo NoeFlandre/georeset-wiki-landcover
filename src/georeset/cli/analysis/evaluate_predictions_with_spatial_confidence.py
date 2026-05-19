@@ -18,6 +18,7 @@ from georeset.analysis.prediction_loading import load_prediction_records
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.experiment_paths import experiment_artifact_dir, experiment_artifact_file
+from georeset.utils.boolish import parse_boolish
 from georeset.utils.json_io import (
     write_dict_rows_csv_atomic,
     write_dict_rows_table_pair_atomic,
@@ -29,9 +30,7 @@ from georeset.utils.math import safe_div
 EXPERIMENT_ID = "article_text_classification_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
 SPATIAL_EXPERIMENT_ID = "corine_spatial_confidence_v1"
-DEFAULT_PARENT_DIR = Path(
-    experiment_artifact_dir(PARENT_EXPERIMENT_ID)
-)
+DEFAULT_PARENT_DIR = Path(experiment_artifact_dir(PARENT_EXPERIMENT_ID))
 DEFAULT_SPATIAL_PATH = experiment_artifact_file(SPATIAL_EXPERIMENT_ID, "spatial_confidence.csv")
 DEFAULT_OUTPUT_DIR = experiment_artifact_dir(EXPERIMENT_ID)
 
@@ -63,9 +62,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def _subset_mask(spatial: pd.DataFrame, subset_name: str) -> pd.Series:
-    return (
-        SUBSET_DEFINITIONS[subset_name](spatial).astype("boolean").fillna(False).astype(bool)
-    )
+    values = SUBSET_DEFINITIONS[subset_name](spatial)
+    return values.map(lambda value: parse_boolish(value) is True).astype(bool)
 
 
 def _primary_score(row: dict[str, Any]) -> tuple[str, float]:

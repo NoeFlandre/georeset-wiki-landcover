@@ -47,6 +47,23 @@ def test_subset_mask_converts_object_values_without_future_warning():
     assert mask.dtype == bool
 
 
+def test_subset_mask_parses_boolish_string_values_for_dominant_filters():
+    spatial = pd.DataFrame(
+        {
+            "point_label_share_250m": [0.5, 0.5, 0.5, 0.5],
+            "point_label_share_500m": [0.5, 0.5, 0.5, 0.5],
+            "dominant_matches_point_label_250m": ["oui", "non", "on", "off"],
+        },
+        index=pd.Index(["page-a", "page-b", "page-c", "page-d"]),
+    )
+
+    mask = _subset_mask(spatial, "dominant_matches_point_label_250m")
+
+    assert mask.tolist() == [True, False, True, False]
+    assert mask.dtype == bool
+    assert list(mask.index) == ["page-a", "page-b", "page-c", "page-d"]
+
+
 def test_subset_mask_preserves_subset_semantics_for_all_and_numeric_and_dominant_filters():
     spatial = pd.DataFrame(
         {
@@ -354,14 +371,12 @@ def test_spatial_subset_evaluation_accepts_experiment_id_overrides_without_chang
     assert "custom_parent" in summary
     assert "custom_spatial_confidence" in summary
 
-    assert (
-        (default_output_dir / "overview_spatial_subsets.csv").read_text(encoding="utf-8")
-        == (custom_output_dir / "overview_spatial_subsets.csv").read_text(encoding="utf-8")
-    )
-    assert (
-        (default_output_dir / "shuffled_delta_spatial_subsets.csv").read_text(encoding="utf-8")
-        == (custom_output_dir / "shuffled_delta_spatial_subsets.csv").read_text(encoding="utf-8")
-    )
+    assert (default_output_dir / "overview_spatial_subsets.csv").read_text(encoding="utf-8") == (
+        custom_output_dir / "overview_spatial_subsets.csv"
+    ).read_text(encoding="utf-8")
+    assert (default_output_dir / "shuffled_delta_spatial_subsets.csv").read_text(
+        encoding="utf-8"
+    ) == (custom_output_dir / "shuffled_delta_spatial_subsets.csv").read_text(encoding="utf-8")
 
 
 def test_spatial_subset_evaluation_treats_non_ok_predictions_as_parse_errors(tmp_path):
