@@ -89,6 +89,29 @@ def _markdown_cell(value: Any) -> str:
     )
 
 
+def markdown_table(
+    *,
+    rows: Sequence[Mapping[str, Any]],
+    columns: Sequence[str] | None = None,
+) -> str:
+    """Format row mappings as a simple Markdown table."""
+    resolved_columns = resolve_table_columns(rows, columns)
+    if not rows:
+        return "No rows.\n"
+
+    lines = [
+        "| " + " | ".join(_markdown_cell(column) for column in resolved_columns) + " |",
+        "| " + " | ".join(["---"] * len(resolved_columns)) + " |",
+    ]
+    for row in rows:
+        lines.append(
+            "| "
+            + " | ".join(_markdown_cell(row.get(column, "")) for column in resolved_columns)
+            + " |"
+        )
+    return "\n".join(lines) + "\n"
+
+
 def write_markdown_table_atomic(
     path: str | os.PathLike[str],
     *,
@@ -97,23 +120,7 @@ def write_markdown_table_atomic(
     columns: list[str] | None = None,
 ) -> None:
     """Write a simple Markdown table through atomic text replacement."""
-    if columns is None:
-        columns = sorted({key for row in rows for key in row})
-    lines = [f"# {title}", ""]
-    if not rows:
-        lines.append("No rows.")
-    else:
-        lines.extend(
-            [
-                "| " + " | ".join(_markdown_cell(column) for column in columns) + " |",
-                "| " + " | ".join(["---"] * len(columns)) + " |",
-            ]
-        )
-        for row in rows:
-            lines.append(
-                "| " + " | ".join(_markdown_cell(row.get(column, "")) for column in columns) + " |"
-            )
-    write_text_atomic(path, "\n".join(lines) + "\n")
+    write_text_atomic(path, f"# {title}\n\n{markdown_table(rows=rows, columns=columns)}")
 
 
 def resolve_table_columns(

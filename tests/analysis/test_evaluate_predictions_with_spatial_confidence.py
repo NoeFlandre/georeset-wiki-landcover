@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from georeset.cli.analysis import evaluate_predictions_with_spatial_confidence as spatial_eval
 from georeset.cli.analysis.evaluate_predictions_with_spatial_confidence import (
     _subset_mask,
     main,
@@ -251,6 +252,49 @@ def test_spatial_subset_evaluation_recomputes_metrics_and_preserves_parent(tmp_p
     assert (
         manifest["osm_spatial_join_coverage"]["n_osm_predictions_missing_spatial_confidence"] == 6
     )
+
+
+def test_spatial_subset_writes_shared_table_pairs_and_csv_only_per_class(tmp_path, monkeypatch):
+    parent_dir = tmp_path / "parent"
+    output_dir = tmp_path / "out"
+    spatial_path = tmp_path / "spatial.csv"
+    _make_parent(parent_dir)
+    _write_spatial(spatial_path)
+    pair_calls = []
+    csv_calls = []
+
+    def fake_write_dict_rows_table_pair_atomic(*, output_dir, stem, title, rows, columns=None):
+        pair_calls.append((Path(output_dir), stem, title, rows, columns))
+
+    def fake_write_dict_rows_csv_atomic(path, rows, *, columns=None):
+        csv_calls.append((path, rows, columns))
+
+    monkeypatch.setattr(
+        spatial_eval,
+        "write_dict_rows_table_pair_atomic",
+        fake_write_dict_rows_table_pair_atomic,
+    )
+    monkeypatch.setattr(spatial_eval, "write_dict_rows_csv_atomic", fake_write_dict_rows_csv_atomic)
+
+    main(
+        [
+            "--parent-experiment-dir",
+            str(parent_dir),
+            "--spatial-confidence-path",
+            str(spatial_path),
+            "--output-dir",
+            str(output_dir),
+        ]
+    )
+
+    assert [call[1] for call in pair_calls] == [
+        "overview_spatial_subsets",
+        "subset_counts",
+        "shuffled_delta_spatial_subsets",
+        "majority_baselines_spatial_subsets",
+        "class_distribution_by_spatial_subset",
+    ]
+    assert [call[0].name for call in csv_calls] == ["per_class_metrics_corine_spatial_subsets.csv"]
 
 
 def test_spatial_subset_evaluation_accepts_experiment_id_overrides_without_changing_metrics(

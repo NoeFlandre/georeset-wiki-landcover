@@ -9,7 +9,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from georeset.cli.analysis import evaluate_relevance_stratified_predictions as relevance_eval
 from georeset.cli.analysis.evaluate_relevance_stratified_predictions import (
+    _write_summary,
     define_evidence_type_subsets,
     define_relevance_and_spatial_subsets,
     define_relevance_subsets,
@@ -30,6 +32,23 @@ def _write_predictions(
 ) -> None:
     path = parent_dir / f"{task}_{text_source}_predictions.json"
     _write_json(path, records)
+
+
+def test_write_summary_empty_rows_uses_shared_markdown_table(tmp_path, monkeypatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_markdown_table(*, rows: list[dict[str, object]], columns: list[str] | None = None) -> str:
+        calls.append({"rows": rows, "columns": columns})
+        return "No rows.\n"
+
+    monkeypatch.setattr(relevance_eval, "markdown_table", fake_markdown_table)
+
+    _write_summary(tmp_path, [], [], [])
+
+    assert calls == [{"rows": [], "columns": None}]
+    assert (tmp_path / "summary.md").read_text(encoding="utf-8") == (
+        "# article_text_classification_relevance_stratified_v1\n\nNo rows.\n"
+    )
 
 
 def _make_parent_experiment(

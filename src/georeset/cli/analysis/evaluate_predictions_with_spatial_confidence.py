@@ -20,7 +20,7 @@ from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.experiment_paths import experiment_artifact_dir, experiment_artifact_file
 from georeset.utils.json_io import (
     write_dict_rows_csv_atomic,
-    write_dict_rows_markdown_atomic,
+    write_dict_rows_table_pair_atomic,
     write_json_atomic,
     write_text_atomic,
 )
@@ -234,10 +234,12 @@ def evaluate(
         ),
     ]
     for stem, rows, title in outputs:
-        write_dict_rows_csv_atomic(output_dir / f"{stem}.csv", rows)
-        if stem != "per_class_metrics_corine_spatial_subsets":
-            write_dict_rows_markdown_atomic(
-                output_dir / f"{stem}.md",
+        if stem == "per_class_metrics_corine_spatial_subsets":
+            write_dict_rows_csv_atomic(output_dir / f"{stem}.csv", rows)
+        else:
+            write_dict_rows_table_pair_atomic(
+                output_dir=output_dir,
+                stem=stem,
                 title=title,
                 rows=rows,
             )

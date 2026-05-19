@@ -1,8 +1,6 @@
 """Summarize classification experiment metrics into compact overview tables."""
 
 import argparse
-import csv
-import io
 import json
 import logging
 from collections import Counter
@@ -11,7 +9,12 @@ from typing import Any, cast
 
 from georeset.classification.text_sources import shuffled_text_source_pairs, text_source_sort_key
 from georeset.experiment_paths import experiment_artifact_dir
-from georeset.utils.json_io import read_json_file, write_markdown_table_atomic, write_text_atomic
+from georeset.utils.json_io import (
+    read_json_file,
+    write_dict_rows_csv_atomic,
+    write_markdown_table_atomic,
+    write_text_atomic,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -196,11 +199,7 @@ def collect_metric_rows(experiment_dir: Path) -> list[dict[str, Any]]:
 
 
 def write_overview_csv(rows: list[dict[str, Any]], output_path: Path) -> None:
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=FIELDNAMES)
-    writer.writeheader()
-    writer.writerows(rows)
-    write_text_atomic(output_path, output.getvalue())
+    write_dict_rows_csv_atomic(output_path, rows, columns=FIELDNAMES)
 
 
 def _format_cell(value: Any) -> str:
@@ -316,11 +315,7 @@ def shuffled_delta_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def write_shuffled_delta_csv(rows: list[dict[str, Any]], output_path: Path) -> None:
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=SHUFFLED_DELTA_FIELDNAMES)
-    writer.writeheader()
-    writer.writerows(rows)
-    write_text_atomic(output_path, output.getvalue())
+    write_dict_rows_csv_atomic(output_path, rows, columns=SHUFFLED_DELTA_FIELDNAMES)
 
 
 def write_shuffled_delta_markdown(rows: list[dict[str, Any]], output_path: Path) -> None:

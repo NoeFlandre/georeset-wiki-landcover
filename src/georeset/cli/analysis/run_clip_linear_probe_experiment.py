@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 from georeset.experiment_paths import experiment_artifact_dir
-from georeset.utils.json_io import write_csv_atomic, write_text_atomic
+from georeset.utils.json_io import markdown_table, write_csv_atomic, write_text_atomic
 from georeset.vision.clip_embedding_cache import load_embedding_cache, stack_embeddings_for_rows
 from georeset.vision.linear_probe import (
     evaluate_predictions,
@@ -30,19 +30,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=600)
     parser.add_argument("--learning-rate", type=float, default=0.1)
     return parser.parse_args(argv)
-
-
-def _markdown_table(frame: pd.DataFrame) -> str:
-    if frame.empty:
-        return "No rows.\n"
-    columns = list(frame.columns)
-    lines = [
-        "| " + " | ".join(columns) + " |",
-        "| " + " | ".join("---" for _ in columns) + " |",
-    ]
-    for row in frame.itertuples(index=False):
-        lines.append("| " + " | ".join(str(value) for value in row) + " |")
-    return "\n".join(lines) + "\n"
 
 
 def run_experiment(
@@ -106,7 +93,11 @@ def run_experiment(
     summary = pd.DataFrame(metric_rows).sort_values("balanced_accuracy", ascending=False)
     write_text_atomic(
         output_dir / "summary.md",
-        "# clip_linear_probe_weak_labels_v1\n\n" + _markdown_table(summary),
+        "# clip_linear_probe_weak_labels_v1\n\n"
+        + markdown_table(
+            rows=summary.to_dict("records"),
+            columns=list(summary.columns),
+        ),
     )
 
 

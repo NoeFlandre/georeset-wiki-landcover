@@ -9,6 +9,7 @@ from shapely.geometry import Point
 
 from georeset.utils import json_io
 from georeset.utils.json_io import (
+    markdown_table,
     read_json_file,
     resolve_table_columns,
     write_csv_atomic,
@@ -109,6 +110,21 @@ def test_write_markdown_table_atomic_escapes_cells_and_preserves_column_order(tm
         "| forest \\| water | line one<br>line two |\n"
     )
     assert not list(output_path.parent.glob("*.tmp"))
+
+
+def test_markdown_table_formats_rows_without_title() -> None:
+    assert markdown_table(
+        rows=[{"label": "forest | water", "note": "line one\nline two"}],
+        columns=["label", "note"],
+    ) == (
+        "| label | note |\n"
+        "| --- | --- |\n"
+        "| forest \\| water | line one<br>line two |\n"
+    )
+
+
+def test_markdown_table_returns_no_rows_for_empty_input() -> None:
+    assert markdown_table(rows=[], columns=["label", "note"]) == "No rows.\n"
 
 
 def test_write_geojson_atomic_uses_replace_after_temp_geojson_is_written(tmp_path, monkeypatch):

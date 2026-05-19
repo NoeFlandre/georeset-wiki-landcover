@@ -1,7 +1,10 @@
 import csv
 import json
 
+from georeset.cli.analysis import summarize_classification_experiment as summarize
 from georeset.cli.analysis.summarize_classification_experiment import (
+    FIELDNAMES,
+    SHUFFLED_DELTA_FIELDNAMES,
     collect_metric_rows,
     majority_baseline_score,
     shuffled_delta_rows,
@@ -163,6 +166,21 @@ def test_write_overview_outputs_csv_and_markdown(tmp_path):
     assert "osm/summary" in md_path.read_text(encoding="utf-8")
 
 
+def test_write_overview_csv_uses_shared_atomic_dict_row_writer(tmp_path, monkeypatch):
+    rows = [{"run": "osm/summary", "extra": "preserved"}]
+    calls = []
+
+    def fake_write_dict_rows_csv_atomic(path, written_rows, *, columns=None):
+        calls.append((path, written_rows, columns))
+
+    monkeypatch.setattr(summarize, "write_dict_rows_csv_atomic", fake_write_dict_rows_csv_atomic)
+
+    output_path = tmp_path / "overview.csv"
+    write_overview_csv(rows, output_path)
+
+    assert calls == [(output_path, rows, FIELDNAMES)]
+
+
 def test_write_shuffled_delta_outputs_landuse_pairs(tmp_path):
     rows = [
         {
@@ -224,6 +242,21 @@ def test_write_shuffled_delta_outputs_landuse_pairs(tmp_path):
     assert csv_rows[0]["text_source"] == "landuse_evidence_summary"
     assert csv_rows[0]["delta"] == "0.13"
     assert "landuse_evidence_summary_shuffled" in md_path.read_text(encoding="utf-8")
+
+
+def test_write_shuffled_delta_csv_uses_shared_atomic_dict_row_writer(tmp_path, monkeypatch):
+    rows = [{"task": "osm", "text_source": "summary"}]
+    calls = []
+
+    def fake_write_dict_rows_csv_atomic(path, written_rows, *, columns=None):
+        calls.append((path, written_rows, columns))
+
+    monkeypatch.setattr(summarize, "write_dict_rows_csv_atomic", fake_write_dict_rows_csv_atomic)
+
+    output_path = tmp_path / "shuffled_delta.csv"
+    write_shuffled_delta_csv(rows, output_path)
+
+    assert calls == [(output_path, rows, SHUFFLED_DELTA_FIELDNAMES)]
 
 
 def test_write_shuffled_delta_outputs_evidence_highlight_pairs(tmp_path):

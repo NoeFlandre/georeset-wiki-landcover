@@ -25,6 +25,7 @@ from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.classification.text_sources import shuffled_text_source_pairs
 from georeset.experiment_paths import experiment_artifact_dir, experiment_artifact_file
 from georeset.utils.json_io import (
+    markdown_table,
     write_dict_rows_csv_atomic,
     write_dict_rows_markdown_atomic,
     write_json_atomic,
@@ -622,7 +623,11 @@ def _write_summary(
     comparison_rows: list[dict[str, Any]],
 ) -> None:
     if not overview_rows:
-        write_text_atomic(output_dir / "summary.md", "# article_text_classification_relevance_stratified_v1\n\nNo rows.\n")
+        write_text_atomic(
+            output_dir / "summary.md",
+            "# article_text_classification_relevance_stratified_v1\n\n"
+            + markdown_table(rows=[]),
+        )
         return
     rows = sorted(
         [row for row in comparison_rows if isinstance(row.get("delta_a_minus_b"), (int, float))],
