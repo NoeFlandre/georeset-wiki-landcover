@@ -3,7 +3,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from georeset.cli.analysis.evaluate_image_probe_training_policy_controls import evaluate_controls
+from georeset.cli.analysis.evaluate_image_probe_training_policy_controls import (
+    evaluate_controls,
+    image_probe_control_manifest_path,
+    image_probe_random_controls_markdown_path,
+    image_probe_random_controls_path,
+)
 from georeset.cli.analysis.run_quality_weighted_image_probe import (
     bootstrap_confidence_intervals_path,
     confusion_matrices_path,
@@ -139,6 +144,20 @@ def test_evaluate_image_probe_training_policy_controls_writes_required_outputs(
     assert (output_dir / "image_probe_random_training_controls.csv").exists()
     assert (output_dir / "image_probe_random_training_controls.md").exists()
     assert (output_dir / "control_manifest.json").exists()
+
+
+def test_image_probe_training_policy_control_output_paths_use_expected_names(
+    tmp_path: Path,
+) -> None:
+    assert (
+        image_probe_random_controls_path(tmp_path)
+        == tmp_path / "image_probe_random_training_controls.csv"
+    )
+    assert (
+        image_probe_random_controls_markdown_path(tmp_path)
+        == tmp_path / "image_probe_random_training_controls.md"
+    )
+    assert image_probe_control_manifest_path(tmp_path) == tmp_path / "control_manifest.json"
 
 
 def test_quality_weighted_zero_shot_output_paths_use_expected_names(tmp_path: Path) -> None:

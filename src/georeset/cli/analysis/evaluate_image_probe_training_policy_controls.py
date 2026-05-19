@@ -29,6 +29,18 @@ EXPERIMENT_ID = "quality_weighted_multiscale_image_probe_v1"
 HARD_TIERS = ("quality_spatial", "text_spatial_agreement")
 
 
+def image_probe_random_controls_path(output_dir: Path) -> Path:
+    return output_dir / "image_probe_random_training_controls.csv"
+
+
+def image_probe_random_controls_markdown_path(output_dir: Path) -> Path:
+    return output_dir / "image_probe_random_training_controls.md"
+
+
+def image_probe_control_manifest_path(output_dir: Path) -> Path:
+    return output_dir / "control_manifest.json"
+
+
 def stable_seed(seed: int, *parts: object) -> int:
     digest = hashlib.sha256(
         "|".join([str(seed), *[str(part) for part in parts]]).encode()
@@ -190,9 +202,9 @@ def evaluate_controls(
                 )
     output_dir.mkdir(parents=True, exist_ok=True)
     controls = pd.DataFrame(rows_out)
-    write_csv_atomic(output_dir / "image_probe_random_training_controls.csv", controls, index=False)
+    write_csv_atomic(image_probe_random_controls_path(output_dir), controls, index=False)
     write_text_atomic(
-        output_dir / "image_probe_random_training_controls.md",
+        image_probe_random_controls_markdown_path(output_dir),
         "# Experiment 014 random training controls\n\n"
         + (
             markdown_table(rows=controls.to_dict("records"))
@@ -202,7 +214,7 @@ def evaluate_controls(
         + "\n",
     )
     write_json_atomic(
-        output_dir / "control_manifest.json",
+        image_probe_control_manifest_path(output_dir),
         {
             "experiment_id": EXPERIMENT_ID,
             "splits_path": str(splits_path),
