@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from numbers import Real
 
+import pandas as pd
+
 TRUE_STRINGS = {"true", "t", "yes", "y", "oui", "on", "1"}
 FALSE_STRINGS = {"false", "f", "no", "n", "non", "off", "0"}
 NONE_STRINGS = {"", "nan", "none", "null"}
@@ -41,3 +43,8 @@ def parse_boolish(value: object) -> bool | None:
         if normalized in NONE_STRINGS:
             return None
     return None
+
+
+def parse_boolish_series(values: pd.Series) -> pd.Series:
+    """Return a strict bool mask from boolish scalar values."""
+    return values.map(lambda value: parse_boolish(value) is True).astype(bool)

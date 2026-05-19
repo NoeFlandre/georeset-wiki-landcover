@@ -18,7 +18,7 @@ from georeset.analysis.prediction_loading import load_prediction_records
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 from georeset.experiment_paths import experiment_artifact_dir, experiment_artifact_file
-from georeset.utils.boolish import parse_boolish
+from georeset.utils.boolish import parse_boolish_series
 from georeset.utils.json_io import (
     write_dict_rows_csv_atomic,
     write_dict_rows_table_pair_atomic,
@@ -63,7 +63,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def _subset_mask(spatial: pd.DataFrame, subset_name: str) -> pd.Series:
     values = SUBSET_DEFINITIONS[subset_name](spatial)
-    return values.map(lambda value: parse_boolish(value) is True).astype(bool)
+    return parse_boolish_series(values)
 
 
 def _primary_score(row: dict[str, Any]) -> tuple[str, float]:

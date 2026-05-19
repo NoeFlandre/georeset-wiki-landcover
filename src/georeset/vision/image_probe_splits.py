@@ -9,7 +9,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from georeset.utils.boolish import parse_boolish
+from georeset.utils.boolish import parse_boolish_series
 
 TRAIN_TIERS = ("all", "spatial_only", "quality_spatial", "text_spatial_agreement")
 RELEVANCE_COMPONENT = {"none": 0.25, "low": 0.60, "medium": 1.00, "high": 1.25}
@@ -110,9 +110,9 @@ def _base_frame(
     frame["models_agree_with_label"] = frame["qwen_prediction"].eq(
         frame["gemma_prediction"]
     ) & frame["qwen_prediction"].eq(frame["label"])
-    frame["dominant_matches_point_label_250m_parsed"] = frame[
-        "dominant_matches_point_label_250m"
-    ].map(lambda value: parse_boolish(value) is True)
+    frame["dominant_matches_point_label_250m_parsed"] = parse_boolish_series(
+        frame["dominant_matches_point_label_250m"]
+    )
     frame["spatial_ok"] = (
         pd.to_numeric(frame["point_label_share_250m"], errors="coerce").ge(0.8)
         & frame["dominant_matches_point_label_250m_parsed"]
@@ -138,7 +138,7 @@ def _tier_mask(frame: pd.DataFrame, tier: str) -> pd.Series:
     if tier == "all":
         return pd.Series(True, index=frame.index)
     if tier in {"spatial_only", "quality_spatial", "text_spatial_agreement"}:
-        return frame[tier].map(lambda value: parse_boolish(value) is True).astype(bool)
+        return parse_boolish_series(frame[tier])
     raise ValueError(f"Unknown image probe tier: {tier}")
 
 

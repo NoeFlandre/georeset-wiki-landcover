@@ -26,7 +26,7 @@ from georeset.analysis.prediction_loading import infer_model_for_records, load_p
 from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
 from georeset.classification.text_sources import shuffled_text_source_pairs
 from georeset.experiment_paths import experiment_artifact_dir, experiment_artifact_file
-from georeset.utils.boolish import parse_boolish
+from georeset.utils.boolish import parse_boolish_series
 from georeset.utils.json_io import (
     markdown_table,
     resolve_table_columns,
@@ -182,7 +182,7 @@ def _numeric(frame: pd.DataFrame, column: str) -> pd.Series:
 
 def _boolish(frame: pd.DataFrame, column: str) -> pd.Series:
     values = _series(frame, column)
-    return values.map(lambda value: parse_boolish(value) is True).astype(bool)
+    return parse_boolish_series(values)
 
 
 def _is_article_type(frame: pd.DataFrame, values: set[str]) -> pd.Series:

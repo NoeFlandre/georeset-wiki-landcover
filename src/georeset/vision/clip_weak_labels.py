@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from georeset.utils.boolish import parse_boolish
+from georeset.utils.boolish import parse_boolish_series
 from georeset.utils.json_io import write_csv_atomic
 
 TRAIN_TIERS = (
@@ -65,9 +65,9 @@ def _base_frame(
 
 
 def _tier_mask(frame: pd.DataFrame, tier: str) -> pd.Series:
-    spatial = frame["point_label_share_250m"].ge(0.8) & frame[
-        "dominant_matches_point_label_250m"
-    ].map(lambda value: parse_boolish(value) is True)
+    spatial = frame["point_label_share_250m"].ge(0.8) & parse_boolish_series(
+        frame["dominant_matches_point_label_250m"]
+    )
     relevance = frame["landcover_relevance"].isin(["medium", "high"])
     quality = frame["quality_bin"].isin(["quality_high", "quality_very_high"])
     low_uncertainty = ~frame["uncertainty"].eq("high")
