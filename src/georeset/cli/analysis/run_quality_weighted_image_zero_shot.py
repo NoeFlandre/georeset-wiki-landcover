@@ -12,6 +12,7 @@ import pandas as pd
 
 from georeset.analysis.supported_metrics import single_label_metrics_supported
 from georeset.cli.analysis.run_clip_zero_shot_experiment import build_transformers_clip_text_encoder
+from georeset.cli.csv_args import parse_csv_strings
 from georeset.experiment_paths import experiment_artifact_dir
 from georeset.utils.json_io import markdown_table, write_csv_atomic, write_text_atomic
 from georeset.vision.clip_embedding_cache import load_embedding_cache, stack_embeddings_for_rows
@@ -24,10 +25,6 @@ from georeset.vision.clip_zero_shot import (
 
 EXPERIMENT_ID = "quality_weighted_multiscale_image_probe_v1"
 TextEncoderFactory = Callable[[str, str], TextEncoder]
-
-
-def _parse_csv(value: str) -> list[str]:
-    return [part.strip() for part in value.split(",") if part.strip()]
 
 
 def _embedding_files(output_dir: Path, encoders: list[str], windows: list[str]) -> list[Path]:
@@ -51,6 +48,7 @@ def run_zero_shot_image_probe(
     text_encoder_factory: TextEncoderFactory | None = None,
 ) -> None:
     if text_encoder_factory is None:
+
         def default_text_encoder_factory(model_name: str, device: str) -> TextEncoder:
             return build_transformers_clip_text_encoder(model_name=model_name, device=device)
 
@@ -67,10 +65,14 @@ def run_zero_shot_image_probe(
         encoder = str(data["encoder_name"]) if "encoder_name" in data else embeddings_path.stem
         if not _is_clip_encoder(encoder):
             continue
-        model_name = str(data["model_name"]) if "model_name" in data else "openai/clip-vit-base-patch32"
+        model_name = (
+            str(data["model_name"]) if "model_name" in data else "openai/clip-vit-base-patch32"
+        )
         window_m = int(data["window_m"]) if "window_m" in data else -1
         embeddings = load_embedding_cache(embeddings_path)
-        rows, eval_x = stack_embeddings_for_rows(eval_rows, embeddings, context=f"{encoder}/zero_shot")
+        rows, eval_x = stack_embeddings_for_rows(
+            eval_rows, embeddings, context=f"{encoder}/zero_shot"
+        )
         y_true = rows["label"].to_numpy(dtype=str)
         prompts = build_corine_zero_shot_prompts(sorted(set(y_true.tolist())))
         text_encoder = text_encoder_factory(model_name, device)
@@ -137,8 +139,8 @@ def main(argv: list[str] | None = None) -> None:
     output_dir = args.output_dir
     embeddings_paths = args.embeddings_path or _embedding_files(
         output_dir,
-        _parse_csv(args.encoders),
-        _parse_csv(args.windows),
+        parse_csv_strings(args.encoders),
+        parse_csv_strings(args.windows),
     )
     run_zero_shot_image_probe(
         splits_path=args.splits_path or output_dir / "image_probe_splits_v2.csv",

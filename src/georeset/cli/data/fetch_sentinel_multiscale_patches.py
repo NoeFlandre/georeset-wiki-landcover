@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from georeset.cli.csv_args import parse_csv_ints
 from georeset.experiment_paths import experiment_artifact_dir, experiment_artifact_file
 from georeset.vision.sentinel_multiscale_patches import (
     sentinel2_planetary_computer_multiscale_fetcher,
@@ -13,10 +14,6 @@ from georeset.vision.sentinel_multiscale_patches import (
 )
 
 EXPERIMENT_ID = "quality_weighted_multiscale_image_probe_v1"
-
-
-def _parse_windows(value: str) -> list[int]:
-    return [int(part.strip()) for part in value.split(",") if part.strip()]
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -37,7 +34,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
-    window_m_values = _parse_windows(args.window_m)
+    window_m_values = parse_csv_ints(args.window_m)
     fetcher = sentinel2_planetary_computer_multiscale_fetcher(
         cloud_cover=args.cloud_cover,
         datetime_range=args.datetime_range,

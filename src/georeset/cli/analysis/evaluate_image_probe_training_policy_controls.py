@@ -12,6 +12,7 @@ import pandas as pd
 from numpy.typing import NDArray
 
 from georeset.analysis.supported_metrics import single_label_metrics_supported
+from georeset.cli.csv_args import parse_csv_strings
 from georeset.experiment_paths import experiment_artifact_dir
 from georeset.utils.json_io import (
     markdown_table,
@@ -212,10 +213,6 @@ def evaluate_controls(
     )
 
 
-def _parse_csv(value: str) -> list[str]:
-    return [part.strip() for part in value.split(",") if part.strip()]
-
-
 def _embedding_files(output_dir: Path, encoders: list[str], windows: list[str]) -> list[Path]:
     return [
         output_dir / f"embeddings_{encoder}_window_{int(window):04d}m.npz"
@@ -244,8 +241,8 @@ def main(argv: list[str] | None = None) -> None:
     output_dir = args.output_dir
     embeddings_paths = args.embeddings_path or _embedding_files(
         output_dir,
-        _parse_csv(args.encoders),
-        _parse_csv(args.windows),
+        parse_csv_strings(args.encoders),
+        parse_csv_strings(args.windows),
     )
     evaluate_controls(
         splits_path=args.splits_path or output_dir / "image_probe_splits_v2.csv",
