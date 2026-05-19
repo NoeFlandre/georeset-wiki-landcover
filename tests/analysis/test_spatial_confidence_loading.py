@@ -67,9 +67,7 @@ def test_load_parquet_if_pyarrow_available(tmp_path: Path) -> None:
 
 def test_load_csv_missing_pageid_returns_empty_when_allowed(tmp_path: Path) -> None:
     path = tmp_path / "missing_pageid.csv"
-    pd.DataFrame({"other": [1, 2], "point_label_share_250m": [0.1, 0.2]}).to_csv(
-        path, index=False
-    )
+    pd.DataFrame({"other": [1, 2], "point_label_share_250m": [0.1, 0.2]}).to_csv(path, index=False)
 
     loaded = load_spatial_confidence(path, allow_missing_pageid=True)
 
@@ -78,9 +76,7 @@ def test_load_csv_missing_pageid_returns_empty_when_allowed(tmp_path: Path) -> N
 
 def test_load_csv_missing_pageid_raises_by_default(tmp_path: Path) -> None:
     path = tmp_path / "missing_pageid.csv"
-    pd.DataFrame({"other": [1, 2], "point_label_share_250m": [0.1, 0.2]}).to_csv(
-        path, index=False
-    )
+    pd.DataFrame({"other": [1, 2], "point_label_share_250m": [0.1, 0.2]}).to_csv(path, index=False)
 
     with pytest.raises(ValueError, match="missing required column.*pageid"):
         load_spatial_confidence(path)
@@ -90,7 +86,7 @@ def test_coerces_dominant_match_columns_from_string_values_to_nullable_bool(tmp_
     path = tmp_path / "dominant.csv"
     pd.DataFrame(
         {
-            "pageid": ["1", "2", "3", "4", "5", "6", "7", "8"],
+            "pageid": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
             "dominant_matches_point_label_250m": [
                 "true",
                 "FALSE",
@@ -100,6 +96,8 @@ def test_coerces_dominant_match_columns_from_string_values_to_nullable_bool(tmp_
                 "",
                 "1",
                 "0",
+                "oui",
+                "non",
             ],
             "dominant_matches_point_label_500m": [
                 "FALSE",
@@ -110,6 +108,8 @@ def test_coerces_dominant_match_columns_from_string_values_to_nullable_bool(tmp_
                 None,
                 "maybe",
                 "",
+                "on",
+                "off",
             ],
         }
     ).to_csv(path, index=False)
@@ -122,8 +122,30 @@ def test_coerces_dominant_match_columns_from_string_values_to_nullable_bool(tmp_
     mask_250 = loaded["dominant_matches_point_label_250m"].astype("boolean").fillna(False)
     mask_500 = loaded["dominant_matches_point_label_500m"].astype("boolean").fillna(False)
 
-    assert mask_250.tolist() == [True, False, True, False, False, False, True, False]
-    assert mask_500.tolist() == [False, True, False, True, False, False, False, False]
+    assert mask_250.tolist() == [
+        True,
+        False,
+        True,
+        False,
+        False,
+        False,
+        True,
+        False,
+        True,
+        False,
+    ]
+    assert mask_500.tolist() == [
+        False,
+        True,
+        False,
+        True,
+        False,
+        False,
+        False,
+        False,
+        True,
+        False,
+    ]
 
 
 def test_numeric_point_label_columns_are_preserved(tmp_path: Path) -> None:
@@ -142,7 +164,4 @@ def test_numeric_point_label_columns_are_preserved(tmp_path: Path) -> None:
     loaded = load_spatial_confidence(path)
 
     assert loaded["point_label_share_250m"].tolist() == frame["point_label_share_250m"].tolist()
-    assert (
-        loaded["point_label_share_500m"].tolist()
-        == frame["point_label_share_500m"].tolist()
-    )
+    assert loaded["point_label_share_500m"].tolist() == frame["point_label_share_500m"].tolist()

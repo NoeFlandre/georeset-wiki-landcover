@@ -6,24 +6,14 @@ from pathlib import Path
 
 import pandas as pd
 
-_TRUE_VALUES = {"1", "t", "true", "yes", "y"}
-_FALSE_VALUES = {"0", "f", "false", "no", "n", ""}
-_NULL_VALUES = {"", "none", "null", "nan", "na"}
+from georeset.utils.boolish import parse_boolish
 
 
 def _coerce_dominant_match_value(value: object) -> object:
-    if isinstance(value, bool):
-        return value
-    if pd.isna(value):
+    parsed = parse_boolish(value)
+    if parsed is None:
         return pd.NA
-    normalized = str(value).strip().lower()
-    if normalized in _TRUE_VALUES:
-        return True
-    if normalized in _FALSE_VALUES:
-        return False
-    if normalized in _NULL_VALUES:
-        return pd.NA
-    return pd.NA
+    return parsed
 
 
 def _coerce_dominant_match_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -48,9 +38,7 @@ def load_spatial_confidence(
     if "pageid" not in df.columns:
         if allow_missing_pageid:
             return pd.DataFrame()
-        raise ValueError(
-            f"Spatial-confidence file '{path}' is missing required column: pageid."
-        )
+        raise ValueError(f"Spatial-confidence file '{path}' is missing required column: pageid.")
 
     df["pageid"] = df["pageid"].astype(str)
     if "point_label" in df.columns:
