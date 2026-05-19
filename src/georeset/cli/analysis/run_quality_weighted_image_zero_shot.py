@@ -28,6 +28,18 @@ EXPERIMENT_ID = "quality_weighted_multiscale_image_probe_v1"
 TextEncoderFactory = Callable[[str, str], TextEncoder]
 
 
+def zero_shot_image_probe_metrics_path(output_dir: Path) -> Path:
+    return output_dir / "zero_shot_image_probe_metrics.csv"
+
+
+def zero_shot_image_probe_predictions_path(output_dir: Path) -> Path:
+    return output_dir / "zero_shot_image_probe_predictions.csv"
+
+
+def zero_shot_image_probe_summary_path(output_dir: Path) -> Path:
+    return output_dir / "zero_shot_image_probe_summary.md"
+
+
 def _is_clip_encoder(encoder_name: str) -> bool:
     return encoder_name.startswith("clip_")
 
@@ -98,9 +110,9 @@ def run_zero_shot_image_probe(
         )
     output_dir.mkdir(parents=True, exist_ok=True)
     metrics = pd.DataFrame(metric_rows)
-    write_csv_atomic(output_dir / "zero_shot_image_probe_metrics.csv", metrics, index=False)
+    write_csv_atomic(zero_shot_image_probe_metrics_path(output_dir), metrics, index=False)
     write_csv_atomic(
-        output_dir / "zero_shot_image_probe_predictions.csv",
+        zero_shot_image_probe_predictions_path(output_dir),
         pd.DataFrame(prediction_rows),
         index=False,
     )
@@ -113,7 +125,7 @@ def run_zero_shot_image_probe(
             + markdown_table(rows=metrics.to_dict("records"))
             + "\n"
         )
-    write_text_atomic(output_dir / "zero_shot_image_probe_summary.md", summary)
+    write_text_atomic(zero_shot_image_probe_summary_path(output_dir), summary)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

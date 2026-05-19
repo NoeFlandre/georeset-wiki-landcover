@@ -5,7 +5,12 @@ import pandas as pd
 
 from georeset.cli.analysis.evaluate_image_probe_training_policy_controls import evaluate_controls
 from georeset.cli.analysis.run_quality_weighted_image_probe import run_probe
-from georeset.cli.analysis.run_quality_weighted_image_zero_shot import run_zero_shot_image_probe
+from georeset.cli.analysis.run_quality_weighted_image_zero_shot import (
+    run_zero_shot_image_probe,
+    zero_shot_image_probe_metrics_path,
+    zero_shot_image_probe_predictions_path,
+    zero_shot_image_probe_summary_path,
+)
 
 
 def _write_probe_fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
@@ -112,6 +117,21 @@ def test_evaluate_image_probe_training_policy_controls_writes_required_outputs(
     assert (output_dir / "image_probe_random_training_controls.csv").exists()
     assert (output_dir / "image_probe_random_training_controls.md").exists()
     assert (output_dir / "control_manifest.json").exists()
+
+
+def test_quality_weighted_zero_shot_output_paths_use_expected_names(tmp_path: Path) -> None:
+    assert (
+        zero_shot_image_probe_metrics_path(tmp_path)
+        == tmp_path / "zero_shot_image_probe_metrics.csv"
+    )
+    assert (
+        zero_shot_image_probe_predictions_path(tmp_path)
+        == tmp_path / "zero_shot_image_probe_predictions.csv"
+    )
+    assert (
+        zero_shot_image_probe_summary_path(tmp_path)
+        == tmp_path / "zero_shot_image_probe_summary.md"
+    )
 
 
 def test_run_quality_weighted_image_zero_shot_writes_window_aware_outputs(
