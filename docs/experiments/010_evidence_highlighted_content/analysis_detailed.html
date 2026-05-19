@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment 010 - Evidence-Highlighted Content</title>
+  <style>
+    :root {
+      --bg:#f6f7fc; --panel:#fff; --line:#d8e0f2; --text:#0f172a; --muted:#54607a;
+      --accent:#1d4ed8; --ok:#166534; --warn:#b45309; --bad:#b91c1c;
+      --shadow:0 10px 30px rgba(15,23,42,.08);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:linear-gradient(140deg,#f8fbff 0%,var(--bg) 46%,#edf3ff 100%);color:var(--text);font:14px/1.5 "Inter","Segoe UI",Roboto,Arial,sans-serif}
+    .container{width:min(1180px,calc(100% - 44px));margin:18px auto 42px}
+    h1{margin:0 0 6px;font-size:38px;line-height:1.08;letter-spacing:-.35px}
+    h2{margin:22px 0 10px;font-size:26px;border-left:4px solid var(--accent);padding-left:12px;line-height:1.15}
+    h3{margin:10px 0 8px;font-size:18px}
+    p{margin:.25rem 0 .85rem}
+    a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+    ul{margin:.35rem 0 .8rem 1.2rem;padding:0}
+    .subtitle{color:var(--muted);margin-bottom:14px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow);min-width:0}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px}
+    .kpi{border:1px solid var(--line);border-radius:10px;background:#fbfdff;padding:10px;min-width:0}
+    .kpi .k{color:var(--muted);font-size:11px}.kpi .v{font-size:24px;font-weight:750;margin-top:3px;line-height:1.15;overflow-wrap:anywhere}
+    .badge{display:inline-block;margin:0 4px 4px 0;padding:2px 8px;border:1px solid #c9d6f2;border-radius:999px;background:#f0f5ff;font-size:11px;color:#25395f}
+    code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+    pre{border:1px solid #dbe6ff;border-radius:8px;padding:10px;background:#f6f8ff;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;background:#fff}
+    th,td{border-bottom:1px solid var(--line);padding:8px 7px;text-align:left;vertical-align:top}
+    th{background:#eff4ff}
+    .callout{border-left:4px solid #8b5cf6;background:#f4efff;padding:8px 10px;border-radius:8px;margin-top:8px;color:#341d66;font-size:13px}
+    .warn-box{border-left:4px solid var(--warn);background:#fff7ed;padding:8px 10px;border-radius:8px;margin-top:8px;color:#7c2d12;font-size:13px}
+    .foot{margin-top:8px;color:var(--muted);font-size:11px}.positive{color:var(--ok);font-weight:650}.negative{color:var(--bad);font-weight:650}
+    .section-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+    .mermaid{overflow-x:auto;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fcfdff}
+    @media(max-width:980px){.split{grid-template-columns:1fr}h1{font-size:30px}}
+  </style>
+  <script type="module">
+    const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';s.onload=()=>{window.mermaid?.initialize({startOnLoad:false,securityLevel:'loose',theme:'default',flowchart:{useMaxWidth:true,nodeSpacing:56,rankSpacing:50,curve:'basis'},themeVariables:{fontSize:'13px'}});window.mermaid?.run({nodes:document.querySelectorAll('.mermaid')});};document.head.appendChild(s);
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Experiment 010: Evidence-Highlighted Content</h1>
+    <div class="subtitle">Detailed implementation and result audit for prepending deterministic evidence highlights to raw Wikipedia content.</div>
+
+    <div class="panel">
+      <div class="section-title"><h2>1) Executive summary</h2><span class="badge">Qwen + Gemma rerun</span></div>
+      <p>Experiment 010 keeps the full raw article but prepends a small no-LLM highlight block built from extracted evidence sentences. It tests whether front-loading land-cover cues helps without replacing the article.</p>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="k">New text sources</div><div class="v">2</div></div>
+        <div class="kpi"><div class="k">Models rerun</div><div class="v">Qwen + Gemma</div></div>
+        <div class="kpi"><div class="k">CORINE valid predictions</div><div class="v">1,251 / 1,251</div></div>
+        <div class="kpi"><div class="k">OSM valid predictions</div><div class="v">275 / 275</div></div>
+        <div class="kpi"><div class="k">Qwen CORINE delta</div><div class="v">+0.183 BA</div></div>
+        <div class="kpi"><div class="k">Main conclusion</div><div class="v">linked signal, raw content still stronger</div></div>
+      </div>
+      <p class="callout">Main result: highlighted content is clearly article-linked and better than the short land-use evidence summary for CORINE, but it is not a better replacement for raw content.</p>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h2>2) Source artifacts</h2>
+        <ul>
+          <li><a href="/Users/noeflandre/georeset/data/wiki/article_evidence_highlights.json">article_evidence_highlights.json</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/article_text_evidence_highlights_v1__qwen3_6_27b_q4_0">Qwen highlighted-content run</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/article_text_evidence_highlights_v1__gemma4_31b_it_q4_0">Gemma highlighted-content run</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_vs_previous_sources.csv">evidence_highlights_vs_previous_sources.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_quality_subsets.csv">evidence_highlights_quality_subsets.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_shuffled_deltas.csv">evidence_highlights_shuffled_deltas.csv</a></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h2>3) Processing flow</h2>
+        <div class="mermaid">
+flowchart TD
+  A["land-use evidence metadata"] --> B["no-place evidence highlight block"]
+  B --> C["prepend to raw article"]
+  C --> D["content_with_evidence_highlights"]
+  D --> E["Qwen + Gemma CORINE/OSM rerun"]
+  D --> F["shuffled highlighted-content control"]
+  E --> G["compare with raw content, summaries, land-use summary"]
+  F --> G
+        </div>
+        <p class="foot">The highlight block is deterministic. The classifier is rerun on the resulting text sources.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>4) What a highlighted-content input looks like</h2>
+      <p>Experiment 010 introduces a highlight block. Unlike the evidence card, it is deliberately minimal: relevance, uncertainty, evidence types, and extracted no-place evidence sentences. It does not include labels, coordinates, spatial purity, predicted labels, or quality scores.</p>
+      <pre>Indices d'occupation du sol extraits, sans nom de lieu.
+
+Pertinence des indices: low
+Incertitude des indices: low
+Types d'indices: forêt
+
+Phrases d'indices:
+- Le site est situé dans une forêt.
+
+Texte complet de l'article:
+La nécropoles protohistoriques et gallo-romaine de Brumath est un monument historique situé à Brumath, dans le département français du Bas-Rhin.
+
+== Localisation ==
+Ce site situé dans la forêt de Brumath.
+
+...</pre>
+      <p class="foot">Example source: <a href="/Users/noeflandre/georeset/data/wiki/article_evidence_highlights.json">article_evidence_highlights.json</a>. The prepended block is no-place; the appended raw article can still contain place names.</p>
+    </div>
+
+    <div class="panel">
+      <h2>5) What the highlights exclude</h2>
+      <table>
+        <thead><tr><th>Included</th><th>Excluded</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td>Land-cover relevance</td><td>CORINE / OSM target labels</td><td>Avoid direct label leakage.</td></tr>
+          <tr><td>Uncertainty</td><td>Predicted labels</td><td>Keep the source deterministic and independent of classifier outputs.</td></tr>
+          <tr><td>Evidence types</td><td>Coordinates and place-label shares</td><td>Avoid turning spatial metadata into a shortcut.</td></tr>
+          <tr><td>No-place evidence sentences</td><td>Quality scores and recommended-use buckets</td><td>Test local text evidence, not the downstream selection score.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Implementation source: <a href="/Users/noeflandre/georeset/src/georeset/text/evidence_highlights.py">evidence_highlights.py</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>6) Shuffled controls</h2>
+      <p>Highlighted content is not random noise. Aligned highlighted content beats shuffled highlighted content for both models and both tasks.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Task</th><th>Metric</th><th>Aligned</th><th>Shuffled</th><th>Delta</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>CORINE</td><td>balanced accuracy</td><td>0.273</td><td>0.090</td><td class="positive">+0.183</td></tr>
+          <tr><td>Gemma</td><td>CORINE</td><td>balanced accuracy</td><td>0.259</td><td>0.075</td><td class="positive">+0.184</td></tr>
+          <tr><td>Qwen</td><td>OSM</td><td>Jaccard</td><td>0.148</td><td>0.065</td><td class="positive">+0.084</td></tr>
+          <tr><td>Gemma</td><td>OSM</td><td>Jaccard</td><td>0.207</td><td>0.091</td><td class="positive">+0.116</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_shuffled_deltas.csv">evidence_highlights_shuffled_deltas.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>7) CORINE: all articles</h2>
+      <p>Highlighted content improves Qwen raw accuracy but loses balanced accuracy and macro-F1. Gemma highlighted content is slightly below raw content across the main CORINE metrics.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Source</th><th>Accuracy</th><th>Balanced accuracy</th><th>Macro F1</th><th>Readout</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>raw content</td><td>0.293</td><td class="positive">0.281</td><td class="positive">0.270</td><td>Best balanced Qwen row.</td></tr>
+          <tr><td>Qwen</td><td>highlighted content</td><td class="positive">0.313</td><td>0.273</td><td>0.256</td><td>Higher raw accuracy, weaker balance.</td></tr>
+          <tr><td>Gemma</td><td>raw content</td><td class="positive">0.357</td><td class="positive">0.271</td><td class="positive">0.254</td><td>Best Gemma row.</td></tr>
+          <tr><td>Gemma</td><td>highlighted content</td><td>0.321</td><td>0.259</td><td>0.253</td><td>Close macro-F1, lower accuracy and BA.</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_vs_previous_sources.csv">evidence_highlights_vs_previous_sources.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>8) OSM: all articles</h2>
+      <p>Raw content remains the best direct input for OSM. Highlighting improves over shuffled controls, but it does not beat raw content or generic summaries.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Source</th><th>Exact match</th><th>Micro F1</th><th>Macro F1</th><th>Jaccard</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>raw content</td><td class="positive">0.164</td><td class="positive">0.197</td><td class="positive">0.158</td><td class="positive">0.190</td></tr>
+          <tr><td>Qwen</td><td>highlighted content</td><td>0.102</td><td>0.180</td><td>0.116</td><td>0.148</td></tr>
+          <tr><td>Gemma</td><td>raw content</td><td>0.215</td><td>0.247</td><td>0.158</td><td>0.252</td></tr>
+          <tr><td>Gemma</td><td>highlighted content</td><td>0.153</td><td>0.218</td><td>0.150</td><td>0.207</td></tr>
+          <tr><td>Gemma</td><td>summary_no_place</td><td class="positive">0.244</td><td class="positive">0.259</td><td>0.153</td><td class="positive">0.258</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_osm_metrics.csv">evidence_highlights_osm_metrics.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>9) Compared with summaries</h2>
+      <p>For CORINE, highlighted content is clearly better than the short land-use evidence summary for both models. For OSM, the result is weaker and model-dependent.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Task</th><th>Highlighted</th><th>Land-use summary</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>CORINE BA / F1</td><td>0.273 / 0.256</td><td>0.184 / 0.203</td><td class="positive">Highlighting is much better.</td></tr>
+          <tr><td>Gemma</td><td>CORINE BA / F1</td><td>0.259 / 0.253</td><td>0.218 / 0.219</td><td class="positive">Highlighting is better.</td></tr>
+          <tr><td>Qwen</td><td>OSM Jaccard / F1</td><td>0.148 / 0.116</td><td>0.168 / 0.120</td><td>Short summary is better.</td></tr>
+          <tr><td>Gemma</td><td>OSM Jaccard / F1</td><td>0.207 / 0.150</td><td>0.153 / 0.093</td><td class="positive">Highlighting is better, but still below raw content.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>10) Clean relevance + spatial subset</h2>
+      <p>On the cleaner subset, highlighted content improves, but raw content still usually wins. Gemma CORINE is the closest case: 0.379 BA highlighted versus 0.384 BA raw.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Task</th><th>Raw content</th><th>Highlighted content</th><th>n</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>CORINE balanced accuracy</td><td class="positive">0.409</td><td>0.361</td><td>321</td></tr>
+          <tr><td>Gemma</td><td>CORINE balanced accuracy</td><td class="positive">0.384</td><td>0.379</td><td>321</td></tr>
+          <tr><td>Qwen</td><td>OSM Jaccard</td><td class="positive">0.291</td><td>0.234</td><td>92</td></tr>
+          <tr><td>Gemma</td><td>OSM Jaccard</td><td class="positive">0.294</td><td>0.223</td><td>92</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">Subset: <span class="mono">relevance_medium_high_and_spatial_250m_ge_0.8</span>. Source: <a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_quality_subsets.csv">evidence_highlights_quality_subsets.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>11) Clean-subset shuffled deltas</h2>
+      <p>The clean-subset shuffled controls remain low, so the highlighted representation continues to carry article-specific signal after filtering.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Task</th><th>Aligned</th><th>Shuffled</th><th>Delta</th><th>n</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>CORINE BA</td><td>0.361</td><td>0.080</td><td class="positive">+0.281</td><td>321</td></tr>
+          <tr><td>Gemma</td><td>CORINE BA</td><td>0.379</td><td>0.073</td><td class="positive">+0.307</td><td>321</td></tr>
+        </tbody>
+      </table>
+      <div class="warn-box">The signal is real, but front-loading the evidence does not add enough new information to beat the raw article in most comparisons.</div>
+    </div>
+
+    <div class="panel">
+      <h2>12) Implementation notes</h2>
+      <ul>
+        <li>Highlight builder: <a href="/Users/noeflandre/georeset/src/georeset/text/evidence_highlights.py">evidence_highlights.py</a>.</li>
+        <li>Comparison evaluator: <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_evidence_highlights_experiment.py">evaluate_evidence_highlights_experiment.py</a>.</li>
+        <li>Text source key: <span class="mono">content_with_evidence_highlights</span>; shuffled control: <span class="mono">content_with_evidence_highlights_shuffled</span>.</li>
+        <li>The highlight block uses no-place evidence sentences, but the full article follows it unchanged.</li>
+        <li>The classification protocol stays fixed: seed 42, temperature 0.0, same labels, same prompts, same shuffled-control logic.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>13) Interpretation and next step</h2>
+      <ul>
+        <li><strong>Highlighting is a useful diagnostic:</strong> aligned-vs-shuffled deltas are strong.</li>
+        <li><strong>It is not a better direct input:</strong> raw content still wins most balanced CORINE and OSM comparisons.</li>
+        <li><strong>It improves over short summaries for CORINE:</strong> especially compared with <span class="mono">landuse_evidence_summary</span>.</li>
+        <li><strong>The next text-only test should be retrieval:</strong> classify from the best evidence-bearing raw windows plus context, not from another prepended metadata block.</li>
+      </ul>
+      <p class="callout">Recommended next step: move from compact/prepended metadata toward retrieved evidence windows, or use quality and spatial filters for downstream weak-supervision pair selection.</p>
+    </div>
+
+    <div class="panel">
+      <h2>14) Artifact index</h2>
+      <ul>
+        <li><a href="/Users/noeflandre/georeset/docs/experiments/010_evidence_highlighted_content/analysis.md">Original experiment 010 analysis.md</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/wiki/article_evidence_highlights.json">article_evidence_highlights.json</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_vs_previous_sources.csv">evidence_highlights_vs_previous_sources.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_quality_subsets.csv">evidence_highlights_quality_subsets.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_shuffled_deltas.csv">evidence_highlights_shuffled_deltas.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_osm_metrics.csv">evidence_highlights_osm_metrics.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/evidence_highlights_per_class_corine.csv">evidence_highlights_per_class_corine.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset/data/experiments/010_evidence_highlighted_content/evidence_highlights_comparison_v1/manifest.json">manifest.json</a></li>
+      </ul>
+      <p class="foot">This detailed HTML was written from the checked markdown analysis, generated comparison CSVs, highlighted-content JSON, and the deterministic highlight-building code path.</p>
+    </div>
+  </div>
+</body>
+</html>
