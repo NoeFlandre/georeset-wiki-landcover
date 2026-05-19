@@ -360,18 +360,30 @@ coverage that worked best in Experiment 012, but turns quality, relevance,
 spatial purity, and Qwen/Gemma agreement into soft sample weights instead of
 hard filters. It also tests physical Sentinel-2 crop scale explicitly.
 
-The first completed MVP run used frozen `openai/clip-vit-base-patch32`
-embeddings on two Sentinel-2 RGB crop sizes: 320 m and 2240 m, both resized to
-224 x 224. The run finished end-to-end on Grid5000 and produced split, patch,
-embedding, prediction, per-class, bootstrap, confusion-matrix, manifest, and
-summary artifacts. Both windows contained 1,251 cached patches and 512-D CLIP
-embeddings.
+The first MVP attempt exposed an important implementation bug: the multiscale
+Sentinel patch fetcher passed WGS84 longitude/latitude directly to
+`rasterio.dataset.index()`, even though Sentinel assets are stored in projected
+raster CRSs. With `boundless=True`, this silently produced all-black crops. That
+invalidated the first `0.143` image-probe result.
 
-The MVP result is negative but useful. On the 35-example strict evaluation
-split, the best trained classifier for both 320 m and 2240 m reached accuracy
-`0.143`, supported balanced accuracy `0.143`, and supported macro-F1 `0.036`.
-That is essentially chance for seven classes and below the earlier Experiment
-012 zero-shot CLIP baseline of accuracy `0.200`, balanced accuracy `0.200`, and
-macro-F1 `0.224`. The classifier often collapsed to the dominant class. This
-means the new pipeline is operational, but `clip_base` on these two scales did
-not reproduce the stronger Experiment 012 linear-probe result.
+After fixing the CRS transform and adding patch validation, the corrected MVP
+used frozen `openai/clip-vit-base-patch32` embeddings on two Sentinel-2 RGB crop
+sizes: 320 m and 2240 m, both resized to 224 x 224. The validation artifacts now
+show 1,251 non-black patches per window, source-pixel sizes of 32 and 224,
+plausible pixel means and variances, and non-identical 320 m versus 2240 m
+arrays.
+
+The corrected result is positive. Zero-shot CLIP reached only `0.200` accuracy,
+supported balanced accuracy, and macro-F1 `0.152` at 320 m / `0.224` at 2240 m.
+The trained linear probe reached `0.686` strict supported balanced accuracy at
+both 320 m and 2240 m. The best 320 m policy was
+`text_agreement_soft_weighted`, with macro-F1 `0.663`; the best 2240 m result
+used the same soft policy and reached macro-F1 `0.685`.
+
+The hard-filter lesson from Experiment 012 still holds. Hard tiers such as
+`quality_spatial_hard` and `agreement_hard` used only 286 and 152 training rows
+and stayed below the best broad soft-weighted policies. The strongest policies
+kept all 1,216 non-evaluation training rows and used text agreement, spatial
+confidence, relevance, and quality as weights instead of as hard gates. Wider
+2240 m context was at least competitive with 320 m and slightly stronger on
+macro-F1, but the MVP is still too small to declare a definitive scale winner.
