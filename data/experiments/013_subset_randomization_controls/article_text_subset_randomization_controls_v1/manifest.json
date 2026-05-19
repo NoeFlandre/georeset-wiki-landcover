@@ -1,0 +1,242 @@
+{
+  "experiment_id": "article_text_subset_randomization_controls_v1",
+  "no_llm_rerun": true,
+  "no_gpu": true,
+  "timestamp": "2026-05-19T08:08:28.876902+00:00",
+  "input_paths": {
+    "parent_experiment_dirs": [
+      "data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1",
+      "data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0"
+    ],
+    "spatial_confidence_path": "data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv",
+    "evidence_metadata_path": "data/wiki/article_landuse_evidence_summaries.json",
+    "article_type_assignments_path": "data/experiments/007_article_type_relevance_stratified_evaluation/article_text_classification_article_type_relevance_stratified_v1/article_type_assignments.csv",
+    "quality_scores_path": "data/experiments/008_supervision_quality_score/article_text_supervision_quality_score_v1/quality_scores.csv"
+  },
+  "parent_experiments_used": [
+    "data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1",
+    "data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0"
+  ],
+  "subset_definitions": {
+    "all": {
+      "required_metadata_columns": []
+    },
+    "point_label_share_250m_ge_0.8": {
+      "required_metadata_columns": [
+        "point_label_share_250m"
+      ]
+    },
+    "point_label_share_500m_ge_0.8": {
+      "required_metadata_columns": [
+        "point_label_share_500m"
+      ]
+    },
+    "point_label_share_250m_ge_0.9": {
+      "required_metadata_columns": [
+        "point_label_share_250m"
+      ]
+    },
+    "dominant_matches_point_label_250m": {
+      "required_metadata_columns": [
+        "dominant_matches_point_label_250m"
+      ]
+    },
+    "dominant_matches_point_label_500m": {
+      "required_metadata_columns": [
+        "dominant_matches_point_label_500m"
+      ]
+    },
+    "relevance_medium_high": {
+      "required_metadata_columns": [
+        "landcover_relevance"
+      ]
+    },
+    "relevance_high": {
+      "required_metadata_columns": [
+        "landcover_relevance"
+      ]
+    },
+    "evidence_sentences_count_ge_1": {
+      "required_metadata_columns": [
+        "evidence_sentences_count"
+      ]
+    },
+    "evidence_sentences_count_ge_2": {
+      "required_metadata_columns": [
+        "evidence_sentences_count"
+      ]
+    },
+    "uncertainty_low": {
+      "required_metadata_columns": [
+        "uncertainty"
+      ]
+    },
+    "uncertainty_low_medium": {
+      "required_metadata_columns": [
+        "uncertainty"
+      ]
+    },
+    "relevance_medium_high_and_spatial_250m_ge_0.8": {
+      "required_metadata_columns": [
+        "landcover_relevance",
+        "point_label_share_250m"
+      ]
+    },
+    "relevance_high_and_spatial_250m_ge_0.8": {
+      "required_metadata_columns": [
+        "landcover_relevance",
+        "point_label_share_250m"
+      ]
+    },
+    "evidence_sentences_count_ge_1_and_spatial_250m_ge_0.8": {
+      "required_metadata_columns": [
+        "evidence_sentences_count",
+        "point_label_share_250m"
+      ]
+    },
+    "quality_high_or_very_high": {
+      "required_metadata_columns": [
+        "quality_bin"
+      ]
+    },
+    "quality_very_high": {
+      "required_metadata_columns": [
+        "quality_bin"
+      ]
+    },
+    "quality_high_or_very_high_and_spatial_250m_ge_0.8": {
+      "required_metadata_columns": [
+        "quality_bin",
+        "point_label_share_250m"
+      ]
+    },
+    "recommended_use_training": {
+      "required_metadata_columns": [
+        "recommended_use"
+      ]
+    },
+    "recommended_use_evaluation_only": {
+      "required_metadata_columns": [
+        "recommended_use"
+      ]
+    },
+    "recommended_use_exclude": {
+      "required_metadata_columns": [
+        "recommended_use"
+      ]
+    },
+    "article_type_agriculture_or_vineyard": {
+      "required_metadata_columns": [
+        "primary_article_type"
+      ]
+    },
+    "article_type_natural_landscape": {
+      "required_metadata_columns": [
+        "primary_article_type"
+      ]
+    },
+    "article_type_water_feature": {
+      "required_metadata_columns": [
+        "primary_article_type"
+      ]
+    },
+    "article_type_settlement_or_administrative": {
+      "required_metadata_columns": [
+        "primary_article_type"
+      ]
+    },
+    "article_type_built_or_cultural_site": {
+      "required_metadata_columns": [
+        "primary_article_type"
+      ]
+    },
+    "article_type_other_or_unclear": {
+      "required_metadata_columns": [
+        "primary_article_type"
+      ]
+    },
+    "article_type_high_prior": {
+      "required_metadata_columns": [
+        "primary_article_type"
+      ]
+    },
+    "article_type_high_prior_and_relevance_medium_high": {
+      "required_metadata_columns": [
+        "primary_article_type",
+        "landcover_relevance"
+      ]
+    },
+    "other_or_unclear_and_relevance_medium_high": {
+      "required_metadata_columns": [
+        "primary_article_type",
+        "landcover_relevance"
+      ]
+    },
+    "article_type_high_prior_and_relevance_medium_high_and_spatial_250m_ge_0.8": {
+      "required_metadata_columns": [
+        "primary_article_type",
+        "landcover_relevance",
+        "point_label_share_250m"
+      ]
+    },
+    "other_or_unclear_and_relevance_medium_high_and_spatial_250m_ge_0.8": {
+      "required_metadata_columns": [
+        "primary_article_type",
+        "landcover_relevance",
+        "point_label_share_250m"
+      ]
+    }
+  },
+  "comparison_universe": {
+    "description": "Random controls sample within the same parent experiment, model, task, text_source, and metadata availability required by the observed subset.",
+    "dimensions": [
+      "parent_experiment_id",
+      "model_key",
+      "task",
+      "text_source"
+    ],
+    "metadata_availability": "subset-specific required columns must be non-missing"
+  },
+  "random_control_definitions": {
+    "random_same_n": "uniform without replacement from the comparison universe",
+    "random_same_target_distribution": "same target or target-label-set counts within the comparison universe"
+  },
+  "n_draws": 1000,
+  "seed": 42,
+  "min_subset_size": 10,
+  "unstable_small_n_threshold": 30,
+  "primary_only": false,
+  "metrics_computed": [
+    "n",
+    "n_predicted_ok",
+    "n_parse_error",
+    "coverage",
+    "accuracy",
+    "balanced_accuracy",
+    "macro_precision",
+    "macro_recall",
+    "macro_f1",
+    "weighted_f1",
+    "exact_match_accuracy",
+    "micro_precision",
+    "micro_recall",
+    "micro_f1",
+    "jaccard",
+    "hamming_loss",
+    "majority_accuracy",
+    "majority_balanced_accuracy",
+    "majority_macro_f1",
+    "delta_vs_majority_balanced_accuracy",
+    "majority_labelset_exact_match_accuracy",
+    "empty_set_exact_match_accuracy"
+  ],
+  "text_pairs_tested": {
+    "summary": "summary_shuffled",
+    "summary_no_place": "summary_no_place_shuffled",
+    "landuse_evidence_summary": "landuse_evidence_summary_shuffled",
+    "evidence_card": "evidence_card_shuffled",
+    "content_with_evidence_card": "content_with_evidence_card_shuffled",
+    "content": "content_shuffled"
+  },
+  "skipped_rows": []
+}

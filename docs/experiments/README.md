@@ -68,6 +68,12 @@ and next steps.
       and Qwen/Gemma agreement.
     - Fetches Sentinel-2 RGB patches, embeds them with frozen CLIP image
       features, and trains a linear probe for CORINE level-2 prediction.
+13. [`013_subset_randomization_controls/analysis.md`](013_subset_randomization_controls/analysis.md)
+    - Reuses frozen Qwen and Gemma predictions without rerunning any LLM or GPU
+      job.
+    - Tests whether relevance, spatial, quality, article-type, and
+      recommended-use subset gains beat same-size and target-matched random
+      controls.
 
 ## Data Artifact Map
 
@@ -75,6 +81,8 @@ The reports cite artifacts under matching numbered folders in
 `data/experiments/`. For example, report
 `docs/experiments/012_clip_linear_probe_weak_labels/analysis.md` cites
 `data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/`.
+`docs/experiments/013_subset_randomization_controls/analysis.md` cites
+`data/experiments/013_subset_randomization_controls/article_text_subset_randomization_controls_v1/`.
 
 Working classifier checkpoints live separately under `data/classification/runs/`.
 Those are useful for resumability, but the stable research outputs are the

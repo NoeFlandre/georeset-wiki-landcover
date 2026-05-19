@@ -320,3 +320,36 @@ filters for downstream image training at this data size. They remove noise, but
 they also remove too many rare-class examples. For the next image experiment,
 quality signals should be used as soft weights, sampling controls, or evaluation
 strata rather than as a hard training-only gate.
+
+We then ran `013_subset_randomization_controls`, an analysis-only reviewer-proofing
+experiment. It reused frozen Qwen and Gemma predictions plus existing relevance,
+spatial-confidence, article-type, and quality-score metadata. No LLM, prompt,
+label, spatial recomputation, or GPU job was rerun.
+
+The purpose was to test whether the earlier filtered-subset improvements survive
+two Monte Carlo controls: random subsets with the same number of examples, and
+random subsets with the same target distribution. The comparison universe was
+kept explicit: same parent experiment, model, task, text source, and
+subset-specific metadata availability.
+
+The main result is that CORINE relevance and spatial-confidence claims are much
+stronger after this control. For raw content, Qwen medium/high relevance reached
+balanced accuracy `0.374` versus target-matched random mean `0.280`; the combined
+medium/high relevance plus 250 m spatial-purity subset reached `0.409` versus
+`0.281`. Gemma showed the same pattern, with `0.352` versus `0.271` for
+medium/high relevance and `0.384` versus `0.272` for the combined subset.
+
+For OSM the result is more cautious. Qwen raw content still has strong evidence
+on the combined relevance plus spatial subset: Jaccard `0.291` versus
+target-matched random mean `0.231`, with exact match `0.261`. But other OSM
+rows beat same-size controls without clearly beating target-matched controls,
+and Gemma OSM content is mostly not distinguishable from target-matched random
+subsets. Rows with fewer than 30 examples, such as OSM
+`recommended_use_evaluation_only`, are marked `unstable_small_n=true` and should
+be treated as diagnostic only.
+
+This rephrases the strongest text result: for CORINE, Wikipedia text is
+predictive when article relevance and spatial label reliability are credible,
+and that effect is not explained away by sample size or class composition. For
+OSM, the evidence remains useful but should be framed more carefully because
+target composition and small support explain more of the apparent gains.

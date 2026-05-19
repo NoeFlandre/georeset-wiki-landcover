@@ -64,6 +64,9 @@ EXPERIMENT_GROUPS: dict[str, str] = {
     ),
     "retrieved_evidence_windows_comparison_v1": "011_retrieved_evidence_windows",
     "clip_linear_probe_weak_labels_v1": "012_clip_linear_probe_weak_labels",
+    "article_text_subset_randomization_controls_v1": (
+        "013_subset_randomization_controls"
+    ),
 }
 
 
