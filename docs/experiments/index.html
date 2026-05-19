@@ -309,10 +309,12 @@
           coordinates can produce useful land-cover supervision. The core result:
           article text contains real signal, but label reliability, relevance,
           class imbalance, and image-model data coverage matter more than another
-          compact text rewrite.
+          compact text rewrite. Randomization controls now confirm that the
+          strongest CORINE subset gains are not just support-size or class-mix
+          artifacts.
         </p>
         <div class="stamp">
-          <span class="pill">12 experiment stages</span>
+          <span class="pill">13 experiment stages</span>
           <span class="pill">1,251 CORINE articles</span>
           <span class="pill">275 OSM articles</span>
           <span class="pill">35-image strict CLIP eval</span>
@@ -341,7 +343,7 @@
     <section>
       <h2>Research Arc</h2>
       <div class="flow">
-        <svg viewBox="0 0 1100 260" width="100%" height="260" role="img" aria-label="Experiment sequence from text classification through image probing">
+        <svg viewBox="0 0 1100 300" width="100%" height="300" role="img" aria-label="Experiment sequence from text classification through image probing and randomization controls">
           <defs>
             <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
               <path d="M0,0 L8,3 L0,6 Z" fill="#526676"></path>
@@ -368,15 +370,20 @@
 
           <line x1="754" y1="84" x2="848" y2="84" stroke="#526676" stroke-width="2" marker-end="url(#arrow)"></line>
 
-          <rect x="848" y="38" width="220" height="92" rx="8" fill="#f3eff8" stroke="#d7cce5"></rect>
-          <text x="958" y="68" text-anchor="middle" font-size="15" font-weight="700" fill="#17202a">Image supervision?</text>
-          <text x="958" y="94" text-anchor="middle" font-size="12" fill="#526676">Sentinel patches + CLIP probe</text>
-          <text x="958" y="113" text-anchor="middle" font-size="12" fill="#5f4b8b">Broad weak labels help</text>
+          <rect x="848" y="28" width="220" height="82" rx="8" fill="#f3eff8" stroke="#d7cce5"></rect>
+          <text x="958" y="57" text-anchor="middle" font-size="15" font-weight="700" fill="#17202a">Image supervision?</text>
+          <text x="958" y="82" text-anchor="middle" font-size="12" fill="#526676">Sentinel patches + CLIP probe</text>
+          <text x="958" y="100" text-anchor="middle" font-size="12" fill="#5f4b8b">Broad weak labels help</text>
+
+          <rect x="848" y="158" width="220" height="82" rx="8" fill="#eef4f7" stroke="#cbd8df"></rect>
+          <text x="958" y="187" text-anchor="middle" font-size="15" font-weight="700" fill="#17202a">Subset gains real?</text>
+          <text x="958" y="212" text-anchor="middle" font-size="12" fill="#526676">Random same-n + target-match</text>
+          <text x="958" y="230" text-anchor="middle" font-size="12" fill="#1d776f">CORINE survives controls</text>
 
           <path d="M90 151 C180 205, 345 205, 456 151" fill="none" stroke="#9a6a14" stroke-width="2"></path>
           <text x="273" y="218" text-anchor="middle" font-size="13" fill="#526676">Controls prevent over-reading priors and majority-class effects</text>
-          <path d="M520 151 C620 205, 820 205, 952 151" fill="none" stroke="#9a6a14" stroke-width="2"></path>
-          <text x="737" y="238" text-anchor="middle" font-size="13" fill="#526676">Filters are strongest as selection signals, not hard replacement text</text>
+          <path d="M520 151 C620 205, 820 205, 958 244" fill="none" stroke="#9a6a14" stroke-width="2"></path>
+          <text x="716" y="278" text-anchor="middle" font-size="13" fill="#526676">Filters are strongest as selection signals, then audited against random subset baselines</text>
         </svg>
       </div>
     </section>
@@ -436,6 +443,10 @@
           <h3>OSM exact / Jaccard</h3>
           <p>OSM can have multiple labels. Exact match requires the whole label set; Jaccard gives partial credit for overlapping predicted and target tags.</p>
         </article>
+        <article class="term">
+          <h3>Random subset controls</h3>
+          <p>Experiment 13 compares each observed filter to random subsets with the same size, then to random subsets with the same target distribution.</p>
+        </article>
       </div>
     </section>
 
@@ -466,6 +477,10 @@
           <h3>6. Image probing is promising</h3>
           <p>Frozen CLIP plus a linear probe trained on broad weak labels reaches 0.600 accuracy, far above zero-shot CLIP at 0.200.</p>
         </article>
+        <article class="panel">
+          <h3>7. CORINE filters survive randomization</h3>
+          <p>Qwen relevance+spatial full-article-text CORINE balanced accuracy is 0.409 versus a 0.281 target-matched random mean.</p>
+        </article>
       </div>
     </section>
 
@@ -478,6 +493,7 @@
           <div class="bar-row"><span>Spatial 250 m clean</span><div class="bar-track"><div class="bar teal" style="width:86.0%"></div></div><span class="num">0.352</span></div>
           <div class="bar-row"><span>Medium/high relevance</span><div class="bar-track"><div class="bar green" style="width:91.3%"></div></div><span class="num">0.374</span></div>
           <div class="bar-row"><span>Medium/high relevance + 250 m purity &gt;=0.8</span><div class="bar-track"><div class="bar green" style="width:100%"></div></div><span class="num">0.409</span></div>
+          <div class="bar-row"><span>Target-matched random mean for that subset</span><div class="bar-track"><div class="bar red" style="width:68.7%"></div></div><span class="num">0.281</span></div>
           <div class="bar-row"><span>Evidence card only</span><div class="bar-track"><div class="bar gold" style="width:54.8%"></div></div><span class="num">0.224</span></div>
           <div class="bar-row"><span>Retrieved windows</span><div class="bar-track"><div class="bar violet" style="width:65.1%"></div></div><span class="num">0.266</span></div>
         </div>
@@ -596,6 +612,13 @@
             <td>Broad weak supervision is promising; the stricter text-agreement tier is cleaner but reduces class coverage too much.</td>
             <td><span class="status">Next path</span></td>
           </tr>
+          <tr>
+            <td class="num"><a href="013_subset_randomization_controls/analysis.md">013</a></td>
+            <td>Are filtered-subset gains stronger than random subsets?</td>
+            <td>Qwen CORINE relevance+spatial full article text: 0.409 balanced accuracy vs 0.280 same-n mean and 0.281 target-matched mean.</td>
+            <td>CORINE gains survive support-size and target-composition controls; OSM evidence is more mixed and should be worded cautiously.</td>
+            <td><span class="status">Strengthens CORINE</span></td>
+          </tr>
         </tbody>
       </table>
     </section>
@@ -610,7 +633,8 @@
         Deterministic summaries, cards, highlights, and retrieved windows are useful for
         diagnostics, filtering, and cost control, but not as primary replacements. For
         image learning, broader weak-label coverage beats the strictest text-agreement
-        filter at the current data size.
+        filter at the current data size. Random subset controls strengthen the CORINE
+        claim, while OSM remains more sensitive to target composition and small support.
       </div>
     </section>
 
