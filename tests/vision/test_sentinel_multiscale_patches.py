@@ -6,6 +6,9 @@ import pytest
 
 from georeset.vision.sentinel_multiscale_patches import (
     dataset_xy_from_lonlat,
+    patch_contact_sheet_path,
+    patch_stats_path,
+    patch_validation_manifest_path,
     source_pixels_for_window,
     write_multiscale_patch_caches,
     write_patch_validation_artifacts,
@@ -15,6 +18,12 @@ from georeset.vision.sentinel_multiscale_patches import (
 def test_source_pixels_for_window_uses_sentinel_native_ten_meter_pixels() -> None:
     assert source_pixels_for_window(320) == 32
     assert source_pixels_for_window(325) == 33
+
+
+def test_patch_validation_artifact_paths_use_expected_names(tmp_path: Path) -> None:
+    assert patch_stats_path(tmp_path) == tmp_path / "patch_stats.csv"
+    assert patch_validation_manifest_path(tmp_path) == tmp_path / "patch_validation_manifest.json"
+    assert patch_contact_sheet_path(tmp_path) == tmp_path / "patch_contact_sheet.png"
 
 
 def test_dataset_xy_from_lonlat_reprojects_to_dataset_crs() -> None:

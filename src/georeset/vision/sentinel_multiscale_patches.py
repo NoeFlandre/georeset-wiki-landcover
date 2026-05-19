@@ -46,6 +46,18 @@ def patch_filename(window_m: int) -> str:
     return f"sentinel_rgb_window_{window_m:04d}m.npz"
 
 
+def patch_stats_path(output_dir: Path) -> Path:
+    return output_dir / "patch_stats.csv"
+
+
+def patch_validation_manifest_path(output_dir: Path) -> Path:
+    return output_dir / "patch_validation_manifest.json"
+
+
+def patch_contact_sheet_path(output_dir: Path) -> Path:
+    return output_dir / "patch_contact_sheet.png"
+
+
 def dataset_xy_from_lonlat(
     dataset: object,
     *,
@@ -304,9 +316,9 @@ def write_patch_validation_artifacts(
         diffs = pd.to_numeric(frame["mean_abs_patch_difference"], errors="coerce").dropna()
         if len(diffs) and (diffs <= 0.0).any():
             raise ValueError("Patch validation failed: at least two window caches are identical.")
-    write_csv_atomic(output_dir / "patch_stats.csv", frame, index=False)
+    write_csv_atomic(patch_stats_path(output_dir), frame, index=False)
     write_json_atomic(
-        output_dir / "patch_validation_manifest.json",
+        patch_validation_manifest_path(output_dir),
         {
             "validation_artifacts": ["patch_stats.csv", "patch_contact_sheet.png"],
             "window_m_values": [int(window_m) for window_m in window_m_values],
@@ -327,7 +339,7 @@ def write_patch_validation_artifacts(
         indent=2,
     )
     _write_contact_sheet_atomic(
-        output_dir / "patch_contact_sheet.png",
+        patch_contact_sheet_path(output_dir),
         splits=splits,
         caches=caches,
         n_pageids=contact_sheet_pageids,
