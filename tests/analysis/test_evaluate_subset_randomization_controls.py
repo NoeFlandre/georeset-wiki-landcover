@@ -9,6 +9,8 @@ from georeset.cli.analysis.evaluate_subset_randomization_controls import (
     compute_metric_row,
     compute_shuffled_delta_row,
     stable_seed,
+    subset_randomization_manifest_path,
+    subset_randomization_summary_path,
     target_key,
     target_matched_sample_pageids,
     uniform_sample_pageids,
@@ -145,7 +147,9 @@ def test_subset_registry_required_masks_and_missing_metadata_are_false() -> None
         "1",
         "2",
     ]
-    assert frame.loc[SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(frame), "pageid"].tolist() == [
+    assert frame.loc[
+        SUBSET_REGISTRY["point_label_share_250m_ge_0.8"].mask(frame), "pageid"
+    ].tolist() == [
         "1",
         "2",
     ]
@@ -157,9 +161,9 @@ def test_subset_registry_required_masks_and_missing_metadata_are_false() -> None
         SUBSET_REGISTRY["quality_high_or_very_high_and_spatial_250m_ge_0.8"].mask(frame),
         "pageid",
     ].tolist() == ["1", "2"]
-    assert frame.loc[SUBSET_REGISTRY["recommended_use_training"].mask(frame), "pageid"].tolist() == [
-        "1"
-    ]
+    assert frame.loc[
+        SUBSET_REGISTRY["recommended_use_training"].mask(frame), "pageid"
+    ].tolist() == ["1"]
     assert frame.loc[
         SUBSET_REGISTRY["article_type_high_prior_and_relevance_medium_high"].mask(frame),
         "pageid",
@@ -168,8 +172,12 @@ def test_subset_registry_required_masks_and_missing_metadata_are_false() -> None
 
 def test_uniform_sampler_exact_n_no_replacement_and_stable_independent_seed() -> None:
     universe = ["1", "2", "3", "4", "5"]
-    seed_a = stable_seed(42, "parent", "qwen", "corine_level2", "content", "subset_a", "random_same_n")
-    seed_b = stable_seed(42, "parent", "qwen", "corine_level2", "content", "subset_b", "random_same_n")
+    seed_a = stable_seed(
+        42, "parent", "qwen", "corine_level2", "content", "subset_a", "random_same_n"
+    )
+    seed_b = stable_seed(
+        42, "parent", "qwen", "corine_level2", "content", "subset_b", "random_same_n"
+    )
 
     draw_a = uniform_sample_pageids(universe, 3, seed_a)
     assert draw_a == uniform_sample_pageids(list(reversed(universe)), 3, seed_a)
@@ -185,14 +193,18 @@ def test_target_matched_sampler_matches_corine_and_osm_or_skips() -> None:
 
     assert result.status == "ok"
     sampled = corine_universe[corine_universe["pageid"].isin(result.pageids)]
-    assert sampled["target"].value_counts().to_dict() == corine_observed["target"].value_counts().to_dict()
+    assert (
+        sampled["target"].value_counts().to_dict()
+        == corine_observed["target"].value_counts().to_dict()
+    )
 
     osm_universe = _toy_osm_records()
     osm_observed = osm_universe[osm_universe["pageid"].isin(["1", "2"])]
     result = target_matched_sample_pageids(osm_universe, osm_observed, seed=123)
     assert result.status == "ok"
     assert [target_key(value) for value in osm_observed["target"]] == [
-        target_key(value) for value in osm_universe[osm_universe["pageid"].isin(result.pageids)]["target"]
+        target_key(value)
+        for value in osm_universe[osm_universe["pageid"].isin(result.pageids)]["target"]
     ]
 
     impossible = target_matched_sample_pageids(corine_universe.iloc[:1], corine_observed, seed=123)
@@ -282,7 +294,9 @@ def test_outputs_and_manifest_are_written_without_parent_mutation(tmp_path) -> N
         random_target_rows=[{"control_type": "random_same_target_distribution", "n": 2}],
         shuffled_delta_rows=[{"text_source": "content", "observed_delta": 0.1}],
         class_distribution_rows=[{"target_key": "31", "support": 2}],
-        significant_rows=[{"subset_name": "relevance_medium_high", "conclusion_flag": "beats_same_n"}],
+        significant_rows=[
+            {"subset_name": "relevance_medium_high", "conclusion_flag": "beats_same_n"}
+        ],
         manifest={
             "experiment_id": "article_text_subset_randomization_controls_v1",
             "no_llm_rerun": True,
@@ -313,3 +327,8 @@ def test_outputs_and_manifest_are_written_without_parent_mutation(tmp_path) -> N
     manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["no_llm_rerun"] is True
     assert marker.read_text(encoding="utf-8") == "frozen"
+
+
+def test_subset_randomization_output_paths_use_expected_names(tmp_path) -> None:
+    assert subset_randomization_manifest_path(tmp_path) == tmp_path / "manifest.json"
+    assert subset_randomization_summary_path(tmp_path) == tmp_path / "summary.md"

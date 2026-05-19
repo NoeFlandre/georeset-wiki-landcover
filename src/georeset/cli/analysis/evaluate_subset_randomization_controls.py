@@ -79,6 +79,14 @@ SHUFFLED_PAIRS = {
 }
 
 
+def subset_randomization_manifest_path(output_dir: Path) -> Path:
+    return output_dir / "manifest.json"
+
+
+def subset_randomization_summary_path(output_dir: Path) -> Path:
+    return output_dir / "summary.md"
+
+
 @dataclass(frozen=True)
 class SubsetDefinition:
     name: str
@@ -941,8 +949,8 @@ def write_outputs(
     _write_table_pair(
         output_dir, "significant_filter_summary", "Significant Filter Summary", significant_rows
     )
-    write_json_atomic(output_dir / "manifest.json", manifest, indent=2)
-    write_text_atomic(output_dir / "summary.md", summary_text)
+    write_json_atomic(subset_randomization_manifest_path(output_dir), manifest, indent=2)
+    write_text_atomic(subset_randomization_summary_path(output_dir), summary_text)
 
 
 def evaluate(
