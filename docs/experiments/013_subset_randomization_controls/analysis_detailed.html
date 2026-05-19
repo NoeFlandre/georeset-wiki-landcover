@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment 013 - Subset Randomization Controls</title>
+  <style>
+    :root{--bg:#f6f7fc;--panel:#fff;--line:#d8e0f2;--text:#0f172a;--muted:#54607a;--accent:#1d4ed8;--ok:#166534;--warn:#b45309;--bad:#b91c1c;--shadow:0 10px 30px rgba(15,23,42,.08)}
+    *{box-sizing:border-box}
+    html,body{margin:0;background:linear-gradient(140deg,#f8fbff 0%,var(--bg) 46%,#edf3ff 100%);color:var(--text);font:14px/1.5 "Inter","Segoe UI",Roboto,Arial,sans-serif}
+    .container{width:min(1180px,calc(100% - 44px));margin:18px auto 42px}
+    h1{margin:0 0 6px;font-size:38px;line-height:1.08;letter-spacing:-.35px}
+    h2{margin:22px 0 10px;font-size:26px;border-left:4px solid var(--accent);padding-left:12px;line-height:1.15}
+    h3{margin:10px 0 8px;font-size:18px}
+    p{margin:.25rem 0 .85rem}
+    a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+    ul{margin:.35rem 0 .8rem 1.2rem;padding:0}
+    .subtitle{color:var(--muted);margin-bottom:14px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow);min-width:0}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px}
+    .kpi{border:1px solid var(--line);border-radius:10px;background:#fbfdff;padding:10px;min-width:0}
+    .kpi .k{color:var(--muted);font-size:11px}.kpi .v{font-size:24px;font-weight:750;margin-top:3px;line-height:1.15;overflow-wrap:anywhere}
+    .badge{display:inline-block;margin:0 4px 4px 0;padding:2px 8px;border:1px solid #c9d6f2;border-radius:999px;background:#f0f5ff;font-size:11px;color:#25395f}
+    code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+    pre{border:1px solid #dbe6ff;border-radius:8px;padding:10px;background:#f6f8ff;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;background:#fff}
+    th,td{border-bottom:1px solid var(--line);padding:8px 7px;text-align:left;vertical-align:top}
+    th{background:#eff4ff}
+    .callout{border-left:4px solid #8b5cf6;background:#f4efff;padding:8px 10px;border-radius:8px;margin-top:8px;color:#341d66;font-size:13px}
+    .warn-box{border-left:4px solid var(--warn);background:#fff7ed;padding:8px 10px;border-radius:8px;margin-top:8px;color:#7c2d12;font-size:13px}
+    .foot{margin-top:8px;color:var(--muted);font-size:11px}.positive{color:var(--ok);font-weight:650}.negative{color:var(--bad);font-weight:650}
+    .section-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+    .mermaid{overflow-x:auto;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fcfdff}
+    @media(max-width:980px){.split{grid-template-columns:1fr}h1{font-size:30px}}
+  </style>
+  <script type="module">
+    const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';s.onload=()=>{window.mermaid?.initialize({startOnLoad:false,securityLevel:'loose',theme:'default',flowchart:{useMaxWidth:true,nodeSpacing:56,rankSpacing:50,curve:'basis'},themeVariables:{fontSize:'13px'}});window.mermaid?.run({nodes:document.querySelectorAll('.mermaid')});};document.head.appendChild(s);
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Experiment 013: Subset Randomization Controls</h1>
+    <div class="subtitle">Detailed implementation and result audit for Monte Carlo controls on filtered article subsets.</div>
+
+    <div class="panel">
+      <div class="section-title"><h2>1) Executive summary</h2><span class="badge">Analysis-only control experiment</span></div>
+      <p>Experiment 013 tests whether the filtered-subset gains from earlier article-text experiments survive random baselines. It reuses frozen predictions and metadata; it does not rerun LLMs, prompts, labels, spatial confidence, training, or GPU jobs.</p>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="k">Monte Carlo draws</div><div class="v">1,000</div></div>
+        <div class="kpi"><div class="k">Random seed</div><div class="v">42</div></div>
+        <div class="kpi"><div class="k">Control types</div><div class="v">2</div></div>
+        <div class="kpi"><div class="k">Headline beats target-matched</div><div class="v">23</div></div>
+        <div class="kpi"><div class="k">Headline below random</div><div class="v">2</div></div>
+        <div class="kpi"><div class="k">Small-n cutoff</div><div class="v">&lt; 30</div></div>
+      </div>
+      <p class="callout">Main result: the CORINE relevance and spatial-confidence claims survive same-size and target-matched random controls. OSM evidence is more mixed and should be phrased more cautiously.</p>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h2>2) Source artifacts</h2>
+        <ul>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/013_subset_randomization_controls/article_text_subset_randomization_controls_v1/observed_subset_metrics.csv">observed_subset_metrics.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/013_subset_randomization_controls/article_text_subset_randomization_controls_v1/random_same_n_controls.csv">random_same_n_controls.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/013_subset_randomization_controls/article_text_subset_randomization_controls_v1/random_target_matched_controls.csv">random_target_matched_controls.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/013_subset_randomization_controls/article_text_subset_randomization_controls_v1/shuffled_delta_random_controls.csv">shuffled_delta_random_controls.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/013_subset_randomization_controls/article_text_subset_randomization_controls_v1/significant_filter_summary.csv">significant_filter_summary.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset/data/experiments/013_subset_randomization_controls/article_text_subset_randomization_controls_v1/manifest.json">manifest.json</a></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h2>3) Processing flow</h2>
+        <div class="mermaid">
+flowchart TD
+  A["frozen Qwen + Gemma predictions"] --> B["observed filtered subsets"]
+  C["spatial, relevance, quality, use metadata"] --> B
+  B --> D["compute observed CORINE BA or OSM Jaccard"]
+  B --> E["sample random_same_n controls"]
+  B --> F["sample random_same_target_distribution controls"]
+  E --> G["compare observed score to random distribution"]
+  F --> G
+  G --> H["significant_filter_summary.csv"]
+        </div>
+        <p class="foot">Each control samples from the same parent experiment, model, task, text source, and required metadata universe as the observed subset.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>4) What a randomization-control row means</h2>
+      <p>Experiment 013 introduces two controls. <span class="mono">random_same_n</span> asks whether a filter beats a random subset of the same size. <span class="mono">random_same_target_distribution</span> asks whether it still beats random subsets after preserving CORINE target counts, or OSM target-label-set counts.</p>
+      <pre>{
+  "model": "Qwen",
+  "task": "corine_level2",
+  "text_source": "content",
+  "subset": "relevance_medium_high_and_spatial_250m_ge_0.8",
+  "n": 321,
+  "primary_metric": "balanced_accuracy",
+  "observed": 0.409,
+  "random_same_n_mean": 0.280,
+  "random_target_matched_mean": 0.281,
+  "conclusion_flag": "beats_target_matched",
+  "interpretation": "The filter is doing more than changing support size or class mix."
+}</pre>
+      <p class="foot">Example source: <a href="/Users/noeflandre/georeset/data/experiments/013_subset_randomization_controls/article_text_subset_randomization_controls_v1/significant_filter_summary.csv">significant_filter_summary.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>5) Control definitions</h2>
+      <table>
+        <thead><tr><th>Control</th><th>What is held fixed</th><th>What it tests</th></tr></thead>
+        <tbody>
+          <tr><td><span class="mono">random_same_n</span></td><td>Parent experiment, model, task, text source, metadata availability, and subset size.</td><td>Whether the observed filter is better than drawing the same number of eligible rows at random.</td></tr>
+          <tr><td><span class="mono">random_same_target_distribution</span></td><td>Everything in same-n plus CORINE target counts or OSM target-label-set counts.</td><td>Whether the gain survives after controlling for target composition.</td></tr>
+          <tr><td><span class="mono">unstable_small_n=true</span></td><td>Rows with fewer than 30 examples.</td><td>Marks results that are useful diagnostics but too small for strong claims.</td></tr>
+        </tbody>
+      </table>
+      <p class="warn-box">Spatial subsets are compared only against rows with the relevant spatial metadata. That avoids giving the random baseline rows that could never have passed the observed filter.</p>
+    </div>
+
+    <div class="panel">
+      <h2>6) CORINE raw-content headline</h2>
+      <p>For raw article content, all headline CORINE filters beat target-matched controls for both Qwen and Gemma. The combined relevance plus 250 m spatial-confidence filter is the strongest interpretable row.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Subset</th><th>n</th><th>Observed BA</th><th>Same-n mean</th><th>Target-matched mean</th><th>Conclusion</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>relevance_medium_high</td><td>576</td><td>0.374</td><td>0.280</td><td>0.280</td><td class="positive">beats target-matched</td></tr>
+          <tr><td>Qwen</td><td>point_label_share_250m_ge_0.8</td><td>646</td><td>0.352</td><td>0.281</td><td>0.280</td><td class="positive">beats target-matched</td></tr>
+          <tr><td>Qwen</td><td>relevance_medium_high_and_spatial_250m_ge_0.8</td><td>321</td><td class="positive">0.409</td><td>0.280</td><td>0.281</td><td class="positive">beats target-matched</td></tr>
+          <tr><td>Qwen</td><td>quality_high_or_very_high_and_spatial_250m_ge_0.8</td><td>388</td><td>0.394</td><td>0.280</td><td>0.281</td><td class="positive">beats target-matched</td></tr>
+          <tr><td>Gemma</td><td>relevance_medium_high</td><td>576</td><td>0.352</td><td>0.271</td><td>0.271</td><td class="positive">beats target-matched</td></tr>
+          <tr><td>Gemma</td><td>point_label_share_250m_ge_0.8</td><td>646</td><td>0.326</td><td>0.271</td><td>0.271</td><td class="positive">beats target-matched</td></tr>
+          <tr><td>Gemma</td><td>relevance_medium_high_and_spatial_250m_ge_0.8</td><td>321</td><td class="positive">0.384</td><td>0.271</td><td>0.272</td><td class="positive">beats target-matched</td></tr>
+          <tr><td>Gemma</td><td>quality_high_or_very_high_and_spatial_250m_ge_0.8</td><td>388</td><td>0.375</td><td>0.271</td><td>0.272</td><td class="positive">beats target-matched</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">BA means balanced accuracy. Source: <a href="/Users/noeflandre/georeset/data/experiments/013_subset_randomization_controls/article_text_subset_randomization_controls_v1/significant_filter_summary.csv">significant_filter_summary.csv</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>7) Recommended-use subsets</h2>
+      <p>The recommended-use rows are useful, but they should not be described as a new training/evaluation protocol here. In this experiment they are only metadata-defined filters applied to frozen predictions.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Task</th><th>Subset</th><th>n</th><th>Observed</th><th>Target-matched mean</th><th>Readout</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>CORINE</td><td>recommended_use_training</td><td>195</td><td>0.385</td><td>0.278</td><td class="positive">Strong CORINE diagnostic.</td></tr>
+          <tr><td>Qwen</td><td>CORINE</td><td>recommended_use_evaluation_only</td><td>126</td><td>0.473</td><td>0.282</td><td class="positive">High score, still metadata diagnostic.</td></tr>
+          <tr><td>Gemma</td><td>CORINE</td><td>recommended_use_training</td><td>195</td><td>0.338</td><td>0.270</td><td class="positive">Survives target matching.</td></tr>
+          <tr><td>Gemma</td><td>CORINE</td><td>recommended_use_evaluation_only</td><td>126</td><td>0.472</td><td>0.271</td><td class="positive">Survives target matching.</td></tr>
+          <tr><td>Qwen</td><td>OSM</td><td>recommended_use_training</td><td>67</td><td>0.248</td><td>0.184</td><td>Not distinguishable in the headline decision rule.</td></tr>
+          <tr><td>Qwen</td><td>OSM</td><td>recommended_use_evaluation_only</td><td>25</td><td>0.407</td><td>0.353</td><td class="negative">Small-n diagnostic only.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>8) OSM raw-content headline</h2>
+      <p>OSM is less stable than CORINE. Qwen shows real signal on spatial and combined subsets, but several rows only beat same-size controls. Gemma OSM content does not survive target matching in the headline rows.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Subset</th><th>n</th><th>Observed Jaccard</th><th>Exact match</th><th>Same-n mean</th><th>Target-matched mean</th><th>Conclusion</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>relevance_medium_high</td><td>153</td><td>0.236</td><td>0.196</td><td>0.190</td><td>0.215</td><td>beats same-n only</td></tr>
+          <tr><td>Qwen</td><td>point_label_share_250m_ge_0.8</td><td>160</td><td>0.245</td><td>0.225</td><td>0.189</td><td>0.206</td><td class="positive">beats target-matched</td></tr>
+          <tr><td>Qwen</td><td>relevance_medium_high_and_spatial_250m_ge_0.8</td><td>92</td><td class="positive">0.291</td><td>0.261</td><td>0.190</td><td>0.231</td><td class="positive">beats target-matched</td></tr>
+          <tr><td>Qwen</td><td>quality_high_or_very_high_and_spatial_250m_ge_0.8</td><td>110</td><td>0.257</td><td>0.227</td><td>0.191</td><td>0.218</td><td>beats same-n only</td></tr>
+          <tr><td>Gemma</td><td>relevance_medium_high</td><td>153</td><td>0.247</td><td>0.196</td><td>0.251</td><td>0.272</td><td class="negative">below random</td></tr>
+          <tr><td>Gemma</td><td>point_label_share_250m_ge_0.8</td><td>160</td><td>0.286</td><td>0.256</td><td>0.252</td><td>0.281</td><td>not distinguishable</td></tr>
+          <tr><td>Gemma</td><td>relevance_medium_high_and_spatial_250m_ge_0.8</td><td>92</td><td>0.294</td><td>0.261</td><td>0.254</td><td>0.295</td><td>not distinguishable</td></tr>
+          <tr><td>Gemma</td><td>recommended_use_training</td><td>67</td><td>0.249</td><td>0.224</td><td>0.252</td><td>0.266</td><td class="negative">below random</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>9) Shuffled-delta controls</h2>
+      <p>The aligned-vs-shuffled CORINE result also survives random delta controls. For raw content, all listed CORINE deltas are above the random 97.5% interval.</p>
+      <table>
+        <thead><tr><th>Model</th><th>Task</th><th>Subset</th><th>Observed delta</th><th>Random mean</th><th>Random 97.5%</th><th>Percentile</th></tr></thead>
+        <tbody>
+          <tr><td>Qwen</td><td>CORINE</td><td>relevance_medium_high</td><td>0.297</td><td>0.214</td><td>0.246</td><td class="positive">100.0</td></tr>
+          <tr><td>Qwen</td><td>CORINE</td><td>point_label_share_250m_ge_0.8</td><td>0.281</td><td>0.214</td><td>0.241</td><td class="positive">100.0</td></tr>
+          <tr><td>Qwen</td><td>CORINE</td><td>relevance_medium_high_and_spatial_250m_ge_0.8</td><td>0.326</td><td>0.213</td><td>0.261</td><td class="positive">100.0</td></tr>
+          <tr><td>Gemma</td><td>CORINE</td><td>relevance_medium_high</td><td>0.279</td><td>0.206</td><td>0.232</td><td class="positive">100.0</td></tr>
+          <tr><td>Gemma</td><td>CORINE</td><td>point_label_share_250m_ge_0.8</td><td>0.260</td><td>0.205</td><td>0.231</td><td class="positive">100.0</td></tr>
+          <tr><td>Gemma</td><td>CORINE</td><td>relevance_medium_high_and_spatial_250m_ge_0.8</td><td>0.317</td><td>0.206</td><td>0.250</td><td class="positive">100.0</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">OSM deltas are weaker: Qwen spatial-only content clears the random interval, while relevance-only and combined rows do not; Gemma OSM deltas are not stronger than random controls in the headline rows.</p>
+    </div>
+
+    <div class="panel">
+      <h2>10) Interpretation</h2>
+      <ul>
+        <li><strong>CORINE claim strengthened:</strong> geolocated Wikipedia text is most predictive when article relevance and spatial label reliability are credible, and that is not explained by support size or target class composition.</li>
+        <li><strong>Spatial confidence remains useful:</strong> the 250 m purity filter survives target-matched controls for raw-content CORINE.</li>
+        <li><strong>Quality plus spatial is a proxy:</strong> it behaves like a strong compact selection rule, but does not beat the best relevance plus spatial row.</li>
+        <li><strong>OSM claim softened:</strong> some Qwen content subsets survive, but target composition and small support explain more of the gain than for CORINE.</li>
+        <li><strong>Evaluation-only rows are diagnostics:</strong> rows marked <span class="mono">unstable_small_n=true</span> should not be treated as final evidence.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>11) Implementation notes</h2>
+      <ul>
+        <li>Evaluator: <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_subset_randomization_controls.py">evaluate_subset_randomization_controls.py</a>.</li>
+        <li>Experiment id: <span class="mono">article_text_subset_randomization_controls_v1</span>.</li>
+        <li>Small-n threshold: <span class="mono">SMALL_N_THRESHOLD = 30</span>.</li>
+        <li>CORINE primary metric: balanced accuracy from per-class recalls.</li>
+        <li>OSM primary metric: average row-level Jaccard.</li>
+        <li>Headline text sources: <span class="mono">content</span>, <span class="mono">summary_no_place</span>, and <span class="mono">landuse_evidence_summary</span>.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>12) Claim wording after this experiment</h2>
+      <p><strong>Use for CORINE:</strong> for CORINE, geolocated Wikipedia text is most predictive when both article relevance and spatial label reliability are credible, and this survives controls for subset size and target class composition.</p>
+      <p><strong>Use for OSM:</strong> OSM gains are text-linked for some Qwen content subsets, but target composition and small sample sizes explain more of the apparent improvement than they do for CORINE.</p>
+      <p class="warn-box">Do not describe Experiment 013 as training or evaluation of a new model. It is a randomization-control analysis over already frozen prediction tables.</p>
+    </div>
+
+    <div class="panel">
+      <h2>13) File inventory</h2>
+      <table>
+        <thead><tr><th>File</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td>observed_subset_metrics.csv/md</td><td>Observed metrics for every evaluated subset.</td></tr>
+          <tr><td>random_same_n_controls.csv/md</td><td>Monte Carlo same-size controls.</td></tr>
+          <tr><td>random_target_matched_controls.csv/md</td><td>Monte Carlo target-distribution-matched controls.</td></tr>
+          <tr><td>shuffled_delta_random_controls.csv/md</td><td>Random controls for aligned-vs-shuffled deltas.</td></tr>
+          <tr><td>subset_class_distribution.csv/md</td><td>CORINE class or OSM label-set distribution by subset.</td></tr>
+          <tr><td>significant_filter_summary.csv/md</td><td>Compact headline table used by this report.</td></tr>
+          <tr><td>manifest.json</td><td>Run configuration, input paths, subset definitions, universe rules, and skipped rows.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
