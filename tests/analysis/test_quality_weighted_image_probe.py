@@ -4,7 +4,16 @@ import numpy as np
 import pandas as pd
 
 from georeset.cli.analysis.evaluate_image_probe_training_policy_controls import evaluate_controls
-from georeset.cli.analysis.run_quality_weighted_image_probe import run_probe
+from georeset.cli.analysis.run_quality_weighted_image_probe import (
+    bootstrap_confidence_intervals_path,
+    confusion_matrices_path,
+    per_class_metrics_path,
+    run_manifest_path,
+    run_probe,
+    weighted_probe_metrics_path,
+    weighted_probe_predictions_path,
+    weighted_probe_summary_path,
+)
 from georeset.cli.analysis.run_quality_weighted_image_zero_shot import (
     run_zero_shot_image_probe,
     zero_shot_image_probe_metrics_path,
@@ -95,6 +104,19 @@ def test_run_quality_weighted_image_probe_writes_required_outputs(tmp_path: Path
     assert (output_dir / "run_manifest.json").exists()
     metrics = pd.read_csv(output_dir / "weighted_probe_metrics.csv")
     assert {"balanced_accuracy_supported", "balanced_accuracy_allowed"}.issubset(metrics.columns)
+
+
+def test_quality_weighted_image_probe_output_paths_use_expected_names(tmp_path: Path) -> None:
+    assert weighted_probe_metrics_path(tmp_path) == tmp_path / "weighted_probe_metrics.csv"
+    assert weighted_probe_predictions_path(tmp_path) == tmp_path / "weighted_probe_predictions.csv"
+    assert per_class_metrics_path(tmp_path) == tmp_path / "per_class_metrics.csv"
+    assert (
+        bootstrap_confidence_intervals_path(tmp_path)
+        == tmp_path / "bootstrap_confidence_intervals.csv"
+    )
+    assert confusion_matrices_path(tmp_path) == tmp_path / "confusion_matrices.json"
+    assert run_manifest_path(tmp_path) == tmp_path / "run_manifest.json"
+    assert weighted_probe_summary_path(tmp_path) == tmp_path / "summary.md"
 
 
 def test_evaluate_image_probe_training_policy_controls_writes_required_outputs(

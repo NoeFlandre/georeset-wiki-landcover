@@ -50,6 +50,34 @@ WEIGHT_COLUMNS = (
 )
 
 
+def weighted_probe_metrics_path(output_dir: Path) -> Path:
+    return output_dir / "weighted_probe_metrics.csv"
+
+
+def weighted_probe_predictions_path(output_dir: Path) -> Path:
+    return output_dir / "weighted_probe_predictions.csv"
+
+
+def per_class_metrics_path(output_dir: Path) -> Path:
+    return output_dir / "per_class_metrics.csv"
+
+
+def bootstrap_confidence_intervals_path(output_dir: Path) -> Path:
+    return output_dir / "bootstrap_confidence_intervals.csv"
+
+
+def confusion_matrices_path(output_dir: Path) -> Path:
+    return output_dir / "confusion_matrices.json"
+
+
+def run_manifest_path(output_dir: Path) -> Path:
+    return output_dir / "run_manifest.json"
+
+
+def weighted_probe_summary_path(output_dir: Path) -> Path:
+    return output_dir / "summary.md"
+
+
 def _normalized(values: pd.Series) -> NDArray[np.float64]:
     array = values.astype(float).to_numpy()
     mean = float(array.mean()) if len(array) else 1.0
@@ -264,21 +292,19 @@ def run_probe(
                     }
     output_dir.mkdir(parents=True, exist_ok=True)
     metrics = pd.DataFrame(metric_rows)
-    write_csv_atomic(output_dir / "weighted_probe_metrics.csv", metrics, index=False)
+    write_csv_atomic(weighted_probe_metrics_path(output_dir), metrics, index=False)
     write_csv_atomic(
-        output_dir / "weighted_probe_predictions.csv", pd.DataFrame(prediction_rows), index=False
+        weighted_probe_predictions_path(output_dir), pd.DataFrame(prediction_rows), index=False
     )
+    write_csv_atomic(per_class_metrics_path(output_dir), pd.DataFrame(per_class_rows), index=False)
     write_csv_atomic(
-        output_dir / "per_class_metrics.csv", pd.DataFrame(per_class_rows), index=False
-    )
-    write_csv_atomic(
-        output_dir / "bootstrap_confidence_intervals.csv",
+        bootstrap_confidence_intervals_path(output_dir),
         pd.DataFrame(bootstrap_rows),
         index=False,
     )
-    write_json_atomic(output_dir / "confusion_matrices.json", matrices)
+    write_json_atomic(confusion_matrices_path(output_dir), matrices)
     write_json_atomic(
-        output_dir / "run_manifest.json",
+        run_manifest_path(output_dir),
         {
             "experiment_id": EXPERIMENT_ID,
             "splits_path": str(splits_path),
@@ -303,7 +329,7 @@ def run_probe(
             + markdown_table(rows=best.to_dict("records"))
             + "\n"
         )
-    write_text_atomic(output_dir / "summary.md", summary)
+    write_text_atomic(weighted_probe_summary_path(output_dir), summary)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
