@@ -9,6 +9,9 @@ from georeset.vision.clip_zero_shot import (
     embed_label_prompts,
     predict_zero_shot,
     run_zero_shot_evaluation,
+    zero_shot_metrics_path,
+    zero_shot_predictions_path,
+    zero_shot_summary_path,
 )
 
 
@@ -46,6 +49,12 @@ def test_embed_label_prompts_rejects_empty_prompt_lists() -> None:
             {"31": []},
             text_encoder=lambda prompts: np.empty((len(prompts), 2), dtype=np.float32),
         )
+
+
+def test_zero_shot_output_paths_use_expected_names(tmp_path: Path) -> None:
+    assert zero_shot_metrics_path(tmp_path) == tmp_path / "zero_shot_clip_metrics.csv"
+    assert zero_shot_predictions_path(tmp_path) == tmp_path / "zero_shot_clip_predictions.csv"
+    assert zero_shot_summary_path(tmp_path) == tmp_path / "zero_shot_clip_summary.md"
 
 
 def test_run_zero_shot_evaluation_writes_metrics_and_predictions(tmp_path: Path) -> None:

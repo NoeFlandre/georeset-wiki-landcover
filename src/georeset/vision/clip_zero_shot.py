@@ -18,6 +18,18 @@ FloatFeatures = NDArray[np.float32]
 TextEncoder = Callable[[list[str]], FloatFeatures]
 
 
+def zero_shot_metrics_path(output_dir: Path) -> Path:
+    return output_dir / "zero_shot_clip_metrics.csv"
+
+
+def zero_shot_predictions_path(output_dir: Path) -> Path:
+    return output_dir / "zero_shot_clip_predictions.csv"
+
+
+def zero_shot_summary_path(output_dir: Path) -> Path:
+    return output_dir / "zero_shot_clip_summary.md"
+
+
 def _normalize(features: FloatFeatures) -> FloatFeatures:
     norms = np.linalg.norm(features, axis=1, keepdims=True)
     norms[norms == 0.0] = 1.0
@@ -88,7 +100,7 @@ def run_zero_shot_evaluation(
         "n_labels": len(prompts),
         **metrics,
     }
-    write_csv_atomic(output_dir / "zero_shot_clip_metrics.csv", pd.DataFrame([metric_row]), index=False)
+    write_csv_atomic(zero_shot_metrics_path(output_dir), pd.DataFrame([metric_row]), index=False)
     prediction_rows = [
         {
             "baseline": "zero_shot_clip",
@@ -99,12 +111,12 @@ def run_zero_shot_evaluation(
         for pageid, target, prediction in zip(eval_rows["pageid"], eval_y, predictions, strict=True)
     ]
     write_csv_atomic(
-        output_dir / "zero_shot_clip_predictions.csv",
+        zero_shot_predictions_path(output_dir),
         pd.DataFrame(prediction_rows),
         index=False,
     )
     write_text_atomic(
-        output_dir / "zero_shot_clip_summary.md",
+        zero_shot_summary_path(output_dir),
         "# zero_shot_clip\n\n"
         f"- n_eval: {metric_row['n_eval']}\n"
         f"- n_labels: {metric_row['n_labels']}\n"
