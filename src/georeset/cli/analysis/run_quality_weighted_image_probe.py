@@ -12,6 +12,7 @@ from numpy.typing import NDArray
 
 from georeset.analysis.supported_metrics import per_label_counts, single_label_metrics_supported
 from georeset.cli.csv_args import parse_csv_strings
+from georeset.cli.image_probe_args import embedding_cache_paths
 from georeset.experiment_paths import experiment_artifact_dir
 from georeset.utils.json_io import (
     markdown_table,
@@ -43,14 +44,6 @@ WEIGHT_COLUMNS = (
     "weight_raw",
     "weight_class_balanced",
 )
-
-
-def _embedding_files(output_dir: Path, encoders: list[str], windows: list[str]) -> list[Path]:
-    files = []
-    for encoder in encoders:
-        for window in windows:
-            files.append(output_dir / f"embeddings_{encoder}_window_{int(window):04d}m.npz")
-    return files
 
 
 def _normalized(values: pd.Series) -> NDArray[np.float64]:
@@ -327,10 +320,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     output_dir = args.output_dir
-    embeddings_paths = args.embeddings_path or _embedding_files(
+    embeddings_paths = args.embeddings_path or embedding_cache_paths(
         output_dir,
-        parse_csv_strings(args.encoders),
-        parse_csv_strings(args.windows),
+        encoders=parse_csv_strings(args.encoders),
+        windows=parse_csv_strings(args.windows),
     )
     run_probe(
         splits_path=args.splits_path or output_dir / "image_probe_splits_v2.csv",

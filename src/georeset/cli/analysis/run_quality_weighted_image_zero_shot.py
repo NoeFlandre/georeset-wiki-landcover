@@ -13,6 +13,7 @@ import pandas as pd
 from georeset.analysis.supported_metrics import single_label_metrics_supported
 from georeset.cli.analysis.run_clip_zero_shot_experiment import build_transformers_clip_text_encoder
 from georeset.cli.csv_args import parse_csv_strings
+from georeset.cli.image_probe_args import embedding_cache_paths
 from georeset.experiment_paths import experiment_artifact_dir
 from georeset.utils.json_io import markdown_table, write_csv_atomic, write_text_atomic
 from georeset.vision.clip_embedding_cache import load_embedding_cache, stack_embeddings_for_rows
@@ -25,14 +26,6 @@ from georeset.vision.clip_zero_shot import (
 
 EXPERIMENT_ID = "quality_weighted_multiscale_image_probe_v1"
 TextEncoderFactory = Callable[[str, str], TextEncoder]
-
-
-def _embedding_files(output_dir: Path, encoders: list[str], windows: list[str]) -> list[Path]:
-    return [
-        output_dir / f"embeddings_{encoder}_window_{int(window):04d}m.npz"
-        for encoder in encoders
-        for window in windows
-    ]
 
 
 def _is_clip_encoder(encoder_name: str) -> bool:
@@ -137,10 +130,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     output_dir = args.output_dir
-    embeddings_paths = args.embeddings_path or _embedding_files(
+    embeddings_paths = args.embeddings_path or embedding_cache_paths(
         output_dir,
-        parse_csv_strings(args.encoders),
-        parse_csv_strings(args.windows),
+        encoders=parse_csv_strings(args.encoders),
+        windows=parse_csv_strings(args.windows),
     )
     run_zero_shot_image_probe(
         splits_path=args.splits_path or output_dir / "image_probe_splits_v2.csv",
