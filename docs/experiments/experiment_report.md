@@ -867,6 +867,76 @@ The OSM claim must be softer: OSM text signal exists for some Qwen subsets, but
 target composition and small support explain more of the apparent gains than
 they do for CORINE.
 
+## Experiment 014: Quality-Weighted Multiscale Image Probe
+
+Report:
+`docs/experiments/014_quality_weighted_multiscale_image_probe/analysis.md`
+
+Artifacts:
+
+- `data/experiments/014_quality_weighted_multiscale_image_probe/quality_weighted_multiscale_image_probe_v1/`
+
+### What Was Done
+
+This experiment implements the next-stage image-probe pipeline motivated by
+Experiment 012. The scientific goal is to avoid the rare-class loss caused by
+hard filtering weak labels. Instead of only dropping examples, it builds
+quality, relevance, spatial-confidence, and Qwen/Gemma agreement signals into
+soft sample weights.
+
+The completed run was the staged MVP, not the full encoder/window grid. It used:
+
+- encoder: frozen `openai/clip-vit-base-patch32`;
+- Sentinel-2 RGB windows: 320 m and 2240 m;
+- output image size: 224 x 224 pixels;
+- embeddings: 512 dimensions;
+- evaluation: the same 35-example strict split style, 5 examples per CORINE
+  class;
+- training policies: broad unweighted, spatial-only, quality-spatial hard
+  filter, text-spatial-agreement hard filter, quality-weighted, class-balanced
+  quality-weighted, spatial soft weighting, and text-agreement soft weighting;
+- metrics: accuracy, allowed-label balanced accuracy, supported-label balanced
+  accuracy, allowed/supported macro-F1, per-class metrics, bootstrap intervals,
+  and confusion matrices.
+
+The run did not rerun LLMs or change labels. It reused existing quality scores,
+spatial metadata, and frozen Qwen/Gemma content predictions.
+
+### Results
+
+The MVP completed end-to-end. It produced 1,251 cached Sentinel-2 patches for
+each physical window and 1,251 CLIP embeddings for each window. The probe output
+contains 1,664 metric rows, 127,104 prediction rows, per-class metrics,
+bootstrap confidence intervals, confusion matrices, and run manifests.
+
+The model-performance result is negative:
+
+| run | window | eval examples | accuracy | supported balanced accuracy | supported macro-F1 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Experiment 014 trained classifier | 320 m | 35 | 0.143 | 0.143 | 0.036 |
+| Experiment 014 trained classifier | 2240 m | 35 | 0.143 | 0.143 | 0.036 |
+| Experiment 012 zero-shot CLIP baseline | prior single-scale patch | 35 | 0.200 | 0.200 | 0.224 |
+| Experiment 012 best linear probe | prior single-scale patch | 35 | 0.600 | 0.600 | 0.586 |
+
+The Experiment 014 MVP classifier often collapsed to predicting dominant CORINE
+class `31`. Both tested physical scales therefore underperformed the earlier
+zero-shot CLIP baseline and were far below the earlier broad weak-label linear
+probe.
+
+### Interpretation
+
+The engineering result is positive: the new multiscale/weighted pipeline runs
+end-to-end on Grid5000 and produces auditable artifacts. The scientific result
+for this MVP configuration is negative: `clip_base` on 320 m and 2240 m crops
+does not recover useful seven-class CORINE signal under the new split and
+training setup.
+
+This should not be overclaimed as a failure of all multiscale or quality-weighted
+image learning. It says that the first MVP configuration is not enough. The next
+decision should come from the planned full encoder/window run, especially the
+stronger CLIP and DINOv2 encoders, before spending compute on random training
+controls.
+
 ## Cross-Experiment Findings
 
 ### 1. Raw Content Remains The Best Direct Text Source
@@ -918,13 +988,15 @@ local, and composition-sensitive. Some Qwen OSM subsets survive controls, but
 Gemma OSM content often does not survive target matching. The OSM evidence is
 real but weaker and should be framed as diagnostic rather than solved.
 
-### 7. Downstream Image Learning Needs Broad Support
+### 7. Downstream Image Learning Needs More Than The First MVP
 
-The CLIP linear probe shows that weak labels can train an image model better
-than out-of-the-box zero-shot CLIP, but strict text/spatial agreement filters
-underperform because they remove too much data. The next image-stage design
-should keep broad support and use quality signals as weights or sampling
-controls rather than hard gates.
+The original CLIP linear probe showed that broad weak labels can train an image
+model better than out-of-the-box zero-shot CLIP, while strict text/spatial
+agreement filters underperform because they remove too much data. Experiment 014
+validated the new multiscale/weighted image-probe pipeline, but its first
+`clip_base` MVP at 320 m and 2240 m was chance-like. The image direction remains
+open, but the next positive claim must come from the full encoder/window grid,
+not from the MVP.
 
 ## Current Best Claims
 
@@ -941,8 +1013,9 @@ The most defensible claims after all experiments are:
    as replacements for raw content.
 6. OSM has useful signal but is more sensitive to target composition and small
    support.
-7. For downstream Sentinel patch learning, broad weak-label training currently
-   beats strict agreement-only training.
+7. For downstream Sentinel patch learning, the original broad weak-label CLIP
+   probe beat strict agreement-only training, but the newer multiscale MVP did
+   not yet recover useful signal.
 
 ## Claims That Should Be Avoided Or Rephrased
 
@@ -974,9 +1047,11 @@ The next high-value research steps are:
    alignment is weak on CORINE satellite patches.
 3. Keep the strict high-quality set as evaluation or calibration data, not as
    the only training set.
-4. Continue reporting CORINE with balanced accuracy and macro-F1, and OSM with
+4. Run the full Experiment 014 encoder/window grid before interpreting the
+   multiscale weighting idea.
+5. Continue reporting CORINE with balanced accuracy and macro-F1, and OSM with
    Jaccard plus exact match.
-5. For every future filtered subset, include same-size and target-matched random
+6. For every future filtered subset, include same-size and target-matched random
    controls by default.
 
 ## Artifact Index
@@ -996,6 +1071,7 @@ Primary reports:
 - `docs/experiments/011_retrieved_evidence_windows/analysis.md`
 - `docs/experiments/012_clip_linear_probe_weak_labels/analysis.md`
 - `docs/experiments/013_subset_randomization_controls/analysis.md`
+- `docs/experiments/014_quality_weighted_multiscale_image_probe/analysis.md`
 
 Primary generated artifact roots:
 
@@ -1012,3 +1088,4 @@ Primary generated artifact roots:
 - `data/experiments/011_retrieved_evidence_windows/`
 - `data/experiments/012_clip_linear_probe_weak_labels/`
 - `data/experiments/013_subset_randomization_controls/`
+- `data/experiments/014_quality_weighted_multiscale_image_probe/`

@@ -354,16 +354,24 @@ and that effect is not explained away by sample size or class composition. For
 OSM, the evidence remains useful but should be framed more carefully because
 target composition and small support explain more of the apparent gains.
 
-Experiment `014_quality_weighted_multiscale_image_probe` is the planned
+Experiment `014_quality_weighted_multiscale_image_probe` implements the
 follow-up to the first image probe. It keeps the broad weak-label training
 coverage that worked best in Experiment 012, but turns quality, relevance,
 spatial purity, and Qwen/Gemma agreement into soft sample weights instead of
-hard filters. It also tests physical Sentinel-2 crop scale explicitly by
-comparing 320 m, 640 m, 1280 m, and 2240 m windows resized to the same encoder
-input size.
+hard filters. It also tests physical Sentinel-2 crop scale explicitly.
 
-The experiment is staged for Grid5000: first a small `clip_base` MVP run on
-320 m and 2240 m windows, then the full encoder/window grid, and finally random
-training controls once the main probe results identify the meaningful
-comparisons. Its headline metric is supported-label balanced accuracy, while
-allowed-label balanced accuracy is retained for continuity with prior reports.
+The first completed MVP run used frozen `openai/clip-vit-base-patch32`
+embeddings on two Sentinel-2 RGB crop sizes: 320 m and 2240 m, both resized to
+224 x 224. The run finished end-to-end on Grid5000 and produced split, patch,
+embedding, prediction, per-class, bootstrap, confusion-matrix, manifest, and
+summary artifacts. Both windows contained 1,251 cached patches and 512-D CLIP
+embeddings.
+
+The MVP result is negative but useful. On the 35-example strict evaluation
+split, the best trained classifier for both 320 m and 2240 m reached accuracy
+`0.143`, supported balanced accuracy `0.143`, and supported macro-F1 `0.036`.
+That is essentially chance for seven classes and below the earlier Experiment
+012 zero-shot CLIP baseline of accuracy `0.200`, balanced accuracy `0.200`, and
+macro-F1 `0.224`. The classifier often collapsed to the dominant class. This
+means the new pipeline is operational, but `clip_base` on these two scales did
+not reproduce the stronger Experiment 012 linear-probe result.

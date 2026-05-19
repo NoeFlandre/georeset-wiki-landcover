@@ -314,7 +314,7 @@
           artifacts.
         </p>
         <div class="stamp">
-          <span class="pill">13 experiment stages</span>
+          <span class="pill">14 experiment stages</span>
           <span class="pill">1,251 CORINE articles</span>
           <span class="pill">275 OSM articles</span>
           <span class="pill">35-image strict CLIP eval</span>
@@ -331,11 +331,11 @@
         </div>
         <div class="metric-card">
           <strong>0.600</strong>
-          <span>Frozen CLIP + linear probe accuracy on the strict image eval split</span>
+          <span>Experiment 012 frozen CLIP + linear probe accuracy on the strict image eval split</span>
         </div>
         <div class="metric-card">
-          <strong>0.200</strong>
-          <span>Out-of-the-box zero-shot CLIP accuracy on that same image eval split</span>
+          <strong>0.143</strong>
+          <span>Experiment 014 CLIP-base multiscale MVP accuracy at both 320 m and 2240 m</span>
         </div>
       </div>
     </section>
@@ -372,8 +372,8 @@
 
           <rect x="848" y="28" width="220" height="82" rx="8" fill="#f3eff8" stroke="#d7cce5"></rect>
           <text x="958" y="57" text-anchor="middle" font-size="15" font-weight="700" fill="#17202a">Image supervision?</text>
-          <text x="958" y="82" text-anchor="middle" font-size="12" fill="#526676">Sentinel patches + CLIP probe</text>
-          <text x="958" y="100" text-anchor="middle" font-size="12" fill="#5f4b8b">Broad weak labels help</text>
+          <text x="958" y="82" text-anchor="middle" font-size="12" fill="#526676">Sentinel patches + CLIP probes</text>
+          <text x="958" y="100" text-anchor="middle" font-size="12" fill="#5f4b8b">MVP pipeline works; signal weak</text>
 
           <rect x="848" y="158" width="220" height="82" rx="8" fill="#eef4f7" stroke="#cbd8df"></rect>
           <text x="958" y="187" text-anchor="middle" font-size="15" font-weight="700" fill="#17202a">Subset gains real?</text>
@@ -436,6 +436,14 @@
           <p>For CLIP training, this stricter tier keeps examples where Qwen, Gemma, and spatial labels agree. It is cleaner but smaller.</p>
         </article>
         <article class="term">
+          <h3>Multiscale image probe</h3>
+          <p>Experiment 14 fetches Sentinel-2 RGB crops at known physical widths, then resizes each crop to 224x224 before CLIP embedding.</p>
+        </article>
+        <article class="term">
+          <h3>Supported metric</h3>
+          <p>Supported balanced accuracy and macro-F1 average only over classes that actually appear in the evaluation split. This is the Experiment 14 headline metric.</p>
+        </article>
+        <article class="term">
           <h3>Balanced accuracy</h3>
           <p>Average recall over classes. It is the main CORINE metric because majority classes can make raw accuracy look better than minority-class behavior.</p>
         </article>
@@ -474,8 +482,8 @@
           <p>Gemma improves raw CORINE accuracy and OSM exact/micro metrics, while Qwen is stronger on balanced CORINE behavior.</p>
         </article>
         <article class="panel">
-          <h3>6. Image probing is promising</h3>
-          <p>Frozen CLIP plus a linear probe trained on broad weak labels reaches 0.600 accuracy, far above zero-shot CLIP at 0.200.</p>
+          <h3>6. Image probing is unresolved</h3>
+          <p>Experiment 012 was promising: CLIP linear probing reached 0.600 accuracy. Experiment 014's stricter multiscale MVP ran successfully but fell to 0.143.</p>
         </article>
         <article class="panel">
           <h3>7. CORINE filters survive randomization</h3>
@@ -500,16 +508,18 @@
         <div class="bar-chart">
           <h3>Sentinel-2 RGB image probe</h3>
           <div class="bar-row"><span>Zero-shot CLIP</span><div class="bar-track"><div class="bar red" style="width:33.3%"></div></div><span class="num">0.200</span></div>
-          <div class="bar-row"><span>Linear probe, all weak labels</span><div class="bar-track"><div class="bar violet" style="width:100%"></div></div><span class="num">0.600</span></div>
-          <div class="bar-row"><span>Linear probe, 250 m purity &gt;=0.8</span><div class="bar-track"><div class="bar teal" style="width:95.2%"></div></div><span class="num">0.571</span></div>
-          <div class="bar-row"><span>Linear probe, text agreement</span><div class="bar-track"><div class="bar gold" style="width:66.7%"></div></div><span class="num">0.400</span></div>
+          <div class="bar-row"><span>Exp012 linear probe, all weak labels</span><div class="bar-track"><div class="bar violet" style="width:100%"></div></div><span class="num">0.600</span></div>
+          <div class="bar-row"><span>Exp012 linear probe, text agreement</span><div class="bar-track"><div class="bar gold" style="width:66.7%"></div></div><span class="num">0.400</span></div>
+          <div class="bar-row"><span>Exp014 MVP, CLIP-base 320 m</span><div class="bar-track"><div class="bar red" style="width:23.8%"></div></div><span class="num">0.143</span></div>
+          <div class="bar-row"><span>Exp014 MVP, CLIP-base 2240 m</span><div class="bar-track"><div class="bar red" style="width:23.8%"></div></div><span class="num">0.143</span></div>
           <p class="small">Image metrics use a separate 35-example strict evaluation split, so they are not directly comparable to text-classifier CORINE metrics.</p>
           <ul class="mini-list">
             <li>Image source: Sentinel-2 RGB patches around article coordinates.</li>
-            <li>Patch/data: 798 cached patches, 224x224 pixels, cloud cover &lt;=25%, 2022-04-01 to 2022-10-31.</li>
-            <li>Encoder: frozen <code>openai/clip-vit-base-patch32</code>; embeddings are 512-dimensional.</li>
-            <li>Training: linear classifier only, batch size 32, 600 epochs, learning rate 0.1.</li>
-            <li>Split: 5 strict eval examples per class, up to 80 training examples per class.</li>
+            <li>Experiment 012: one cached patch scale, 798 patches, frozen <code>openai/clip-vit-base-patch32</code>, linear classifier.</li>
+            <li>Experiment 014 MVP: 1,251 patches at 320 m and 1,251 patches at 2240 m, both resized to 224x224.</li>
+            <li>Experiment 014 encoder: frozen <code>openai/clip-vit-base-patch32</code>; embeddings are 512-dimensional.</li>
+            <li>Experiment 014 training: weighted/unweighted linear probes, 600 epochs, learning rate 0.1, L2 grid.</li>
+            <li>Experiment 014 result: the pipeline completed, but the classifier collapsed toward a dominant class.</li>
           </ul>
         </div>
       </div>
@@ -619,6 +629,13 @@
             <td>CORINE gains survive support-size and target-composition controls; OSM evidence is more mixed and should be worded cautiously.</td>
             <td><span class="status">Strengthens CORINE</span></td>
           </tr>
+          <tr>
+            <td class="num"><a href="014_quality_weighted_multiscale_image_probe/analysis.md">014</a></td>
+            <td>Can soft quality weighting and physical crop scale improve image probing?</td>
+            <td>MVP completed for CLIP-base at 320 m and 2240 m. Both reached 0.143 supported balanced accuracy on the 35-example strict eval split.</td>
+            <td>The pipeline is operational, but this MVP configuration is chance-like and below the earlier 0.200 zero-shot CLIP baseline.</td>
+            <td><span class="status warn">Pipeline works; result weak</span></td>
+          </tr>
         </tbody>
       </table>
     </section>
@@ -632,9 +649,10 @@
         complete Wikipedia article body.
         Deterministic summaries, cards, highlights, and retrieved windows are useful for
         diagnostics, filtering, and cost control, but not as primary replacements. For
-        image learning, broader weak-label coverage beats the strictest text-agreement
-        filter at the current data size. Random subset controls strengthen the CORINE
-        claim, while OSM remains more sensitive to target composition and small support.
+        image learning, the original broad weak-label CLIP probe was promising, but the
+        new multiscale CLIP-base MVP did not yet recover useful signal. Random subset
+        controls strengthen the CORINE claim, while OSM remains more sensitive to target
+        composition and small support.
       </div>
     </section>
 
