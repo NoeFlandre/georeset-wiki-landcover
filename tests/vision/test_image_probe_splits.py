@@ -6,6 +6,7 @@ import pandas as pd
 from georeset.vision.image_probe_splits import (
     build_image_probe_splits_v2,
     compute_quality_weights,
+    tier_mask,
 )
 
 
@@ -104,3 +105,31 @@ def test_build_image_probe_splits_excludes_eval_from_training_and_keeps_agreemen
     )
     assert np.isclose(weights["weight_raw"].mean(), 1.0)
     assert manifest["evaluation_selection_excludes_model_agreement"] is True
+
+
+def test_tier_mask_does_not_treat_false_strings_as_true() -> None:
+    frame = pd.DataFrame(
+        {
+            "spatial_only": ["true", "false", "", None, True, False],
+            "quality_spatial": ["yes", "no", "maybe", "1", "0", False],
+            "text_spatial_agreement": [1, 0, "TRUE", "FALSE", "nan", None],
+        }
+    )
+
+    assert tier_mask(frame, "spatial_only").tolist() == [True, False, False, False, True, False]
+    assert tier_mask(frame, "quality_spatial").tolist() == [
+        True,
+        False,
+        False,
+        True,
+        False,
+        False,
+    ]
+    assert tier_mask(frame, "text_spatial_agreement").tolist() == [
+        True,
+        False,
+        True,
+        False,
+        False,
+        False,
+    ]

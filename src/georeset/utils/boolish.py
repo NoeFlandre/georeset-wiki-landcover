@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import math
+from numbers import Real
 
-TRUE_STRINGS = {"true", "t", "yes", "y", "oui", "1"}
-FALSE_STRINGS = {"false", "f", "no", "n", "non", "0"}
+TRUE_STRINGS = {"true", "t", "yes", "y", "oui", "on", "1"}
+FALSE_STRINGS = {"false", "f", "no", "n", "non", "off", "0"}
 NONE_STRINGS = {"", "nan", "none", "null"}
 
 
@@ -15,7 +16,11 @@ def parse_boolish(value: object) -> bool | None:
         return value
     if value is None:
         return None
-    if isinstance(value, int | float):
+    if hasattr(value, "item"):
+        scalar = value.item()
+        if scalar is not value:
+            return parse_boolish(scalar)
+    if isinstance(value, Real):
         try:
             numeric = float(value)
         except (TypeError, ValueError):

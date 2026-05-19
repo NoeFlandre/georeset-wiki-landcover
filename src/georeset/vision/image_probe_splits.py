@@ -138,8 +138,13 @@ def _tier_mask(frame: pd.DataFrame, tier: str) -> pd.Series:
     if tier == "all":
         return pd.Series(True, index=frame.index)
     if tier in {"spatial_only", "quality_spatial", "text_spatial_agreement"}:
-        return frame[tier].astype(bool)
+        return frame[tier].map(lambda value: parse_boolish(value) is True).astype(bool)
     raise ValueError(f"Unknown image probe tier: {tier}")
+
+
+def tier_mask(frame: pd.DataFrame, tier: str) -> pd.Series:
+    """Return a boolean mask for an image-probe train tier."""
+    return _tier_mask(frame, tier)
 
 
 def _sample_eval(frame: pd.DataFrame, *, seed: int, eval_per_class: int) -> pd.DataFrame:

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from numbers import Real
 from pathlib import Path
 
 import pandas as pd
 
 from georeset.analysis.list_normalization import normalize_string_list
+from georeset.utils.boolish import parse_boolish
 from georeset.utils.json_io import read_json_file
 
 _ARTICLE_TYPE_METADATA_COLUMNS = [
@@ -54,28 +54,9 @@ def _coerce_count(value: object) -> int:
 
 
 def _coerce_bool(value: object) -> bool:
-    if value is None:
-        return False
-    if isinstance(value, bool):
-        return value
     if isinstance(value, (list, tuple, dict)):
         return False
-    if pd.isna(value):
-        return False
-    if isinstance(value, str):
-        value_lower = value.strip().lower()
-        if value_lower in {"true", "1", "yes", "y", "on"}:
-            return True
-        if value_lower in {"false", "0", "no", "n", "off"}:
-            return False
-        return False
-    if isinstance(value, Real):
-        if value == 1:
-            return True
-        if value == 0:
-            return False
-        return False
-    return False
+    return parse_boolish(value) is True
 
 
 def load_article_type_metadata(path: Path) -> pd.DataFrame:

@@ -136,7 +136,9 @@ def test_load_article_type_metadata_normalizes_pageid_from_payload_or_key(tmp_pa
     assert frame["pageid"].tolist() == ["10", "200", "300", "400", "500"]
 
 
-def test_load_article_type_metadata_normalizes_candidate_and_rule_categories(tmp_path: Path) -> None:
+def test_load_article_type_metadata_normalizes_candidate_and_rule_categories(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / "article_type_metadata.json"
     _write_json(
         path,
@@ -173,15 +175,31 @@ def test_load_article_type_metadata_normalizes_candidate_and_rule_categories(tmp
     assert frame.loc[2, "candidate_article_types"] == ["other_or_unclear"]
 
 
-def test_load_article_type_metadata_all_categories_count_and_has_categories_are_normalized(tmp_path: Path) -> None:
+def test_load_article_type_metadata_all_categories_count_and_has_categories_are_normalized(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / "article_type_metadata.json"
     _write_json(
         path,
         {
-            "1": {"all_categories_count": "3", "has_categories": "true", "primary_article_type": "water_feature"},
-            "2": {"all_categories_count": 2.7, "has_categories": "0", "primary_article_type": "water_feature"},
-            "3": {"all_categories_count": "bad", "has_categories": "False", "primary_article_type": "water_feature"},
+            "1": {
+                "all_categories_count": "3",
+                "has_categories": "true",
+                "primary_article_type": "water_feature",
+            },
+            "2": {
+                "all_categories_count": 2.7,
+                "has_categories": "0",
+                "primary_article_type": "water_feature",
+            },
+            "3": {
+                "all_categories_count": "bad",
+                "has_categories": "False",
+                "primary_article_type": "water_feature",
+            },
             "4": {"has_categories": None, "primary_article_type": "water_feature"},
+            "5": {"has_categories": "oui", "primary_article_type": "water_feature"},
+            "6": {"has_categories": "non", "primary_article_type": "water_feature"},
         },
     )
 
@@ -191,7 +209,7 @@ def test_load_article_type_metadata_all_categories_count_and_has_categories_are_
     assert frame.loc[1, "all_categories_count"] == 2
     assert frame.loc[2, "all_categories_count"] == 0
     assert frame.loc[3, "all_categories_count"] == 0
-    assert frame["has_categories"].tolist() == [True, False, False, False]
+    assert frame["has_categories"].tolist() == [True, False, False, False, True, False]
 
 
 def test_load_article_type_metadata_unknown_has_categories_string_is_false(tmp_path: Path) -> None:
@@ -209,7 +227,9 @@ def test_load_article_type_metadata_unknown_has_categories_string_is_false(tmp_p
     assert frame["has_categories"].tolist() == [False, False]
 
 
-def test_load_article_type_metadata_container_has_categories_values_are_false(tmp_path: Path) -> None:
+def test_load_article_type_metadata_container_has_categories_values_are_false(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / "article_type_metadata.json"
     _write_json(
         path,
