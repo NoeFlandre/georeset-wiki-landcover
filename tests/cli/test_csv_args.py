@@ -1,7 +1,11 @@
 import pytest
 
 from georeset.cli.csv_args import parse_csv_ints, parse_csv_strings
-from georeset.cli.image_probe_args import embedding_cache_paths
+from georeset.cli.image_probe_args import (
+    embedding_cache_paths,
+    image_probe_splits_path,
+    sample_weights_path,
+)
 
 
 def test_parse_csv_strings_strips_whitespace_and_drops_empty_parts() -> None:
@@ -32,3 +36,8 @@ def test_embedding_cache_paths_uses_experiment_filename_convention(tmp_path) -> 
         tmp_path / "embeddings_dinov2_base_window_0320m.npz",
         tmp_path / "embeddings_dinov2_base_window_2240m.npz",
     ]
+
+
+def test_image_probe_metadata_paths_use_experiment_filename_convention(tmp_path) -> None:
+    assert image_probe_splits_path(tmp_path) == tmp_path / "image_probe_splits_v2.csv"
+    assert sample_weights_path(tmp_path) == tmp_path / "sample_weights.csv"

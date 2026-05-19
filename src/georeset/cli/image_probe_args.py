@@ -5,6 +5,16 @@ from __future__ import annotations
 from pathlib import Path
 
 
+def image_probe_splits_path(output_dir: Path) -> Path:
+    """Return the canonical Experiment 014 split metadata path."""
+    return output_dir / "image_probe_splits_v2.csv"
+
+
+def sample_weights_path(output_dir: Path) -> Path:
+    """Return the canonical Experiment 014 sample-weight metadata path."""
+    return output_dir / "sample_weights.csv"
+
+
 def embedding_cache_paths(
     output_dir: Path, *, encoders: list[str], windows: list[str]
 ) -> list[Path]:

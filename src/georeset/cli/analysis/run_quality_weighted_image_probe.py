@@ -12,7 +12,11 @@ from numpy.typing import NDArray
 
 from georeset.analysis.supported_metrics import per_label_counts, single_label_metrics_supported
 from georeset.cli.csv_args import parse_csv_strings
-from georeset.cli.image_probe_args import embedding_cache_paths
+from georeset.cli.image_probe_args import (
+    embedding_cache_paths,
+    image_probe_splits_path,
+    sample_weights_path,
+)
 from georeset.experiment_paths import experiment_artifact_dir
 from georeset.utils.json_io import (
     markdown_table,
@@ -326,8 +330,8 @@ def main(argv: list[str] | None = None) -> None:
         windows=parse_csv_strings(args.windows),
     )
     run_probe(
-        splits_path=args.splits_path or output_dir / "image_probe_splits_v2.csv",
-        weights_path=args.weights_path or output_dir / "sample_weights.csv",
+        splits_path=args.splits_path or image_probe_splits_path(output_dir),
+        weights_path=args.weights_path or sample_weights_path(output_dir),
         embeddings_paths=embeddings_paths,
         output_dir=output_dir,
         seed=args.seed,

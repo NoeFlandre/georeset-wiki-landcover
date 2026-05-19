@@ -13,7 +13,7 @@ import pandas as pd
 from georeset.analysis.supported_metrics import single_label_metrics_supported
 from georeset.cli.analysis.run_clip_zero_shot_experiment import build_transformers_clip_text_encoder
 from georeset.cli.csv_args import parse_csv_strings
-from georeset.cli.image_probe_args import embedding_cache_paths
+from georeset.cli.image_probe_args import embedding_cache_paths, image_probe_splits_path
 from georeset.experiment_paths import experiment_artifact_dir
 from georeset.utils.json_io import markdown_table, write_csv_atomic, write_text_atomic
 from georeset.vision.clip_embedding_cache import load_embedding_cache, stack_embeddings_for_rows
@@ -136,7 +136,7 @@ def main(argv: list[str] | None = None) -> None:
         windows=parse_csv_strings(args.windows),
     )
     run_zero_shot_image_probe(
-        splits_path=args.splits_path or output_dir / "image_probe_splits_v2.csv",
+        splits_path=args.splits_path or image_probe_splits_path(output_dir),
         embeddings_paths=embeddings_paths,
         output_dir=output_dir,
         device=args.device,
