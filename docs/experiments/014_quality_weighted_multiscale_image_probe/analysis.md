@@ -1,171 +1,353 @@
 # Experiment 014: Quality-Weighted Multiscale Image Probe
 
-## Question
+## Executive Summary
 
-Experiment 012 showed that hard filtering weak CORINE labels can hurt a
-downstream CLIP linear probe because it removes rare-class training examples.
-Experiment 014 tests the next alternative:
+Experiment 014 is the corrected multiscale Sentinel-2 image-probe experiment.
+It asks whether weak labels derived from GeoReset's Wikipedia/CORINE pipeline can
+train a useful image classifier when quality signals are used as soft weights
+instead of strict hard filters.
 
-- keep broad image-training coverage;
-- encode Sentinel-2 crops at explicit physical scales;
-- use article relevance, spatial purity, supervision quality, and Qwen/Gemma
-  agreement as soft training weights;
-- compare soft weighting with hard-filtered tiers and broad unweighted training;
-- keep the same 35-example strict evaluation design used by Experiment 012.
+The corrected MVP result is positive:
 
-This is an image experiment, not a new LLM experiment. It does not rerun prompts,
-change labels, or change article predictions.
+- zero-shot CLIP reaches only `0.200` supported balanced accuracy at both 320 m
+  and 2240 m;
+- the best trained CLIP linear probe reaches `0.686` supported balanced accuracy
+  at both scales;
+- 2240 m has the strongest strict-split macro-F1 (`0.685`);
+- hard-filtered tiers remain weaker than broad training because they remove too
+  many training examples;
+- soft text-agreement weighting helps clearly at 320 m, but at 2240 m it
+  essentially ties broad all-unweighted training.
 
-## Critical Implementation Note
+The important conclusion is therefore not "soft weighting always wins." The
+stronger and better-supported conclusion is:
 
-The first MVP run was invalid. The multiscale patch fetcher passed WGS84
-longitude/latitude directly to `rasterio.dataset.index()`, but Sentinel-2 raster
-assets use projected raster CRSs. Because reads were `boundless=True`, the wrong
-coordinates silently produced all-black patches.
+> Broad training coverage is essential. Quality, relevance, spatial confidence,
+> and text-model agreement are useful training signals, but at this data size
+> they should not be used mainly as hard filters.
 
-The bug was fixed by reprojecting each article point from `EPSG:4326` into the
-asset CRS before calling `dataset.index()`. The corrected run also adds patch
-validation artifacts before embeddings are computed:
+## Why This Experiment Exists
 
-- `patch_stats.csv`
-- `patch_contact_sheet.png`
-- `patch_validation_manifest.json`
+Experiment 012 was the first downstream image experiment. It fetched Sentinel-2
+RGB patches around geolocated Wikipedia articles, embedded them with frozen
+`openai/clip-vit-base-patch32`, and trained a simple linear classifier to predict
+CORINE level-2 land-cover classes.
 
-The corrected validation passed:
+Experiment 012 found a useful signal: broad weak-label training reached `0.600`
+balanced accuracy on the fixed 35-example strict evaluation split, compared with
+`0.200` for zero-shot CLIP.
 
-| window | patches | source pixels | all-zero patches | mean pixel | pixel std |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| 320 m | 1,251 | 32 | 0 | 132.788 | 34.880 |
-| 2240 m | 1,251 | 224 | 0 | 128.356 | 38.231 |
+But it also showed a problem. The cleanest hard-filtered training tier performed
+worse because it removed too many examples, especially minority classes. That
+made the next research question clear:
 
-The 320 m and 2240 m arrays are not identical: mean absolute pixel difference is
-`26.758`, and the contact sheet visually confirms centered, non-black crops at
-both scales.
+Can we preserve broad training coverage while still using relevance, spatial
+confidence, quality, and Qwen/Gemma agreement to reduce weak-label noise?
 
-## MVP Scope
+Experiment 014 tests that idea.
 
-The completed corrected MVP used:
+## What Was Performed
 
-- encoder: `openai/clip-vit-base-patch32`;
-- windows: 320 m and 2240 m;
-- Sentinel-2 bands: B04/B03/B02;
-- native pixel size: 10 m;
-- output size: 224 x 224;
-- resize method: bilinear;
-- strict evaluation split: 35 examples, 5 per supported CORINE class;
-- training rows after excluding strict eval: 1,216 for broad policies;
-- linear-probe epochs: 600;
+The corrected MVP run used:
+
+- task: CORINE level-2 single-label image classification;
+- image source: Sentinel-2 L2A RGB crops from Microsoft Planetary Computer;
+- bands: B04/B03/B02;
+- encoder: frozen `openai/clip-vit-base-patch32`;
+- image embedding size: 512;
+- crop windows: 320 m and 2240 m;
+- Sentinel native pixel size: 10 m;
+- source pixels:
+  - 320 m -> 32 source pixels;
+  - 2240 m -> 224 source pixels;
+- resize: bilinear to 224 x 224;
+- strict eval split: 35 examples, 5 per supported CORINE class;
+- broad train rows after excluding strict eval: 1,216;
+- linear probe: NumPy softmax classifier on frozen CLIP embeddings;
+- training epochs: 600;
 - L2 grid: `1e-5`, `1e-4`, `1e-3`, `1e-2`;
 - bootstrap intervals: 1,000 resamples.
 
-Qwen/Gemma agreement is used only as a training signal, not as the main
-evaluation selector. The strict evaluation set is selected from the
-quality-spatial subset, independent of text-model agreement.
+No LLMs were rerun. No prompts, text sources, or labels were changed. Qwen/Gemma
+predictions were reused only as frozen metadata for training weights and
+training-tier definitions.
 
-## Zero-Shot Baseline
+## The Critical CRS Bug And Fix
 
-Zero-shot CLIP is weak on the strict evaluation split:
+The first MVP run was invalid. The multiscale patch fetcher passed WGS84
+longitude/latitude directly to `rasterio.dataset.index()`. Sentinel-2 raster
+assets are stored in projected raster coordinate reference systems, so
+`dataset.index()` expects coordinates in the raster asset CRS, not WGS84.
 
-| window | accuracy | supported balanced accuracy | supported macro-F1 |
+Because patch reads used `boundless=True`, the bug did not crash. It silently
+returned fill pixels, which made the Sentinel patches all black. The previous
+`0.143` result must therefore be ignored.
+
+The fix reprojects every article point from `EPSG:4326` into the raster asset CRS
+before calling `dataset.index()`. We also added three safeguards:
+
+- all-zero newly fetched patches fail immediately;
+- all-zero existing patch caches fail immediately;
+- each patch run writes numeric and visual validation artifacts before embedding.
+
+Corrected validation:
+
+| Window | Patches | Source pixels | All-zero patches | Mean pixel | Pixel std |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 320 m | 1,251 | 32 | 0 | 132.788 | 34.880 |
+| 2240 m | 1,251 | 224 | 0 | 128.356 | 38.231 |
+
+The 320 m and 2240 m patch arrays differ for the same pageids:
+
+```text
+mean absolute patch difference = 26.758
+exact equal patch count = 0
+```
+
+The contact sheet also confirms the expected visual pattern: 320 m crops show
+local detail, while 2240 m crops show broader landscape context.
+
+## What The Classifier Does
+
+The classifier predicts CORINE level-2 land-cover labels from Sentinel-2 image
+crops. Text is not used at inference time.
+
+The image pipeline is:
+
+1. take a geolocated Wikipedia article coordinate;
+2. fetch a Sentinel-2 RGB crop around that coordinate;
+3. resize the physical crop to 224 x 224;
+4. embed the image with frozen CLIP;
+5. train a linear classifier on top of the frozen image embedding;
+6. predict the CORINE level-2 label.
+
+The text-derived signals enter only during training-policy construction. They
+help decide how much to weight a training example or whether it belongs to a hard
+training tier.
+
+## What Soft Weighting Means
+
+A hard filter makes a binary decision:
+
+```text
+keep this example / drop this example
+```
+
+Soft weighting keeps broad coverage but changes how much each example
+contributes to the training loss:
+
+```text
+cleaner examples count more / noisier examples count less
+```
+
+This matters because the dataset is small and class-imbalanced. Hard filters can
+remove noisy labels, but they can also remove rare-class examples and visual
+diversity. A small clean set can be worse than a larger slightly noisy set.
+
+Experiment 014 compares both strategies directly.
+
+## Weight Signals
+
+The sample weights use four families of metadata:
+
+1. **Land-cover relevance**
+
+   Articles with medium/high explicit land-cover evidence are more trusted than
+   articles with none/low evidence.
+
+2. **Uncertainty**
+
+   High uncertainty downweights examples.
+
+3. **Spatial confidence**
+
+   Higher `point_label_share_250m` indicates that the article coordinate sits in
+   a locally coherent CORINE region.
+
+4. **Qwen/Gemma agreement**
+
+   If both frozen text classifiers predict the same CORINE label as the spatial
+   point label, the example receives stronger training support.
+
+Important: Qwen/Gemma agreement is not used to select the strict evaluation set.
+It is used only for training weights and training tiers. This avoids selecting
+the evaluation set with the same text models whose metadata is being tested.
+
+## Training Policies
+
+The experiment compares broad training, hard filters, and soft weighting.
+
+| Policy | Type | Train rows | Meaning |
+| --- | --- | ---: | --- |
+| `all_unweighted` | broad baseline | 1,216 | Use every train row equally. |
+| `spatial_only_unweighted` | hard filter | 611 | Keep only spatially coherent rows. |
+| `quality_spatial_hard` | hard filter | 286 | Keep spatially coherent, relevant, high-quality, low-uncertainty rows. |
+| `agreement_hard` | hard filter | 152 | Keep only rows where Qwen, Gemma, and CORINE agree. |
+| `all_quality_weighted` | soft weight | 1,216 | Use all rows with relevance/spatial/quality/agreement weights. |
+| `all_quality_weighted_class_balanced` | soft weight | 1,216 | Same but normalized within classes. |
+| `spatial_soft_weighted` | soft weight | 1,216 | Use all rows but emphasize spatially coherent rows. |
+| `text_agreement_soft_weighted` | soft weight | 1,216 | Use all rows but emphasize text agreement plus spatial/relevance signals. |
+
+The hard-filter rows show the core risk: `agreement_hard` is clean but has only
+152 training examples. That is too little for robust class coverage.
+
+## Zero-Shot CLIP Baseline
+
+Zero-shot CLIP means no training on GeoReset Sentinel/CORINE data. The model
+classifies images using CLIP text-image similarity to class prompts.
+
+| Window | Accuracy | Supported balanced accuracy | Supported macro-F1 |
 | ---: | ---: | ---: | ---: |
 | 320 m | 0.200 | 0.200 | 0.152 |
 | 2240 m | 0.200 | 0.200 | 0.224 |
 
-This confirms that the trained linear probe is adding information beyond
-out-of-the-box CLIP text-image alignment.
+Zero-shot CLIP is weak for this task. That is expected: CORINE level-2
+remote-sensing labels are specialized, and the images are Sentinel-2 overhead
+crops rather than ordinary web photos.
 
 ## Strict Evaluation Results
 
-Headline metric: `balanced_accuracy_supported`. The allowed-label metrics are
-identical here because the strict split contains support for the same seven
-labels used in this MVP comparison.
+The headline metric is `balanced_accuracy_supported`, which averages recall only
+over labels present in the evaluation split. In this strict split, it matches the
+allowed-label balanced accuracy because all seven supported labels are present.
 
 Best policy per window:
 
-| window | best policy | L2 | train n | accuracy | supported balanced accuracy | supported macro-F1 | 95% CI balanced accuracy | 95% CI macro-F1 |
+| Window | Best policy | L2 | Train rows | Accuracy | Supported balanced accuracy | Supported macro-F1 | Balanced-accuracy 95% CI | Macro-F1 95% CI |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | 320 m | `text_agreement_soft_weighted` | 0.01 | 1,216 | 0.686 | 0.686 | 0.663 | 0.560-0.817 | 0.507-0.785 |
 | 2240 m | `text_agreement_soft_weighted` | 0.00001 | 1,216 | 0.686 | 0.686 | 0.685 | 0.538-0.837 | 0.505-0.827 |
 
-Best strict-split score by training policy:
+These results are far above zero-shot CLIP:
 
-| window | policy | train n | supported balanced accuracy | supported macro-F1 |
-| ---: | --- | ---: | ---: | ---: |
-| 320 m | `text_agreement_soft_weighted` | 1,216 | 0.686 | 0.663 |
-| 320 m | `all_quality_weighted_class_balanced` | 1,216 | 0.600 | 0.569 |
-| 320 m | `all_quality_weighted` | 1,216 | 0.571 | 0.524 |
-| 320 m | `all_unweighted` | 1,216 | 0.543 | 0.502 |
-| 320 m | `spatial_only_unweighted` | 611 | 0.543 | 0.520 |
-| 320 m | `quality_spatial_hard` | 286 | 0.400 | 0.344 |
-| 320 m | `agreement_hard` | 152 | 0.429 | 0.358 |
-| 2240 m | `text_agreement_soft_weighted` | 1,216 | 0.686 | 0.685 |
-| 2240 m | `all_unweighted` | 1,216 | 0.686 | 0.677 |
-| 2240 m | `spatial_soft_weighted` | 1,216 | 0.657 | 0.642 |
-| 2240 m | `all_quality_weighted_class_balanced` | 1,216 | 0.629 | 0.617 |
-| 2240 m | `all_quality_weighted` | 1,216 | 0.600 | 0.588 |
-| 2240 m | `quality_spatial_hard` | 286 | 0.543 | 0.505 |
-| 2240 m | `spatial_only_unweighted` | 611 | 0.543 | 0.520 |
-| 2240 m | `agreement_hard` | 152 | 0.400 | 0.363 |
+| Method | 320 m balanced accuracy | 2240 m balanced accuracy |
+| --- | ---: | ---: |
+| zero-shot CLIP | 0.200 | 0.200 |
+| best trained linear probe | 0.686 | 0.686 |
 
-## Interpretation
+## Policy Comparison
 
-The corrected MVP reverses the invalid first conclusion. The pipeline is not
-collapsing to chance. With valid Sentinel crops, the trained CLIP linear probe
-beats zero-shot CLIP by a large margin:
+### 320 m
 
-- best trained 320 m: `0.686` supported balanced accuracy versus zero-shot
-  `0.200`;
-- best trained 2240 m: `0.686` supported balanced accuracy versus zero-shot
-  `0.200`;
-- 2240 m gives the strongest strict-split macro-F1 (`0.685`), slightly above
-  320 m (`0.663`).
+| Policy | Train rows | Supported balanced accuracy | Supported macro-F1 |
+| --- | ---: | ---: | ---: |
+| `text_agreement_soft_weighted` | 1,216 | 0.686 | 0.663 |
+| `all_quality_weighted_class_balanced` | 1,216 | 0.600 | 0.569 |
+| `all_quality_weighted` | 1,216 | 0.571 | 0.524 |
+| `all_unweighted` | 1,216 | 0.543 | 0.502 |
+| `spatial_only_unweighted` | 611 | 0.543 | 0.520 |
+| `spatial_soft_weighted` | 1,216 | 0.543 | 0.534 |
+| `agreement_hard` | 152 | 0.429 | 0.358 |
+| `quality_spatial_hard` | 286 | 0.400 | 0.344 |
 
-The most important modeling result is about hard filters. Hard-filtered training
-tiers still underperform broad training:
+At 320 m, soft text-agreement weighting clearly helps over all-unweighted
+training: `0.686` versus `0.543` supported balanced accuracy.
 
-- `quality_spatial_hard` uses only 286 training rows and reaches `0.400` at
-  320 m and `0.543` at 2240 m;
-- `agreement_hard` uses only 152 training rows and reaches `0.429` at 320 m and
-  `0.400` at 2240 m;
-- the best policies keep all 1,216 train rows and use soft weights.
+### 2240 m
 
-This supports the Experiment 014 design premise: for this data size, quality and
-agreement signals are more useful as weights than as hard filters.
+| Policy | Train rows | Supported balanced accuracy | Supported macro-F1 |
+| --- | ---: | ---: | ---: |
+| `text_agreement_soft_weighted` | 1,216 | 0.686 | 0.685 |
+| `all_unweighted` | 1,216 | 0.686 | 0.677 |
+| `spatial_soft_weighted` | 1,216 | 0.657 | 0.642 |
+| `all_quality_weighted_class_balanced` | 1,216 | 0.629 | 0.617 |
+| `all_quality_weighted` | 1,216 | 0.600 | 0.588 |
+| `quality_spatial_hard` | 286 | 0.543 | 0.505 |
+| `spatial_only_unweighted` | 611 | 0.543 | 0.520 |
+| `agreement_hard` | 152 | 0.400 | 0.363 |
 
-The scale result is mixed but informative. Both windows tie on strict balanced
-accuracy, but 2240 m has slightly better macro-F1 and stronger broad unweighted
-performance. The wider crop likely provides useful land-cover context for some
-classes, but the MVP is too small to claim a definitive scale winner.
+At 2240 m, the story is different. `all_unweighted` ties
+`text_agreement_soft_weighted` on supported balanced accuracy (`0.686`) and is
+only slightly lower on macro-F1 (`0.677` versus `0.685`). This means we should
+not claim that soft weighting universally improves the classifier.
 
-## Robustness Notes
+The robust conclusion is that broad coverage matters most; soft weighting can
+help, especially at local scale, but the clear loser is aggressive hard
+filtering.
 
-Repeated evaluation splits are much higher on average than the fixed strict
-split, and spatial-block folds are lower:
+## Scale Interpretation
 
-- repeated split means for `text_agreement_soft_weighted`: about `0.893` at
-  320 m and `0.900` at 2240 m supported balanced accuracy;
-- spatial-block means for the same policy: about `0.495` at 320 m and `0.533`
-  at 2240 m.
+The strict split does not show a balanced-accuracy winner between 320 m and
+2240 m:
 
-This gap means the fixed strict split is not the whole story. Random repeated
-splits can be optimistic, while spatial-block folds expose geographic
-generalization difficulty. The final publication-grade claim should therefore
-report all three views: strict comparability, repeated split stability, and
-spatial-block generalization.
+```text
+320 m best balanced accuracy  = 0.686
+2240 m best balanced accuracy = 0.686
+```
+
+But 2240 m has slightly stronger macro-F1:
+
+```text
+320 m best macro-F1  = 0.663
+2240 m best macro-F1 = 0.685
+```
+
+The wider window also performs very well without any soft weighting:
+
+```text
+2240 m all_unweighted balanced accuracy = 0.686
+2240 m all_unweighted macro-F1          = 0.677
+```
+
+This suggests that broader physical context may make the task easier for CLIP
+features. But the MVP has only two scales and one encoder, so the correct next
+step is the planned full grid rather than a scale claim.
+
+## Repeated And Spatial-Block Results
+
+Repeated random evaluation splits are much higher than the fixed strict split.
+For `text_agreement_soft_weighted`:
+
+| Window | Repeated mean supported balanced accuracy | Repeated mean supported macro-F1 |
+| ---: | ---: | ---: |
+| 320 m | 0.893 | 0.888 |
+| 2240 m | 0.900 | 0.898 |
+
+Spatial-block folds are lower:
+
+| Window | Spatial-block mean supported balanced accuracy | Spatial-block mean supported macro-F1 |
+| ---: | ---: | ---: |
+| 320 m | 0.495 | 0.489 |
+| 2240 m | 0.533 | 0.522 |
+
+This is an important caution. Random splits can be optimistic because nearby
+geography may appear in both train and evaluation. Spatial-block folds test a
+harder form of generalization. They show that the classifier has learned useful
+visual signal, but geographic generalization is still not solved.
+
+## What Claims Are Safe
+
+Safe claims:
+
+- The first black-patch run was invalid and has been corrected.
+- Corrected Sentinel-2 crops are non-black and scale-specific.
+- Trained CLIP linear probes beat zero-shot CLIP strongly on the strict split.
+- Hard filters underperform broad training in this MVP.
+- Soft text-agreement weighting helps clearly at 320 m.
+- At 2240 m, all-unweighted broad training is essentially tied with the best
+  soft-weighted policy.
+- Spatial-block performance is much lower than random repeated split
+  performance, so geographic generalization remains a major concern.
+
+Claims to avoid:
+
+- "Soft weighting universally wins."
+- "2240 m is definitively the best scale."
+- "The classifier is publication-ready."
+- "Random split performance alone proves generalization."
 
 ## Current Conclusion
 
-Experiment 014 is now operational and scientifically useful after the CRS fix.
-The corrected MVP shows:
+Experiment 014 is now a valid, useful image experiment. The corrected MVP shows
+that weakly supervised Sentinel-2 image probing is viable when the patch
+extraction is correct. It also sharpens the lesson from Experiment 012: do not
+throw away too much data. At this scale, broad weak-label coverage is more
+important than strict hard filtering.
 
-1. valid Sentinel-2 patch extraction at both scales;
-2. non-identical, normalized CLIP embeddings for 320 m and 2240 m;
-3. zero-shot CLIP remains weak;
-4. trained CLIP linear probes reach `0.686` strict supported balanced accuracy;
-5. soft weighting is safer than hard filtering;
-6. 2240 m is at least competitive with 320 m and slightly stronger on macro-F1.
+The best next experiment is the full main grid:
 
-Next, run the planned full main grid: `clip_base`, `clip_large`, and
-`dinov2_base` across 320 m, 640 m, 1280 m, and 2240 m. Random training controls
-should be run only after the full grid identifies the encoder/window/policy
-comparisons that matter.
+- encoders: `clip_base`, `clip_large`, `dinov2_base`;
+- windows: 320 m, 640 m, 1280 m, 2240 m;
+- policies: broad unweighted, soft weighted, class-balanced weighted, and hard
+  tiers;
+- then random training controls for the comparisons that matter.

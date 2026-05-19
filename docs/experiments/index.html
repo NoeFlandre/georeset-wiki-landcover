@@ -520,7 +520,7 @@
             <li>Experiment 014 encoder: frozen <code>openai/clip-vit-base-patch32</code>; embeddings are 512-dimensional.</li>
             <li>Experiment 014 training: weighted/unweighted linear probes, 600 epochs, learning rate 0.1, L2 grid.</li>
             <li>Experiment 014 safeguard: the first all-black-patch run was discarded after a CRS-indexing bug; corrected patches now pass numeric and contact-sheet validation.</li>
-            <li>Experiment 014 result: soft-weighted broad training beats zero-shot CLIP clearly; hard filters still lose too much training support.</li>
+            <li>Experiment 014 result: broad training beats zero-shot CLIP clearly; soft weighting helps at 320 m but ties all-unweighted at 2240 m.</li>
           </ul>
         </div>
       </div>
@@ -634,7 +634,7 @@
             <td class="num"><a href="014_quality_weighted_multiscale_image_probe/analysis.md">014</a></td>
             <td>Can soft quality weighting and physical crop scale improve image probing?</td>
             <td>Corrected MVP completed for CLIP-base at 320 m and 2240 m. Both reached 0.686 supported balanced accuracy on the 35-example strict eval split.</td>
-            <td>After CRS-correct Sentinel crops, soft weighting is useful and beats zero-shot CLIP; hard filters remain weaker because they reduce training support.</td>
+            <td>After CRS-correct Sentinel crops, broad training beats zero-shot CLIP. Soft weighting helps at 320 m, but all-unweighted ties it at 2240 m; hard filters remain weaker because they reduce training support.</td>
             <td><span class="status">Corrected positive MVP</span></td>
           </tr>
         </tbody>
@@ -651,9 +651,10 @@
         Deterministic summaries, cards, highlights, and retrieved windows are useful for
         diagnostics, filtering, and cost control, but not as primary replacements. For
         image learning, the original broad weak-label CLIP probe was promising, and the
-        corrected multiscale CLIP-base MVP now strengthens that path: soft-weighted broad
-        training reaches 0.686 strict supported balanced accuracy, while zero-shot CLIP
-        remains at 0.200. Random subset controls strengthen the CORINE claim, while OSM
+        corrected multiscale CLIP-base MVP now strengthens that path: broad training reaches
+        0.686 strict supported balanced accuracy, while zero-shot CLIP remains at 0.200.
+        Soft weighting is promising but not universally better than all-unweighted training.
+        Random subset controls strengthen the CORINE claim, while OSM
         remains more sensitive to target composition and small support.
       </div>
     </section>

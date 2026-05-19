@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Experiment 014 - Quality-Weighted Multiscale Image Probe</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;--panel:#fff;--ink:#111827;--muted:#5b667a;--line:#dce3ee;
+      --green:#16715f;--blue:#225ea8;--gold:#a06400;--red:#b42318;--violet:#635bff;
+      --soft-green:#eaf7f1;--soft-blue:#edf4ff;--soft-gold:#fff6e6;--shadow:0 14px 34px rgba(16,24,40,.08)
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:linear-gradient(135deg,#fbfcff 0%,var(--bg) 55%,#edf4ff 100%);color:var(--ink);font:14px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+    .page{width:min(1180px,calc(100% - 42px));margin:22px auto 46px}
+    h1{margin:0;font-size:40px;line-height:1.05;letter-spacing:-.02em}
+    h2{margin:0 0 12px;font-size:22px;line-height:1.2}
+    h3{margin:0 0 8px;font-size:16px}
+    p{margin:.2rem 0 .8rem}.muted{color:var(--muted)}.small{font-size:12px;color:var(--muted)}
+    code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+    .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;align-items:stretch;margin-bottom:16px}
+    .card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px}
+    .hero .card:first-child{padding:24px}
+    .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--blue);font-weight:750;margin-bottom:8px}
+    .lead{font-size:17px;color:#344054;max-width:76ch}
+    .pill-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+    .pill{display:inline-flex;align-items:center;border:1px solid #cdd8e8;border-radius:999px;background:#f8fbff;padding:4px 9px;font-size:12px;color:#344054}
+    .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .kpi{border:1px solid var(--line);border-radius:12px;background:#fbfdff;padding:12px}
+    .kpi .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+    .kpi .value{font-size:30px;font-weight:800;line-height:1.05;margin-top:5px}
+    .kpi.good .value{color:var(--green)}.kpi.bad .value{color:var(--red)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+    .wide{grid-column:1/-1}
+    table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;margin-top:8px}
+    th,td{border-bottom:1px solid var(--line);padding:8px 7px;text-align:left;vertical-align:top}
+    th{background:#f0f5ff;color:#26364f;font-weight:750}
+    .num{text-align:right;font-variant-numeric:tabular-nums}.good{color:var(--green);font-weight:750}.bad{color:var(--red);font-weight:750}
+    .callout{border-left:4px solid var(--green);background:var(--soft-green);border-radius:10px;padding:10px 12px;color:#123f35}
+    .warn{border-left-color:var(--gold);background:var(--soft-gold);color:#553500}
+    .flow{width:100%;height:auto;margin-top:8px}
+    .bar-row{display:grid;grid-template-columns:190px 1fr 58px;gap:10px;align-items:center;margin:8px 0}
+    .bar-track{height:13px;background:#edf1f7;border-radius:999px;overflow:hidden}
+    .bar{height:100%;border-radius:999px;background:var(--blue)}
+    .bar.green{background:var(--green)}.bar.gold{background:var(--gold)}.bar.red{background:var(--red)}.bar.violet{background:var(--violet)}
+    .img-frame{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:white}
+    .img-frame img{display:block;width:100%;height:auto}
+    .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;background:var(--blue)}
+    @media(max-width:900px){.hero,.grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr}.bar-row{grid-template-columns:1fr}.num{text-align:left}h1{font-size:31px}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <article class="card">
+        <div class="eyebrow">GeoReset Experiment 014</div>
+        <h1>Quality-Weighted Multiscale Image Probe</h1>
+        <p class="lead">
+          We trained a CORINE land-cover classifier from Sentinel-2 image crops using
+          frozen CLIP image embeddings. The corrected MVP shows that broad weak-label
+          training works, zero-shot CLIP is weak, and hard filtering removes too much
+          training support.
+        </p>
+        <div class="pill-row">
+          <span class="pill">No new LLM calls</span>
+          <span class="pill">1,251 corrected Sentinel crops</span>
+          <span class="pill">320 m vs 2240 m</span>
+          <span class="pill">CLIP ViT-B/32</span>
+          <span class="pill">35-image strict eval</span>
+        </div>
+      </article>
+      <aside class="card kpis">
+        <div class="kpi bad"><div class="label">Zero-shot CLIP BA</div><div class="value">0.200</div></div>
+        <div class="kpi good"><div class="label">Best trained BA</div><div class="value">0.686</div></div>
+        <div class="kpi"><div class="label">320 m best F1</div><div class="value">0.663</div></div>
+        <div class="kpi"><div class="label">2240 m best F1</div><div class="value">0.685</div></div>
+      </aside>
+    </section>
+
+    <section class="panel wide">
+      <h2>The Experiment In One Diagram</h2>
+      <svg class="flow" viewBox="0 0 1120 270" role="img" aria-label="Experiment 014 workflow">
+        <defs>
+          <marker id="arrow14" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6 Z" fill="#5b667a"></path>
+          </marker>
+        </defs>
+        <rect x="20" y="40" width="170" height="82" rx="10" fill="#edf4ff" stroke="#cbd8ea"></rect>
+        <text x="105" y="68" text-anchor="middle" font-size="15" font-weight="700">Article point</text>
+        <text x="105" y="94" text-anchor="middle" font-size="12" fill="#5b667a">lat/lon + CORINE label</text>
+        <line x1="190" y1="81" x2="276" y2="81" stroke="#5b667a" stroke-width="2" marker-end="url(#arrow14)"></line>
+        <rect x="276" y="30" width="190" height="102" rx="10" fill="#eaf7f1" stroke="#c5ded5"></rect>
+        <text x="371" y="61" text-anchor="middle" font-size="15" font-weight="700">Sentinel-2 crops</text>
+        <text x="371" y="86" text-anchor="middle" font-size="12" fill="#5b667a">320 m and 2240 m</text>
+        <text x="371" y="106" text-anchor="middle" font-size="12" fill="#16715f">CRS-corrected</text>
+        <line x1="466" y1="81" x2="552" y2="81" stroke="#5b667a" stroke-width="2" marker-end="url(#arrow14)"></line>
+        <rect x="552" y="40" width="170" height="82" rx="10" fill="#fff6e6" stroke="#efd6a6"></rect>
+        <text x="637" y="68" text-anchor="middle" font-size="15" font-weight="700">Frozen CLIP</text>
+        <text x="637" y="94" text-anchor="middle" font-size="12" fill="#5b667a">512-D image features</text>
+        <line x1="722" y1="81" x2="808" y2="81" stroke="#5b667a" stroke-width="2" marker-end="url(#arrow14)"></line>
+        <rect x="808" y="22" width="250" height="120" rx="10" fill="#f3f0ff" stroke="#d8d2fb"></rect>
+        <text x="933" y="52" text-anchor="middle" font-size="15" font-weight="700">Linear probe policies</text>
+        <text x="933" y="78" text-anchor="middle" font-size="12" fill="#5b667a">all unweighted</text>
+        <text x="933" y="98" text-anchor="middle" font-size="12" fill="#5b667a">soft weighted</text>
+        <text x="933" y="118" text-anchor="middle" font-size="12" fill="#5b667a">hard filtered tiers</text>
+        <rect x="276" y="170" width="360" height="70" rx="10" fill="#fff" stroke="#dce3ee"></rect>
+        <text x="456" y="198" text-anchor="middle" font-size="14" font-weight="700">Weights come from frozen metadata</text>
+        <text x="456" y="222" text-anchor="middle" font-size="12" fill="#5b667a">relevance + uncertainty + spatial purity + Qwen/Gemma agreement</text>
+        <path d="M456 170 C520 140, 730 132, 835 140" fill="none" stroke="#a06400" stroke-width="2" marker-end="url(#arrow14)"></path>
+      </svg>
+      <p class="callout">
+        Text is not used at image inference time. Text-derived signals only decide how
+        strongly each training image contributes to the linear-probe loss.
+      </p>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>The Bug We Had To Fix</h2>
+        <p>
+          The first MVP result was invalid because the fetcher called
+          <code>rasterio.dataset.index()</code> with WGS84 longitude/latitude.
+          Sentinel assets use projected raster CRSs, so the coordinates were wrong.
+          With <code>boundless=True</code>, rasterio returned black fill pixels
+          instead of crashing.
+        </p>
+        <table>
+          <thead><tr><th>Check</th><th>320 m</th><th>2240 m</th></tr></thead>
+          <tbody>
+            <tr><td>Patches</td><td class="num">1,251</td><td class="num">1,251</td></tr>
+            <tr><td>Source pixels</td><td class="num">32</td><td class="num">224</td></tr>
+            <tr><td>All-zero patches</td><td class="num good">0</td><td class="num good">0</td></tr>
+            <tr><td>Mean pixel</td><td class="num">132.788</td><td class="num">128.356</td></tr>
+            <tr><td>Pixel std</td><td class="num">34.880</td><td class="num">38.231</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="panel">
+        <h2>Patch Contact Sheet</h2>
+        <div class="img-frame">
+          <img src="/Users/noeflandre/georeset/data/experiments/014_quality_weighted_multiscale_image_probe/quality_weighted_multiscale_image_probe_v1/patch_contact_sheet.png" alt="Contact sheet comparing 320 m and 2240 m Sentinel-2 crops" />
+        </div>
+        <p class="small">The 320 m column is local and zoomed; the 2240 m column shows wider landscape context. This is the visual safeguard that caught whether physical scale and centering looked sane.</p>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>Strict Split: Zero-Shot vs Trained</h2>
+        <div class="bar-row"><span>Zero-shot CLIP, 320 m</span><div class="bar-track"><div class="bar red" style="width:29%"></div></div><span class="num">0.200</span></div>
+        <div class="bar-row"><span>Zero-shot CLIP, 2240 m</span><div class="bar-track"><div class="bar red" style="width:29%"></div></div><span class="num">0.200</span></div>
+        <div class="bar-row"><span>Best trained, 320 m</span><div class="bar-track"><div class="bar green" style="width:100%"></div></div><span class="num">0.686</span></div>
+        <div class="bar-row"><span>Best trained, 2240 m</span><div class="bar-track"><div class="bar green" style="width:100%"></div></div><span class="num">0.686</span></div>
+        <p class="small">Bars show supported balanced accuracy on the 35-example strict evaluation split.</p>
+      </article>
+      <article class="panel">
+        <h2>Best Strict Results</h2>
+        <table>
+          <thead><tr><th>Window</th><th>Best policy</th><th class="num">BA</th><th class="num">Macro-F1</th></tr></thead>
+          <tbody>
+            <tr><td>320 m</td><td><code>text_agreement_soft_weighted</code></td><td class="num good">0.686</td><td class="num good">0.663</td></tr>
+            <tr><td>2240 m</td><td><code>text_agreement_soft_weighted</code></td><td class="num good">0.686</td><td class="num good">0.685</td></tr>
+          </tbody>
+        </table>
+        <p class="warn callout">
+          The strict eval set is small: 35 examples. Bootstrap intervals are wide,
+          so the exact 320 m vs 2240 m ranking should not be over-read.
+        </p>
+      </article>
+    </section>
+
+    <section class="panel wide">
+      <h2>Policy Comparison: The Nuanced Story</h2>
+      <p>
+        The clear result is not that soft weighting always beats unweighted training.
+        The clear result is that broad coverage beats aggressive hard filtering.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Window</th><th>Policy</th><th class="num">Train rows</th><th class="num">Balanced accuracy</th><th class="num">Macro-F1</th><th>Readout</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>320 m</td><td><code>text_agreement_soft_weighted</code></td><td class="num">1,216</td><td class="num good">0.686</td><td class="num good">0.663</td><td>Soft agreement weighting clearly helps at local scale.</td></tr>
+          <tr><td>320 m</td><td><code>all_unweighted</code></td><td class="num">1,216</td><td class="num">0.543</td><td class="num">0.502</td><td>Broad baseline is useful but lower at 320 m.</td></tr>
+          <tr><td>320 m</td><td><code>quality_spatial_hard</code></td><td class="num">286</td><td class="num bad">0.400</td><td class="num bad">0.344</td><td>Hard filtering removes too much support.</td></tr>
+          <tr><td>320 m</td><td><code>agreement_hard</code></td><td class="num">152</td><td class="num bad">0.429</td><td class="num bad">0.358</td><td>Clean but too small.</td></tr>
+          <tr><td>2240 m</td><td><code>text_agreement_soft_weighted</code></td><td class="num">1,216</td><td class="num good">0.686</td><td class="num good">0.685</td><td>Best macro-F1.</td></tr>
+          <tr><td>2240 m</td><td><code>all_unweighted</code></td><td class="num">1,216</td><td class="num good">0.686</td><td class="num good">0.677</td><td>Essentially tied with soft weighting.</td></tr>
+          <tr><td>2240 m</td><td><code>quality_spatial_hard</code></td><td class="num">286</td><td class="num">0.543</td><td class="num">0.505</td><td>Cleaner but weaker.</td></tr>
+          <tr><td>2240 m</td><td><code>agreement_hard</code></td><td class="num">152</td><td class="num bad">0.400</td><td class="num bad">0.363</td><td>Too little class coverage.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>What Soft Weighting Means</h2>
+        <p>Hard filtering makes a binary decision: keep or drop. Soft weighting keeps broad coverage but changes the contribution of each image during training.</p>
+        <table>
+          <thead><tr><th>Signal</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>Land-cover relevance</td><td>Trust articles that actually mention landscape evidence.</td></tr>
+            <tr><td>Uncertainty</td><td>Downweight ambiguous evidence.</td></tr>
+            <tr><td>Spatial confidence</td><td>Trust coordinates surrounded by consistent CORINE labels.</td></tr>
+            <tr><td>Qwen/Gemma agreement</td><td>Upweight cases where frozen text models agree with the spatial label.</td></tr>
+          </tbody>
+        </table>
+      </article>
+      <article class="panel">
+        <h2>Generalization Caution</h2>
+        <table>
+          <thead><tr><th>Split view</th><th>320 m BA</th><th>2240 m BA</th></tr></thead>
+          <tbody>
+            <tr><td>Strict split, best policy</td><td class="num">0.686</td><td class="num">0.686</td></tr>
+            <tr><td>Repeated split mean, text-agreement soft</td><td class="num">0.893</td><td class="num">0.900</td></tr>
+            <tr><td>Spatial-block mean, text-agreement soft</td><td class="num">0.495</td><td class="num">0.533</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Random repeated splits are optimistic. Spatial-block folds are harder and show that geographic generalization remains the next major issue.</p>
+      </article>
+    </section>
+
+    <section class="panel wide">
+      <h2>Final Takeaway</h2>
+      <p>
+        Experiment 014 is now valid after the CRS fix. It strengthens the image-learning
+        path: trained frozen-CLIP probes beat zero-shot CLIP strongly. But it also
+        narrows the claim. Soft weighting is promising and helpful at 320 m, yet at
+        2240 m broad all-unweighted training performs essentially as well. The robust
+        lesson is to keep broad class coverage and avoid aggressive hard filters.
+      </p>
+      <p class="callout">
+        Next run: full encoder/window grid with <code>clip_base</code>, <code>clip_large</code>,
+        and <code>dinov2_base</code> across 320 m, 640 m, 1280 m, and 2240 m, then run
+        random training controls only for the comparisons that matter.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

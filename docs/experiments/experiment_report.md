@@ -904,38 +904,46 @@ spatial metadata, and frozen Qwen/Gemma content predictions.
 
 ### Results
 
-The MVP completed end-to-end. It produced 1,251 cached Sentinel-2 patches for
-each physical window and 1,251 CLIP embeddings for each window. The probe output
-contains 1,664 metric rows, 127,104 prediction rows, per-class metrics,
-bootstrap confidence intervals, confusion matrices, and run manifests.
+The first MVP result was invalid. The multiscale patch fetcher passed WGS84
+longitude/latitude directly to `rasterio.dataset.index()`, while Sentinel-2
+raster assets expect coordinates in the asset CRS. Because patch reads used
+`boundless=True`, this silently produced all-black crops. The earlier `0.143`
+result is therefore discarded.
 
-The model-performance result is negative:
+After fixing the CRS transform and adding patch validation, the corrected MVP
+completed end-to-end. It produced 1,251 non-black cached Sentinel-2 patches for
+each physical window and 1,251 CLIP embeddings for each window. The validation
+artifacts show source-pixel sizes of 32 for 320 m and 224 for 2240 m, zero
+all-black patches, plausible pixel means/standard deviations, and non-identical
+320 m versus 2240 m arrays.
+
+The corrected model-performance result is positive:
 
 | run | window | eval examples | accuracy | supported balanced accuracy | supported macro-F1 |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Experiment 014 trained classifier | 320 m | 35 | 0.143 | 0.143 | 0.036 |
-| Experiment 014 trained classifier | 2240 m | 35 | 0.143 | 0.143 | 0.036 |
-| Experiment 012 zero-shot CLIP baseline | prior single-scale patch | 35 | 0.200 | 0.200 | 0.224 |
-| Experiment 012 best linear probe | prior single-scale patch | 35 | 0.600 | 0.600 | 0.586 |
+| Experiment 014 zero-shot CLIP | 320 m | 35 | 0.200 | 0.200 | 0.152 |
+| Experiment 014 zero-shot CLIP | 2240 m | 35 | 0.200 | 0.200 | 0.224 |
+| Experiment 014 best trained classifier | 320 m | 35 | 0.686 | 0.686 | 0.663 |
+| Experiment 014 best trained classifier | 2240 m | 35 | 0.686 | 0.686 | 0.685 |
 
-The Experiment 014 MVP classifier often collapsed to predicting dominant CORINE
-class `31`. Both tested physical scales therefore underperformed the earlier
-zero-shot CLIP baseline and were far below the earlier broad weak-label linear
-probe.
+At 320 m, `text_agreement_soft_weighted` clearly beat `all_unweighted`
+(`0.686` versus `0.543` supported balanced accuracy). At 2240 m, however,
+`all_unweighted` tied the best soft-weighted policy on supported balanced
+accuracy (`0.686`) and was only slightly lower on macro-F1 (`0.677` versus
+`0.685`).
 
 ### Interpretation
 
-The engineering result is positive: the new multiscale/weighted pipeline runs
-end-to-end on Grid5000 and produces auditable artifacts. The scientific result
-for this MVP configuration is negative: `clip_base` on 320 m and 2240 m crops
-does not recover useful seven-class CORINE signal under the new split and
-training setup.
+Experiment 014 is now a valid, useful image result. It confirms that trained
+frozen-CLIP probes can beat zero-shot CLIP strongly once the Sentinel crops are
+correct. It also sharpens the conclusion from Experiment 012: aggressive hard
+filters are the clear loser because they remove too much training support.
 
-This should not be overclaimed as a failure of all multiscale or quality-weighted
-image learning. It says that the first MVP configuration is not enough. The next
-decision should come from the planned full encoder/window run, especially the
-stronger CLIP and DINOv2 encoders, before spending compute on random training
-controls.
+The soft-weighting story is more nuanced. Soft text-agreement weighting is
+promising and helps clearly at 320 m, but at 2240 m broad all-unweighted
+training performs essentially as well. The strongest supported conclusion is
+that broad coverage is essential; quality, relevance, spatial confidence, and
+text-model agreement are safer as weights or diagnostics than as hard gates.
 
 ## Cross-Experiment Findings
 
@@ -988,15 +996,19 @@ local, and composition-sensitive. Some Qwen OSM subsets survive controls, but
 Gemma OSM content often does not survive target matching. The OSM evidence is
 real but weaker and should be framed as diagnostic rather than solved.
 
-### 7. Downstream Image Learning Needs More Than The First MVP
+### 7. Downstream Image Learning Works, But Broad Coverage Matters
 
 The original CLIP linear probe showed that broad weak labels can train an image
 model better than out-of-the-box zero-shot CLIP, while strict text/spatial
 agreement filters underperform because they remove too much data. Experiment 014
-validated the new multiscale/weighted image-probe pipeline, but its first
-`clip_base` MVP at 320 m and 2240 m was chance-like. The image direction remains
-open, but the next positive claim must come from the full encoder/window grid,
-not from the MVP.
+first exposed and fixed a CRS bug in multiscale Sentinel patch extraction. After
+that correction, the `clip_base` MVP reached `0.686` supported balanced accuracy
+at both 320 m and 2240 m, far above the `0.200` zero-shot baseline.
+
+The image direction is therefore promising, but the weighting result is nuanced:
+soft text-agreement weighting helps clearly at 320 m, while broad all-unweighted
+training essentially ties it at 2240 m. The next claim should come from the full
+encoder/window grid and random training controls.
 
 ## Current Best Claims
 
@@ -1013,9 +1025,9 @@ The most defensible claims after all experiments are:
    as replacements for raw content.
 6. OSM has useful signal but is more sensitive to target composition and small
    support.
-7. For downstream Sentinel patch learning, the original broad weak-label CLIP
-   probe beat strict agreement-only training, but the newer multiscale MVP did
-   not yet recover useful signal.
+7. For downstream Sentinel patch learning, broad weak-label training beats
+   zero-shot CLIP, and aggressive hard filters are weaker because they remove too
+   much class support.
 
 ## Claims That Should Be Avoided Or Rephrased
 

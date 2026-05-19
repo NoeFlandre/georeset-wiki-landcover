@@ -78,9 +78,11 @@ and next steps.
     - Extends the image-probe path with multiscale Sentinel-2 crops, soft
       quality/relevance/spatial/text-agreement sample weights, and supported-label
       metrics.
-    - Uses a staged Grid5000 workflow: first `clip_base` at 320m and 2240m, then
-      all planned encoders/windows, with random training controls after the main
-      probe works.
+    - Corrected a CRS bug that invalidated the first all-black-patch MVP run;
+      the final MVP report compares zero-shot CLIP, broad unweighted training,
+      hard filters, and soft-weighted training at 320m and 2240m.
+    - Visual report:
+      [`analysis_detailed.html`](014_quality_weighted_multiscale_image_probe/analysis_detailed.html).
 
 ## Data Artifact Map
 

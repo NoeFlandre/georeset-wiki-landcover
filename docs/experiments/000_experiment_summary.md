@@ -373,17 +373,20 @@ show 1,251 non-black patches per window, source-pixel sizes of 32 and 224,
 plausible pixel means and variances, and non-identical 320 m versus 2240 m
 arrays.
 
-The corrected result is positive. Zero-shot CLIP reached only `0.200` accuracy,
-supported balanced accuracy, and macro-F1 `0.152` at 320 m / `0.224` at 2240 m.
-The trained linear probe reached `0.686` strict supported balanced accuracy at
-both 320 m and 2240 m. The best 320 m policy was
-`text_agreement_soft_weighted`, with macro-F1 `0.663`; the best 2240 m result
-used the same soft policy and reached macro-F1 `0.685`.
+The corrected result is positive. Zero-shot CLIP reached only `0.200` accuracy
+and supported balanced accuracy, with macro-F1 `0.152` at 320 m and `0.224` at
+2240 m. The trained linear probe reached `0.686` strict supported balanced
+accuracy at both 320 m and 2240 m. At 320 m, `text_agreement_soft_weighted`
+clearly improved over `all_unweighted` (`0.686` versus `0.543` balanced
+accuracy). At 2240 m, however, `all_unweighted` tied the best soft-weighted
+policy on balanced accuracy (`0.686`) and was only slightly lower on macro-F1
+(`0.677` versus `0.685`).
 
 The hard-filter lesson from Experiment 012 still holds. Hard tiers such as
 `quality_spatial_hard` and `agreement_hard` used only 286 and 152 training rows
-and stayed below the best broad soft-weighted policies. The strongest policies
-kept all 1,216 non-evaluation training rows and used text agreement, spatial
-confidence, relevance, and quality as weights instead of as hard gates. Wider
-2240 m context was at least competitive with 320 m and slightly stronger on
-macro-F1, but the MVP is still too small to declare a definitive scale winner.
+and stayed below broad training. The strongest supported conclusion is not that
+soft weighting always wins; it is that broad training coverage is essential, and
+quality/agreement signals are safer as weights than as aggressive hard gates.
+Wider 2240 m context was at least competitive with 320 m and slightly stronger
+on macro-F1, but the MVP is still too small to declare a definitive scale
+winner.
