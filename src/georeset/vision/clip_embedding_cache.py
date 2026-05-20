@@ -26,9 +26,16 @@ def stack_embeddings_for_rows(
     embeddings: dict[str, FloatFeatures],
     *,
     context: str,
+    allow_missing: bool = False,
 ) -> tuple[pd.DataFrame, FloatFeatures]:
-    filtered = rows[rows["pageid"].isin(embeddings)].copy()
+    pageids = rows["pageid"].astype(str)
+    missing = sorted(set(pageids) - set(embeddings))
+    if missing and not allow_missing:
+        preview = ", ".join(missing[:10])
+        suffix = "" if len(missing) <= 10 else f", ... ({len(missing)} total)"
+        raise ValueError(f"Missing cached embeddings for {context}: {preview}{suffix}")
+    filtered = rows[pageids.isin(embeddings)].copy()
     if filtered.empty:
         raise ValueError(f"No cached embeddings available for {context}.")
-    matrix = np.stack([embeddings[pageid] for pageid in filtered["pageid"]]).astype(np.float32)
+    matrix = np.stack([embeddings[str(pageid)] for pageid in filtered["pageid"]]).astype(np.float32)
     return filtered, matrix

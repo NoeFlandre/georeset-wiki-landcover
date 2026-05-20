@@ -2,8 +2,10 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from georeset.vision.image_probe_splits import (
+    add_geo_groups,
     build_image_probe_splits_v2,
     compute_quality_weights,
     tier_mask,
@@ -133,3 +135,15 @@ def test_tier_mask_does_not_treat_false_strings_as_true() -> None:
         False,
         False,
     ]
+
+
+def test_add_geo_groups_fails_instead_of_silently_collapsing_groups() -> None:
+    frame = pd.DataFrame(
+        [
+            {"pageid": "1", "lat": "not-a-lat", "lon": 2.0},
+            {"pageid": "2", "lat": 48.0, "lon": 2.1},
+        ]
+    )
+
+    with pytest.raises(ValueError, match="Cannot compute EPSG:2154 geo groups"):
+        add_geo_groups(frame)

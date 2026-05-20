@@ -34,7 +34,9 @@ def test_unknown_or_missing_categories_become_other_or_unclear() -> None:
 
 
 def test_candidate_matching_is_case_and_accent_insensitive() -> None:
-    assignment = assign_article_types(["Catégorie:PRéfecture d'une Commune", "Catégorie:Vallée de la Loire"])
+    assignment = assign_article_types(
+        ["Catégorie:PRéfecture d'une Commune", "Catégorie:Vallée de la Loire"]
+    )
 
     assert assignment.primary_article_type == "natural_landscape"
     assert "natural_landscape" in assignment.candidate_article_types
@@ -43,7 +45,9 @@ def test_candidate_matching_is_case_and_accent_insensitive() -> None:
 
 
 def test_matched_categories_are_preserved_and_normalized() -> None:
-    assignment = assign_article_types(["Catégorie:Rivière de la Loire", "  Catégorie:Vignoble des Côtes-du-Rhône "])
+    assignment = assign_article_types(
+        ["Catégorie:Rivière de la Loire", "  Catégorie:Vignoble des Côtes-du-Rhône "]
+    )
 
     assert assignment.matched_categories == ["riviere de la loire", "vignoble des cotes-du-rhone"]
     assert assignment.matched_rules == ["rivière", "vignoble"]

@@ -88,3 +88,38 @@ def test_run_zero_shot_evaluation_writes_metrics_and_predictions(tmp_path: Path)
     assert metrics.loc[0, "baseline"] == "zero_shot_clip"
     assert metrics.loc[0, "accuracy"] == 1.0
     assert predictions["prediction"].tolist() == [31, 22]
+
+
+def test_run_zero_shot_evaluation_uses_full_split_label_universe(tmp_path: Path) -> None:
+    splits_path = tmp_path / "splits.csv"
+    embeddings_path = tmp_path / "embeddings.npz"
+    output_dir = tmp_path / "out"
+    pd.DataFrame(
+        [
+            {"pageid": "1", "split": "eval_strict", "tier": "eval_strict", "label": "31"},
+            {"pageid": "2", "split": "eval_strict", "tier": "eval_strict", "label": "22"},
+            {"pageid": "3", "split": "train", "tier": "all", "label": "21"},
+        ]
+    ).to_csv(splits_path, index=False)
+    np.savez(
+        embeddings_path,
+        pageids=np.array(["1", "2"]),
+        embeddings=np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.float32),
+    )
+    prompt_count = 0
+
+    def text_encoder(prompts: list[str]) -> np.ndarray:
+        nonlocal prompt_count
+        prompt_count += len(prompts)
+        return np.ones((len(prompts), 2), dtype=np.float32)
+
+    run_zero_shot_evaluation(
+        splits_path=splits_path,
+        embeddings_path=embeddings_path,
+        output_dir=output_dir,
+        text_encoder=text_encoder,
+    )
+
+    metrics = pd.read_csv(output_dir / "zero_shot_clip_metrics.csv")
+    assert metrics.loc[0, "n_labels"] == 3
+    assert prompt_count == 9

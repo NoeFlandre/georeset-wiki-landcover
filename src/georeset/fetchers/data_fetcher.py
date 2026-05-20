@@ -73,9 +73,7 @@ class DataFetcher:
 
         sample["class_label"] = sample["code_18"].str[:level]
 
-        sample["centroid"] = sample.to_crs(epsg=2154).centroid.to_crs(
-            epsg=4326
-        )
+        sample["centroid"] = sample.to_crs(epsg=2154).centroid.to_crs(epsg=4326)
 
         return sample[["class_label", "geometry", "centroid", "code_18"]]
 

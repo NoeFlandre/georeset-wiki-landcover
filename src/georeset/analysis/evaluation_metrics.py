@@ -16,9 +16,7 @@ from georeset.utils.math import safe_div
 MetricName = Literal["precision", "recall", "f1"]
 
 
-def _weighted_from_per_label(
-    per_label: dict[str, PerLabelMetric], metric: MetricName
-) -> float:
+def _weighted_from_per_label(per_label: dict[str, PerLabelMetric], metric: MetricName) -> float:
     total_support = sum(values["support"] for values in per_label.values())
     if total_support == 0:
         return 0.0

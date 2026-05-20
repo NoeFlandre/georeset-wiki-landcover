@@ -90,7 +90,9 @@ def test_load_prediction_records_normalizes_list_targets_and_predictions(tmp_pat
     assert row["prediction"] == ["wood", "2"]
 
 
-def test_load_prediction_records_normalizes_scalar_targets_to_string_when_enabled(tmp_path: Path) -> None:
+def test_load_prediction_records_normalizes_scalar_targets_to_string_when_enabled(
+    tmp_path: Path,
+) -> None:
     experiment_dir = tmp_path / "scalar_normalization"
     experiment_dir.mkdir()
     path = experiment_dir / "corine_level2_summary_predictions.json"
@@ -185,7 +187,9 @@ def test_infer_model_from_metadata_prefers_metadata_and_falls_back_to_directory_
     assert (
         infer_model_from_metadata(
             {"model_repo_id": "unsloth/gemma-4-31B-it-GGUF"},
-            Path("/tmp/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0"),
+            Path(
+                "/tmp/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0"
+            ),
         )
         == "unsloth/gemma-4-31B-it-GGUF"
     )
@@ -199,7 +203,9 @@ def test_infer_model_from_metadata_prefers_metadata_and_falls_back_to_directory_
         == "gemma-4-31B-it-Q4_0.gguf"
     )
     assert (
-        infer_model_from_metadata({}, Path("/tmp/article_text_classification_e2e_with_shuffled_control_v1"))
+        infer_model_from_metadata(
+            {}, Path("/tmp/article_text_classification_e2e_with_shuffled_control_v1")
+        )
         == "Qwen3.6-27B-Q4_0.gguf"
     )
 

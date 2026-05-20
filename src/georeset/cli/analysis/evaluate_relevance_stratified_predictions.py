@@ -42,9 +42,7 @@ DEFAULT_EVIDENCE_METADATA_PATH = Path("data/wiki/article_landuse_evidence_summar
 DEFAULT_SPATIAL_CONFIDENCE_PATH = experiment_artifact_file(
     "corine_spatial_confidence_v1", "spatial_confidence.csv"
 )
-DEFAULT_OUTPUT_DIR = experiment_artifact_dir(
-    "article_text_classification_relevance_stratified_v1"
-)
+DEFAULT_OUTPUT_DIR = experiment_artifact_dir("article_text_classification_relevance_stratified_v1")
 DEFAULT_EXPERIMENT_ID = "article_text_classification_relevance_stratified_v1"
 
 EVIDENCE_TYPES = [
@@ -111,12 +109,16 @@ def join_metadata_with_evidence(
 
 
 def define_relevance_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
-    relevance = records.get("landcover_relevance", pd.Series([""] * len(records), index=records.index)).astype(
-        "string"
-    ).str.lower()
-    uncertainty = records.get("uncertainty", pd.Series([""] * len(records), index=records.index)).astype(
-        "string"
-    ).str.lower()
+    relevance = (
+        records.get("landcover_relevance", pd.Series([""] * len(records), index=records.index))
+        .astype("string")
+        .str.lower()
+    )
+    uncertainty = (
+        records.get("uncertainty", pd.Series([""] * len(records), index=records.index))
+        .astype("string")
+        .str.lower()
+    )
     sentence_count = pd.to_numeric(
         records.get("evidence_sentences_count", pd.Series([0] * len(records), index=records.index)),
         errors="coerce",
@@ -138,7 +140,9 @@ def define_relevance_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
         "uncertainty_low": uncertainty == "low",
         "uncertainty_low_medium": uncertainty.isin(["low", "medium"]),
         "point_label_share_250m_ge_0.8": spatial_share >= 0.8,
-        "point_label_share_250m_ge_0.8_and_relevance_medium_high": (relevance.isin(["medium", "high"]))
+        "point_label_share_250m_ge_0.8_and_relevance_medium_high": (
+            relevance.isin(["medium", "high"])
+        )
         & (spatial_share >= 0.8),
         "point_label_share_250m_ge_0.8_and_evidence_sentences_count_ge_1": (sentence_count >= 1)
         & (spatial_share >= 0.8),
@@ -147,17 +151,19 @@ def define_relevance_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
 
 def define_relevance_and_spatial_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
     relevance = define_relevance_subsets(records)
-    spatial = (pd.to_numeric(records["point_label_share_250m"], errors="coerce") >= 0.8).fillna(False)
+    spatial = (pd.to_numeric(records["point_label_share_250m"], errors="coerce") >= 0.8).fillna(
+        False
+    )
     return {
         f"{name}_and_point_label_share_250m_ge_0.8": subset & spatial
         for name, subset in relevance.items()
-        if name != "all"
-        and not name.startswith("point_label_share_250m_ge_0.8")
+        if name != "all" and not name.startswith("point_label_share_250m_ge_0.8")
     } | {"all_and_point_label_share_250m_ge_0.8": spatial}
 
 
 def define_evidence_type_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
     evidence_lists = records["evidence_types"]
+
     def _contains_evidence_type(values: object, evidence_type: str) -> bool:
         return evidence_type in (values if isinstance(values, list) else [])
 
@@ -169,7 +175,8 @@ def define_evidence_type_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
 
 def _compute_shuffled_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     lookup = {
-        (row["model"], row["task"], row["text_source"], row["relevance_subset"]): row for row in rows
+        (row["model"], row["task"], row["text_source"], row["relevance_subset"]): row
+        for row in rows
     }
     shuffled_pairs = shuffled_text_source_pairs({str(row["text_source"]) for row in rows})
     deltas: list[dict[str, Any]] = []
@@ -287,7 +294,9 @@ def evaluate(
     for parent_dir, parent_records in merged.groupby("source_parent_experiment_dir"):
         model = str(parent_records["model"].iloc[0])
         for task, text_source in parent_records.groupby(["task", "text_source"]).groups:
-            group = parent_records[parent_records["task"].eq(task) & parent_records["text_source"].eq(text_source)]
+            group = parent_records[
+                parent_records["task"].eq(task) & parent_records["text_source"].eq(text_source)
+            ]
             task_records = group.to_dict("records")
             if task == "corine_level2":
                 labels = sorted(set(CORINE_LEVEL2_DESCRIPTIONS))
@@ -297,7 +306,9 @@ def evaluate(
                         str(label)
                         for record in task_records
                         for label in (
-                            record["target"] if isinstance(record["target"], list) else [record["target"]]
+                            record["target"]
+                            if isinstance(record["target"], list)
+                            else [record["target"]]
                         )
                         if record["target"] is not None and label is not None
                     }
@@ -389,14 +400,14 @@ def evaluate(
                     "jaccard": metrics.get("jaccard", ""),
                     "hamming_loss": metrics.get("hamming_loss", ""),
                     "majority_accuracy": metrics.get("majority_accuracy", ""),
-                    "majority_balanced_accuracy": metrics.get(
-                        "majority_balanced_accuracy", ""
-                    ),
+                    "majority_balanced_accuracy": metrics.get("majority_balanced_accuracy", ""),
                     "majority_macro_f1": metrics.get("majority_macro_f1", ""),
                     "majority_labelset_exact_match_accuracy": metrics.get(
                         "majority_labelset_exact_match_accuracy", ""
                     ),
-                    "empty_set_exact_match_accuracy": metrics.get("empty_set_exact_match_accuracy", ""),
+                    "empty_set_exact_match_accuracy": metrics.get(
+                        "empty_set_exact_match_accuracy", ""
+                    ),
                     "exact_match_accuracy": metrics.get("exact_match_accuracy", ""),
                 }
                 overview_rows.append(row)
@@ -417,7 +428,9 @@ def evaluate(
                         "majority_labelset_exact_match_accuracy": metrics.get(
                             "majority_labelset_exact_match_accuracy", ""
                         ),
-                        "empty_set_exact_match_accuracy": metrics.get("empty_set_exact_match_accuracy", ""),
+                        "empty_set_exact_match_accuracy": metrics.get(
+                            "empty_set_exact_match_accuracy", ""
+                        ),
                     }
                 )
                 for item in per_class:
@@ -590,7 +603,9 @@ def evaluate(
             "source_experiments": sorted(set(merged["source_parent_experiment_dir"])),
             "source_parent_experiment_dirs": sorted(set(merged["source_parent_experiment_dir"])),
             "relevance_subset_definitions": list(define_relevance_subsets(merged).keys()),
-            "evidence_type_subset_definitions": [f"evidence_type_{name}" for name in EVIDENCE_TYPES],
+            "evidence_type_subset_definitions": [
+                f"evidence_type_{name}" for name in EVIDENCE_TYPES
+            ],
             "models": sorted(set(merged["model"])),
             "source_artifacts": {
                 "text_sources": sorted(set(merged["text_source"])),
@@ -625,8 +640,7 @@ def _write_summary(
     if not overview_rows:
         write_text_atomic(
             output_dir / "summary.md",
-            "# article_text_classification_relevance_stratified_v1\n\n"
-            + markdown_table(rows=[]),
+            "# article_text_classification_relevance_stratified_v1\n\n" + markdown_table(rows=[]),
         )
         return
     rows = sorted(
@@ -651,8 +665,8 @@ def _write_summary(
         "- optional spatial-confidence intersections",
         "- task-specific shuffled-control deltas per subset",
         "",
-        f"- CORINE rows: {sum(1 for row in overview_rows if row['task']=='corine_level2')}",
-        f"- OSM rows: {sum(1 for row in overview_rows if row['task']=='osm')}",
+        f"- CORINE rows: {sum(1 for row in overview_rows if row['task'] == 'corine_level2')}",
+        f"- OSM rows: {sum(1 for row in overview_rows if row['task'] == 'osm')}",
     ]
     if best_model_comparison:
         lines.extend(

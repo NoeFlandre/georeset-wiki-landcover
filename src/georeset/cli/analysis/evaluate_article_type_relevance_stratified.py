@@ -107,9 +107,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def define_relevance_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
-    relevance = records.get("landcover_relevance", pd.Series([""] * len(records), index=records.index)).astype(
-        "string"
-    ).str.lower()
+    relevance = (
+        records.get("landcover_relevance", pd.Series([""] * len(records), index=records.index))
+        .astype("string")
+        .str.lower()
+    )
     return {
         "all": pd.Series(True, index=records.index),
         "relevance_none": relevance == "none",
@@ -137,7 +139,9 @@ def define_spatial_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
 def define_article_type_subsets(records: pd.DataFrame) -> dict[str, pd.Series]:
     if "primary_article_type" not in records.columns:
         return {}
-    article_types = pd.Series(records["primary_article_type"], index=records.index).fillna("other_or_unclear")
+    article_types = pd.Series(records["primary_article_type"], index=records.index).fillna(
+        "other_or_unclear"
+    )
     subsets: dict[str, pd.Series] = {}
     for article_type in ARTICLE_TYPE_PREFERENCE:
         subsets[f"article_type:{article_type}"] = article_types.astype(str) == article_type
@@ -185,7 +189,9 @@ def _metric_rows_by_subset(
         "majority_accuracy": metrics.get("majority_accuracy", ""),
         "majority_balanced_accuracy": metrics.get("majority_balanced_accuracy", ""),
         "majority_macro_f1": metrics.get("majority_macro_f1", ""),
-        "majority_labelset_exact_match_accuracy": metrics.get("majority_labelset_exact_match_accuracy", ""),
+        "majority_labelset_exact_match_accuracy": metrics.get(
+            "majority_labelset_exact_match_accuracy", ""
+        ),
         "empty_set_exact_match_accuracy": metrics.get("empty_set_exact_match_accuracy", ""),
         "exact_match_accuracy": metrics.get("exact_match_accuracy", ""),
     }
@@ -303,12 +309,16 @@ def _build_manifest_join_counts(
     n_prediction_records_loaded = int(len(prediction_records))
     n_unique_prediction_pageids = int(pd.Series(prediction_records["pageid"]).astype(str).nunique())
     n_article_type_metadata_records = int(len(article_type_metadata))
-    n_unique_article_type_pageids = int(
-        pd.Series(article_type_metadata["pageid"]).astype(str).nunique()
-    ) if article_type_loaded else 0
+    n_unique_article_type_pageids = (
+        int(pd.Series(article_type_metadata["pageid"]).astype(str).nunique())
+        if article_type_loaded
+        else 0
+    )
 
     if evidence_loaded:
-        n_predictions_missing_evidence_metadata = int(pd.Series(merged["landcover_relevance"]).isna().sum())
+        n_predictions_missing_evidence_metadata = int(
+            pd.Series(merged["landcover_relevance"]).isna().sum()
+        )
     else:
         n_predictions_missing_evidence_metadata = n_prediction_records_loaded
 
@@ -320,7 +330,9 @@ def _build_manifest_join_counts(
         n_predictions_missing_spatial_confidence = n_prediction_records_loaded
 
     if article_type_loaded:
-        n_predictions_missing_article_type_metadata = int(merged["primary_article_type"].isna().sum())
+        n_predictions_missing_article_type_metadata = int(
+            merged["primary_article_type"].isna().sum()
+        )
     else:
         n_predictions_missing_article_type_metadata = n_prediction_records_loaded
 
@@ -408,7 +420,9 @@ def evaluate(
         merged["matched_rules"] = merged["matched_rules"].apply(
             lambda value: value if isinstance(value, list) else []
         )
-        merged["all_categories_count"] = pd.to_numeric(merged["all_categories_count"], errors="coerce").fillna(0).astype(int)
+        merged["all_categories_count"] = (
+            pd.to_numeric(merged["all_categories_count"], errors="coerce").fillna(0).astype(int)
+        )
         merged["has_categories"] = merged["has_categories"].fillna(False).astype(bool)
 
     manifest_join_counts = _build_manifest_join_counts(
@@ -423,9 +437,9 @@ def evaluate(
     merged["evidence_types"] = merged["evidence_types"].apply(
         lambda value: value if isinstance(value, list) else []
     )
-    merged["evidence_sentences_count"] = pd.to_numeric(
-        merged["evidence_sentences_count"], errors="coerce"
-    ).fillna(0).astype(int)
+    merged["evidence_sentences_count"] = (
+        pd.to_numeric(merged["evidence_sentences_count"], errors="coerce").fillna(0).astype(int)
+    )
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -437,10 +451,12 @@ def evaluate(
     if "all" not in spatial_subsets:
         spatial_subsets["all"] = pd.Series(True, index=merged.index)
     relevance_relabel = {
-        f"relevance:{key.removeprefix('relevance_')}": value for key, value in relevance_subsets.items()
+        f"relevance:{key.removeprefix('relevance_')}": value
+        for key, value in relevance_subsets.items()
     }
     spatial_relabel = {
-        f"spatial:{key}" if key != "all" else "spatial:all": value for key, value in spatial_subsets.items()
+        f"spatial:{key}" if key != "all" else "spatial:all": value
+        for key, value in spatial_subsets.items()
     }
 
     overview_rows: list[dict[str, Any]] = []
@@ -448,7 +464,9 @@ def evaluate(
     per_class_rows: list[dict[str, Any]] = []
     distribution_rows: list[dict[str, Any]] = []
 
-    for (model, task, text_source), group in merged.groupby(["model", "task", "text_source"], sort=False):
+    for (model, task, text_source), group in merged.groupby(
+        ["model", "task", "text_source"], sort=False
+    ):
         labels = label_universe(group, task, columns=("target",))
 
         for subset_name, mask in article_type_subsets.items():
@@ -457,78 +475,8 @@ def evaluate(
             row = {"model": model, "task": task, "text_source": text_source}
             row.update(metrics)
             overview_rows.append(row)
-            majority_rows.append({
-                key: row.get(key, "")
-                for key in [
-                    "model",
-                    "task",
-                    "text_source",
-                    "subset",
-                    "majority_accuracy",
-                    "majority_balanced_accuracy",
-                    "majority_macro_f1",
-                    "majority_labelset_exact_match_accuracy",
-                    "empty_set_exact_match_accuracy",
-                ]
-            })
-            per_class_rows.extend({**{"model": model, "task": task, "text_source": text_source}, **item} for item in per_class)
-
-        for subset_key, mask in relevance_relabel.items():
-            rows = _metric_rows_by_subset(_subset_by_mask(group, mask), subset_key, task, labels)
-            metrics, per_class = rows
-            row = {"model": model, "task": task, "text_source": text_source, "subset": subset_key}
-            row.update(metrics)
-            overview_rows.append(row)
-            majority_rows.append({
-                key: row.get(key, "")
-                for key in [
-                    "model",
-                    "task",
-                    "text_source",
-                    "subset",
-                    "majority_accuracy",
-                    "majority_balanced_accuracy",
-                    "majority_macro_f1",
-                    "majority_labelset_exact_match_accuracy",
-                    "empty_set_exact_match_accuracy",
-                ]
-            })
-            per_class_rows.extend({**{"model": model, "task": task, "text_source": text_source}, **item} for item in per_class)
-
-        for subset_key, mask in spatial_relabel.items():
-            rows = _metric_rows_by_subset(_subset_by_mask(group, mask), subset_key, task, labels)
-            metrics, per_class = rows
-            row = {"model": model, "task": task, "text_source": text_source, "subset": subset_key}
-            row.update(metrics)
-            overview_rows.append(row)
-            majority_rows.append({
-                key: row.get(key, "")
-                for key in [
-                    "model",
-                    "task",
-                    "text_source",
-                    "subset",
-                    "majority_accuracy",
-                    "majority_balanced_accuracy",
-                    "majority_macro_f1",
-                    "majority_labelset_exact_match_accuracy",
-                    "empty_set_exact_match_accuracy",
-                ]
-                })
-            per_class_rows.extend({**{"model": model, "task": task, "text_source": text_source}, **item} for item in per_class)
-
-        for article_label, article_mask in article_type_subsets.items():
-            for relevance_key, relevance_mask in relevance_relabel.items():
-                subset_name = f"{article_label}|{relevance_key}"
-                mask = article_mask & relevance_mask
-                rows = _metric_rows_by_subset(
-                    _subset_by_mask(group, mask), subset_name, task, labels
-                )
-                metrics, per_class = rows
-                row = {"model": model, "task": task, "text_source": text_source, "subset": subset_name}
-                row.update(metrics)
-                overview_rows.append(row)
-                majority_rows.append({
+            majority_rows.append(
+                {
                     key: row.get(key, "")
                     for key in [
                         "model",
@@ -541,20 +489,85 @@ def evaluate(
                         "majority_labelset_exact_match_accuracy",
                         "empty_set_exact_match_accuracy",
                     ]
-                })
-                per_class_rows.extend({**{"model": model, "task": task, "text_source": text_source}, **item} for item in per_class)
+                }
+            )
+            per_class_rows.extend(
+                {**{"model": model, "task": task, "text_source": text_source}, **item}
+                for item in per_class
+            )
 
-                for spatial_key, spatial_mask in spatial_relabel.items():
-                    subset_name = f"{article_label}|{relevance_key}|{spatial_key}"
-                    mask = article_mask & relevance_mask & spatial_mask
-                    rows = _metric_rows_by_subset(
-                        _subset_by_mask(group, mask), subset_name, task, labels
-                    )
-                    metrics, per_class = rows
-                    row = {"model": model, "task": task, "text_source": text_source, "subset": subset_name}
-                    row.update(metrics)
-                    overview_rows.append(row)
-                    majority_rows.append({
+        for subset_key, mask in relevance_relabel.items():
+            rows = _metric_rows_by_subset(_subset_by_mask(group, mask), subset_key, task, labels)
+            metrics, per_class = rows
+            row = {"model": model, "task": task, "text_source": text_source, "subset": subset_key}
+            row.update(metrics)
+            overview_rows.append(row)
+            majority_rows.append(
+                {
+                    key: row.get(key, "")
+                    for key in [
+                        "model",
+                        "task",
+                        "text_source",
+                        "subset",
+                        "majority_accuracy",
+                        "majority_balanced_accuracy",
+                        "majority_macro_f1",
+                        "majority_labelset_exact_match_accuracy",
+                        "empty_set_exact_match_accuracy",
+                    ]
+                }
+            )
+            per_class_rows.extend(
+                {**{"model": model, "task": task, "text_source": text_source}, **item}
+                for item in per_class
+            )
+
+        for subset_key, mask in spatial_relabel.items():
+            rows = _metric_rows_by_subset(_subset_by_mask(group, mask), subset_key, task, labels)
+            metrics, per_class = rows
+            row = {"model": model, "task": task, "text_source": text_source, "subset": subset_key}
+            row.update(metrics)
+            overview_rows.append(row)
+            majority_rows.append(
+                {
+                    key: row.get(key, "")
+                    for key in [
+                        "model",
+                        "task",
+                        "text_source",
+                        "subset",
+                        "majority_accuracy",
+                        "majority_balanced_accuracy",
+                        "majority_macro_f1",
+                        "majority_labelset_exact_match_accuracy",
+                        "empty_set_exact_match_accuracy",
+                    ]
+                }
+            )
+            per_class_rows.extend(
+                {**{"model": model, "task": task, "text_source": text_source}, **item}
+                for item in per_class
+            )
+
+        for article_label, article_mask in article_type_subsets.items():
+            for relevance_key, relevance_mask in relevance_relabel.items():
+                subset_name = f"{article_label}|{relevance_key}"
+                mask = article_mask & relevance_mask
+                rows = _metric_rows_by_subset(
+                    _subset_by_mask(group, mask), subset_name, task, labels
+                )
+                metrics, per_class = rows
+                row = {
+                    "model": model,
+                    "task": task,
+                    "text_source": text_source,
+                    "subset": subset_name,
+                }
+                row.update(metrics)
+                overview_rows.append(row)
+                majority_rows.append(
+                    {
                         key: row.get(key, "")
                         for key in [
                             "model",
@@ -567,13 +580,19 @@ def evaluate(
                             "majority_labelset_exact_match_accuracy",
                             "empty_set_exact_match_accuracy",
                         ]
-                    })
-                    per_class_rows.extend({**{"model": model, "task": task, "text_source": text_source}, **item} for item in per_class)
+                    }
+                )
+                per_class_rows.extend(
+                    {**{"model": model, "task": task, "text_source": text_source}, **item}
+                    for item in per_class
+                )
 
                 for spatial_key, spatial_mask in spatial_relabel.items():
-                    subset_name = f"{article_label}|{spatial_key}"
-                    mask = article_mask & spatial_mask
-                    rows = _metric_rows_by_subset(_subset_by_mask(group, mask), subset_name, task, labels)
+                    subset_name = f"{article_label}|{relevance_key}|{spatial_key}"
+                    mask = article_mask & relevance_mask & spatial_mask
+                    rows = _metric_rows_by_subset(
+                        _subset_by_mask(group, mask), subset_name, task, labels
+                    )
                     metrics, per_class = rows
                     row = {
                         "model": model,
@@ -583,20 +602,58 @@ def evaluate(
                     }
                     row.update(metrics)
                     overview_rows.append(row)
-                    majority_rows.append({
-                        key: row.get(key, "")
-                        for key in [
-                            "model",
-                            "task",
-                            "text_source",
-                            "subset",
-                            "majority_accuracy",
-                            "majority_balanced_accuracy",
-                            "majority_macro_f1",
-                            "majority_labelset_exact_match_accuracy",
-                            "empty_set_exact_match_accuracy",
-                        ]
-                    })
+                    majority_rows.append(
+                        {
+                            key: row.get(key, "")
+                            for key in [
+                                "model",
+                                "task",
+                                "text_source",
+                                "subset",
+                                "majority_accuracy",
+                                "majority_balanced_accuracy",
+                                "majority_macro_f1",
+                                "majority_labelset_exact_match_accuracy",
+                                "empty_set_exact_match_accuracy",
+                            ]
+                        }
+                    )
+                    per_class_rows.extend(
+                        {**{"model": model, "task": task, "text_source": text_source}, **item}
+                        for item in per_class
+                    )
+
+                for spatial_key, spatial_mask in spatial_relabel.items():
+                    subset_name = f"{article_label}|{spatial_key}"
+                    mask = article_mask & spatial_mask
+                    rows = _metric_rows_by_subset(
+                        _subset_by_mask(group, mask), subset_name, task, labels
+                    )
+                    metrics, per_class = rows
+                    row = {
+                        "model": model,
+                        "task": task,
+                        "text_source": text_source,
+                        "subset": subset_name,
+                    }
+                    row.update(metrics)
+                    overview_rows.append(row)
+                    majority_rows.append(
+                        {
+                            key: row.get(key, "")
+                            for key in [
+                                "model",
+                                "task",
+                                "text_source",
+                                "subset",
+                                "majority_accuracy",
+                                "majority_balanced_accuracy",
+                                "majority_macro_f1",
+                                "majority_labelset_exact_match_accuracy",
+                                "empty_set_exact_match_accuracy",
+                            ]
+                        }
+                    )
                     per_class_rows.extend(
                         {**{"model": model, "task": task, "text_source": text_source}, **item}
                         for item in per_class
@@ -606,10 +663,15 @@ def evaluate(
     article_type_relevance_spatial = [
         row
         for row in overview_rows
-        if "article_type:" in str(row["subset"]) and "|" in str(row["subset"]) and "relevance:" in str(row["subset"]) and "spatial:" in str(row["subset"])
+        if "article_type:" in str(row["subset"])
+        and "|" in str(row["subset"])
+        and "relevance:" in str(row["subset"])
+        and "spatial:" in str(row["subset"])
     ]
 
-    assignments_output = _build_article_type_assignment_outputs(article_types if not article_types.empty else merged)
+    assignments_output = _build_article_type_assignment_outputs(
+        article_types if not article_types.empty else merged
+    )
     audit_sample = _build_audit_sample(article_types if not article_types.empty else merged)
 
     write_dict_rows_csv_atomic(
@@ -642,10 +704,12 @@ def evaluate(
         sorted(article_type_relevance_spatial, key=_row_sort_key),
     )
     write_dict_rows_csv_atomic(
-        output_dir / "majority_baselines_by_article_type.csv", sorted(majority_rows, key=_row_sort_key)
+        output_dir / "majority_baselines_by_article_type.csv",
+        sorted(majority_rows, key=_row_sort_key),
     )
     write_dict_rows_csv_atomic(
-        output_dir / "per_class_corine_by_article_type.csv", sorted(per_class_rows, key=_row_sort_key)
+        output_dir / "per_class_corine_by_article_type.csv",
+        sorted(per_class_rows, key=_row_sort_key),
     )
 
     write_dict_rows_markdown_atomic(
@@ -684,7 +748,9 @@ def evaluate(
     if article_types.empty:
         distribution_rows = []
     else:
-        for (task, text_source, model), group in merged.groupby(["task", "text_source", "model"], sort=False):
+        for (task, text_source, model), group in merged.groupby(
+            ["task", "text_source", "model"], sort=False
+        ):
             counts = group["primary_article_type"].value_counts().to_dict()
             for article_type, count in sorted(counts.items()):
                 distribution_rows.append(
@@ -708,7 +774,7 @@ def evaluate(
                 str(row["model"]),
                 str(row["primary_article_type"]),
             ),
-            ),
+        ),
     )
 
     write_json_atomic(

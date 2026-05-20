@@ -87,9 +87,10 @@ def test_content_with_evidence_card_prepends_card_and_preserves_raw_content():
     )
 
     assert record["content_with_evidence_card"].startswith(record["evidence_card"])
-    assert "\n\nTexte complet de l'article:\nTexte brut avec le nom Village." in record[
-        "content_with_evidence_card"
-    ]
+    assert (
+        "\n\nTexte complet de l'article:\nTexte brut avec le nom Village."
+        in record["content_with_evidence_card"]
+    )
     assert "Village" not in record["evidence_card"]
     assert "Village" in record["content_with_evidence_card"]
 
@@ -112,7 +113,9 @@ def test_evidence_card_uses_fallback_for_missing_sentences_and_metadata():
     assert "Aucun indice factuel explicite n'a été extrait." in card
     assert record["evidence_sentence_count"] == 0
     assert record["evidence_card_char_count"] == len(card)
-    assert record["content_with_evidence_card_char_count"] == len(record["content_with_evidence_card"])
+    assert record["content_with_evidence_card_char_count"] == len(
+        record["content_with_evidence_card"]
+    )
 
 
 def test_evidence_card_accepts_series_metadata_values():
@@ -165,7 +168,9 @@ def test_evidence_card_renders_readable_metadata_labels():
     card = record["evidence_card"]
 
     assert "Type d'article: zone urbaine / administrative" in card
-    assert "Types d'article candidats: zone urbaine / administrative, agriculture ou vignoble" in card
+    assert (
+        "Types d'article candidats: zone urbaine / administrative, agriculture ou vignoble" in card
+    )
     assert "Pertinence: faible" in card
     assert "Incertitude: élevée" in card
     assert "Types d'indices: urbain ou artificiel, eau" in card

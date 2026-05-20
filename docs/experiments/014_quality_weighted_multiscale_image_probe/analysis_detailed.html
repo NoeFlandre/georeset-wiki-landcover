@@ -165,7 +165,8 @@
         </table>
         <p class="warn callout">
           The strict eval set is small: 35 examples. Bootstrap intervals are wide,
-          so the exact 320 m vs 2240 m ranking should not be over-read.
+          so the exact 320 m vs 2240 m ranking should not be over-read. The L2
+          grid is exploratory because this MVP has no separate validation split.
         </p>
       </article>
     </section>
@@ -213,11 +214,11 @@
           <thead><tr><th>Split view</th><th>320 m BA</th><th>2240 m BA</th></tr></thead>
           <tbody>
             <tr><td>Strict split, best policy</td><td class="num">0.686</td><td class="num">0.686</td></tr>
-            <tr><td>Repeated split mean, text-agreement soft</td><td class="num">0.893</td><td class="num">0.900</td></tr>
-            <tr><td>Spatial-block mean, text-agreement soft</td><td class="num">0.495</td><td class="num">0.533</td></tr>
+            <tr><td>Repeated split mean, text-agreement soft</td><td class="num">0.649</td><td class="num">0.627</td></tr>
+            <tr><td>Spatial-block mean, text-agreement soft</td><td class="num">0.493</td><td class="num">0.529</td></tr>
           </tbody>
         </table>
-        <p class="small">Random repeated splits are optimistic. Spatial-block folds are harder and show that geographic generalization remains the next major issue.</p>
+        <p class="small">Repeated splits now exclude their own eval pageids from training. Spatial-block folds are harder and show that geographic generalization remains the next major issue.</p>
       </article>
     </section>
 

@@ -39,7 +39,9 @@ def embed_patch_cache(
     for start in range(0, len(patches), batch_size):
         encoded = encoder(patches[start : start + batch_size])
         embeddings.append(encoded.astype(np.float32))
-    write_npz_atomic(output_path, pageids=pageids, embeddings=np.vstack(embeddings).astype(np.float32))
+    write_npz_atomic(
+        output_path, pageids=pageids, embeddings=np.vstack(embeddings).astype(np.float32)
+    )
 
 
 def build_transformers_clip_encoder(

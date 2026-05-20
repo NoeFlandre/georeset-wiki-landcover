@@ -518,7 +518,7 @@
             <li>Experiment 012: one cached patch scale, 798 patches, frozen <code>openai/clip-vit-base-patch32</code>, linear classifier.</li>
             <li>Experiment 014 MVP: 1,251 patches at 320 m and 1,251 patches at 2240 m, both resized to 224x224.</li>
             <li>Experiment 014 encoder: frozen <code>openai/clip-vit-base-patch32</code>; embeddings are 512-dimensional.</li>
-            <li>Experiment 014 training: weighted/unweighted linear probes, 600 epochs, learning rate 0.1, L2 grid.</li>
+            <li>Experiment 014 training: weighted/unweighted linear probes, 600 epochs, learning rate 0.1, exploratory L2 grid without a separate validation split.</li>
             <li>Experiment 014 safeguard: the first all-black-patch run was discarded after a CRS-indexing bug; corrected patches now pass numeric and contact-sheet validation.</li>
             <li>Experiment 014 result: broad training beats zero-shot CLIP clearly; soft weighting helps at 320 m but ties all-unweighted at 2240 m.</li>
           </ul>

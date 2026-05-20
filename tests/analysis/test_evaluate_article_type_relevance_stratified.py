@@ -217,7 +217,9 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(f))
 
 
-def test_evaluate_article_type_relevance_stratified_joins_by_pageid_and_outputs_files(tmp_path: Path) -> None:
+def test_evaluate_article_type_relevance_stratified_joins_by_pageid_and_outputs_files(
+    tmp_path: Path,
+) -> None:
     parent_dir = tmp_path / "parent"
     output_dir = tmp_path / "out"
     evidence_path = tmp_path / "evidence.json"
@@ -400,8 +402,14 @@ def test_evaluation_metrics_and_deltas_are_recomputed_per_subset(tmp_path: Path)
     # relevance + spatial subset family should include both dimensions in its label
     overview_rs = _read_csv(output_dir / "overview_by_article_type_relevance_spatial.csv")
     rs_subsets = {row["subset"] for row in overview_rs}
-    assert "article_type:water_feature|relevance:high|spatial:point_label_share_250m_ge_0.8" in rs_subsets
-    assert "article_type:natural_landscape|relevance:low|spatial:point_label_share_250m_ge_0.8" in rs_subsets
+    assert (
+        "article_type:water_feature|relevance:high|spatial:point_label_share_250m_ge_0.8"
+        in rs_subsets
+    )
+    assert (
+        "article_type:natural_landscape|relevance:low|spatial:point_label_share_250m_ge_0.8"
+        in rs_subsets
+    )
 
 
 def test_audit_sample_is_deterministic_and_has_required_columns(tmp_path: Path) -> None:

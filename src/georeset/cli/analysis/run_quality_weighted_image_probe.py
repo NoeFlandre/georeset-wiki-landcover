@@ -105,6 +105,15 @@ def _attach_weights(splits: pd.DataFrame, weights: pd.DataFrame) -> pd.DataFrame
     return split_rows.merge(weight_rows, on="pageid", how="left")
 
 
+def _training_rows_for_eval_split(
+    base_train_rows: pd.DataFrame, eval_rows: pd.DataFrame
+) -> pd.DataFrame:
+    eval_pageids = set(eval_rows["pageid"].astype(str))
+    if not eval_pageids:
+        return base_train_rows
+    return base_train_rows[~base_train_rows["pageid"].astype(str).isin(eval_pageids)].copy()
+
+
 def _bootstrap_interval(
     y_true: NDArray[np.str_],
     y_pred: NDArray[np.str_],
@@ -184,11 +193,7 @@ def run_probe(
                 eval_rows = rows[rows["split"] == split].copy()
                 if eval_rows.empty:
                     continue
-                train_for_split = base_train_rows
-                if str(split).startswith("spatial_block_fold_"):
-                    train_for_split = base_train_rows[
-                        ~base_train_rows["pageid"].isin(eval_rows["pageid"])
-                    ].copy()
+                train_for_split = _training_rows_for_eval_split(base_train_rows, eval_rows)
                 if train_for_split.empty or train_for_split["label"].nunique() < 2:
                     continue
                 train_rows, train_x = stack_embeddings_for_rows(
@@ -316,16 +321,28 @@ def run_probe(
             "l2_grid": list(L2_GRID),
             "headline_metrics": ["balanced_accuracy_supported", "macro_f1_supported"],
             "continuity_metrics": ["balanced_accuracy_allowed", "macro_f1_allowed"],
+            "model_selection": "exploratory_eval_grid_no_validation_split",
+            "train_eval_leakage_guard": "each eval split pageids are excluded from training before fitting",
         },
     )
     if metrics.empty:
         summary = "# quality_weighted_multiscale_image_probe_v1\n\nNo metrics were produced.\n"
     else:
-        best = metrics.sort_values("balanced_accuracy_supported", ascending=False).head(10)
+        summary_scope = metrics[metrics["split"] == "eval_strict"]
+        if summary_scope.empty:
+            summary_scope = metrics
+            scope_note = "No strict-split rows were available; table shows the best available rows."
+        else:
+            scope_note = "Table shows strict-split rows only."
+        best = summary_scope.sort_values(
+            ["balanced_accuracy_supported", "macro_f1_supported"], ascending=False
+        ).head(10)
         summary = (
             "# quality_weighted_multiscale_image_probe_v1\n\n"
             "Headline metric: `balanced_accuracy_supported`. Allowed-label metrics are retained "
-            "for continuity with prior experiments.\n\n"
+            "for continuity with prior experiments. L2/policy ranking is exploratory because "
+            "this MVP has no separate validation split. Each evaluation split's pageids are "
+            f"excluded from training before fitting. {scope_note}\n\n"
             + markdown_table(rows=best.to_dict("records"))
             + "\n"
         )

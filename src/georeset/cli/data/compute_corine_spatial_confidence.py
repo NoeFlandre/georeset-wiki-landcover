@@ -32,9 +32,7 @@ from georeset.utils.json_io import (
 
 EXPERIMENT_ID = "corine_spatial_confidence_v1"
 PARENT_EXPERIMENT_ID = "article_text_classification_e2e_with_shuffled_control_v1"
-DEFAULT_PARENT_DIR = Path(
-    experiment_artifact_dir(PARENT_EXPERIMENT_ID)
-)
+DEFAULT_PARENT_DIR = Path(experiment_artifact_dir(PARENT_EXPERIMENT_ID))
 DEFAULT_OUTPUT_DIR = experiment_artifact_dir(EXPERIMENT_ID)
 DEFAULT_RADII = [100, 250, 500, 1000]
 

@@ -63,7 +63,9 @@ def test_single_label_subset_metrics_compute_expected_fields() -> None:
     assert by_label["31"]["f1"] == pytest.approx(0.6666666666666666)
 
 
-def test_single_label_subset_metrics_treats_missing_or_parse_error_predictions_as_parse_errors() -> None:
+def test_single_label_subset_metrics_treats_missing_or_parse_error_predictions_as_parse_errors() -> (
+    None
+):
     records = pd.DataFrame(
         [
             {"pageid": "1", "target": "a", "prediction": "a", "parse_status": "ok"},
@@ -92,7 +94,12 @@ def test_multilabel_subset_metrics_compute_expected_fields() -> None:
         [
             {"pageid": "1", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
             {"pageid": "2", "target": ["water"], "prediction": ["wood"], "parse_status": "ok"},
-            {"pageid": "3", "target": ["wood", "water"], "prediction": None, "parse_status": "error"},
+            {
+                "pageid": "3",
+                "target": ["wood", "water"],
+                "prediction": None,
+                "parse_status": "error",
+            },
             {"pageid": "4", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
         ]
     )
@@ -127,7 +134,12 @@ def test_multilabel_subset_metrics_counts_missing_as_empty_for_derived_metrics()
         [
             {"pageid": "1", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
             {"pageid": "2", "target": ["water"], "prediction": ["wood"], "parse_status": "ok"},
-            {"pageid": "3", "target": ["wood", "water"], "prediction": None, "parse_status": "error"},
+            {
+                "pageid": "3",
+                "target": ["wood", "water"],
+                "prediction": None,
+                "parse_status": "error",
+            },
             {"pageid": "4", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
         ]
     )
@@ -148,7 +160,12 @@ def test_multilabel_subset_metrics_skips_missing_for_derived_metrics() -> None:
         [
             {"pageid": "1", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
             {"pageid": "2", "target": ["water"], "prediction": ["wood"], "parse_status": "ok"},
-            {"pageid": "3", "target": ["wood", "water"], "prediction": None, "parse_status": "error"},
+            {
+                "pageid": "3",
+                "target": ["wood", "water"],
+                "prediction": None,
+                "parse_status": "error",
+            },
             {"pageid": "4", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
         ]
     )
@@ -169,7 +186,12 @@ def test_multilabel_subset_metrics_supported_denominator_switch() -> None:
         [
             {"pageid": "1", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
             {"pageid": "2", "target": ["water"], "prediction": ["wood"], "parse_status": "ok"},
-            {"pageid": "3", "target": ["wood", "water"], "prediction": None, "parse_status": "error"},
+            {
+                "pageid": "3",
+                "target": ["wood", "water"],
+                "prediction": None,
+                "parse_status": "error",
+            },
             {"pageid": "4", "target": ["wood"], "prediction": ["wood"], "parse_status": "ok"},
         ]
     )

@@ -390,3 +390,8 @@ quality/agreement signals are safer as weights than as aggressive hard gates.
 Wider 2240 m context was at least competitive with 320 m and slightly stronger
 on macro-F1, but the MVP is still too small to declare a definitive scale
 winner.
+
+The Experiment 014 L2 grid is exploratory because no separate validation split
+was used for hyperparameter selection. Repeated-evaluation rows now exclude each
+eval split's own pageids from training before fitting; the strict split remains
+the main comparable result.

@@ -42,9 +42,7 @@ def build_retrieved_evidence_windows(
     evidence_metadata_path: Path,
     seed: int,
 ) -> dict[str, dict[str, Any]]:
-    articles = read_required_json_mapping(
-        article_contents_path, description="article contents"
-    )
+    articles = read_required_json_mapping(article_contents_path, description="article contents")
     evidence_by_pageid = index_json_records_by_pageid(
         read_optional_json_mapping(evidence_metadata_path)
     )

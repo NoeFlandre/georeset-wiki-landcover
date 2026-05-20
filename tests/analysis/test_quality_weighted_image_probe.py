@@ -86,6 +86,38 @@ def _write_probe_fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
     return splits_path, weights_path, embeddings_path
 
 
+def _write_probe_fixture_with_repeated_split(tmp_path: Path) -> tuple[Path, Path, Path]:
+    splits_path, weights_path, embeddings_path = _write_probe_fixture(tmp_path)
+    splits = pd.read_csv(splits_path, dtype={"pageid": str, "label": str})
+    repeated = pd.DataFrame(
+        [
+            {
+                "pageid": "1",
+                "split": "repeated_eval_seed_1",
+                "tier": "eval_repeated",
+                "label": "31",
+            },
+            {
+                "pageid": "6",
+                "split": "repeated_eval_seed_1",
+                "tier": "eval_repeated",
+                "label": "22",
+            },
+        ]
+    )
+    for column in [
+        "relevance_component",
+        "uncertainty_component",
+        "spatial_component",
+        "agreement_component",
+        "weight_raw",
+        "weight_class_balanced",
+    ]:
+        repeated[column] = 1.0
+    pd.concat([splits, repeated], ignore_index=True).to_csv(splits_path, index=False)
+    return splits_path, weights_path, embeddings_path
+
+
 def test_run_quality_weighted_image_probe_writes_required_outputs(tmp_path: Path) -> None:
     splits_path, weights_path, embeddings_path = _write_probe_fixture(tmp_path)
     output_dir = tmp_path / "out"
@@ -109,6 +141,53 @@ def test_run_quality_weighted_image_probe_writes_required_outputs(tmp_path: Path
     assert (output_dir / "run_manifest.json").exists()
     metrics = pd.read_csv(output_dir / "weighted_probe_metrics.csv")
     assert {"balanced_accuracy_supported", "balanced_accuracy_allowed"}.issubset(metrics.columns)
+
+
+def test_run_quality_weighted_image_probe_excludes_each_eval_split_from_training(
+    tmp_path: Path,
+) -> None:
+    splits_path, weights_path, embeddings_path = _write_probe_fixture_with_repeated_split(tmp_path)
+    output_dir = tmp_path / "out"
+
+    run_probe(
+        splits_path=splits_path,
+        weights_path=weights_path,
+        embeddings_paths=[embeddings_path],
+        output_dir=output_dir,
+        seed=5,
+        epochs=20,
+        learning_rate=0.2,
+        n_bootstrap=0,
+    )
+
+    metrics = pd.read_csv(output_dir / "weighted_probe_metrics.csv")
+    repeated_all = metrics[
+        (metrics["split"] == "repeated_eval_seed_1")
+        & (metrics["policy"] == "all_unweighted")
+        & (metrics["l2"] == 0.0001)
+    ].iloc[0]
+    assert repeated_all["n_train"] == 3
+
+
+def test_run_quality_weighted_image_probe_records_l2_selection_as_exploratory(
+    tmp_path: Path,
+) -> None:
+    splits_path, weights_path, embeddings_path = _write_probe_fixture(tmp_path)
+    output_dir = tmp_path / "out"
+
+    run_probe(
+        splits_path=splits_path,
+        weights_path=weights_path,
+        embeddings_paths=[embeddings_path],
+        output_dir=output_dir,
+        seed=5,
+        epochs=20,
+        learning_rate=0.2,
+        n_bootstrap=0,
+    )
+
+    manifest = (output_dir / "run_manifest.json").read_text(encoding="utf-8")
+    assert '"model_selection": "exploratory_eval_grid_no_validation_split"' in manifest
 
 
 def test_quality_weighted_image_probe_output_paths_use_expected_names(tmp_path: Path) -> None:
@@ -208,3 +287,42 @@ def test_run_quality_weighted_image_zero_shot_writes_window_aware_outputs(
     assert metrics.loc[0, "window_m"] == 320
     assert {"balanced_accuracy_supported", "macro_f1_supported"}.issubset(metrics.columns)
     assert predictions["window_m"].tolist() == [320, 320]
+
+
+def test_run_quality_weighted_image_zero_shot_uses_full_split_label_universe(
+    tmp_path: Path,
+) -> None:
+    splits_path, _, embeddings_path = _write_probe_fixture(tmp_path)
+    splits = pd.read_csv(splits_path, dtype={"pageid": str, "label": str})
+    splits.loc[len(splits)] = {
+        **splits.iloc[0].to_dict(),
+        "pageid": "7",
+        "split": "train",
+        "tier": "all",
+        "label": "21",
+    }
+    splits.to_csv(splits_path, index=False)
+    output_dir = tmp_path / "zero-shot"
+    prompt_count = 0
+
+    def text_encoder_factory(model_name: str, device: str):
+        del model_name, device
+
+        def encode(prompts: list[str]) -> np.ndarray:
+            nonlocal prompt_count
+            prompt_count += len(prompts)
+            return np.ones((len(prompts), 2), dtype=np.float32)
+
+        return encode
+
+    run_zero_shot_image_probe(
+        splits_path=splits_path,
+        embeddings_paths=[embeddings_path],
+        output_dir=output_dir,
+        device="cpu",
+        text_encoder_factory=text_encoder_factory,
+    )
+
+    metrics = pd.read_csv(output_dir / "zero_shot_image_probe_metrics.csv")
+    assert metrics.loc[0, "n_labels"] == 3
+    assert prompt_count == 9

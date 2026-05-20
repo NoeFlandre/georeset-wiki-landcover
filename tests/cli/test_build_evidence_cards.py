@@ -91,14 +91,9 @@ def test_build_evidence_cards_cli_writes_deterministic_records(tmp_path):
     assert output["100"]["evidence_card_char_count"] == len(output["100"]["evidence_card"])
     assert output["100"]["metadata"]["source"] == "deterministic_evidence_card"
     assert output["100"]["metadata"]["version"] == 1
+    assert output["100"]["metadata"]["text_variants"]["evidence_card"]["uses_raw_content"] is False
     assert (
-        output["100"]["metadata"]["text_variants"]["evidence_card"]["uses_raw_content"]
-        is False
-    )
-    assert (
-        output["100"]["metadata"]["text_variants"]["content_with_evidence_card"][
-            "uses_raw_content"
-        ]
+        output["100"]["metadata"]["text_variants"]["content_with_evidence_card"]["uses_raw_content"]
         is True
     )
     assert "Aucun indice factuel explicite" in output["200"]["evidence_card"]
@@ -134,8 +129,7 @@ def test_build_evidence_cards_cli_sanitizes_missing_metadata_for_json(tmp_path):
         },
     )
     article_types_path.write_text(
-        "pageid,primary_article_type,candidate_article_types\n"
-        "100,,\n",
+        "pageid,primary_article_type,candidate_article_types\n100,,\n",
         encoding="utf-8",
     )
     spatial_path.write_text(
@@ -144,8 +138,7 @@ def test_build_evidence_cards_cli_sanitizes_missing_metadata_for_json(tmp_path):
         encoding="utf-8",
     )
     quality_path.write_text(
-        "pageid,quality_score,quality_bin,recommended_use\n"
-        "100,,,\n",
+        "pageid,quality_score,quality_bin,recommended_use\n100,,,\n",
         encoding="utf-8",
     )
 

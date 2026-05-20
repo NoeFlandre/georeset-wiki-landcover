@@ -68,6 +68,10 @@ The corrected MVP run used:
 - L2 grid: `1e-5`, `1e-4`, `1e-3`, `1e-2`;
 - bootstrap intervals: 1,000 resamples.
 
+The L2 grid is exploratory in this MVP: there is no separate validation split,
+so "best" rows below mean best observed evaluation rows, not a final
+hyperparameter-selected estimate.
+
 No LLMs were rerun. No prompts, text sources, or labels were changed. Qwen/Gemma
 predictions were reused only as frozen metadata for training weights and
 training-tier definitions.
@@ -295,25 +299,28 @@ step is the planned full grid rather than a scale claim.
 
 ## Repeated And Spatial-Block Results
 
-Repeated random evaluation splits are much higher than the fixed strict split.
-For `text_agreement_soft_weighted`:
+Repeated evaluation splits are alternative quality-spatial samples with their
+own pageids excluded from training before fitting. For
+`text_agreement_soft_weighted`, the corrected leakage-guarded means are:
 
 | Window | Repeated mean supported balanced accuracy | Repeated mean supported macro-F1 |
 | ---: | ---: | ---: |
-| 320 m | 0.893 | 0.888 |
-| 2240 m | 0.900 | 0.898 |
+| 320 m | 0.649 | 0.636 |
+| 2240 m | 0.627 | 0.619 |
 
 Spatial-block folds are lower:
 
 | Window | Spatial-block mean supported balanced accuracy | Spatial-block mean supported macro-F1 |
 | ---: | ---: | ---: |
-| 320 m | 0.495 | 0.489 |
-| 2240 m | 0.533 | 0.522 |
+| 320 m | 0.493 | 0.487 |
+| 2240 m | 0.529 | 0.517 |
 
-This is an important caution. Random splits can be optimistic because nearby
-geography may appear in both train and evaluation. Spatial-block folds test a
-harder form of generalization. They show that the classifier has learned useful
-visual signal, but geographic generalization is still not solved.
+This is an important caution. Random repeated splits are no longer inflated by
+direct train/eval pageid overlap, but they can still be easier than geographic
+holdout because nearby places may appear in both train and evaluation.
+Spatial-block folds test a harder form of generalization. They show that the
+classifier has learned useful visual signal, but geographic generalization is
+still not solved.
 
 ## What Claims Are Safe
 
@@ -326,7 +333,8 @@ Safe claims:
 - Soft text-agreement weighting helps clearly at 320 m.
 - At 2240 m, all-unweighted broad training is essentially tied with the best
   soft-weighted policy.
-- Spatial-block performance is much lower than random repeated split
+- Repeated-split metrics now exclude each eval split's pageids from training.
+- Spatial-block performance is lower than random repeated split
   performance, so geographic generalization remains a major concern.
 
 Claims to avoid:
@@ -335,6 +343,7 @@ Claims to avoid:
 - "2240 m is definitively the best scale."
 - "The classifier is publication-ready."
 - "Random split performance alone proves generalization."
+- "The best L2/policy rows are final model-selection estimates."
 
 ## Current Conclusion
 

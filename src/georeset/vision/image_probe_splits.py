@@ -71,7 +71,8 @@ def _normalize_mean_one(values: pd.Series) -> pd.Series:
     return (values / mean).astype(float)
 
 
-def _add_geo_groups(frame: pd.DataFrame) -> pd.DataFrame:
+def add_geo_groups(frame: pd.DataFrame) -> pd.DataFrame:
+    """Attach deterministic EPSG:2154 10km and 20km geographic group ids."""
     grouped = frame.copy()
     try:
         import geopandas as gpd
@@ -89,9 +90,8 @@ def _add_geo_groups(frame: pd.DataFrame) -> pd.DataFrame:
         grouped["geo_group_20km"] = (
             (x // 20000).astype(int).astype(str) + "_" + (y // 20000).astype(int).astype(str)
         )
-    except Exception:
-        grouped["geo_group_10km"] = "missing"
-        grouped["geo_group_20km"] = "missing"
+    except Exception as exc:
+        raise ValueError("Cannot compute EPSG:2154 geo groups from lon/lat columns") from exc
     return grouped
 
 
@@ -130,7 +130,7 @@ def _base_frame(
         & frame["low_uncertainty"]
     )
     frame["text_spatial_agreement"] = frame["quality_spatial"] & frame["models_agree_with_label"]
-    frame = _add_geo_groups(frame)
+    frame = add_geo_groups(frame)
     return compute_quality_weights(frame)
 
 

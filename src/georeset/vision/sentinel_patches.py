@@ -108,11 +108,14 @@ def sentinel2_planetary_computer_fetcher(
         arrays = []
         for asset_key in ("B04", "B03", "B02"):
             href = item.assets[asset_key].href
-            with rasterio.Env(
-                GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
-                GDAL_HTTP_TIMEOUT="30",
-                GDAL_HTTP_MAX_RETRY="2",
-            ), rasterio.open(href) as dataset:
+            with (
+                rasterio.Env(
+                    GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
+                    GDAL_HTTP_TIMEOUT="30",
+                    GDAL_HTTP_MAX_RETRY="2",
+                ),
+                rasterio.open(href) as dataset,
+            ):
                 x, y = transform("EPSG:4326", dataset.crs, [lon], [lat])
                 row_index, col_index = dataset.index(x[0], y[0])
                 window = Window(col_index - half, row_index - half, patch_size, patch_size)

@@ -33,7 +33,23 @@ ARTICLE_TYPE_CANDIDATES: set[str] = {
 
 # Ordered mapping preserves deterministic first-match behavior.
 ARTICLE_TYPE_PATTERNS: list[tuple[ArticleType, list[str]]] = [
-    ("water_feature", ["rivière", "fleuve", "ruisseau", "lac", "étang", "etang", "canal", "cours d'eau", "cascade", "source", "hydrologie", "hydrographie"]),
+    (
+        "water_feature",
+        [
+            "rivière",
+            "fleuve",
+            "ruisseau",
+            "lac",
+            "étang",
+            "etang",
+            "canal",
+            "cours d'eau",
+            "cascade",
+            "source",
+            "hydrologie",
+            "hydrographie",
+        ],
+    ),
     (
         "natural_landscape",
         [
@@ -219,7 +235,11 @@ def _pattern_matches(text: str, raw_pattern: str) -> bool:
         token_sep = r"\s+"
         regex = re.compile(rf"(?<![a-z0-9])(?:{token_sep.join(token_patterns)})(?![a-z0-9])")
     else:
-        token_pattern = rf"{re.escape(pattern)}s?" if len(pattern) <= 4 and pattern.isalpha() else re.escape(pattern)
+        token_pattern = (
+            rf"{re.escape(pattern)}s?"
+            if len(pattern) <= 4 and pattern.isalpha()
+            else re.escape(pattern)
+        )
         regex = re.compile(rf"(?<![a-z0-9])(?:{token_pattern})(?![a-z0-9])")
 
     normalized_text = _normalize_for_match(text)
@@ -248,7 +268,9 @@ def _candidate_types(normalized_categories: list[str]) -> tuple[list[str], list[
                         matched_rule_keys.add(normalized_pattern)
 
     ordered_candidates = [
-        article_type for article_type in ARTICLE_TYPE_PREFERENCE[:-1] if article_type in candidate_types
+        article_type
+        for article_type in ARTICLE_TYPE_PREFERENCE[:-1]
+        if article_type in candidate_types
     ]
     if not ordered_candidates:
         return ["other_or_unclear"], [], []

@@ -932,6 +932,11 @@ At 320 m, `text_agreement_soft_weighted` clearly beat `all_unweighted`
 accuracy (`0.686`) and was only slightly lower on macro-F1 (`0.677` versus
 `0.685`).
 
+The L2 grid in this MVP is exploratory because no separate validation split was
+used for hyperparameter selection. Repeated evaluation splits were rerun with a
+leakage guard that excludes each eval split's pageids from training before
+fitting; the strict split remains the main comparable result.
+
 ### Interpretation
 
 Experiment 014 is now a valid, useful image result. It confirms that trained

@@ -81,6 +81,8 @@ and next steps.
     - Corrected a CRS bug that invalidated the first all-black-patch MVP run;
       the final MVP report compares zero-shot CLIP, broad unweighted training,
       hard filters, and soft-weighted training at 320m and 2240m.
+    - The strict split is the main comparable result; L2 selection is exploratory
+      because the MVP has no separate validation split.
     - Visual report:
       [`analysis_detailed.html`](014_quality_weighted_multiscale_image_probe/analysis_detailed.html).
 

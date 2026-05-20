@@ -37,7 +37,9 @@ def _write_predictions(
 def test_write_summary_empty_rows_uses_shared_markdown_table(tmp_path, monkeypatch) -> None:
     calls: list[dict[str, object]] = []
 
-    def fake_markdown_table(*, rows: list[dict[str, object]], columns: list[str] | None = None) -> str:
+    def fake_markdown_table(
+        *, rows: list[dict[str, object]], columns: list[str] | None = None
+    ) -> str:
         calls.append({"rows": rows, "columns": columns})
         return "No rows.\n"
 
@@ -65,28 +67,40 @@ def _make_parent_experiment(
             "target": "31",
             "prediction": "31",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "2": {
             "pageid": 2,
             "target": "21",
             "prediction": "31",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "3": {
             "pageid": 3,
             "target": "31",
             "prediction": "21",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "4": {
             "pageid": 4,
             "target": "21",
             "prediction": None,
             "parse_status": "error",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
     }
     corine_summary_shuffled = {
@@ -95,33 +109,54 @@ def _make_parent_experiment(
             "target": "31",
             "prediction": "21",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "2": {
             "pageid": 2,
             "target": "21",
             "prediction": "21",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "3": {
             "pageid": 3,
             "target": "31",
             "prediction": "31",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "4": {
             "pageid": 4,
             "target": "21",
             "prediction": None,
             "parse_status": "error",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
     }
     corine_content_shuffled = {
         **{
-            key: {"pageid": value["pageid"], "target": value["target"], "prediction": value["prediction"], "parse_status": value["parse_status"], "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})}}
+            key: {
+                "pageid": value["pageid"],
+                "target": value["target"],
+                "prediction": value["prediction"],
+                "parse_status": value["parse_status"],
+                "metadata": {
+                    "model": model,
+                    **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+                },
+            }
             for key, value in corine_summary_shuffled.items()
         }
     }
@@ -131,28 +166,40 @@ def _make_parent_experiment(
             "target": ["wood"],
             "prediction": ["wood"],
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "2": {
             "pageid": 2,
             "target": ["water"],
             "prediction": [],
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "3": {
             "pageid": 3,
             "target": ["wood", "water"],
             "prediction": ["wood"],
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "4": {
             "pageid": 4,
             "target": ["wood"],
             "prediction": None,
             "parse_status": "error",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
     }
     osm_summary_shuffled = {
@@ -161,28 +208,40 @@ def _make_parent_experiment(
             "target": ["wood"],
             "prediction": [],
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "2": {
             "pageid": 2,
             "target": ["water"],
             "prediction": ["water"],
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "3": {
             "pageid": 3,
             "target": ["wood", "water"],
             "prediction": ["wood", "water"],
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "4": {
             "pageid": 4,
             "target": ["wood"],
             "prediction": None,
             "parse_status": "error",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
     }
     for source in [
@@ -210,9 +269,16 @@ def _make_parent_experiment(
 
     if include_landuse_summary:
         _write_predictions(parent_dir, "corine_level2", "landuse_evidence_summary", corine_summary)
-        _write_predictions(parent_dir, "corine_level2", "landuse_evidence_summary_shuffled", corine_summary_shuffled)
+        _write_predictions(
+            parent_dir,
+            "corine_level2",
+            "landuse_evidence_summary_shuffled",
+            corine_summary_shuffled,
+        )
         _write_predictions(parent_dir, "osm", "landuse_evidence_summary", osm_summary)
-        _write_predictions(parent_dir, "osm", "landuse_evidence_summary_shuffled", osm_summary_shuffled)
+        _write_predictions(
+            parent_dir, "osm", "landuse_evidence_summary_shuffled", osm_summary_shuffled
+        )
 
 
 def _make_evidence_metadata(path: Path) -> None:
@@ -312,19 +378,23 @@ def test_relevance_subsets_and_spatial_intersections() -> None:
     evidence_type = define_evidence_type_subsets(
         frame.assign(evidence_types=[["forest"], ["water"], ["agriculture"], ["bare_ground"]])
     )
-    spatial_relevance = define_relevance_and_spatial_subsets(frame.join(spatial.set_index("pageid"), on="pageid"))
+    spatial_relevance = define_relevance_and_spatial_subsets(
+        frame.join(spatial.set_index("pageid"), on="pageid")
+    )
     assert set(frame.loc[relevance["relevance_low"], "pageid"]) == {"1"}
     assert set(frame.loc[relevance["relevance_medium_high"], "pageid"]) == {"2", "3"}
-    assert set(frame.loc[relevance["point_label_share_250m_ge_0.8_and_relevance_medium_high"], "pageid"]) == {
-        "3"
-    }
+    assert set(
+        frame.loc[relevance["point_label_share_250m_ge_0.8_and_relevance_medium_high"], "pageid"]
+    ) == {"3"}
     assert set(frame.loc[evidence_type["evidence_type_forest"], "pageid"]) == {"1"}
     assert set(frame.loc[evidence_type["evidence_type_bare_ground"], "pageid"]) == {"4"}
     assert set(frame.loc[spatial_relevance["all_and_point_label_share_250m_ge_0.8"], "pageid"]) == {
         "1",
         "3",
     }
-    assert set(frame.loc[spatial_relevance["relevance_low_and_point_label_share_250m_ge_0.8"], "pageid"]) == {"1"}
+    assert set(
+        frame.loc[spatial_relevance["relevance_low_and_point_label_share_250m_ge_0.8"], "pageid"]
+    ) == {"1"}
 
 
 @pytest.mark.parametrize(
@@ -460,20 +530,28 @@ def test_relevance_stratified_analysis_runs_and_writes_outputs(
     assert len(manifest["source_parent_experiment_dirs"]) == 2
 
     if expect_optional:
-        overview_sources = {row["text_source"] for row in overview if row["model"] == "Qwen3.6-27B-Q4_0.gguf"}
+        overview_sources = {
+            row["text_source"] for row in overview if row["model"] == "Qwen3.6-27B-Q4_0.gguf"
+        }
         assert expect_optional in overview_sources
         gemma_sources = {
             row["text_source"] for row in overview if row["model"] == "gemma-4-31B-it-Q4_0.gguf"
         }
         assert expect_optional not in gemma_sources
     else:
-        overview_sources = {row["text_source"] for row in overview if row["model"] == "Qwen3.6-27B-Q4_0.gguf"}
+        overview_sources = {
+            row["text_source"] for row in overview if row["model"] == "Qwen3.6-27B-Q4_0.gguf"
+        }
         assert "landuse_evidence_summary" not in overview_sources
 
 
-def test_metrics_are_recomputed_per_subset_and_majority_baseline_is_not_global(tmp_path: Path) -> None:
+def test_metrics_are_recomputed_per_subset_and_majority_baseline_is_not_global(
+    tmp_path: Path,
+) -> None:
     qwen_parent = tmp_path / "qwen"
-    _make_parent_experiment(qwen_parent, include_landuse_summary=False, model="Qwen3.6-27B-Q4_0.gguf")
+    _make_parent_experiment(
+        qwen_parent, include_landuse_summary=False, model="Qwen3.6-27B-Q4_0.gguf"
+    )
     evidence_path = tmp_path / "evidence.json"
     _make_evidence_metadata(evidence_path)
     spatial_path = tmp_path / "spatial.csv"
@@ -495,10 +573,15 @@ def test_metrics_are_recomputed_per_subset_and_majority_baseline_is_not_global(t
 
     overview = _read_csv(output_dir / "overview_by_relevance.csv")
     all_row = next(
-        row for row in overview if row["relevance_subset"] == "relevance_low_medium_high" and row["text_source"] == "summary"
+        row
+        for row in overview
+        if row["relevance_subset"] == "relevance_low_medium_high"
+        and row["text_source"] == "summary"
     )
     low_row = next(
-        row for row in overview if row["relevance_subset"] == "relevance_low" and row["text_source"] == "summary"
+        row
+        for row in overview
+        if row["relevance_subset"] == "relevance_low" and row["text_source"] == "summary"
     )
     assert all_row["accuracy"] == "0.3333333333333333"
     assert low_row["accuracy"] == "1.0"

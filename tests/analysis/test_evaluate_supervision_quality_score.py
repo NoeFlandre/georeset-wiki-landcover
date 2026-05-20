@@ -50,14 +50,20 @@ def _build_parent_experiment(
             "target": "31",
             "prediction": "31",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "2": {
             "pageid": 2,
             "target": "31",
             "prediction": "31",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "3": {
             "pageid": "3",
@@ -65,14 +71,20 @@ def _build_parent_experiment(
             "target": "32",
             "prediction": "23",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "4": {
             "pageid": "4",
             "target": "51",
             "prediction": "21",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
     }
     corine_shuffled = {
@@ -82,7 +94,10 @@ def _build_parent_experiment(
             "target": "31",
             "prediction": "21",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "2": {
             "pageid": 2,
@@ -90,21 +105,30 @@ def _build_parent_experiment(
             "target": "31",
             "prediction": "31",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "3": {
             "pageid": "3",
             "target": "32",
             "prediction": "31",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "4": {
             "pageid": "4",
             "target": "51",
             "prediction": "51",
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
     }
     osm_base = {
@@ -113,28 +137,40 @@ def _build_parent_experiment(
             "target": ["wood"],
             "prediction": ["wood"],
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "2": {
             "pageid": 2,
             "target": ["wood", "water"],
             "prediction": ["water"],
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "3": {
             "pageid": "3",
             "target": ["water"],
             "prediction": ["water"],
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "4": {
             "pageid": "4",
             "target": ["natural"],
             "prediction": [],
             "parse_status": "error",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
     }
     osm_shuffled = {
@@ -143,36 +179,46 @@ def _build_parent_experiment(
             "target": ["wood"],
             "prediction": ["water"],
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "2": {
             "pageid": 2,
             "target": ["wood", "water"],
             "prediction": ["wood"],
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "3": {
             "pageid": "3",
             "target": ["water"],
             "prediction": ["wood", "water"],
             "parse_status": "ok",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
         "4": {
             "pageid": "4",
             "target": ["natural"],
             "prediction": [],
             "parse_status": "error",
-            "metadata": {"model": model, **({"model_repo_id": model_repo_id} if model_repo_id else {})},
+            "metadata": {
+                "model": model,
+                **({"model_repo_id": model_repo_id} if model_repo_id else {}),
+            },
         },
     }
 
     for source in TEXT_SOURCES:
         if "shuffled" in source:
-            _write_predictions(
-                path / f"corine_level2_{source}_predictions.json", corine_shuffled
-            )
+            _write_predictions(path / f"corine_level2_{source}_predictions.json", corine_shuffled)
             _write_predictions(path / f"osm_{source}_predictions.json", osm_shuffled)
         else:
             _write_predictions(path / f"corine_level2_{source}_predictions.json", corine_base)
@@ -352,7 +398,11 @@ def test_recommended_use_precedence() -> None:
             "primary_article_type": None,
         }
     )
-    assert inspect_manual_if_missing_article_type["quality_bin"] in {"quality_medium", "quality_high", "quality_very_high"}
+    assert inspect_manual_if_missing_article_type["quality_bin"] in {
+        "quality_medium",
+        "quality_high",
+        "quality_very_high",
+    }
     assert inspect_manual_if_missing_article_type["recommended_use"] == "inspect_manually"
 
 
@@ -661,9 +711,7 @@ def test_metrics_include_corine_full_labels_and_osm_multi_metrics(tmp_path: Path
     assert "31" in labels
 
     osm_rows = [
-        row
-        for row in _read_csv(output_dir / "overview_by_quality_bin.csv")
-        if row["task"] == "osm"
+        row for row in _read_csv(output_dir / "overview_by_quality_bin.csv") if row["task"] == "osm"
     ]
     assert osm_rows
     for metric_name in ["jaccard", "micro_f1", "macro_f1"]:
@@ -702,7 +750,9 @@ def test_subset_metrics_and_shuffled_deltas(tmp_path: Path) -> None:
     )
 
     quality_rows = _read_csv(output_dir / "overview_by_quality_bin.csv")
-    all_row = next(row for row in quality_rows if row["subset"] == "all" and row["task"] == "corine_level2")
+    all_row = next(
+        row for row in quality_rows if row["subset"] == "all" and row["task"] == "corine_level2"
+    )
     medium_row = next(
         row
         for row in quality_rows

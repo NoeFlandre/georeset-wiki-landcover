@@ -79,7 +79,7 @@ def run_zero_shot_image_probe(
             eval_rows, embeddings, context=f"{encoder}/zero_shot"
         )
         y_true = rows["label"].to_numpy(dtype=str)
-        prompts = build_corine_zero_shot_prompts(sorted(set(y_true.tolist())))
+        prompts = build_corine_zero_shot_prompts(labels)
         text_encoder = text_encoder_factory(model_name, device)
         text_embeddings = embed_label_prompts(prompts, text_encoder)
         y_pred = predict_zero_shot(eval_x.astype(np.float32), text_embeddings)

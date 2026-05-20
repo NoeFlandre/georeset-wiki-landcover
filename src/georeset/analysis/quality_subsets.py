@@ -18,8 +18,7 @@ def quality_subset_masks(records: pd.DataFrame) -> dict[str, pd.Series]:
         "all": pd.Series(True, index=records.index),
         "relevance_medium_high": relevance_medium_high,
         "spatial_250m_ge_0.8": spatial_high,
-        "relevance_medium_high_and_spatial_250m_ge_0.8": relevance_medium_high
-        & spatial_high,
+        "relevance_medium_high_and_spatial_250m_ge_0.8": relevance_medium_high & spatial_high,
         "quality_high_or_very_high": high_quality,
         "quality_high_or_very_high_and_spatial_250m_ge_0.8": high_quality & spatial_high,
         "recommended_use_training": recommended_use == "use_for_training",

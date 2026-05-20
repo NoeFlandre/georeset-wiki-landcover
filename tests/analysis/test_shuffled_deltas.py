@@ -103,5 +103,8 @@ def test_compute_shuffled_delta_rows_uses_jaccard_for_osm_and_skips_missing_pair
 
 
 def test_primary_metric_name_can_use_exact_match_for_osm_reports() -> None:
-    assert primary_metric_name("corine_level2", osm_metric="exact_match_accuracy") == "balanced_accuracy"
+    assert (
+        primary_metric_name("corine_level2", osm_metric="exact_match_accuracy")
+        == "balanced_accuracy"
+    )
     assert primary_metric_name("osm", osm_metric="exact_match_accuracy") == "exact_match_accuracy"

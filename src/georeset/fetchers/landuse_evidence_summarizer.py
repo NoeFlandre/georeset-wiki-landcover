@@ -172,7 +172,9 @@ class LandUseEvidenceSummarizer:
         attempt_count = 0
         for attempt in range(1, self.max_attempts + 1):
             attempt_count = attempt
-            current_user_prompt = self._retry_user_prompt(user_prompt) if attempt > 1 else user_prompt
+            current_user_prompt = (
+                self._retry_user_prompt(user_prompt) if attempt > 1 else user_prompt
+            )
             try:
                 successful_user_prompt = current_user_prompt
                 payload = self._parse_payload(
@@ -376,7 +378,7 @@ class LandUseEvidenceSummarizer:
             "Retourne exactement cet objet JSON:\n"
             "{\n"
             '  "landuse_evidence_summary": "1 à 3 phrases courtes, sans nom de lieu, '
-            'résumant uniquement les indices utiles d\'occupation du sol.",\n'
+            "résumant uniquement les indices utiles d'occupation du sol.\",\n"
             '  "landcover_relevance": "none|low|medium|high",\n'
             '  "evidence_types": ["liste de types parmi les types autorisés"],\n'
             '  "evidence_sentences_no_place": ["phrases factuelles reformulées, sans nom de lieu"],\n'
@@ -385,7 +387,7 @@ class LandUseEvidenceSummarizer:
             "Si aucune preuve utile n'est présente, retourne:\n"
             "{\n"
             '  "landuse_evidence_summary": "Aucune preuve utile sur l\'occupation du sol ou '
-            'le paysage n\'est présente dans le texte.",\n'
+            "le paysage n'est présente dans le texte.\",\n"
             '  "landcover_relevance": "none",\n'
             '  "evidence_types": [],\n'
             '  "evidence_sentences_no_place": [],\n'

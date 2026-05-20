@@ -110,7 +110,7 @@ class WikiArticleTypeFetcher:
             is_last_attempt = attempt >= max_attempts - 1
             if is_last_attempt:
                 break
-            time.sleep(base_backoff_seconds * (2 ** attempt))
+            time.sleep(base_backoff_seconds * (2**attempt))
 
         assert last_error is not None
         raise last_error
@@ -119,7 +119,9 @@ class WikiArticleTypeFetcher:
         rows: dict[str, dict[str, Any]] = {}
         for pageid, raw_row in records.items():
             categories = raw_row.get("categories", [])
-            row = assign_article_types(categories, pageid=pageid, title=str(raw_row.get("title", "")))
+            row = assign_article_types(
+                categories, pageid=pageid, title=str(raw_row.get("title", ""))
+            )
             rows[pageid] = self._serialize_assignment(row, raw_row)
         return rows
 
@@ -142,7 +144,9 @@ class WikiArticleTypeFetcher:
         }
 
     @staticmethod
-    def _prune_stale_records(records: dict[str, Any], pageids: set[str]) -> dict[str, dict[str, Any]]:
+    def _prune_stale_records(
+        records: dict[str, Any], pageids: set[str]
+    ) -> dict[str, dict[str, Any]]:
         return {
             pageid: value
             for pageid, value in records.items()
@@ -154,7 +158,8 @@ class WikiArticleTypeFetcher:
         return {
             str(pageid): value
             for pageid, value in records.items()
-            if isinstance(pageid, (str, int)) and isinstance(value, dict)
+            if isinstance(pageid, (str, int))
+            and isinstance(value, dict)
             and str(pageid) not in {"", None}
             and isinstance(value.get("primary_article_type"), str)
         }

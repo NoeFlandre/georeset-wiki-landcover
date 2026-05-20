@@ -206,11 +206,7 @@ def compute_quality_row(record: Mapping[str, Any]) -> dict[str, Any]:
     quality_bin = classify_quality_bin(float(quality_score))
 
     article_type_missing = article_type in {"", "none", "missing", "unknown", "other_or_unclear"}
-    if (
-        quality_score < 3
-        or relevance == "none"
-        or uncertainty == "high"
-    ):
+    if quality_score < 3 or relevance == "none" or uncertainty == "high":
         recommended_use = "exclude"
     elif (
         quality_bin == "quality_very_high"
@@ -226,11 +222,7 @@ def compute_quality_row(record: Mapping[str, Any]) -> dict[str, Any]:
         and relevance in {"medium", "high"}
     ):
         recommended_use = "use_for_training"
-    elif (
-        quality_bin == "quality_medium"
-        or article_type_missing
-        or uncertainty == "medium"
-    ):
+    elif quality_bin == "quality_medium" or article_type_missing or uncertainty == "medium":
         recommended_use = "inspect_manually"
     else:
         recommended_use = "inspect_manually"
@@ -330,9 +322,9 @@ def _quality_mask_map(frame: pd.DataFrame) -> dict[str, pd.Series]:
         "recommended_use_training": frame["recommended_use"] == "use_for_training",
         "recommended_use_evaluation_only": frame["recommended_use"] == "use_for_evaluation_only",
         "recommended_use_exclude": frame["recommended_use"] == "exclude",
-        "article_type_high_prior": frame["primary_article_type"].astype("string").isin(
-            ARTICLE_TYPE_HIGH_PRIOR
-        ),
+        "article_type_high_prior": frame["primary_article_type"]
+        .astype("string")
+        .isin(ARTICLE_TYPE_HIGH_PRIOR),
     }
 
 
@@ -375,12 +367,12 @@ def _row_subset_metric(
         "majority_accuracy": metrics.get("majority_accuracy", ""),
         "majority_balanced_accuracy": metrics.get("majority_balanced_accuracy", ""),
         "majority_macro_f1": metrics.get("majority_macro_f1", ""),
-        "majority_labelset_exact_match_accuracy": metrics.get("majority_labelset_exact_match_accuracy", ""),
+        "majority_labelset_exact_match_accuracy": metrics.get(
+            "majority_labelset_exact_match_accuracy", ""
+        ),
         "empty_set_exact_match_accuracy": metrics.get("empty_set_exact_match_accuracy", ""),
         "exact_match_accuracy": metrics.get("exact_match_accuracy", ""),
-    }, [
-        {**item, "label": str(item["label"])} for item in per_class
-    ]
+    }, [{**item, "label": str(item["label"])} for item in per_class]
 
 
 def _compute_overview_rows(
@@ -417,7 +409,9 @@ def _compute_overview_rows(
                     "majority_accuracy": metrics["majority_accuracy"],
                     "majority_balanced_accuracy": metrics["majority_balanced_accuracy"],
                     "majority_macro_f1": metrics["majority_macro_f1"],
-                    "majority_labelset_exact_match_accuracy": metrics["majority_labelset_exact_match_accuracy"],
+                    "majority_labelset_exact_match_accuracy": metrics[
+                        "majority_labelset_exact_match_accuracy"
+                    ],
                     "empty_set_exact_match_accuracy": metrics["empty_set_exact_match_accuracy"],
                 }
             )
@@ -437,8 +431,7 @@ def _compute_overview_rows(
 
 def _compute_shuffled_delta_rows(overview_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     lookup = {
-        (row["model"], row["task"], row["text_source"], row["subset"]): row
-        for row in overview_rows
+        (row["model"], row["task"], row["text_source"], row["subset"]): row for row in overview_rows
     }
     shuffled_pairs = shuffled_text_source_pairs({str(row["text_source"]) for row in overview_rows})
     output: list[dict[str, Any]] = []
@@ -477,9 +470,9 @@ def _compute_shuffled_delta_rows(overview_rows: list[dict[str, Any]]) -> list[di
 def _compute_model_comparison_rows(overview_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     by_bucket: dict[tuple[str, str, str], dict[str, dict[str, Any]]] = {}
     for row in overview_rows:
-        by_bucket.setdefault((row["task"], row["text_source"], row["subset"]), {})[
-            row["model"]
-        ] = row
+        by_bucket.setdefault((row["task"], row["text_source"], row["subset"]), {})[row["model"]] = (
+            row
+        )
 
     output: list[dict[str, Any]] = []
     for (task, text_source, subset), model_rows in by_bucket.items():
@@ -536,8 +529,7 @@ def build_quality_rows(
 
     predicted_pageids = pd.DataFrame({"pageid": sorted(predictions["pageid"].astype(str).unique())})
     artifact = (
-        predicted_pageids
-        .merge(wiki, on="pageid", how="left")
+        predicted_pageids.merge(wiki, on="pageid", how="left")
         .merge(evidence_metadata_with_flags, on="pageid", how="left")
         .merge(spatial_confidence_with_flags, on="pageid", how="left")
         .merge(article_types_with_flags, on="pageid", how="left")
@@ -555,29 +547,39 @@ def build_quality_rows(
     artifact["candidate_article_types"] = artifact["candidate_article_types"].apply(
         lambda values: values if values else ["other_or_unclear"]
     )
-    artifact["evidence_sentences_count"] = pd.to_numeric(
-        artifact["evidence_sentences_count"], errors="coerce"
-    ).fillna(0).astype(int)
-    artifact["landuse_evidence_summary_char_count"] = pd.to_numeric(
-        artifact["landuse_evidence_summary_char_count"], errors="coerce"
-    ).fillna(0).astype(int)
+    artifact["evidence_sentences_count"] = (
+        pd.to_numeric(artifact["evidence_sentences_count"], errors="coerce").fillna(0).astype(int)
+    )
+    artifact["landuse_evidence_summary_char_count"] = (
+        pd.to_numeric(artifact["landuse_evidence_summary_char_count"], errors="coerce")
+        .fillna(0)
+        .astype(int)
+    )
 
     quality_scores: list[dict[str, Any]] = []
     for _, row in artifact.iterrows():
         quality_scores.append(compute_quality_row(row.to_dict()))
     quality_df = pd.DataFrame(quality_scores)
-    artifact = pd.concat([artifact.reset_index(drop=True), quality_df.reset_index(drop=True)], axis=1)
+    artifact = pd.concat(
+        [artifact.reset_index(drop=True), quality_df.reset_index(drop=True)], axis=1
+    )
 
     osm_targets = predictions[predictions["task"] == "osm"]
     osm_by_pageid = (
         osm_targets.groupby("pageid")["target"]
-        .apply(lambda values: sorted({str(value) for row in values if isinstance(row, list) for value in row}))
+        .apply(
+            lambda values: sorted(
+                {str(value) for row in values if isinstance(row, list) for value in row}
+            )
+        )
         .to_dict()
         if not osm_targets.empty
         else {}
     )
-    artifact["osm_labels"] = artifact["pageid"].map(osm_by_pageid).apply(
-        lambda values: values if isinstance(values, list) else []
+    artifact["osm_labels"] = (
+        artifact["pageid"]
+        .map(osm_by_pageid)
+        .apply(lambda values: values if isinstance(values, list) else [])
     )
     artifact["corine_label"] = artifact["point_label"].fillna("")
 
@@ -642,7 +644,9 @@ def _quality_output_rows(
                 ),
                 "point_label_share_250m": _to_float_or_zero(row.get("point_label_share_250m")),
                 "point_label_share_500m": _to_float_or_zero(row.get("point_label_share_500m")),
-                "dominant_matches_point_label_250m": row.get("dominant_matches_point_label_250m", ""),
+                "dominant_matches_point_label_250m": row.get(
+                    "dominant_matches_point_label_250m", ""
+                ),
                 "relevance_score": row["relevance_score"],
                 "spatial_score": row["spatial_score"],
                 "evidence_density_score": row["evidence_density_score"],
@@ -692,11 +696,7 @@ def _build_summary(
 
     if shuffled_deltas:
         best_delta_rows = sorted(
-            [
-                row
-                for row in shuffled_deltas
-                if isinstance(row.get("delta"), (int, float))
-            ],
+            [row for row in shuffled_deltas if isinstance(row.get("delta"), (int, float))],
             key=lambda row: abs(float(row["delta"])),
             reverse=True,
         )
@@ -756,7 +756,11 @@ def evaluate(
         spatial_confidence=spatial,
         article_types=article_types,
     )
-    for spatial_column in ["point_label_share_250m", "point_label_share_500m", "dominant_matches_point_label_250m"]:
+    for spatial_column in [
+        "point_label_share_250m",
+        "point_label_share_500m",
+        "dominant_matches_point_label_250m",
+    ]:
         if spatial_column not in quality_articles.columns:
             quality_articles[spatial_column] = pd.NA
     quality_rows = _quality_output_rows(quality_articles)
@@ -794,14 +798,23 @@ def evaluate(
     mask_map = _quality_mask_map(merged)
 
     overview_rows, majority_rows, per_class_rows = _compute_overview_rows(merged, mask_map)
-    overview_rows = sorted(overview_rows, key=lambda row: (row["model"], row["task"], row["text_source"], row["subset"]))
+    overview_rows = sorted(
+        overview_rows,
+        key=lambda row: (row["model"], row["task"], row["text_source"], row["subset"]),
+    )
     majority_rows = sorted(
         majority_rows,
         key=lambda row: (row["model"], row["task"], row["text_source"], row["subset"]),
     )
     per_class_rows = sorted(
         per_class_rows,
-        key=lambda row: (row["model"], row["task"], row["text_source"], row["subset"], str(row.get("label"))),
+        key=lambda row: (
+            row["model"],
+            row["task"],
+            row["text_source"],
+            row["subset"],
+            str(row.get("label")),
+        ),
     )
 
     shuffled_delta_rows = _compute_shuffled_delta_rows(overview_rows)
@@ -889,7 +902,14 @@ def evaluate(
             row
             for row in overview_rows
             if str(row["subset"]).endswith("and_spatial_250m_ge_0.8")
-            or str(row["subset"]) in {"all", "relevance_medium_high", "quality_medium", "quality_high", "quality_very_high"}
+            or str(row["subset"])
+            in {
+                "all",
+                "relevance_medium_high",
+                "quality_medium",
+                "quality_high",
+                "quality_very_high",
+            }
         ],
         columns=OUTPUT_METRIC_COLUMNS,
     )
@@ -899,7 +919,14 @@ def evaluate(
             row
             for row in overview_rows
             if str(row["subset"]).endswith("and_spatial_250m_ge_0.8")
-            or str(row["subset"]) in {"all", "relevance_medium_high", "quality_medium", "quality_high", "quality_very_high"}
+            or str(row["subset"])
+            in {
+                "all",
+                "relevance_medium_high",
+                "quality_medium",
+                "quality_high",
+                "quality_very_high",
+            }
         ],
         title="Overview by Quality and Spatial Subset",
         columns=OUTPUT_METRIC_COLUMNS,
@@ -980,7 +1007,13 @@ def evaluate(
             "parent_experiment_dirs": sorted({str(path) for path in parent_dirs}),
             "number_of_articles_scored": int(len(quality_articles)),
             "scoring": {
-                "relevance_score": {"none": 0, "low": 1, "medium": 2, "high": 3, "missing_or_unknown": 0},
+                "relevance_score": {
+                    "none": 0,
+                    "low": 1,
+                    "medium": 2,
+                    "high": 3,
+                    "missing_or_unknown": 0,
+                },
                 "spatial_score": "3 * point_label_share_250m",
                 "evidence_density_score": {
                     "missing_or_0": 0,

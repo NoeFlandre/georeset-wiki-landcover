@@ -141,10 +141,19 @@ def evaluate_controls(
         encoder = str(data["encoder_name"]) if "encoder_name" in data else embeddings_path.stem
         window_m = int(data["window_m"]) if "window_m" in data else -1
         embeddings = load_embedding_cache(embeddings_path)
-        universe = splits[(splits["split"] == "train") & (splits["tier"] == "all")].copy()
         eval_rows = splits[splits["split"] == "eval_strict"].copy()
+        eval_pageids = set(eval_rows["pageid"].astype(str))
+        universe = splits[
+            (splits["split"] == "train")
+            & (splits["tier"] == "all")
+            & ~splits["pageid"].astype(str).isin(eval_pageids)
+        ].copy()
         for tier in HARD_TIERS:
-            observed = splits[(splits["split"] == "train") & (splits["tier"] == tier)].copy()
+            observed = splits[
+                (splits["split"] == "train")
+                & (splits["tier"] == tier)
+                & ~splits["pageid"].astype(str).isin(eval_pageids)
+            ].copy()
             if observed.empty:
                 continue
             observed_score = _evaluate_subset(

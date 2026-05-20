@@ -116,11 +116,7 @@ def test_markdown_table_formats_rows_without_title() -> None:
     assert markdown_table(
         rows=[{"label": "forest | water", "note": "line one\nline two"}],
         columns=["label", "note"],
-    ) == (
-        "| label | note |\n"
-        "| --- | --- |\n"
-        "| forest \\| water | line one<br>line two |\n"
-    )
+    ) == ("| label | note |\n| --- | --- |\n| forest \\| water | line one<br>line two |\n")
 
 
 def test_markdown_table_returns_no_rows_for_empty_input() -> None:
@@ -234,7 +230,9 @@ def test_read_json_file_propagates_json_decode_error(tmp_path):
         read_json_file(bad_path)
 
 
-def test_resolve_table_columns_uses_union_all_rows_and_preserves_explicit_order_for_supplied_columns() -> None:
+def test_resolve_table_columns_uses_union_all_rows_and_preserves_explicit_order_for_supplied_columns() -> (
+    None
+):
     rows = [{"b": 1, "a": 2}, {"c": 3, "b": 4}]
 
     assert resolve_table_columns(rows, ["b", "a"]) == ["b", "a", "c"]
@@ -246,9 +244,7 @@ def test_resolve_table_columns_without_columns_is_deterministic_union() -> None:
     assert resolve_table_columns(rows) == ["a", "b", "c"]
 
 
-def test_write_dict_rows_csv_atomic_uses_union_columns_and_is_atomic(
-    tmp_path, monkeypatch
-) -> None:
+def test_write_dict_rows_csv_atomic_uses_union_columns_and_is_atomic(tmp_path, monkeypatch) -> None:
     output_path = tmp_path / "rows.csv"
     captured: list[tuple[str, str]] = []
 
@@ -316,6 +312,8 @@ def test_write_dict_rows_table_pair_atomic_writes_csv_and_markdown(tmp_path) -> 
     )
 
     assert (output_dir / "overview.csv").read_text(encoding="utf-8").splitlines()[0] == "a,b,c"
-    assert (output_dir / "overview.md").read_text(encoding="utf-8").startswith(
-        "# Overview\n\n| a | b | c |"
+    assert (
+        (output_dir / "overview.md")
+        .read_text(encoding="utf-8")
+        .startswith("# Overview\n\n| a | b | c |")
     )

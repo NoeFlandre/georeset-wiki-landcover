@@ -33,7 +33,9 @@ class LinearProbeModel:
         return self.scale
 
 
-def _standardize(features: NDArray[np.float32] | FloatArray) -> tuple[FloatArray, FloatArray, FloatArray]:
+def _standardize(
+    features: NDArray[np.float32] | FloatArray,
+) -> tuple[FloatArray, FloatArray, FloatArray]:
     mean = features.mean(axis=0)
     scale = features.std(axis=0)
     scale[scale == 0] = 1.0
@@ -87,7 +89,9 @@ def fit_linear_probe(
     )
 
 
-def predict_linear_probe(model: LinearProbeModel, features: NDArray[np.float32] | FloatArray) -> StringArray:
+def predict_linear_probe(
+    model: LinearProbeModel, features: NDArray[np.float32] | FloatArray
+) -> StringArray:
     x = (features.astype(np.float64) - model.mean) / model.scale
     indices = np.argmax(x @ model.weights + model.bias, axis=1)
     return np.asarray(model.labels[indices])
@@ -102,8 +106,16 @@ def evaluate_predictions(y_true: StringArray, y_pred: StringArray) -> dict[str, 
         true_positive = int(((y_true == label) & (y_pred == label)).sum())
         false_positive = int(((y_true != label) & (y_pred == label)).sum())
         false_negative = int(((y_true == label) & (y_pred != label)).sum())
-        recall = true_positive / (true_positive + false_negative) if true_positive + false_negative else 0.0
-        precision = true_positive / (true_positive + false_positive) if true_positive + false_positive else 0.0
+        recall = (
+            true_positive / (true_positive + false_negative)
+            if true_positive + false_negative
+            else 0.0
+        )
+        precision = (
+            true_positive / (true_positive + false_positive)
+            if true_positive + false_positive
+            else 0.0
+        )
         f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
         recalls.append(recall)
         f1s.append(f1)

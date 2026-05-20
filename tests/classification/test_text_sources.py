@@ -50,8 +50,7 @@ def test_text_source_choices_include_primary_and_shuffled_sources():
     assert SHUFFLED_TEXT_SOURCES["landuse_evidence_summary_shuffled"] == "landuse_evidence_summary"
     assert SHUFFLED_TEXT_SOURCES["evidence_card_shuffled"] == "evidence_card"
     assert (
-        SHUFFLED_TEXT_SOURCES["content_with_evidence_card_shuffled"]
-        == "content_with_evidence_card"
+        SHUFFLED_TEXT_SOURCES["content_with_evidence_card_shuffled"] == "content_with_evidence_card"
     )
     assert (
         SHUFFLED_TEXT_SOURCES["content_with_evidence_highlights_shuffled"]

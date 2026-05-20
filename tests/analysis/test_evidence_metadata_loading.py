@@ -60,7 +60,9 @@ def test_load_evidence_metadata_ignores_non_dict_payloads(tmp_path: Path) -> Non
     assert frame["pageid"].tolist() == ["3"]
 
 
-def test_load_evidence_metadata_returns_stable_columns_for_no_usable_records(tmp_path: Path) -> None:
+def test_load_evidence_metadata_returns_stable_columns_for_no_usable_records(
+    tmp_path: Path,
+) -> None:
     payload_path = tmp_path / "evidence_metadata.json"
     _write_json(payload_path, {"1": "not-a-record", "2": 4, "3": [1, 2, 3]})
     frame = load_evidence_metadata(payload_path)
@@ -76,7 +78,9 @@ def test_load_evidence_metadata_returns_stable_columns_for_no_usable_records(tmp
     ]
 
 
-def test_load_evidence_metadata_returns_stable_columns_for_non_dict_top_level_payload(tmp_path: Path) -> None:
+def test_load_evidence_metadata_returns_stable_columns_for_non_dict_top_level_payload(
+    tmp_path: Path,
+) -> None:
     payload_path = tmp_path / "evidence_metadata.json"
     _write_json(payload_path, [{"pageid": "1", "evidence_types": ["forest"]}])
 
@@ -134,7 +138,9 @@ def test_load_evidence_metadata_parses_stringified_evidence_types(tmp_path: Path
     ]
 
 
-def test_load_evidence_metadata_numeric_fields_default_to_zero_on_bad_or_missing(tmp_path: Path) -> None:
+def test_load_evidence_metadata_numeric_fields_default_to_zero_on_bad_or_missing(
+    tmp_path: Path,
+) -> None:
     payload_path = tmp_path / "evidence_metadata.json"
     _write_json(
         payload_path,
@@ -144,8 +150,16 @@ def test_load_evidence_metadata_numeric_fields_default_to_zero_on_bad_or_missing
                 "evidence_sentences_count": "3",
                 "landuse_evidence_summary_char_count": 7.2,
             },
-            "2": {"pageid": "2", "evidence_sentences_count": "bad", "landuse_evidence_summary_char_count": None},
-            "3": {"pageid": "3", "evidence_sentences_count": None, "landuse_evidence_summary_char_count": "nope"},
+            "2": {
+                "pageid": "2",
+                "evidence_sentences_count": "bad",
+                "landuse_evidence_summary_char_count": None,
+            },
+            "3": {
+                "pageid": "3",
+                "evidence_sentences_count": None,
+                "landuse_evidence_summary_char_count": "nope",
+            },
             "4": {"pageid": "4"},
         },
     )
@@ -164,7 +178,9 @@ def test_load_evidence_metadata_numeric_fields_default_to_zero_on_bad_or_missing
 
 def test_load_evidence_metadata_preserves_raw_relevance_values(tmp_path: Path) -> None:
     payload_path = tmp_path / "evidence_metadata.json"
-    _write_json(payload_path, {"1": {"pageid": "1", "landcover_relevance": "LOW", "uncertainty": "HIGH"}})
+    _write_json(
+        payload_path, {"1": {"pageid": "1", "landcover_relevance": "LOW", "uncertainty": "HIGH"}}
+    )
 
     frame = load_evidence_metadata(payload_path)
 

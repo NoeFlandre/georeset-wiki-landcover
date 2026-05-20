@@ -322,7 +322,10 @@ def write_shuffled_delta_markdown(rows: list[dict[str, Any]], output_path: Path)
     write_markdown_table_atomic(
         output_path,
         title="Shuffled Control Deltas",
-        rows=[{key: _format_cell(row.get(key, "")) for key in SHUFFLED_DELTA_FIELDNAMES} for row in rows],
+        rows=[
+            {key: _format_cell(row.get(key, "")) for key in SHUFFLED_DELTA_FIELDNAMES}
+            for row in rows
+        ],
         columns=SHUFFLED_DELTA_FIELDNAMES,
     )
 

@@ -58,12 +58,9 @@ def _build_summarizer(response: str) -> tuple[LandUseEvidenceSummarizer, _FakeCl
 
 def test_schema_and_prompt_have_fixed_version() -> None:
     assert LANDUSE_EVIDENCE_PROMPT_VERSION == 2
-    assert (
-        LandUseEvidenceSummarizer.EVIDENCE_SCHEMA["properties"]["evidence_types"]["items"][
-            "enum"
-        ]
-        == list(EVIDENCE_TYPES)
-    )
+    assert LandUseEvidenceSummarizer.EVIDENCE_SCHEMA["properties"]["evidence_types"]["items"][
+        "enum"
+    ] == list(EVIDENCE_TYPES)
 
 
 def test_summarize_adds_required_evidence_fields_and_counts(fake_good_response: str) -> None:
@@ -488,7 +485,10 @@ def test_process_file_continues_after_summary_failure_and_allows_retry(tmp_path:
 
     first_result = json.loads(output_path.read_text(encoding="utf-8"))
     assert set(first_result) == {"1"}
-    assert first_result["1"]["landuse_evidence_summary"] == valid_current_record["landuse_evidence_summary"]
+    assert (
+        first_result["1"]["landuse_evidence_summary"]
+        == valid_current_record["landuse_evidence_summary"]
+    )
 
     success_response = json.dumps(
         {

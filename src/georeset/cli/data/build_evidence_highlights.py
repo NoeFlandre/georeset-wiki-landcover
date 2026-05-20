@@ -37,9 +37,7 @@ def build_highlights(
     article_contents_path: Path,
     evidence_metadata_path: Path,
 ) -> dict[str, dict[str, Any]]:
-    articles = read_required_json_mapping(
-        article_contents_path, description="article contents"
-    )
+    articles = read_required_json_mapping(article_contents_path, description="article contents")
     evidence_by_pageid = index_json_records_by_pageid(
         read_optional_json_mapping(evidence_metadata_path)
     )

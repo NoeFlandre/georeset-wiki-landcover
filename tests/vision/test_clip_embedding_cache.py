@@ -30,11 +30,13 @@ def test_load_embedding_cache_rejects_mismatched_rows(tmp_path: Path) -> None:
         embeddings=np.array([[1.0, 2.0]], dtype=np.float32),
     )
 
-    with pytest.raises(ValueError, match="pageids and embeddings must have the same number of rows"):
+    with pytest.raises(
+        ValueError, match="pageids and embeddings must have the same number of rows"
+    ):
         load_embedding_cache(path)
 
 
-def test_stack_embeddings_for_rows_filters_missing_pageids_and_errors_when_empty() -> None:
+def test_stack_embeddings_for_rows_rejects_missing_pageids_by_default() -> None:
     rows = pd.DataFrame(
         [
             {"pageid": "1", "label": "31"},
@@ -43,7 +45,22 @@ def test_stack_embeddings_for_rows_filters_missing_pageids_and_errors_when_empty
     )
     embeddings = {"1": np.array([1.0, 2.0], dtype=np.float32)}
 
-    filtered, matrix = stack_embeddings_for_rows(rows, embeddings, context="eval_strict")
+    with pytest.raises(ValueError, match="Missing cached embeddings for eval_strict: missing"):
+        stack_embeddings_for_rows(rows, embeddings, context="eval_strict")
+
+
+def test_stack_embeddings_for_rows_can_allow_missing_pageids_explicitly() -> None:
+    rows = pd.DataFrame(
+        [
+            {"pageid": "1", "label": "31"},
+            {"pageid": "missing", "label": "22"},
+        ]
+    )
+    embeddings = {"1": np.array([1.0, 2.0], dtype=np.float32)}
+
+    filtered, matrix = stack_embeddings_for_rows(
+        rows, embeddings, context="eval_strict", allow_missing=True
+    )
 
     assert filtered["pageid"].tolist() == ["1"]
     assert matrix.tolist() == [[1.0, 2.0]]
