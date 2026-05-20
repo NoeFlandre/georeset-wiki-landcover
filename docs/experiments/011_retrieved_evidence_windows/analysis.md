@@ -110,7 +110,7 @@ should replace full raw content. Full articles still carry useful cues outside
 the matched evidence sentences: place type, local context, surrounding prose,
 and indirect landscape descriptions.
 
-The no-place variant is informative. Removing place-name variants did not
+The no-place variant is informative. Deterministic article-title scrubbing did not
 collapse performance; for Gemma it slightly improved CORINE balanced accuracy.
 So the signal is not only memorized place-name association. It is mostly carried
 by the article text itself.

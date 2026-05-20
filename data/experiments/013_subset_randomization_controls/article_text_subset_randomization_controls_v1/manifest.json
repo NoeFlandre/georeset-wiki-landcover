@@ -2,7 +2,7 @@
   "experiment_id": "article_text_subset_randomization_controls_v1",
   "no_llm_rerun": true,
   "no_gpu": true,
-  "timestamp": "2026-05-20T05:16:58.122312+00:00",
+  "timestamp": "2026-05-20T08:12:38.490294+00:00",
   "input_paths": {
     "parent_experiment_dirs": [
       "data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1",

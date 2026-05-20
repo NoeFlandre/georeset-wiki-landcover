@@ -49,7 +49,8 @@ multi-label sets.
 The main text sources tested were:
 
 - `summary`: generic place summary.
-- `summary_no_place`: generic no-place summary with place-name cues removed.
+- `summary_no_place`: generic no-place summary with deterministic article-title
+  scrubbing applied after generation.
 - `content`: raw article content.
 - `landuse_evidence_summary`: short extracted land-use evidence summary.
 - `evidence_card`: deterministic structured evidence card.
@@ -96,7 +97,7 @@ For CORINE, raw content was the strongest source:
 | source | accuracy | balanced accuracy | macro-F1 | shuffled balanced accuracy |
 | --- | ---: | ---: | ---: | ---: |
 | `summary` | 0.237 | 0.255 | 0.244 | 0.063 |
-| `summary_no_place` | 0.232 | 0.243 | 0.235 | 0.058 |
+| `summary_no_place` | 0.255 | 0.258 | 0.253 | 0.057 |
 | `content` | 0.293 | 0.281 | 0.270 | 0.067 |
 
 Raw CORINE accuracy was below the majority-class raw accuracy baseline, but
@@ -110,7 +111,7 @@ baseline of 0.207, but aligned text still beat shuffled text:
 | source | exact match | shuffled exact match | micro-F1 | shuffled micro-F1 |
 | --- | ---: | ---: | ---: | ---: |
 | `summary` | 0.145 | 0.076 | 0.161 | 0.087 |
-| `summary_no_place` | 0.164 | 0.080 | 0.188 | 0.098 |
+| `summary_no_place` | 0.142 | 0.065 | 0.161 | 0.084 |
 | `content` | 0.164 | 0.058 | 0.197 | 0.097 |
 
 ### Interpretation
@@ -243,7 +244,7 @@ Gemma CORINE:
 | source | accuracy | balanced accuracy | macro-F1 | shuffled balanced accuracy |
 | --- | ---: | ---: | ---: | ---: |
 | `summary` | 0.285 | 0.236 | 0.217 | 0.047 |
-| `summary_no_place` | 0.237 | 0.223 | 0.209 | 0.049 |
+| `summary_no_place` | 0.237 | 0.223 | 0.209 | 0.048 |
 | `content` | 0.357 | 0.271 | 0.254 | 0.066 |
 
 Gemma OSM:
@@ -251,7 +252,7 @@ Gemma OSM:
 | source | exact match | micro-F1 | macro-F1 | shuffled exact match |
 | --- | ---: | ---: | ---: | ---: |
 | `summary` | 0.240 | 0.264 | 0.129 | 0.131 |
-| `summary_no_place` | 0.244 | 0.259 | 0.153 | 0.127 |
+| `summary_no_place` | 0.247 | 0.262 | 0.133 | 0.127 |
 | `content` | 0.215 | 0.247 | 0.158 | 0.087 |
 
 Compared with Qwen:
@@ -736,9 +737,10 @@ Retrieved windows are the best compact text representation tested so far for
 CORINE, but they still do not replace full raw content. Full articles contain
 useful indirect cues outside the retrieved evidence sentences.
 
-The no-place result is also important: removing place-name variants did not
-collapse performance, and for Gemma it slightly improved CORINE balanced
-accuracy. The signal is therefore not only memorized place-name association.
+The no-place result is also important: deterministic article-title scrubbing did
+not collapse performance. The signal is therefore not only exact article-title
+memorization, though no-place controls should still be read as reduced-name
+controls rather than proof that every possible geographic alias was removed.
 
 ## Experiment 012: CLIP Linear Probe With Weak Labels
 

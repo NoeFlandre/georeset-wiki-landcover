@@ -46,11 +46,13 @@ For text inputs, we used three article representations:
 
 - `summary`: a normal one-sentence summary where the place name may appear.
 - `summary_no_place`: a one-sentence summary asking the summarizer not to
-  mention the described place name.
+  mention the described place name, with deterministic article-title scrubbing
+  applied after generation.
 - `content`: the raw article extract.
 
-The two summary variants were generated once and then reused. We did not create
-new summaries during the classifier reruns. The summarizer is a local
+The two summary variants were generated once and then reused. The no-place
+artifact was later deterministically scrubbed for exact article-title leaks and
+the affected `summary_no_place` classifier rows were rerun. The summarizer is a local
 llama-cpp based article summarizer; using
 `Qwen3.6-27B-Q4_0.gguf` with summarization temperature `0.7`. Classification
 itself used temperature `0.0` and seed `42` throughout, so the experiments

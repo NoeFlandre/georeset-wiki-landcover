@@ -72,10 +72,10 @@ were reused.
 | task | text source | n | primary metric | primary score | accuracy | exact match | macro recall | macro F1 | micro F1 |
 | --- | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | CORINE | summary | 1251 | macro recall | 0.2358 | 0.2846 |  | 0.2358 | 0.2172 |  |
-| CORINE | summary_no_place | 1251 | macro recall | 0.2232 | 0.2374 |  | 0.2232 | 0.2086 |  |
+| CORINE | summary_no_place | 1251 | macro recall | 0.2225 | 0.2366 |  | 0.2225 | 0.2085 |  |
 | CORINE | content | 1251 | macro recall | 0.2714 | 0.3565 |  | 0.2714 | 0.2544 |  |
 | OSM | summary | 275 | exact match | 0.2400 |  | 0.2400 | 0.1811 | 0.1287 | 0.2640 |
-| OSM | summary_no_place | 275 | exact match | 0.2436 |  | 0.2436 | 0.1971 | 0.1529 | 0.2585 |
+| OSM | summary_no_place | 275 | exact match | 0.2473 |  | 0.2473 | 0.1869 | 0.1333 | 0.2619 |
 | OSM | content | 275 | exact match | 0.2145 |  | 0.2145 | 0.3221 | 0.1584 | 0.2472 |
 
 For CORINE, Gemma performs best on raw `content` under macro recall and raw
@@ -83,7 +83,7 @@ accuracy. `content` reaches accuracy 0.3565, macro recall 0.2714, and macro F1
 0.2544.
 
 For OSM, Gemma's strict exact-match score is highest on `summary_no_place`
-at 0.2436, followed closely by `summary` at 0.2400. Raw `content` has lower
+at 0.2473, followed by `summary` at 0.2400. Raw `content` has lower
 exact match at 0.2145, but it has the highest macro recall at 0.3221. This
 suggests raw content recovers more true labels, but not always the exact full
 label set.
@@ -93,10 +93,10 @@ label set.
 | task | text source | primary delta aligned - shuffled | macro F1 delta | micro F1 delta |
 | --- | --- | ---: | ---: | ---: |
 | CORINE | summary | 0.1892 | 0.1657 |  |
-| CORINE | summary_no_place | 0.1745 | 0.1528 |  |
+| CORINE | summary_no_place | 0.1745 | 0.1532 |  |
 | CORINE | content | 0.2057 | 0.1874 |  |
 | OSM | summary | 0.1091 | 0.0655 | 0.1051 |
-| OSM | summary_no_place | 0.1164 | 0.0939 | 0.1070 |
+| OSM | summary_no_place | 0.1200 | 0.0742 | 0.1104 |
 | OSM | content | 0.1273 | 0.0999 | 0.1133 |
 
 All Gemma aligned text sources beat their matching shuffled controls on the

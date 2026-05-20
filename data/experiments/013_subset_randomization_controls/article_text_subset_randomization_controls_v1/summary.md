@@ -29,7 +29,7 @@ Aligned-vs-shuffled CORINE deltas also survive random delta controls. For raw co
 
 ## Headline Control Flags
 
-- beats_same_n: 9
+- beats_same_n: 8
 - beats_target_matched: 23
 - below_random: 2
-- not_distinguishable: 14
+- not_distinguishable: 15

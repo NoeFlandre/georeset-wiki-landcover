@@ -45,7 +45,7 @@ For CORINE on all articles:
 | content | 0.293 | 0.281 | 0.270 |
 | content_with_evidence_card | 0.337 | 0.285 | 0.260 |
 | summary | 0.237 | 0.255 | 0.244 |
-| summary_no_place | 0.232 | 0.243 | 0.235 |
+| summary_no_place | 0.255 | 0.258 | 0.253 |
 | evidence_card | 0.286 | 0.224 | 0.226 |
 | landuse_evidence_summary | 0.237 | 0.184 | 0.203 |
 
@@ -68,7 +68,7 @@ For OSM on all articles:
 | text source | exact match | micro-F1 | macro-F1 | Jaccard |
 |---|---:|---:|---:|---:|
 | content | 0.164 | 0.197 | 0.158 | 0.190 |
-| summary_no_place | 0.164 | 0.188 | 0.122 | 0.180 |
+| summary_no_place | 0.142 | 0.161 | 0.068 | 0.157 |
 | landuse_evidence_summary | 0.109 | 0.195 | 0.120 | 0.168 |
 | content_with_evidence_card | 0.135 | 0.152 | 0.086 | 0.164 |
 | evidence_card | 0.095 | 0.168 | 0.107 | 0.137 |

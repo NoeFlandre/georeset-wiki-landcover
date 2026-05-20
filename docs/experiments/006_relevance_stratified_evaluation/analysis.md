@@ -152,7 +152,7 @@ For Qwen:
 | Text source | Exact match, all | Exact match, medium/high | Micro-F1, all | Micro-F1, medium/high | Jaccard, all | Jaccard, medium/high |
 |---|---:|---:|---:|---:|---:|---:|
 | summary | 0.145 | 0.163 | 0.161 | 0.186 | 0.155 | 0.178 |
-| summary_no_place | 0.164 | 0.203 | 0.189 | 0.236 | 0.180 | 0.226 |
+| summary_no_place | 0.142 | 0.190 | 0.161 | 0.222 | 0.157 | 0.212 |
 | content | 0.164 | 0.196 | 0.197 | 0.236 | 0.190 | 0.236 |
 
 For Gemma, the pattern is mixed:

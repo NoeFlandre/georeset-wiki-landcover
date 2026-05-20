@@ -16,7 +16,7 @@
 ### Qwen: land-use vs generic
 - corine_level2 / content: primary delta -0.0965 (0.2807 -> 0.1842).
 - corine_level2 / summary: primary delta -0.0706 (0.2548 -> 0.1842).
-- corine_level2 / summary_no_place: primary delta -0.0584 (0.2426 -> 0.1842).
+- corine_level2 / summary_no_place: primary delta -0.0737 (0.2579 -> 0.1842).
 - osm / content: primary delta -0.0545 (0.1636 -> 0.1091).
 - osm / summary: primary delta -0.0364 (0.1455 -> 0.1091).
 - osm / summary_no_place: primary delta -0.0545 (0.1636 -> 0.1091).
@@ -24,10 +24,10 @@
 ### Gemma: land-use vs generic
 - corine_level2 / content: primary delta -0.0533 (0.2714 -> 0.2181).
 - corine_level2 / summary: primary delta -0.0177 (0.2358 -> 0.2181).
-- corine_level2 / summary_no_place: primary delta -0.0051 (0.2232 -> 0.2181).
+- corine_level2 / summary_no_place: primary delta -0.0051 (0.2225 -> 0.2181).
 - osm / content: primary delta -0.1127 (0.2145 -> 0.1018).
 - osm / summary: primary delta -0.1382 (0.2400 -> 0.1018).
-- osm / summary_no_place: primary delta -0.1418 (0.2436 -> 0.1018).
+- osm / summary_no_place: primary delta -0.1418 (0.2473 -> 0.1018).
 
 ## Aligned minus shuffled (land-use text)
 - qwen / corine_level2: 0.1370
