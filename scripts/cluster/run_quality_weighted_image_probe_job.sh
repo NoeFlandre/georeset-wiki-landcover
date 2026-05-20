@@ -7,7 +7,7 @@ set -euo pipefail
 
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 
-REMOTE_DIR="${G5K_REMOTE_DIR:-georeset}"
+REMOTE_DIR="${G5K_REMOTE_DIR:-georeset_wiki_landcover}"
 REMOTE_PROJECT_DIR="${G5K_REMOTE_PROJECT_DIR:-${HOME}/${REMOTE_DIR}}"
 OUTPUT_DIR="${IMAGE_PROBE_OUTPUT_DIR:-data/experiments/014_quality_weighted_multiscale_image_probe/quality_weighted_multiscale_image_probe_v1}"
 WINDOWS="${IMAGE_PROBE_WINDOWS:-320,2240}"
@@ -23,7 +23,7 @@ N_CONTROL_DRAWS="${IMAGE_PROBE_N_CONTROL_DRAWS:-100}"
 cd "${REMOTE_PROJECT_DIR}"
 
 export PYTHONDONTWRITEBYTECODE=1
-JOB_CACHE_DIR="${GEORESET_JOB_CACHE_DIR:-${TMPDIR:-/tmp}/georeset_${OAR_JOB_ID:-manual}}"
+JOB_CACHE_DIR="${GEORESET_WIKI_LANDCOVER_JOB_CACHE_DIR:-${TMPDIR:-/tmp}/georeset_${OAR_JOB_ID:-manual}}"
 export HF_HOME="${HF_HOME:-${JOB_CACHE_DIR}/hf}"
 export TORCH_HOME="${TORCH_HOME:-${JOB_CACHE_DIR}/torch}"
 export UV_CACHE_DIR="${UV_CACHE_DIR:-${JOB_CACHE_DIR}/uv}"
@@ -40,8 +40,8 @@ fi
 
 uv sync --group dev --group vision
 
-uv run georeset-build-image-probe-splits-v2 --output-dir "${OUTPUT_DIR}"
-uv run georeset-fetch-sentinel-multiscale-patches --output-dir "${OUTPUT_DIR}" --window-m "${WINDOWS}"
+uv run georeset-wiki-landcover-build-image-probe-splits-v2 --output-dir "${OUTPUT_DIR}"
+uv run georeset-wiki-landcover-fetch-sentinel-multiscale-patches --output-dir "${OUTPUT_DIR}" --window-m "${WINDOWS}"
 
 if [[ "${STOP_AFTER_PATCH_VALIDATION}" == "1" ]]; then
   echo "IMAGE_PROBE_STOP_AFTER_PATCH_VALIDATION=1; stopping after patch validation artifacts."
@@ -54,7 +54,7 @@ for window_m in "${WINDOW_ARRAY[@]}"; do
   window_padded="$(printf "%04d" "${window_m}")"
   patches_path="${OUTPUT_DIR}/sentinel_rgb_window_${window_padded}m.npz"
   for encoder in "${ENCODER_ARRAY[@]}"; do
-    uv run georeset-embed-image-patches \
+    uv run georeset-wiki-landcover-embed-image-patches \
       --patches-path "${patches_path}" \
       --output-path "${OUTPUT_DIR}/embeddings_${encoder}_window_${window_padded}m.npz" \
       --encoder "${encoder}" \
@@ -63,13 +63,13 @@ for window_m in "${WINDOW_ARRAY[@]}"; do
   done
 done
 
-uv run georeset-run-quality-weighted-image-zero-shot \
+uv run georeset-wiki-landcover-run-quality-weighted-image-zero-shot \
   --output-dir "${OUTPUT_DIR}" \
   --encoders "${ENCODERS}" \
   --windows "${WINDOWS}" \
   --device "${DEVICE}"
 
-uv run georeset-run-quality-weighted-image-probe \
+uv run georeset-wiki-landcover-run-quality-weighted-image-probe \
   --output-dir "${OUTPUT_DIR}" \
   --encoders "${ENCODERS}" \
   --windows "${WINDOWS}" \
@@ -77,7 +77,7 @@ uv run georeset-run-quality-weighted-image-probe \
   --n-bootstrap "${N_BOOTSTRAP}"
 
 if [[ "${RUN_CONTROLS}" == "1" ]]; then
-  uv run georeset-evaluate-image-probe-training-policy-controls \
+  uv run georeset-wiki-landcover-evaluate-image-probe-training-policy-controls \
     --output-dir "${OUTPUT_DIR}" \
     --encoders "${ENCODERS}" \
     --windows "${WINDOWS}" \

@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-from georeset.fetchers.wiki_article_type_fetcher import WikiArticleTypeFetcher
+from georeset_wiki_landcover.fetchers.wiki_article_type_fetcher import WikiArticleTypeFetcher
 
 
 def _response_json(pageid_to_records: dict[int, dict[str, Any]]) -> dict[str, Any]:
@@ -45,7 +45,8 @@ def test_fetcher_batches_pageids(tmp_path: Path) -> None:
         return _make_response(payload)
 
     with patch(
-        "georeset.fetchers.wiki_article_type_fetcher.requests.get", side_effect=side_effect
+        "georeset_wiki_landcover.fetchers.wiki_article_type_fetcher.requests.get",
+        side_effect=side_effect,
     ) as get_mock:
         input_path = tmp_path / "wiki_articles.json"
         output_path = tmp_path / "article_type_metadata.json"
@@ -71,7 +72,7 @@ def test_fetcher_resumes_current_records(tmp_path: Path) -> None:
     )
 
     with patch(
-        "georeset.fetchers.wiki_article_type_fetcher.requests.get",
+        "georeset_wiki_landcover.fetchers.wiki_article_type_fetcher.requests.get",
         return_value=_make_response(payload),
     ) as get_mock:
         input_path = tmp_path / "wiki_articles.json"
@@ -115,7 +116,7 @@ def test_fetcher_handles_missing_categories(tmp_path: Path) -> None:
     payload = _response_json({1: {"pageid": 1, "title": "NoCats", "ns": 0}})
 
     with patch(
-        "georeset.fetchers.wiki_article_type_fetcher.requests.get",
+        "georeset_wiki_landcover.fetchers.wiki_article_type_fetcher.requests.get",
         return_value=_make_response(payload),
     ):
         input_path = tmp_path / "wiki_articles.json"
@@ -136,7 +137,7 @@ def test_fetcher_does_not_fetch_article_content(tmp_path: Path) -> None:
     payload = _response_json({1: {"pageid": 1, "title": "A", "ns": 0, "categories": []}})
 
     with patch(
-        "georeset.fetchers.wiki_article_type_fetcher.requests.get",
+        "georeset_wiki_landcover.fetchers.wiki_article_type_fetcher.requests.get",
         return_value=_make_response(payload),
     ) as get_mock:
         input_path = tmp_path / "wiki_articles.json"
@@ -156,9 +157,11 @@ def test_fetcher_writes_atomically(tmp_path: Path) -> None:
     payload = _response_json({1: {"pageid": 1, "title": "A", "ns": 0, "categories": []}})
 
     with (
-        patch("georeset.fetchers.wiki_article_type_fetcher.write_json_atomic") as write_atomic_mock,
         patch(
-            "georeset.fetchers.wiki_article_type_fetcher.requests.get",
+            "georeset_wiki_landcover.fetchers.wiki_article_type_fetcher.write_json_atomic"
+        ) as write_atomic_mock,
+        patch(
+            "georeset_wiki_landcover.fetchers.wiki_article_type_fetcher.requests.get",
             return_value=_make_response(payload),
         ),
     ):
@@ -176,9 +179,9 @@ def test_fetcher_retries_transient_requests_exception() -> None:
     payload = _response_json({1: {"pageid": 1, "title": "A", "ns": 0, "categories": []}})
 
     with (
-        patch("georeset.fetchers.wiki_article_type_fetcher.time.sleep"),
+        patch("georeset_wiki_landcover.fetchers.wiki_article_type_fetcher.time.sleep"),
         patch(
-            "georeset.fetchers.wiki_article_type_fetcher.requests.get",
+            "georeset_wiki_landcover.fetchers.wiki_article_type_fetcher.requests.get",
             side_effect=[requests.RequestException("temporary"), _make_response(payload)],
         ) as get_mock,
     ):
@@ -195,9 +198,10 @@ def test_fetcher_does_not_retry_non_429_4xx() -> None:
     )
 
     with (
-        patch("georeset.fetchers.wiki_article_type_fetcher.time.sleep"),
+        patch("georeset_wiki_landcover.fetchers.wiki_article_type_fetcher.time.sleep"),
         patch(
-            "georeset.fetchers.wiki_article_type_fetcher.requests.get", return_value=payload
+            "georeset_wiki_landcover.fetchers.wiki_article_type_fetcher.requests.get",
+            return_value=payload,
         ) as get_mock,
         pytest.raises(requests.HTTPError),
     ):

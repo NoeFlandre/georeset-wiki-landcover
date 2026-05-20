@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "georeset"
+name = "georeset-wiki-landcover"
 version = "0.1.0"
 description = "Geolocated Wikipedia text experiments for CORINE and OSM land-cover classification"
 readme = "README.md"
@@ -43,40 +43,40 @@ vision = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/georeset"]
+packages = ["src/georeset_wiki_landcover"]
 
 [project.scripts]
-georeset-classify-articles = "georeset.cli.data.classify_articles:main"
-georeset-compute-corine-spatial-confidence = "georeset.cli.data.compute_corine_spatial_confidence:main"
-georeset-filter-pipeline = "georeset.cli.data.filter_pipeline:main"
-georeset-run-corine-analysis = "georeset.cli.analysis.run_corine_analysis:main"
-georeset-snapshot = "georeset.cli.dev.snapshot:main"
-georeset-summarize-articles = "georeset.cli.data.summarize_articles:main"
-georeset-summarize-landuse-evidence = "georeset.cli.data.summarize_landuse_evidence:main"
-georeset-build-evidence-cards = "georeset.cli.data.build_evidence_cards:main"
-georeset-build-evidence-highlights = "georeset.cli.data.build_evidence_highlights:main"
-georeset-build-retrieved-evidence-windows = "georeset.cli.data.build_retrieved_evidence_windows:main"
-georeset-build-clip-label-splits = "georeset.cli.data.build_clip_label_splits:main"
-georeset-fetch-sentinel-patches = "georeset.cli.data.fetch_sentinel_patches:main"
-georeset-embed-clip-patches = "georeset.cli.data.embed_clip_patches:main"
-georeset-summarize-classification-experiment = "georeset.cli.analysis.summarize_classification_experiment:main"
-georeset-evaluate-spatial-confidence = "georeset.cli.analysis.evaluate_predictions_with_spatial_confidence:main"
-georeset-evaluate-relevance-stratified = "georeset.cli.analysis.evaluate_relevance_stratified_predictions:main"
-georeset-evaluate-supervision-quality-score = "georeset.cli.analysis.evaluate_supervision_quality_score:main"
-georeset-fetch-wikipedia-article-types = "georeset.cli.data.fetch_wikipedia_article_types:main"
-georeset-evaluate-article-type-relevance-stratified = "georeset.cli.analysis.evaluate_article_type_relevance_stratified:main"
-georeset-evaluate-evidence-card-experiment = "georeset.cli.analysis.evaluate_evidence_card_experiment:main"
-georeset-evaluate-evidence-highlights-experiment = "georeset.cli.analysis.evaluate_evidence_highlights_experiment:main"
-georeset-evaluate-retrieved-evidence-windows-experiment = "georeset.cli.analysis.evaluate_retrieved_evidence_windows_experiment:main"
-georeset-run-clip-linear-probe-experiment = "georeset.cli.analysis.run_clip_linear_probe_experiment:main"
-georeset-run-clip-zero-shot-experiment = "georeset.cli.analysis.run_clip_zero_shot_experiment:main"
-georeset-evaluate-subset-randomization-controls = "georeset.cli.analysis.evaluate_subset_randomization_controls:main"
-georeset-build-image-probe-splits-v2 = "georeset.cli.data.build_image_probe_splits_v2:main"
-georeset-fetch-sentinel-multiscale-patches = "georeset.cli.data.fetch_sentinel_multiscale_patches:main"
-georeset-embed-image-patches = "georeset.cli.data.embed_image_patches:main"
-georeset-run-quality-weighted-image-probe = "georeset.cli.analysis.run_quality_weighted_image_probe:main"
-georeset-run-quality-weighted-image-zero-shot = "georeset.cli.analysis.run_quality_weighted_image_zero_shot:main"
-georeset-evaluate-image-probe-training-policy-controls = "georeset.cli.analysis.evaluate_image_probe_training_policy_controls:main"
+georeset-wiki-landcover-classify-articles = "georeset_wiki_landcover.cli.data.classify_articles:main"
+georeset-wiki-landcover-compute-corine-spatial-confidence = "georeset_wiki_landcover.cli.data.compute_corine_spatial_confidence:main"
+georeset-wiki-landcover-filter-pipeline = "georeset_wiki_landcover.cli.data.filter_pipeline:main"
+georeset-wiki-landcover-run-corine-analysis = "georeset_wiki_landcover.cli.analysis.run_corine_analysis:main"
+georeset-wiki-landcover-snapshot = "georeset_wiki_landcover.cli.dev.snapshot:main"
+georeset-wiki-landcover-summarize-articles = "georeset_wiki_landcover.cli.data.summarize_articles:main"
+georeset-wiki-landcover-summarize-landuse-evidence = "georeset_wiki_landcover.cli.data.summarize_landuse_evidence:main"
+georeset-wiki-landcover-build-evidence-cards = "georeset_wiki_landcover.cli.data.build_evidence_cards:main"
+georeset-wiki-landcover-build-evidence-highlights = "georeset_wiki_landcover.cli.data.build_evidence_highlights:main"
+georeset-wiki-landcover-build-retrieved-evidence-windows = "georeset_wiki_landcover.cli.data.build_retrieved_evidence_windows:main"
+georeset-wiki-landcover-build-clip-label-splits = "georeset_wiki_landcover.cli.data.build_clip_label_splits:main"
+georeset-wiki-landcover-fetch-sentinel-patches = "georeset_wiki_landcover.cli.data.fetch_sentinel_patches:main"
+georeset-wiki-landcover-embed-clip-patches = "georeset_wiki_landcover.cli.data.embed_clip_patches:main"
+georeset-wiki-landcover-summarize-classification-experiment = "georeset_wiki_landcover.cli.analysis.summarize_classification_experiment:main"
+georeset-wiki-landcover-evaluate-spatial-confidence = "georeset_wiki_landcover.cli.analysis.evaluate_predictions_with_spatial_confidence:main"
+georeset-wiki-landcover-evaluate-relevance-stratified = "georeset_wiki_landcover.cli.analysis.evaluate_relevance_stratified_predictions:main"
+georeset-wiki-landcover-evaluate-supervision-quality-score = "georeset_wiki_landcover.cli.analysis.evaluate_supervision_quality_score:main"
+georeset-wiki-landcover-fetch-wikipedia-article-types = "georeset_wiki_landcover.cli.data.fetch_wikipedia_article_types:main"
+georeset-wiki-landcover-evaluate-article-type-relevance-stratified = "georeset_wiki_landcover.cli.analysis.evaluate_article_type_relevance_stratified:main"
+georeset-wiki-landcover-evaluate-evidence-card-experiment = "georeset_wiki_landcover.cli.analysis.evaluate_evidence_card_experiment:main"
+georeset-wiki-landcover-evaluate-evidence-highlights-experiment = "georeset_wiki_landcover.cli.analysis.evaluate_evidence_highlights_experiment:main"
+georeset-wiki-landcover-evaluate-retrieved-evidence-windows-experiment = "georeset_wiki_landcover.cli.analysis.evaluate_retrieved_evidence_windows_experiment:main"
+georeset-wiki-landcover-run-clip-linear-probe-experiment = "georeset_wiki_landcover.cli.analysis.run_clip_linear_probe_experiment:main"
+georeset-wiki-landcover-run-clip-zero-shot-experiment = "georeset_wiki_landcover.cli.analysis.run_clip_zero_shot_experiment:main"
+georeset-wiki-landcover-evaluate-subset-randomization-controls = "georeset_wiki_landcover.cli.analysis.evaluate_subset_randomization_controls:main"
+georeset-wiki-landcover-build-image-probe-splits-v2 = "georeset_wiki_landcover.cli.data.build_image_probe_splits_v2:main"
+georeset-wiki-landcover-fetch-sentinel-multiscale-patches = "georeset_wiki_landcover.cli.data.fetch_sentinel_multiscale_patches:main"
+georeset-wiki-landcover-embed-image-patches = "georeset_wiki_landcover.cli.data.embed_image_patches:main"
+georeset-wiki-landcover-run-quality-weighted-image-probe = "georeset_wiki_landcover.cli.analysis.run_quality_weighted_image_probe:main"
+georeset-wiki-landcover-run-quality-weighted-image-zero-shot = "georeset_wiki_landcover.cli.analysis.run_quality_weighted_image_zero_shot:main"
+georeset-wiki-landcover-evaluate-image-probe-training-policy-controls = "georeset_wiki_landcover.cli.analysis.evaluate_image_probe_training_policy_controls:main"
 
 [tool.ruff]
 target-version = "py310"
@@ -96,7 +96,7 @@ lint.ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["georeset", "scripts"]
+known-first-party = ["georeset_wiki_landcover", "scripts"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -109,15 +109,15 @@ disallow_untyped_defs = false
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["georeset.utils.*", "georeset.config", "georeset.contracts"]
+module = ["georeset_wiki_landcover.utils.*", "georeset_wiki_landcover.config", "georeset_wiki_landcover.contracts"]
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["georeset.classification.*"]
+module = ["georeset_wiki_landcover.classification.*"]
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["georeset.fetchers.*", "georeset.visualization.*", "scripts.*"]
+module = ["georeset_wiki_landcover.fetchers.*", "georeset_wiki_landcover.visualization.*", "scripts.*"]
 strict = false
 disallow_untyped_defs = false
 disallow_untyped_calls = false
@@ -126,7 +126,7 @@ disallow_any_generics = false
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
 addopts = [
-    "--cov=georeset.classification",
+    "--cov=georeset_wiki_landcover.classification",
     "--cov-report=term-missing",
     "--cov-fail-under=95",
 ]

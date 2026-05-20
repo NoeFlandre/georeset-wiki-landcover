@@ -9,8 +9,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from georeset.cli.analysis import evaluate_relevance_stratified_predictions as relevance_eval
-from georeset.cli.analysis.evaluate_relevance_stratified_predictions import (
+from georeset_wiki_landcover.cli.analysis import (
+    evaluate_relevance_stratified_predictions as relevance_eval,
+)
+from georeset_wiki_landcover.cli.analysis.evaluate_relevance_stratified_predictions import (
     _write_summary,
     define_evidence_type_subsets,
     define_relevance_and_spatial_subsets,

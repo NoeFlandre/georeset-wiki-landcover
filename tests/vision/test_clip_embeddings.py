@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from georeset.vision.clip_embeddings import embed_patch_cache
+from georeset_wiki_landcover.vision.clip_embeddings import embed_patch_cache
 
 
 def test_embed_patch_cache_writes_normalized_embeddings_with_pageids(tmp_path: Path) -> None:

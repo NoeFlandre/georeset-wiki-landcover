@@ -6,13 +6,13 @@ import pytest
 import requests
 from shapely.geometry import Polygon
 
-from georeset.fetchers.osm_fetcher import OSMFetcher, OSMFetchError
+from georeset_wiki_landcover.fetchers.osm_fetcher import OSMFetcher, OSMFetchError
 
 
 def test_fetch_polygons_uses_corine_bounds_in_overpass_order():
     fetcher = OSMFetcher(tile_size=10)
 
-    with patch("georeset.fetchers.osm_fetcher.requests.post") as post:
+    with patch("georeset_wiki_landcover.fetchers.osm_fetcher.requests.post") as post:
         post.return_value.json.return_value = {"elements": []}
         post.return_value.raise_for_status.return_value = None
 
@@ -45,7 +45,7 @@ def test_fetch_polygons_returns_closed_way_polygons():
         ]
     }
 
-    with patch("georeset.fetchers.osm_fetcher.requests.post") as post:
+    with patch("georeset_wiki_landcover.fetchers.osm_fetcher.requests.post") as post:
         post.return_value.json.return_value = response
         post.return_value.raise_for_status.return_value = None
 
@@ -74,7 +74,7 @@ def test_fetch_polygons_skips_open_ways():
         ]
     }
 
-    with patch("georeset.fetchers.osm_fetcher.requests.post") as post:
+    with patch("georeset_wiki_landcover.fetchers.osm_fetcher.requests.post") as post:
         post.return_value.json.return_value = response
         post.return_value.raise_for_status.return_value = None
 
@@ -86,7 +86,7 @@ def test_fetch_polygons_skips_open_ways():
 def test_fetch_polygons_tiles_large_bounds():
     fetcher = OSMFetcher(tile_size=0.5)
 
-    with patch("georeset.fetchers.osm_fetcher.requests.post") as post:
+    with patch("georeset_wiki_landcover.fetchers.osm_fetcher.requests.post") as post:
         post.return_value.json.return_value = {"elements": []}
         post.return_value.raise_for_status.return_value = None
 
@@ -98,7 +98,7 @@ def test_fetch_polygons_tiles_large_bounds():
 def test_fetch_polygons_empty_bounds_returns_empty_geodataframe():
     fetcher = OSMFetcher(tile_size=10)
 
-    with patch("georeset.fetchers.osm_fetcher.requests.post") as post:
+    with patch("georeset_wiki_landcover.fetchers.osm_fetcher.requests.post") as post:
         gdf = fetcher.fetch_polygons(min_lon=7.0, min_lat=48.0, max_lon=7.0, max_lat=49.0)
 
     assert gdf.empty
@@ -124,8 +124,8 @@ def test_fetch_polygons_retries_rate_limited_tiles():
             return self._payload
 
     with (
-        patch("georeset.fetchers.osm_fetcher.time.sleep") as sleep,
-        patch("georeset.fetchers.osm_fetcher.requests.post") as post,
+        patch("georeset_wiki_landcover.fetchers.osm_fetcher.time.sleep") as sleep,
+        patch("georeset_wiki_landcover.fetchers.osm_fetcher.requests.post") as post,
     ):
         post.side_effect = [
             Response(429, {}),
@@ -143,7 +143,7 @@ def test_sleep_before_retry_uses_logging_not_print():
     fetcher = OSMFetcher(tile_size=10)
 
     with (
-        patch("georeset.fetchers.osm_fetcher.time.sleep"),
+        patch("georeset_wiki_landcover.fetchers.osm_fetcher.time.sleep"),
         patch("builtins.print") as print_mock,
     ):
         fetcher._sleep_before_retry(429, attempt=0)
@@ -167,8 +167,8 @@ def test_fetch_polygons_retries_transient_server_errors():
             return self._payload
 
     with (
-        patch("georeset.fetchers.osm_fetcher.time.sleep") as sleep,
-        patch("georeset.fetchers.osm_fetcher.requests.post") as post,
+        patch("georeset_wiki_landcover.fetchers.osm_fetcher.time.sleep") as sleep,
+        patch("georeset_wiki_landcover.fetchers.osm_fetcher.requests.post") as post,
     ):
         post.side_effect = [
             Response(503, {}),
@@ -186,8 +186,8 @@ def test_fetch_polygons_raises_after_transient_retries_are_exhausted():
     fetcher = OSMFetcher(tile_size=10, retries=2)
 
     with (
-        patch("georeset.fetchers.osm_fetcher.time.sleep"),
-        patch("georeset.fetchers.osm_fetcher.requests.post") as post,
+        patch("georeset_wiki_landcover.fetchers.osm_fetcher.time.sleep"),
+        patch("georeset_wiki_landcover.fetchers.osm_fetcher.requests.post") as post,
     ):
         post.side_effect = requests.Timeout("timeout")
 
@@ -210,8 +210,8 @@ def test_fetch_polygons_does_not_retry_non_transient_client_errors():
             return {"elements": []}
 
     with (
-        patch("georeset.fetchers.osm_fetcher.time.sleep") as sleep,
-        patch("georeset.fetchers.osm_fetcher.requests.post") as post,
+        patch("georeset_wiki_landcover.fetchers.osm_fetcher.time.sleep") as sleep,
+        patch("georeset_wiki_landcover.fetchers.osm_fetcher.requests.post") as post,
     ):
         post.return_value = Response()
 

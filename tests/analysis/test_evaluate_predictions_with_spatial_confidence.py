@@ -5,8 +5,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from georeset.cli.analysis import evaluate_predictions_with_spatial_confidence as spatial_eval
-from georeset.cli.analysis.evaluate_predictions_with_spatial_confidence import (
+from georeset_wiki_landcover.cli.analysis import (
+    evaluate_predictions_with_spatial_confidence as spatial_eval,
+)
+from georeset_wiki_landcover.cli.analysis.evaluate_predictions_with_spatial_confidence import (
     _subset_mask,
     main,
     spatial_eval_manifest_path,

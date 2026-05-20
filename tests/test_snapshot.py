@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from georeset.cli.dev.snapshot import main, snapshot
+from georeset_wiki_landcover.cli.dev.snapshot import main, snapshot
 
 
 def _mock_gdf():
@@ -27,7 +27,7 @@ def _mock_sample():
 
 
 class TestSnapshot:
-    @patch("georeset.cli.dev.snapshot.DataFetcher")
+    @patch("georeset_wiki_landcover.cli.dev.snapshot.DataFetcher")
     def test_snapshot_runs_without_error(self, mock_fetcher_class):
         """Should run without raising exceptions when mocked."""
         mock_fetcher = mock_fetcher_class.return_value
@@ -37,7 +37,7 @@ class TestSnapshot:
 
         snapshot(n_samples=3)
 
-    @patch("georeset.cli.dev.snapshot.DataFetcher")
+    @patch("georeset_wiki_landcover.cli.dev.snapshot.DataFetcher")
     def test_snapshot_calls_load_data(self, mock_fetcher_class):
         """Should load CORINE with artificial surfaces excluded."""
         mock_fetcher = mock_fetcher_class.return_value
@@ -48,7 +48,7 @@ class TestSnapshot:
         snapshot(n_samples=1)
         mock_fetcher.load_data.assert_called_once_with(exclude_artificial=True)
 
-    @patch("georeset.cli.dev.snapshot.DataFetcher")
+    @patch("georeset_wiki_landcover.cli.dev.snapshot.DataFetcher")
     def test_snapshot_calls_get_bounds(self, mock_fetcher_class):
         """Should call get_bounds on the DataFetcher."""
         mock_fetcher = mock_fetcher_class.return_value
@@ -59,7 +59,7 @@ class TestSnapshot:
         snapshot(n_samples=1)
         mock_fetcher.get_bounds.assert_called_once()
 
-    @patch("georeset.cli.dev.snapshot.DataFetcher")
+    @patch("georeset_wiki_landcover.cli.dev.snapshot.DataFetcher")
     def test_snapshot_calls_get_sample_polygons(self, mock_fetcher_class):
         """Should call get_sample_polygons with correct n_samples."""
         mock_fetcher = mock_fetcher_class.return_value
@@ -74,7 +74,7 @@ class TestSnapshot:
 
     def test_snapshot_returns_formatted_report(self):
         """Should return the same snapshot sections as human-readable output."""
-        with patch("georeset.cli.dev.snapshot.DataFetcher") as mock_fetcher_class:
+        with patch("georeset_wiki_landcover.cli.dev.snapshot.DataFetcher") as mock_fetcher_class:
             mock_fetcher = mock_fetcher_class.return_value
             mock_fetcher.load_data.return_value = _mock_gdf()
             mock_fetcher.get_bounds.return_value = (7.0, 48.0, 9.0, 49.0)
@@ -93,7 +93,7 @@ class TestSnapshot:
         assert "Class: 11, Code: 111" in report
         assert "Class: 12, Code: 121" in report
 
-    @patch("georeset.cli.dev.snapshot.DataFetcher")
+    @patch("georeset_wiki_landcover.cli.dev.snapshot.DataFetcher")
     @patch("builtins.print")
     def test_snapshot_does_not_print(self, mock_print, mock_fetcher_class):
         """Reusable snapshot helper should return text instead of printing."""
@@ -106,7 +106,7 @@ class TestSnapshot:
         assert not mock_print.called
 
     @patch("builtins.print")
-    @patch("georeset.cli.dev.snapshot.snapshot")
+    @patch("georeset_wiki_landcover.cli.dev.snapshot.snapshot")
     def test_main_prints_snapshot_once(self, mock_snapshot, mock_print):
         """Main should print snapshot output exactly once."""
         mock_snapshot.return_value = "SNAPSHOT_TEXT"

@@ -1,12 +1,12 @@
 # Source Code Overview
 
-`src/georeset/` contains the installable GeoReset Python package. The wheel
+`src/georeset_wiki_landcover/` contains the installable GeoReset Wiki Land-Cover Python package. The wheel
 packages this tree only; top-level `scripts/` files are repository wrappers, not
 the primary package API.
 
 ## Packages
 
-- `georeset.fetchers`
+- `georeset_wiki_landcover.fetchers`
   - `data_fetcher.py`: loads CORINE data from `data/corine/`, converts to WGS84,
     maps CORINE codes to labels, and exposes bounds/sampling helpers.
   - `wiki_fetcher.py`: fetches French Wikipedia geosearch metadata for the
@@ -17,12 +17,12 @@ the primary package API.
   - `osm_fetcher.py`: fetches OSM land-cover polygons from Overpass using the
     project tag allowlist.
 
-- `georeset.analysis`
+- `georeset_wiki_landcover.analysis`
   - `corine_polygon_stats.py`: computes CORINE class area/share distributions
     inside OSM polygons.
   - `distribution_summary.py`: summarizes distribution CSV outputs.
 
-- `georeset.classification`
+- `georeset_wiki_landcover.classification`
   - `labels.py`: CORINE level-2 and OSM label allowlists.
   - `ground_truth.py`: spatial joins that build CORINE single-label and OSM
     multi-label ground truth.
@@ -39,22 +39,22 @@ the primary package API.
   - `text_sources.py`: primary and shuffled text-source policy.
   - `types.py`: shared typed contracts for prediction results and records.
 
-- `georeset.visualization`
+- `georeset_wiki_landcover.visualization`
   - `map_visualizer.py`: writes Folium maps for CORINE polygons, Wikipedia
     article points, and OSM polygon overlays.
 
-- `georeset.spatial`
+- `georeset_wiki_landcover.spatial`
   - `corine_confidence.py`: computes CORINE level-2 buffer purity around
     article coordinates in EPSG:2154. It uses the full CORINE dataset, including
     artificial classes, for spatial-confidence diagnostics.
 
-- `georeset.utils`
+- `georeset_wiki_landcover.utils`
   - `json_io.py`: atomic writers for JSON, text, CSV, GeoJSON, Folium HTML maps,
     and optional parquet outputs. Pipeline artifact writes should go through
     these helpers instead of direct `open(..., "w")`, `to_file`, `save`, or
     `to_parquet` calls.
 
-- `georeset.cli`
+- `georeset_wiki_landcover.cli`
   - `dev/snapshot.py`: prints a quick CORINE dataset snapshot.
   - `analysis/run_corine_analysis.py`: runs OSM/CORINE distribution and
     map generation.
@@ -82,28 +82,28 @@ of the Git repository. Sync it from the Hugging Face bucket before running
 pipeline commands:
 
 ```bash
-hf sync hf://buckets/NoeFlandre/georeset ./data
+hf sync hf://buckets/NoeFlandre/georeset-wiki-landcover ./data
 ```
 
 After generating or fetching data, sync it back:
 
 ```bash
-hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
+hf sync ./data hf://buckets/NoeFlandre/georeset-wiki-landcover --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```
 
 ## Common Entry Points
 
 ```bash
-uv run georeset-snapshot
-uv run python -m georeset.fetchers.wiki_fetcher
-uv run python -m georeset.fetchers.wiki_content_fetcher
-uv run python -m georeset.visualization.map_visualizer
-uv run georeset-run-corine-analysis
-uv run georeset-summarize-articles
-uv run georeset-classify-articles --help
-uv run georeset-compute-corine-spatial-confidence --help
-uv run georeset-evaluate-spatial-confidence --help
-uv run georeset-summarize-classification-experiment --help
+uv run georeset-wiki-landcover-snapshot
+uv run python -m georeset_wiki_landcover.fetchers.wiki_fetcher
+uv run python -m georeset_wiki_landcover.fetchers.wiki_content_fetcher
+uv run python -m georeset_wiki_landcover.visualization.map_visualizer
+uv run georeset-wiki-landcover-run-corine-analysis
+uv run georeset-wiki-landcover-summarize-articles
+uv run georeset-wiki-landcover-classify-articles --help
+uv run georeset-wiki-landcover-compute-corine-spatial-confidence --help
+uv run georeset-wiki-landcover-evaluate-spatial-confidence --help
+uv run georeset-wiki-landcover-summarize-classification-experiment --help
 ```
 
 Use `PYTHONDONTWRITEBYTECODE=1` while developing if you want to avoid local
@@ -111,7 +111,7 @@ Use `PYTHONDONTWRITEBYTECODE=1` while developing if you want to avoid local
 
 ## Quality Checks
 
-The test suite enforces focused coverage for `georeset.classification` with
+The test suite enforces focused coverage for `georeset_wiki_landcover.classification` with
 `pytest-cov` and a 95% fail-under threshold. Run the full local gate before
 committing:
 

@@ -4,9 +4,9 @@ import json
 from collections.abc import Iterator
 from pathlib import Path
 
-from georeset.cli.data.summarize_landuse_evidence import main, parse_args
-from georeset.config import DataPaths, ModelSettings
-from georeset.fetchers.landuse_evidence_summarizer import LandUseEvidenceSummarizer
+from georeset_wiki_landcover.cli.data.summarize_landuse_evidence import main, parse_args
+from georeset_wiki_landcover.config import DataPaths, ModelSettings
+from georeset_wiki_landcover.fetchers.landuse_evidence_summarizer import LandUseEvidenceSummarizer
 
 
 class _FakeSummarizer:
@@ -42,7 +42,7 @@ def _fake_client_response() -> Iterator[dict[str, str]]:
 
 
 def test_parse_args_defaults_and_new_flags(monkeypatch):
-    monkeypatch.delenv("GEORESET_MODEL_PATH", raising=False)
+    monkeypatch.delenv("GEORESET_WIKI_LANDCOVER_MODEL_PATH", raising=False)
 
     args = parse_args([])
 
@@ -55,7 +55,7 @@ def test_parse_args_defaults_and_new_flags(monkeypatch):
 
 
 def test_parse_args_accepts_overrides(monkeypatch):
-    monkeypatch.setenv("GEORESET_MODEL_PATH", "custom.gguf")
+    monkeypatch.setenv("GEORESET_WIKI_LANDCOVER_MODEL_PATH", "custom.gguf")
     args = parse_args(["--model-repo-id", "org/repo", "--seed", "13", "--temperature", "0.25"])
 
     assert args.model_path == "custom.gguf"
@@ -93,7 +93,8 @@ def test_main_invokes_landuse_summarizer_with_expected_args(monkeypatch, tmp_pat
         return summarizer
 
     monkeypatch.setattr(
-        "georeset.cli.data.summarize_landuse_evidence.LandUseEvidenceSummarizer", _factory
+        "georeset_wiki_landcover.cli.data.summarize_landuse_evidence.LandUseEvidenceSummarizer",
+        _factory,
     )
     main(
         [
@@ -230,7 +231,8 @@ def test_main_does_not_touch_frozen_experiment_directories(tmp_path, monkeypatch
         return fake
 
     monkeypatch.setattr(
-        "georeset.cli.data.summarize_landuse_evidence.LandUseEvidenceSummarizer", _factory
+        "georeset_wiki_landcover.cli.data.summarize_landuse_evidence.LandUseEvidenceSummarizer",
+        _factory,
     )
     main(["--input-path", str(input_path), "--output-path", str(output_path)])
 

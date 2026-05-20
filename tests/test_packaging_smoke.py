@@ -51,8 +51,8 @@ def test_direct_runtime_imports_are_declared_project_dependencies():
 
 def test_fetcher_file_reads_use_read_json_file_helper():
     modules = [
-        Path("src/georeset/fetchers/article_summarizer.py"),
-        Path("src/georeset/fetchers/wiki_content_fetcher.py"),
+        Path("src/georeset_wiki_landcover/fetchers/article_summarizer.py"),
+        Path("src/georeset_wiki_landcover/fetchers/wiki_content_fetcher.py"),
     ]
 
     for path in modules:
@@ -63,9 +63,9 @@ def test_fetcher_file_reads_use_read_json_file_helper():
 
 def test_analysis_and_visualization_json_reads_use_read_json_file_helper():
     modules = [
-        Path("src/georeset/cli/analysis/run_corine_analysis.py"),
-        Path("src/georeset/visualization/map_visualizer.py"),
-        Path("src/georeset/fetchers/wiki_fetcher.py"),
+        Path("src/georeset_wiki_landcover/cli/analysis/run_corine_analysis.py"),
+        Path("src/georeset_wiki_landcover/visualization/map_visualizer.py"),
+        Path("src/georeset_wiki_landcover/fetchers/wiki_fetcher.py"),
     ]
 
     for path in modules:
@@ -75,7 +75,7 @@ def test_analysis_and_visualization_json_reads_use_read_json_file_helper():
 
 
 def test_classification_runner_file_reads_use_read_json_file_helper():
-    path = Path("src/georeset/classification/runner.py")
+    path = Path("src/georeset_wiki_landcover/classification/runner.py")
     text = path.read_text(encoding="utf-8")
     assert "json.load(" not in text, f"{path} must use read_json_file() instead of json.load()"
     assert "read_json_file(" in text
@@ -83,9 +83,11 @@ def test_classification_runner_file_reads_use_read_json_file_helper():
 
 def test_experiment_cli_modules_use_read_json_file_helper():
     experiment_cli_modules = [
-        Path("src/georeset/cli/data/compute_corine_spatial_confidence.py"),
-        Path("src/georeset/cli/analysis/summarize_classification_experiment.py"),
-        Path("src/georeset/cli/analysis/evaluate_predictions_with_spatial_confidence.py"),
+        Path("src/georeset_wiki_landcover/cli/data/compute_corine_spatial_confidence.py"),
+        Path("src/georeset_wiki_landcover/cli/analysis/summarize_classification_experiment.py"),
+        Path(
+            "src/georeset_wiki_landcover/cli/analysis/evaluate_predictions_with_spatial_confidence.py"
+        ),
     ]
 
     for path in experiment_cli_modules:
@@ -93,28 +95,31 @@ def test_experiment_cli_modules_use_read_json_file_helper():
         assert "json.load(" not in text, f"{path} must use read_json_file() instead of json.load()"
 
     direct_json_modules = [
-        Path("src/georeset/cli/data/compute_corine_spatial_confidence.py"),
-        Path("src/georeset/cli/analysis/summarize_classification_experiment.py"),
-        Path("src/georeset/analysis/prediction_loading.py"),
+        Path("src/georeset_wiki_landcover/cli/data/compute_corine_spatial_confidence.py"),
+        Path("src/georeset_wiki_landcover/cli/analysis/summarize_classification_experiment.py"),
+        Path("src/georeset_wiki_landcover/analysis/prediction_loading.py"),
     ]
     for path in direct_json_modules:
         text = path.read_text(encoding="utf-8")
         assert "read_json_file(" in text, f"{path} must import and use read_json_file()"
 
-    spatial_confidence_module = Path("src/georeset/cli/data/compute_corine_spatial_confidence.py")
+    spatial_confidence_module = Path(
+        "src/georeset_wiki_landcover/cli/data/compute_corine_spatial_confidence.py"
+    )
     spatial_confidence_text = spatial_confidence_module.read_text(encoding="utf-8")
     assert "def _load_json(" not in spatial_confidence_text, (
         f"{spatial_confidence_module} should use read_json_file() directly"
     )
 
     spatial_predictions_module = Path(
-        "src/georeset/cli/analysis/evaluate_predictions_with_spatial_confidence.py"
+        "src/georeset_wiki_landcover/cli/analysis/evaluate_predictions_with_spatial_confidence.py"
     )
     spatial_text = spatial_predictions_module.read_text(encoding="utf-8")
     assert (
-        "from georeset.analysis.prediction_loading import load_prediction_records" in spatial_text
+        "from georeset_wiki_landcover.analysis.prediction_loading import load_prediction_records"
+        in spatial_text
     ), (
-        f"{spatial_predictions_module} must use load_prediction_records from georeset.analysis.prediction_loading"
+        f"{spatial_predictions_module} must use load_prediction_records from georeset_wiki_landcover.analysis.prediction_loading"
     )
     assert "load_prediction_records(" in spatial_text, (
         f"{spatial_predictions_module} must invoke load_prediction_records()"
@@ -123,8 +128,8 @@ def test_experiment_cli_modules_use_read_json_file_helper():
 
 def test_evidence_evaluators_call_shared_quality_subset_helper_directly():
     modules = [
-        Path("src/georeset/cli/analysis/evaluate_evidence_card_experiment.py"),
-        Path("src/georeset/cli/analysis/evaluate_evidence_highlights_experiment.py"),
+        Path("src/georeset_wiki_landcover/cli/analysis/evaluate_evidence_card_experiment.py"),
+        Path("src/georeset_wiki_landcover/cli/analysis/evaluate_evidence_highlights_experiment.py"),
     ]
 
     for path in modules:
@@ -147,9 +152,15 @@ def test_pre_commit_scopes_match_ci_quality_commands():
 def test_mypy_has_strict_overrides_for_typed_core_modules():
     pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
 
-    assert 'module = ["georeset.utils.*", "georeset.config", "georeset.contracts"]' in pyproject
-    assert 'module = ["georeset.classification.*"]' in pyproject
-    assert 'module = ["georeset.fetchers.*", "georeset.visualization.*", "scripts.*"]' in pyproject
+    assert (
+        'module = ["georeset_wiki_landcover.utils.*", "georeset_wiki_landcover.config", "georeset_wiki_landcover.contracts"]'
+        in pyproject
+    )
+    assert 'module = ["georeset_wiki_landcover.classification.*"]' in pyproject
+    assert (
+        'module = ["georeset_wiki_landcover.fetchers.*", "georeset_wiki_landcover.visualization.*", "scripts.*"]'
+        in pyproject
+    )
     assert "strict = true" in pyproject
 
 
@@ -163,7 +174,7 @@ def test_production_outputs_use_atomic_file_helpers():
         re.compile(r"\.save\("),
         re.compile(r"\.to_parquet\("),
     ]
-    allowed_files = {Path("src/georeset/utils/json_io.py")}
+    allowed_files = {Path("src/georeset_wiki_landcover/utils/json_io.py")}
 
     for root in [Path("src"), Path("scripts")]:
         for path in root.rglob("*.py"):
@@ -178,15 +189,15 @@ def test_production_outputs_use_atomic_file_helpers():
 
 def test_documented_cli_modules_are_importable():
     for module_name in [
-        "georeset.cli.data.classify_articles",
-        "georeset.cli.data.compute_corine_spatial_confidence",
-        "georeset.cli.data.filter_pipeline",
-        "georeset.cli.data.summarize_landuse_evidence",
-        "georeset.cli.data.summarize_articles",
-        "georeset.cli.analysis.evaluate_predictions_with_spatial_confidence",
-        "georeset.cli.analysis.run_corine_analysis",
-        "georeset.cli.analysis.summarize_classification_experiment",
-        "georeset.cli.dev.snapshot",
+        "georeset_wiki_landcover.cli.data.classify_articles",
+        "georeset_wiki_landcover.cli.data.compute_corine_spatial_confidence",
+        "georeset_wiki_landcover.cli.data.filter_pipeline",
+        "georeset_wiki_landcover.cli.data.summarize_landuse_evidence",
+        "georeset_wiki_landcover.cli.data.summarize_articles",
+        "georeset_wiki_landcover.cli.analysis.evaluate_predictions_with_spatial_confidence",
+        "georeset_wiki_landcover.cli.analysis.run_corine_analysis",
+        "georeset_wiki_landcover.cli.analysis.summarize_classification_experiment",
+        "georeset_wiki_landcover.cli.dev.snapshot",
     ]:
         assert importlib.import_module(module_name)
 
@@ -194,18 +205,18 @@ def test_documented_cli_modules_are_importable():
 def test_major_codebase_subfolders_have_local_readmes():
     expected_readmes = [
         Path("src/README.md"),
-        Path("src/georeset/analysis/README.md"),
-        Path("src/georeset/classification/README.md"),
-        Path("src/georeset/cli/README.md"),
-        Path("src/georeset/cli/analysis/README.md"),
-        Path("src/georeset/cli/data/README.md"),
-        Path("src/georeset/cli/dev/README.md"),
-        Path("src/georeset/fetchers/README.md"),
-        Path("src/georeset/llm/README.md"),
-        Path("src/georeset/spatial/README.md"),
-        Path("src/georeset/text/README.md"),
-        Path("src/georeset/utils/README.md"),
-        Path("src/georeset/visualization/README.md"),
+        Path("src/georeset_wiki_landcover/analysis/README.md"),
+        Path("src/georeset_wiki_landcover/classification/README.md"),
+        Path("src/georeset_wiki_landcover/cli/README.md"),
+        Path("src/georeset_wiki_landcover/cli/analysis/README.md"),
+        Path("src/georeset_wiki_landcover/cli/data/README.md"),
+        Path("src/georeset_wiki_landcover/cli/dev/README.md"),
+        Path("src/georeset_wiki_landcover/fetchers/README.md"),
+        Path("src/georeset_wiki_landcover/llm/README.md"),
+        Path("src/georeset_wiki_landcover/spatial/README.md"),
+        Path("src/georeset_wiki_landcover/text/README.md"),
+        Path("src/georeset_wiki_landcover/utils/README.md"),
+        Path("src/georeset_wiki_landcover/visualization/README.md"),
         Path("scripts/README.md"),
         Path("scripts/analysis/README.md"),
         Path("scripts/cluster/README.md"),
@@ -242,7 +253,7 @@ def test_repo_scripts_are_thin_wrappers_over_packaged_cli_modules():
     for path in wrapper_paths:
         text = path.read_text(encoding="utf-8")
         assert len(text.splitlines()) <= 12
-        assert "from georeset.cli." in text
+        assert "from georeset_wiki_landcover.cli." in text
         assert "if __name__" in text
 
 
@@ -251,22 +262,22 @@ def test_packaged_cli_entry_points_are_declared():
 
     assert "[project.scripts]" in pyproject
     for command in [
-        "georeset-classify-articles",
-        "georeset-compute-corine-spatial-confidence",
-        "georeset-filter-pipeline",
-        "georeset-run-corine-analysis",
-        "georeset-snapshot",
-        "georeset-summarize-landuse-evidence",
-        "georeset-summarize-articles",
-        "georeset-summarize-classification-experiment",
-        "georeset-evaluate-spatial-confidence",
+        "georeset-wiki-landcover-classify-articles",
+        "georeset-wiki-landcover-compute-corine-spatial-confidence",
+        "georeset-wiki-landcover-filter-pipeline",
+        "georeset-wiki-landcover-run-corine-analysis",
+        "georeset-wiki-landcover-snapshot",
+        "georeset-wiki-landcover-summarize-landuse-evidence",
+        "georeset-wiki-landcover-summarize-articles",
+        "georeset-wiki-landcover-summarize-classification-experiment",
+        "georeset-wiki-landcover-evaluate-spatial-confidence",
     ]:
         assert command in pyproject
 
 
 def test_georeset_package_imports_work_without_src_compatibility_shims():
-    assert importlib.import_module("georeset.config")
-    assert importlib.import_module("georeset.classification.runner")
+    assert importlib.import_module("georeset_wiki_landcover.config")
+    assert importlib.import_module("georeset_wiki_landcover.classification.runner")
 
     obsolete_shims = [
         Path("src/__init__.py"),
@@ -287,7 +298,7 @@ def test_new_code_does_not_import_historical_src_namespace():
     forbidden = re.compile(r"\b(from src\.|import src\.|src\.)")
     allowed_files = {Path("tests/test_packaging_smoke.py")}
 
-    for root in [Path("src/georeset"), Path("scripts"), Path("tests")]:
+    for root in [Path("src/georeset_wiki_landcover"), Path("scripts"), Path("tests")]:
         for path in root.rglob("*.py"):
             if path in allowed_files:
                 continue
@@ -298,14 +309,16 @@ def test_new_code_does_not_import_historical_src_namespace():
 def test_ruff_first_party_namespace_is_georeset_not_src():
     pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
 
-    assert 'known-first-party = ["georeset", "scripts"]' in pyproject
+    assert 'known-first-party = ["georeset_wiki_landcover", "scripts"]' in pyproject
     assert 'known-first-party = ["src", "scripts"]' not in pyproject
 
 
 def test_metric_contracts_are_split_by_metric_family():
-    contracts = importlib.import_module("georeset.contracts")
-    metrics_module = importlib.import_module("georeset.classification.metrics")
-    analysis_metrics = importlib.import_module("georeset.analysis.evaluation_metrics")
+    contracts = importlib.import_module("georeset_wiki_landcover.contracts")
+    metrics_module = importlib.import_module("georeset_wiki_landcover.classification.metrics")
+    analysis_metrics = importlib.import_module(
+        "georeset_wiki_landcover.analysis.evaluation_metrics"
+    )
 
     assert hasattr(contracts, "SingleLabelMetricResult")
     assert hasattr(contracts, "MultiLabelMetricResult")
@@ -365,7 +378,7 @@ def test_reusable_script_functions_do_not_print():
 def test_cluster_classification_submit_does_not_autosync_by_default():
     script = Path("scripts/cluster/submit_classification.sh").read_text()
 
-    assert 'AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"' in script
+    assert 'AUTO_SYNC="${GEORESET_WIKI_LANDCOVER_AUTO_SYNC:-0}"' in script
     assert 'if [ "${AUTO_SYNC}" != "1" ]; then' in script
     assert "Auto-sync disabled to avoid repeated SSH polling" in script
 
@@ -379,7 +392,7 @@ def test_cluster_classification_submit_avoids_sed_generated_wrappers():
     assert "G5K_REMOTE_PROJECT_DIR" in script
     assert 'OAR_QUEUE="${G5K_OAR_QUEUE:-production}"' in script
     assert 'oarsub -q \\"${OAR_QUEUE}\\"' in script
-    assert "env GEORESET_CLASSIFICATION_TASK=" in script
+    assert "env GEORESET_WIKI_LANDCOVER_CLASSIFICATION_TASK=" in script
 
 
 def test_cluster_classification_submit_allows_oar_property_override():
@@ -393,7 +406,7 @@ def test_classification_sync_interval_defaults_to_admin_safe_value_and_supports_
     script = Path("scripts/cluster/sync_classification.sh").read_text()
 
     assert (
-        'OUTPUT_DIR="${GEORESET_CLASSIFICATION_OUTPUT_DIR:-data/classification/runs/default}"'
+        'OUTPUT_DIR="${GEORESET_WIKI_LANDCOVER_CLASSIFICATION_OUTPUT_DIR:-data/classification/runs/default}"'
         in script
     )
     assert 'OUTPUT_PREFIX="${OUTPUT_DIR}/${TASK}_${TEXT_SOURCE}"' in script
@@ -419,7 +432,7 @@ def test_classification_job_passes_extra_args_as_array():
     script = Path("scripts/cluster/run_classification_job.sh").read_text()
 
     assert "EXTRA_ARGS=()" in script
-    assert 'read -r -a EXTRA_ARGS <<< "${GEORESET_EXTRA_ARGS}"' in script
+    assert 'read -r -a EXTRA_ARGS <<< "${GEORESET_WIKI_LANDCOVER_EXTRA_ARGS}"' in script
     assert '"${EXTRA_ARGS[@]}"' in script
 
 

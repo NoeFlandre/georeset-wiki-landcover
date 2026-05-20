@@ -1,6 +1,8 @@
 import json
 
-from georeset.text.retrieved_evidence_windows import build_retrieved_evidence_window_record
+from georeset_wiki_landcover.text.retrieved_evidence_windows import (
+    build_retrieved_evidence_window_record,
+)
 
 
 def test_retrieved_windows_selects_matching_evidence_sentence_with_context() -> None:

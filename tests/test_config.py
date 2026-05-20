@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from georeset.config import DataPaths, ModelSettings
+from georeset_wiki_landcover.config import DataPaths, ModelSettings
 
 
 def test_data_paths_preserve_existing_defaults():
@@ -25,7 +25,7 @@ def test_data_paths_preserve_existing_defaults():
 
 
 def test_model_settings_preserve_existing_defaults(monkeypatch):
-    monkeypatch.delenv("GEORESET_MODEL_PATH", raising=False)
+    monkeypatch.delenv("GEORESET_WIKI_LANDCOVER_MODEL_PATH", raising=False)
 
     settings = ModelSettings.from_env()
 
@@ -36,7 +36,7 @@ def test_model_settings_preserve_existing_defaults(monkeypatch):
 
 
 def test_model_settings_respect_env_override(monkeypatch):
-    monkeypatch.setenv("GEORESET_MODEL_PATH", "custom.gguf")
+    monkeypatch.setenv("GEORESET_WIKI_LANDCOVER_MODEL_PATH", "custom.gguf")
 
     assert ModelSettings.from_env().model_path == "custom.gguf"
 

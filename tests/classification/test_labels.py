@@ -1,13 +1,13 @@
 import geopandas as gpd
 from shapely.geometry import box
 
-from georeset.classification.labels import (
+from georeset_wiki_landcover.classification.labels import (
     corine_level2_labels,
     osm_allowed_labels,
     osm_label_from_row,
     osm_labels_from_row,
 )
-from georeset.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES
+from georeset_wiki_landcover.fetchers.osm_fetcher import LANDUSE_VALUES, NATURAL_VALUES
 
 
 def test_corine_level2_labels_derive_first_two_digits_and_drop_artificial():

@@ -10,8 +10,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from georeset.analysis.list_normalization import normalize_string_list
-from georeset.cli.analysis.evaluate_supervision_quality_score import (
+from georeset_wiki_landcover.analysis.list_normalization import normalize_string_list
+from georeset_wiki_landcover.cli.analysis.evaluate_supervision_quality_score import (
     classify_quality_bin,
     compute_quality_row,
     main,

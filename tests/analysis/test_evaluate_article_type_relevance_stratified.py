@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from georeset.cli.analysis.evaluate_article_type_relevance_stratified import main
+from georeset_wiki_landcover.cli.analysis.evaluate_article_type_relevance_stratified import main
 
 
 def _write_json(path: Path, payload: object) -> None:

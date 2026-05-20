@@ -246,11 +246,11 @@
         <h2>2) Artifact topology</h2>
         <p>Experiment 004 has three generated artifact directories, all grouped under <span class="mono">data/experiments/004_gemma4_model_rerun_and_comparison</span>.</p>
         <ul>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0">Gemma e2e + shuffled control</a></li>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0">Gemma spatial-confidence reevaluation</a></li>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0">Qwen vs Gemma comparison tables</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0">Gemma e2e + shuffled control</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0">Gemma spatial-confidence reevaluation</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0">Qwen vs Gemma comparison tables</a></li>
         </ul>
-        <p>Canonical mapping is registered in <a href="/Users/noeflandre/georeset/src/georeset/experiment_paths.py">src/georeset/experiment_paths.py</a>.</p>
+        <p>Canonical mapping is registered in <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/experiment_paths.py">src/georeset_wiki_landcover/experiment_paths.py</a>.</p>
       </div>
 
       <div class="panel">
@@ -277,20 +277,20 @@ flowchart TD
         <div>
           <h3>Classification rerun</h3>
           <ul>
-            <li>Entrypoint: <a href="/Users/noeflandre/georeset/src/georeset/cli/data/classify_articles.py">classify_articles.py</a></li>
-            <li>Core orchestration: <a href="/Users/noeflandre/georeset/src/georeset/classification/runner.py">classification/runner.py</a></li>
-            <li>Text-source loading: <a href="/Users/noeflandre/georeset/src/georeset/classification/text_sources.py">classification/text_sources.py</a></li>
-            <li>Prompting and JSON parsing: <a href="/Users/noeflandre/georeset/src/georeset/classification/llm_classifier.py">llm_classifier.py</a> and <a href="/Users/noeflandre/georeset/src/georeset/classification/prediction_parser.py">prediction_parser.py</a></li>
-            <li>Non-spatial summary: <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/summarize_classification_experiment.py">summarize_classification_experiment.py</a></li>
+            <li>Entrypoint: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/data/classify_articles.py">classify_articles.py</a></li>
+            <li>Core orchestration: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/runner.py">classification/runner.py</a></li>
+            <li>Text-source loading: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/text_sources.py">classification/text_sources.py</a></li>
+            <li>Prompting and JSON parsing: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/llm_classifier.py">llm_classifier.py</a> and <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/prediction_parser.py">prediction_parser.py</a></li>
+            <li>Non-spatial summary: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/analysis/summarize_classification_experiment.py">summarize_classification_experiment.py</a></li>
           </ul>
         </div>
         <div>
           <h3>Spatial and comparison stages</h3>
           <ul>
-            <li>Spatial reevaluation: <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_predictions_with_spatial_confidence.py">evaluate_predictions_with_spatial_confidence.py</a></li>
-            <li>Spatial loader: <a href="/Users/noeflandre/georeset/src/georeset/analysis/spatial_confidence_loading.py">spatial_confidence_loading.py</a></li>
-            <li>Subset metrics: <a href="/Users/noeflandre/georeset/src/georeset/analysis/evaluation_metrics.py">analysis/evaluation_metrics.py</a></li>
-            <li>Spatial confidence source: <a href="/Users/noeflandre/georeset/data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv">Experiment 002 spatial_confidence.csv</a></li>
+            <li>Spatial reevaluation: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/analysis/evaluate_predictions_with_spatial_confidence.py">evaluate_predictions_with_spatial_confidence.py</a></li>
+            <li>Spatial loader: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/analysis/spatial_confidence_loading.py">spatial_confidence_loading.py</a></li>
+            <li>Subset metrics: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/analysis/evaluation_metrics.py">analysis/evaluation_metrics.py</a></li>
+            <li>Spatial confidence source: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv">Experiment 002 spatial_confidence.csv</a></li>
             <li>All comparison rows use frozen Qwen artifacts from experiments 001 and 003.</li>
           </ul>
         </div>
@@ -313,7 +313,7 @@ flowchart TD
           <tr><td>OSM</td><td>content</td><td>275</td><td>0.2145</td><td></td><td>0.2145</td><td class="positive">0.3221</td><td class="positive">0.1584</td><td>0.2472</td></tr>
         </tbody>
       </table>
-      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/overview.csv">Gemma overview.csv</a>.</p>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/overview.csv">Gemma overview.csv</a>.</p>
       <div class="callout">For CORINE, raw content is best by macro recall, accuracy, and macro F1. For OSM, summary_no_place has the best exact-match score, while raw content has the strongest macro recall.</div>
     </div>
 
@@ -333,7 +333,7 @@ flowchart TD
           <tr><td>OSM</td><td>content</td><td>exact match</td><td>0.2145</td><td>0.0873</td><td class="positive">+0.1273</td><td>+0.0999</td><td>+0.1133</td></tr>
         </tbody>
       </table>
-      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/shuffled_delta.csv">Gemma shuffled_delta.csv</a>.</p>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/shuffled_delta.csv">Gemma shuffled_delta.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -354,7 +354,7 @@ flowchart TD
           <tr><td>OSM</td><td>point_label_share_250m_ge_0.9</td><td>140</td><td></td><td></td><td>0.2500</td><td>0.2698</td><td>0.1497</td><td>0.2748</td></tr>
         </tbody>
       </table>
-      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0/overview_spatial_subsets.csv">Gemma overview_spatial_subsets.csv</a>.</p>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0/overview_spatial_subsets.csv">Gemma overview_spatial_subsets.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -379,7 +379,7 @@ flowchart TD
           <tr><td>OSM / 250m share >= 0.8</td><td>macro F1</td><td>0.2039</td><td>0.1778</td><td class="negative">-0.0261</td></tr>
         </tbody>
       </table>
-      <p class="foot">Sources: <a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_overview.csv">qwen_vs_gemma_overview.csv</a> and <a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_spatial_subsets.csv">qwen_vs_gemma_spatial_subsets.csv</a>.</p>
+      <p class="foot">Sources: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_overview.csv">qwen_vs_gemma_overview.csv</a> and <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_spatial_subsets.csv">qwen_vs_gemma_spatial_subsets.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -408,7 +408,7 @@ flowchart TD
         <div class="bar-row"><div class="bar-label">Gemma predicts class 24</div><div class="bar-shell"><div class="bar-fill bar-gemma" style="width: 24.5%;">24.5%</div></div><div>307</div></div>
         <div class="bar-row"><div class="bar-label">Gemma predicts class 33</div><div class="bar-shell"><div class="bar-fill bar-gemma" style="width: 19.4%;">19.4%</div></div><div>243</div></div>
       </div>
-      <p class="foot">Sources: <a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_per_class_corine.csv">qwen_vs_gemma_per_class_corine.csv</a> and <a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_prediction_distribution.csv">qwen_vs_gemma_prediction_distribution.csv</a>.</p>
+      <p class="foot">Sources: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_per_class_corine.csv">qwen_vs_gemma_per_class_corine.csv</a> and <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_prediction_distribution.csv">qwen_vs_gemma_prediction_distribution.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -426,16 +426,16 @@ flowchart TD
     <div class="panel">
       <h2>11) Artifact index</h2>
       <ul>
-        <li><a href="/Users/noeflandre/georeset/docs/experiments/004_gemma4_model_rerun_and_comparison/analysis.md">Original experiment 004 analysis.md</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/overview.csv">Gemma overview.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/shuffled_delta.csv">Gemma shuffled_delta.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0/overview_spatial_subsets.csv">Gemma overview_spatial_subsets.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0/subset_counts.csv">Gemma subset_counts.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0/per_class_metrics_corine_spatial_subsets.csv">Gemma per_class_metrics_corine_spatial_subsets.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_overview.csv">qwen_vs_gemma_overview.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_spatial_subsets.csv">qwen_vs_gemma_spatial_subsets.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_shuffled_delta.csv">qwen_vs_gemma_shuffled_delta.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_prediction_distribution.csv">qwen_vs_gemma_prediction_distribution.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/docs/experiments/004_gemma4_model_rerun_and_comparison/analysis.md">Original experiment 004 analysis.md</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/overview.csv">Gemma overview.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_e2e_with_shuffled_control_v1__gemma4_31b_it_q4_0/shuffled_delta.csv">Gemma shuffled_delta.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0/overview_spatial_subsets.csv">Gemma overview_spatial_subsets.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0/subset_counts.csv">Gemma subset_counts.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/article_text_classification_spatial_confidence_v1__gemma4_31b_it_q4_0/per_class_metrics_corine_spatial_subsets.csv">Gemma per_class_metrics_corine_spatial_subsets.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_overview.csv">qwen_vs_gemma_overview.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_spatial_subsets.csv">qwen_vs_gemma_spatial_subsets.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_shuffled_delta.csv">qwen_vs_gemma_shuffled_delta.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/004_gemma4_model_rerun_and_comparison/model_comparison_qwen_vs_gemma4_31b_it_q4_0/qwen_vs_gemma_prediction_distribution.csv">qwen_vs_gemma_prediction_distribution.csv</a></li>
       </ul>
       <p class="foot">This detailed HTML was written from the checked markdown analysis and revalidated against generated CSV artifacts in the local workspace.</p>
     </div>

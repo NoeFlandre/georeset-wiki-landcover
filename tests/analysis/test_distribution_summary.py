@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from georeset.analysis.distribution_summary import (
+from georeset_wiki_landcover.analysis.distribution_summary import (
     class_count_summary,
     format_class_count_summary,
     main,

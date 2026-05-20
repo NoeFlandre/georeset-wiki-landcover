@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from georeset.cli.analysis.evaluate_retrieved_evidence_windows_experiment import main
+from georeset_wiki_landcover.cli.analysis.evaluate_retrieved_evidence_windows_experiment import main
 
 
 def _write_json(path: Path, payload: object) -> None:

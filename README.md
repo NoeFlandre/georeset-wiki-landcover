@@ -1,14 +1,14 @@
 ![Pipeline Overview](docs/diagrams/pipeline_diagram-1.png)
 
-# GeoReset
+# GeoReset Wiki Land-Cover
 
-GeoReset experiments with whether geolocated Wikipedia text can help an LLM
+GeoReset Wiki Land-Cover experiments with whether geolocated Wikipedia text can help an LLM
 infer land-cover labels, evaluated against CORINE level-2 classes and
 project-scoped OSM land-cover tags.
 
 - Project site: https://geo-reset.sylvainlobry.com/
-- Code repository: https://github.com/NoeFlandre/georeset
-- Data bucket: https://huggingface.co/buckets/NoeFlandre/georeset
+- Code repository: https://github.com/NoeFlandre/georeset-wiki-landcover
+- Data bucket: https://huggingface.co/buckets/NoeFlandre/georeset-wiki-landcover
 
 ## Code And Data Split
 
@@ -19,13 +19,13 @@ Generated and downloaded project data lives in the Hugging Face bucket. Keep
 Download or refresh data from Hugging Face:
 
 ```bash
-hf sync hf://buckets/NoeFlandre/georeset ./data
+hf sync hf://buckets/NoeFlandre/georeset-wiki-landcover ./data
 ```
 
 Upload local data changes back to Hugging Face:
 
 ```bash
-hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
+hf sync ./data hf://buckets/NoeFlandre/georeset-wiki-landcover --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```
 
 Before committing code, check that no data files are staged:
@@ -44,31 +44,31 @@ git add .gitignore README.md docs src scripts tests pyproject.toml uv.lock LICEN
 
 ## Repository Layout
 
-- `src/georeset/`: installable Python package. The wheel packages only this
+- `src/georeset_wiki_landcover/`: installable Python package. The wheel packages only this
   tree.
-- `src/georeset/fetchers/data_fetcher.py`: loads CORINE shapefiles and exposes bounds,
+- `src/georeset_wiki_landcover/fetchers/data_fetcher.py`: loads CORINE shapefiles and exposes bounds,
   class labels, centroids, and samples.
-- `src/georeset/fetchers/wiki_fetcher.py`: fetches French Wikipedia geosearch metadata
+- `src/georeset_wiki_landcover/fetchers/wiki_fetcher.py`: fetches French Wikipedia geosearch metadata
   inside the CORINE bounds and project polygon filters.
-- `src/georeset/fetchers/wiki_content_fetcher.py`: fetches full Wikipedia extracts from
+- `src/georeset_wiki_landcover/fetchers/wiki_content_fetcher.py`: fetches full Wikipedia extracts from
   page IDs. It sanitizes existing output, skips already-fetched entries, writes
   checkpoints after each batch, and can be stopped/resumed at any time.
-- `src/georeset/fetchers/osm_fetcher.py`: fetches project-relevant OSM land-cover
+- `src/georeset_wiki_landcover/fetchers/osm_fetcher.py`: fetches project-relevant OSM land-cover
   polygons from Overpass.
-- `src/georeset/analysis/corine_polygon_stats.py`: computes CORINE class area/share
+- `src/georeset_wiki_landcover/analysis/corine_polygon_stats.py`: computes CORINE class area/share
   distributions inside OSM polygons.
-- `src/georeset/analysis/distribution_summary.py`: summarizes distribution outputs.
-- `src/georeset/visualization/map_visualizer.py`: writes Folium map visualizations.
-- `src/georeset/cli/`: packaged CLI implementations exposed through
-  `[project.scripts]` entry points such as `georeset-classify-articles`,
-  `georeset-summarize-articles`, `georeset-summarize-landuse-evidence`,
-  and `georeset-run-corine-analysis`.
-- `scripts/`: thin repository-compatible wrappers around `georeset.cli.*` plus
-  Grid5000 shell launchers. Prefer the `georeset-*` entry points in new docs and
+- `src/georeset_wiki_landcover/analysis/distribution_summary.py`: summarizes distribution outputs.
+- `src/georeset_wiki_landcover/visualization/map_visualizer.py`: writes Folium map visualizations.
+- `src/georeset_wiki_landcover/cli/`: packaged CLI implementations exposed through
+  `[project.scripts]` entry points such as `georeset-wiki-landcover-classify-articles`,
+  `georeset-wiki-landcover-summarize-articles`, `georeset-wiki-landcover-summarize-landuse-evidence`,
+  and `georeset-wiki-landcover-run-corine-analysis`.
+- `scripts/`: thin repository-compatible wrappers around `georeset_wiki_landcover.cli.*` plus
+  Grid5000 shell launchers. Prefer the `georeset-wiki-landcover-*` entry points in new docs and
   automation.
-- `src/georeset/classification/`: label utilities, ground-truth builders, LLM
+- `src/georeset_wiki_landcover/classification/`: label utilities, ground-truth builders, LLM
   classifier, and metrics for CORINE level-2 and OSM tag classification.
-- `src/georeset/spatial/corine_confidence.py`: CORINE buffer-purity diagnostics
+- `src/georeset_wiki_landcover/spatial/corine_confidence.py`: CORINE buffer-purity diagnostics
   in EPSG:2154 for spatial-confidence experiments.
 - `scripts/cluster/submit_summarization.sh`: syncs the minimal repository
   state to Grid5000/Nancy and submits summarization OAR jobs. Auto-sync is
@@ -100,7 +100,7 @@ Install dependencies with `uv`:
 
 ```bash
 uv sync --group dev
-hf sync hf://buckets/NoeFlandre/georeset ./data
+hf sync hf://buckets/NoeFlandre/georeset-wiki-landcover ./data
 ```
 
 The default development and CI environment uses the `dev` group only. LLM/GPU
@@ -133,20 +133,20 @@ PYTHONDONTWRITEBYTECODE=1 uv run pytest tests/fetchers/test_wiki_content_fetcher
 
 ## Pipeline Commands
 
-Installable commands are exposed as `georeset-*` entry points. The top-level
+Installable commands are exposed as `georeset-wiki-landcover-*` entry points. The top-level
 `scripts/` modules are kept as thin repository wrappers for backwards
 compatibility, but they are not part of the installed wheel.
 
 Print a quick dataset snapshot:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-snapshot
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-snapshot
 ```
 
 Fetch Wikipedia article metadata:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m georeset.fetchers.wiki_fetcher
+PYTHONDONTWRITEBYTECODE=1 uv run python -m georeset_wiki_landcover.fetchers.wiki_fetcher
 ```
 
 Fetch full Wikipedia article content. This command is resumable: stop it with
@@ -154,29 +154,29 @@ Fetch full Wikipedia article content. This command is resumable: stop it with
 `data/wiki/article_contents.json`.
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m georeset.fetchers.wiki_content_fetcher
-hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
+PYTHONDONTWRITEBYTECODE=1 uv run python -m georeset_wiki_landcover.fetchers.wiki_content_fetcher
+hf sync ./data hf://buckets/NoeFlandre/georeset-wiki-landcover --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```
 
 Regenerate the CORINE + Wikipedia article map:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run python -m georeset.visualization.map_visualizer
+PYTHONDONTWRITEBYTECODE=1 uv run python -m georeset_wiki_landcover.visualization.map_visualizer
 ```
 
 Fetch/use OSM polygons, compute CORINE distributions, and generate the separate
 CORINE + OSM map:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-run-corine-analysis
-hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-run-corine-analysis
+hf sync ./data hf://buckets/NoeFlandre/georeset-wiki-landcover --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```
 
 Run the full filter pipeline with existing local OSM/Wikipedia inputs:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-filter-pipeline --dry-run
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-filter-pipeline
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-filter-pipeline --dry-run
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-filter-pipeline
 ```
 
 Use `--refetch-osm` or `--refetch-wiki` only when you explicitly want fresh
@@ -204,7 +204,7 @@ The remote job installs `uv` if needed, syncs the project with the `dev` and
 `llama-cpp-python`, and runs:
 
 ```bash
-uv run georeset-summarize-articles \
+uv run georeset-wiki-landcover-summarize-articles \
   --input-path data/wiki/article_contents.json \
   --output-path data/wiki/article_summaries.json \
   --summary-mode place
@@ -213,7 +213,7 @@ uv run georeset-summarize-articles \
 The no-place job writes `data/wiki/article_summaries_no_place.json`:
 
 ```bash
-uv run georeset-summarize-articles \
+uv run georeset-wiki-landcover-summarize-articles \
   --input-path data/wiki/article_contents.json \
   --output-path data/wiki/article_summaries_no_place.json \
   --summary-mode no_place
@@ -229,7 +229,7 @@ bash scripts/cluster/submit_landuse_evidence_summarization.sh
 or locally:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-summarize-landuse-evidence \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-summarize-landuse-evidence \
   --input-path data/wiki/article_contents.json \
   --output-path data/wiki/article_landuse_evidence_summaries.json \
   --seed 42 \
@@ -239,20 +239,20 @@ PYTHONDONTWRITEBYTECODE=1 uv run georeset-summarize-landuse-evidence \
 Optional environment overrides:
 
 ```bash
-G5K_SITE=nancy G5K_REMOTE_DIR=georeset G5K_REMOTE_HOME=/home/nflandre \
-GEORESET_MODEL_PATH=Qwen3.6-27B-Q4_0.gguf \
+G5K_SITE=nancy G5K_REMOTE_DIR=georeset-wiki-landcover G5K_REMOTE_HOME=/home/nflandre \
+GEORESET_WIKI_LANDCOVER_MODEL_PATH=Qwen3.6-27B-Q4_0.gguf \
   bash scripts/cluster/submit_summarization.sh
 
-G5K_SITE=nancy G5K_REMOTE_DIR=georeset G5K_REMOTE_HOME=/home/nflandre \
-GEORESET_MODEL_PATH=Qwen3.6-27B-Q4_0.gguf \
-GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH=data/wiki/article_landuse_evidence_summaries.json \
+G5K_SITE=nancy G5K_REMOTE_DIR=georeset-wiki-landcover G5K_REMOTE_HOME=/home/nflandre \
+GEORESET_WIKI_LANDCOVER_MODEL_PATH=Qwen3.6-27B-Q4_0.gguf \
+GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_OUTPUT_PATH=data/wiki/article_landuse_evidence_summaries.json \
   bash scripts/cluster/submit_landuse_evidence_summarization.sh
 ```
 
 Sync a finished summary job with one SSH polling pass:
 
 ```bash
-GEORESET_SUMMARY_OUTPUT=data/wiki/article_summaries.json \
+GEORESET_WIKI_LANDCOVER_SUMMARY_OUTPUT=data/wiki/article_summaries.json \
 SYNC_ONCE=1 bash scripts/cluster/sync_summaries.sh
 ```
 
@@ -263,34 +263,34 @@ Six primary classification runs are supported: 2 tasks (CORINE level-2 single-la
 Local runs:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles \
   --task corine_level2 --text-source summary
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles \
   --task corine_level2 --text-source summary_no_place
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles \
   --task corine_level2 --text-source content
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles \
   --task osm --text-source summary
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles \
   --task osm --text-source summary_no_place
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles \
   --task osm --text-source content
 ```
 
 Shuffled-control local runs:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles \
   --task corine_level2 --text-source summary_shuffled
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles \
   --task corine_level2 --text-source summary_no_place_shuffled
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles \
   --task corine_level2 --text-source content_shuffled
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles \
   --task osm --text-source summary_shuffled
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles \
   --task osm --text-source summary_no_place_shuffled
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-classify-articles \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles \
   --task osm --text-source content_shuffled
 ```
 
@@ -298,7 +298,7 @@ Outputs default to `data/classification/runs/default/`:
 - `data/classification/runs/default/{task}_{text_source}_predictions.json`: per-article predictions with raw LLM response, parsed `prediction`, a normalized `prediction_labels` list, and full metadata including fingerprint.
 - `data/classification/runs/default/{task}_{text_source}_metrics.json`: aggregate metrics (n_eligible, n_predicted_ok, n_parse_error, coverage, accuracy/F1 scores, task, text_source, allowed_labels, labels_evaluated).
 
-Use `--output-dir` or `GEORESET_CLASSIFICATION_OUTPUT_DIR` to give important
+Use `--output-dir` or `GEORESET_WIKI_LANDCOVER_CLASSIFICATION_OUTPUT_DIR` to give important
 runs stable names, for example `data/classification/runs/qwen3_6_27b_q4_0/`
 or `data/classification/runs/gemma4_31b_it_q4_0/`.
 
@@ -311,8 +311,8 @@ Label Policies:
 Grid5000 runs:
 
 ```bash
-GEORESET_CLASSIFICATION_TASK=corine_level2 \
-GEORESET_CLASSIFICATION_TEXT_SOURCE=summary \
+GEORESET_WIKI_LANDCOVER_CLASSIFICATION_TASK=corine_level2 \
+GEORESET_WIKI_LANDCOVER_CLASSIFICATION_TEXT_SOURCE=summary \
 bash scripts/cluster/submit_classification.sh
 ```
 
@@ -322,12 +322,12 @@ source. Classification jobs request one GPU for 20 hours by default in
 avoid repeated SSH polling; sync finished jobs with one-shot syncs only:
 
 ```bash
-GEORESET_CLASSIFICATION_TASK=corine_level2 \
-GEORESET_CLASSIFICATION_TEXT_SOURCE=summary_shuffled \
+GEORESET_WIKI_LANDCOVER_CLASSIFICATION_TASK=corine_level2 \
+GEORESET_WIKI_LANDCOVER_CLASSIFICATION_TEXT_SOURCE=summary_shuffled \
 bash scripts/cluster/submit_classification.sh
 
-GEORESET_CLASSIFICATION_TASK=corine_level2 \
-GEORESET_CLASSIFICATION_TEXT_SOURCE=summary_shuffled \
+GEORESET_WIKI_LANDCOVER_CLASSIFICATION_TASK=corine_level2 \
+GEORESET_WIKI_LANDCOVER_CLASSIFICATION_TEXT_SOURCE=summary_shuffled \
 SYNC_ONCE=1 bash scripts/cluster/sync_classification.sh
 ```
 
@@ -335,7 +335,7 @@ To freeze the shuffled-control batch after all six shuffled outputs are synced
 locally, or to regenerate overview tables for any experiment directory:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-summarize-classification-experiment \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-summarize-classification-experiment \
   --experiment-dir data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1 \
   --title "Article-Text Classification E2E with Shuffled Control v1"
 ```
@@ -349,7 +349,7 @@ at 100 m, 250 m, 500 m, and 1000 m in EPSG:2154, and keeps artificial classes as
 ambiguity evidence.
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-compute-corine-spatial-confidence \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-compute-corine-spatial-confidence \
   --parent-experiment-dir data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1 \
   --output-dir data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1
 ```
@@ -358,7 +358,7 @@ Reevaluate the frozen parent predictions on spatially reliable subsets without
 changing prompts, summaries, model outputs, or temperature:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 uv run georeset-evaluate-spatial-confidence \
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-evaluate-spatial-confidence \
   --parent-experiment-dir data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1 \
   --spatial-confidence-path data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv \
   --output-dir data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1
@@ -366,7 +366,7 @@ PYTHONDONTWRITEBYTECODE=1 uv run georeset-evaluate-spatial-confidence \
 
 ## Docker
 
-The Docker image contains the installable `georeset` package, packaged CLI
+The Docker image contains the installable `georeset_wiki_landcover` package, packaged CLI
 entry points, thin top-level `scripts/` wrappers for repository compatibility,
 tests, and Python dependencies. It intentionally does not bake in `data/`;
 mount local synced data at `/app/data`.
@@ -374,33 +374,33 @@ mount local synced data at `/app/data`.
 Build the image:
 
 ```bash
-docker build -t georeset .
+docker build -t georeset-wiki-landcover .
 ```
 
 Run a quick container smoke test:
 
 ```bash
-docker run --rm georeset
+docker run --rm georeset-wiki-landcover
 ```
 
 Run tests in Docker:
 
 ```bash
-docker run --rm -v "$PWD/data:/app/data" georeset uv run pytest tests/fetchers/test_wiki_content_fetcher.py -q
+docker run --rm -v "$PWD/data:/app/data" georeset-wiki-landcover uv run pytest tests/fetchers/test_wiki_content_fetcher.py -q
 ```
 
 Run a packaged CLI smoke test in Docker:
 
 ```bash
-docker run --rm -v "$PWD/data:/app/data" georeset uv run georeset-snapshot
+docker run --rm -v "$PWD/data:/app/data" georeset-wiki-landcover uv run georeset-wiki-landcover-snapshot
 ```
 
 Run a pipeline command in Docker:
 
 ```bash
-hf sync hf://buckets/NoeFlandre/georeset ./data
-docker run --rm -v "$PWD/data:/app/data" georeset uv run python -m georeset.fetchers.wiki_content_fetcher
-hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
+hf sync hf://buckets/NoeFlandre/georeset-wiki-landcover ./data
+docker run --rm -v "$PWD/data:/app/data" georeset-wiki-landcover uv run python -m georeset_wiki_landcover.fetchers.wiki_content_fetcher
+hf sync ./data hf://buckets/NoeFlandre/georeset-wiki-landcover --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```
 
 The regular Docker image syncs the `dev` dependency group, not the optional
@@ -448,5 +448,5 @@ git push origin main
 Data push:
 
 ```bash
-hf sync ./data hf://buckets/NoeFlandre/georeset --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
+hf sync ./data hf://buckets/NoeFlandre/georeset-wiki-landcover --delete --exclude '**/.DS_Store' --exclude '.DS_Store'
 ```

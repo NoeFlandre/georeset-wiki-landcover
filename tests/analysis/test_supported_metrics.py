@@ -1,6 +1,6 @@
 import numpy as np
 
-from georeset.analysis.supported_metrics import (
+from georeset_wiki_landcover.analysis.supported_metrics import (
     per_label_counts,
     single_label_metrics_supported,
 )

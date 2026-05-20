@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from georeset.cli.analysis.run_clip_linear_probe_experiment import (
+from georeset_wiki_landcover.cli.analysis.run_clip_linear_probe_experiment import (
     linear_probe_metrics_path,
     linear_probe_predictions_path,
     linear_probe_summary_path,

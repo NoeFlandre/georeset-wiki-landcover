@@ -22,4 +22,4 @@ COPY scripts ./scripts
 COPY tests ./tests
 RUN uv sync --frozen --group dev
 
-CMD ["uv", "run", "python", "-c", "print('GeoReset container ready. Mount ./data at /app/data and run a documented module command.')"]
+CMD ["uv", "run", "python", "-c", "print('GeoReset Wiki Land-Cover container ready. Mount ./data at /app/data and run a documented module command.')"]

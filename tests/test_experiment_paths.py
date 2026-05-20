@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from georeset.experiment_paths import (
+from georeset_wiki_landcover.experiment_paths import (
     experiment_artifact_dir,
     experiment_artifact_file,
     resolve_existing_experiment_artifact_dir,

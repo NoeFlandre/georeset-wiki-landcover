@@ -1,8 +1,8 @@
-PWD /Users/noeflandre/georeset/docs/diagrams
+PWD /Users/noeflandre/georeset-wiki-landcover/docs/diagrams
 INPUT /usr/local/texlive/2024/texmf.cnf
 INPUT /usr/local/texlive/2024/texmf-dist/web2c/texmf.cnf
 INPUT /usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT /Users/noeflandre/georeset/docs/diagrams/pipeline_diagram.tex
+INPUT /Users/noeflandre/georeset-wiki-landcover/docs/diagrams/pipeline_diagram.tex
 OUTPUT pipeline_diagram.log
 INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/standalone/standalone.cls
 INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/standalone/standalone.cls

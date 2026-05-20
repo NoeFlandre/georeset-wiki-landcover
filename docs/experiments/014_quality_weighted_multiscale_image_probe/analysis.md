@@ -3,7 +3,7 @@
 ## Executive Summary
 
 Experiment 014 is the corrected multiscale Sentinel-2 image-probe experiment.
-It asks whether weak labels derived from GeoReset's Wikipedia/CORINE pipeline can
+It asks whether weak labels derived from GeoReset Wiki Land-Cover's Wikipedia/CORINE pipeline can
 train a useful image classifier when quality signals are used as soft weights
 instead of strict hard filters.
 
@@ -197,7 +197,7 @@ The hard-filter rows show the core risk: `agreement_hard` is clean but has only
 
 ## Zero-Shot CLIP Baseline
 
-Zero-shot CLIP means no training on GeoReset Sentinel/CORINE data. The model
+Zero-shot CLIP means no training on GeoReset Wiki Land-Cover Sentinel/CORINE data. The model
 classifies images using CLIP text-image similarity to class prompts.
 
 | Window | Accuracy | Supported balanced accuracy | Supported macro-F1 |

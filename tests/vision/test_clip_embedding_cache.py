@@ -4,7 +4,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from georeset.vision.clip_embedding_cache import load_embedding_cache, stack_embeddings_for_rows
+from georeset_wiki_landcover.vision.clip_embedding_cache import (
+    load_embedding_cache,
+    stack_embeddings_for_rows,
+)
 
 
 def test_load_embedding_cache_returns_string_pageid_float32_mapping(tmp_path: Path) -> None:

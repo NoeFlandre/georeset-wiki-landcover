@@ -1,6 +1,9 @@
 import numpy as np
 
-from georeset.vision.image_encoder_registry import ENCODER_REGISTRY, _encoder_output_to_numpy
+from georeset_wiki_landcover.vision.image_encoder_registry import (
+    ENCODER_REGISTRY,
+    _encoder_output_to_numpy,
+)
 
 
 def test_image_encoder_registry_exposes_expected_model_configs_without_downloads() -> None:

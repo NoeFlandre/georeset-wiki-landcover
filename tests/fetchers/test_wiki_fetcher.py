@@ -5,13 +5,13 @@ from unittest.mock import patch
 import pytest
 import requests
 
-from georeset.fetchers.wiki_fetcher import WikiFetcher, WikiFetchError
+from georeset_wiki_landcover.fetchers.wiki_fetcher import WikiFetcher, WikiFetchError
 
 
 class TestWikiFetcher:
     def setup_method(self):
         self.fetcher = WikiFetcher()
-        self.sleep_patcher = patch("georeset.fetchers.wiki_fetcher.time.sleep")
+        self.sleep_patcher = patch("georeset_wiki_landcover.fetchers.wiki_fetcher.time.sleep")
         self.sleep_patcher.start()
 
     def teardown_method(self):

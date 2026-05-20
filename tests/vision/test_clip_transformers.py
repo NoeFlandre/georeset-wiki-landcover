@@ -1,4 +1,4 @@
-from georeset.vision.clip_transformers import select_clip_features
+from georeset_wiki_landcover.vision.clip_transformers import select_clip_features
 
 
 class _FakeClipOutput:

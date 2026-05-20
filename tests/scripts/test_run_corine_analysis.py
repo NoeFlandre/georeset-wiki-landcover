@@ -7,7 +7,7 @@ import geopandas as gpd
 import pytest
 from shapely.geometry import Polygon
 
-from georeset.cli.analysis.run_corine_analysis import run
+from georeset_wiki_landcover.cli.analysis.run_corine_analysis import run
 
 
 def test_run_corine_analysis_exports_run():
@@ -72,10 +72,14 @@ class TestRunCorineAnalysisWithFilteredCorine:
         corine_gdf = mock_corine_gdf.copy()
 
         with (
-            patch("georeset.fetchers.data_fetcher.DataFetcher.load_data") as mock_load,
+            patch(
+                "georeset_wiki_landcover.fetchers.data_fetcher.DataFetcher.load_data"
+            ) as mock_load,
             patch("geopandas.read_file") as mock_read,
             patch("geopandas.GeoDataFrame.to_file") as _mock_to_file,
-            patch("georeset.cli.analysis.run_corine_analysis.write_csv_atomic") as _mock_write_csv,
+            patch(
+                "georeset_wiki_landcover.cli.analysis.run_corine_analysis.write_csv_atomic"
+            ) as _mock_write_csv,
             patch("folium.Map.save") as _mock_map_save,
         ):
             mock_load.return_value = corine_gdf
@@ -139,7 +143,9 @@ class TestRunCorineAnalysisWithFilteredCorine:
             written["osm"] = gdf.copy()
 
         with (
-            patch("georeset.fetchers.data_fetcher.DataFetcher.load_data") as mock_load,
+            patch(
+                "georeset_wiki_landcover.fetchers.data_fetcher.DataFetcher.load_data"
+            ) as mock_load,
             patch("geopandas.read_file", return_value=osm),
             patch("geopandas.GeoDataFrame.to_file", new=capture_to_file),
             patch("folium.Map.save"),
@@ -170,12 +176,15 @@ class TestRunCorineAnalysisWithFilteredCorine:
 
         with (
             patch(
-                "georeset.fetchers.data_fetcher.DataFetcher.load_data", return_value=mock_corine_gdf
+                "georeset_wiki_landcover.fetchers.data_fetcher.DataFetcher.load_data",
+                return_value=mock_corine_gdf,
             ),
-            patch("georeset.cli.analysis.run_corine_analysis.OSMFetcher") as mock_fetcher_cls,
+            patch(
+                "georeset_wiki_landcover.cli.analysis.run_corine_analysis.OSMFetcher"
+            ) as mock_fetcher_cls,
             patch("geopandas.read_file") as mock_read_file,
             patch("geopandas.GeoDataFrame.to_file"),
-            patch("georeset.cli.analysis.run_corine_analysis.write_csv_atomic"),
+            patch("georeset_wiki_landcover.cli.analysis.run_corine_analysis.write_csv_atomic"),
             patch("folium.Map.save"),
         ):
             mock_fetcher_cls.return_value.fetch_polygons.return_value = fetched
@@ -204,12 +213,15 @@ class TestRunCorineAnalysisWithFilteredCorine:
 
         with (
             patch(
-                "georeset.fetchers.data_fetcher.DataFetcher.load_data", return_value=mock_corine_gdf
+                "georeset_wiki_landcover.fetchers.data_fetcher.DataFetcher.load_data",
+                return_value=mock_corine_gdf,
             ),
             patch("geopandas.read_file", return_value=mock_osm_gdf) as mock_read_file,
-            patch("georeset.cli.analysis.run_corine_analysis.OSMFetcher") as mock_fetcher_cls,
+            patch(
+                "georeset_wiki_landcover.cli.analysis.run_corine_analysis.OSMFetcher"
+            ) as mock_fetcher_cls,
             patch("geopandas.GeoDataFrame.to_file"),
-            patch("georeset.cli.analysis.run_corine_analysis.write_csv_atomic"),
+            patch("georeset_wiki_landcover.cli.analysis.run_corine_analysis.write_csv_atomic"),
             patch("folium.Map.save"),
         ):
             run(

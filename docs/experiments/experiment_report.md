@@ -1,6 +1,6 @@
-# GeoReset Experiment Report
+# GeoReset Wiki Land-Cover Experiment Report
 
-This report consolidates the completed GeoReset experiments through experiment
+This report consolidates the completed GeoReset Wiki Land-Cover experiments through experiment
 013. It is written from the existing Markdown reports and generated artifacts in
 `data/experiments/`; no experiments, LLM calls, GPU jobs, labels, or prediction
 files were rerun for this synthesis.

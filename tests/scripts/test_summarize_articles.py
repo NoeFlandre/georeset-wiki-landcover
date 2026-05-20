@@ -7,9 +7,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from georeset.cli.data.summarize_articles import parse_args
-from georeset.config import DataPaths, ModelSettings
-from georeset.fetchers.article_summarizer import ArticleSummarizer
+from georeset_wiki_landcover.cli.data.summarize_articles import parse_args
+from georeset_wiki_landcover.config import DataPaths, ModelSettings
+from georeset_wiki_landcover.fetchers.article_summarizer import ArticleSummarizer
 
 
 class TestArticleSummarizer:
@@ -367,7 +367,7 @@ class TestArticleSummarizer:
 
 def test_parse_args_uses_grid5000_ready_defaults(monkeypatch):
     """Should default to the expected resumable summarization files."""
-    monkeypatch.delenv("GEORESET_MODEL_PATH", raising=False)
+    monkeypatch.delenv("GEORESET_WIKI_LANDCOVER_MODEL_PATH", raising=False)
 
     args = parse_args([])
 
@@ -381,7 +381,7 @@ def test_parse_args_uses_grid5000_ready_defaults(monkeypatch):
 
 def test_parse_args_allows_environment_model_override(monkeypatch):
     """Should let Grid5000 jobs select a model without patching Python code."""
-    monkeypatch.setenv("GEORESET_MODEL_PATH", "custom.gguf")
+    monkeypatch.setenv("GEORESET_WIKI_LANDCOVER_MODEL_PATH", "custom.gguf")
 
     args = parse_args([])
 

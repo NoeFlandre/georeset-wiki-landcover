@@ -2,17 +2,17 @@ import json
 
 import pytest
 
-from georeset.classification.runner import (
+from georeset_wiki_landcover.classification.runner import (
     compute_metrics,
     load_text_source,
     parse_args,
     prediction_fingerprint,
 )
-from georeset.config import DataPaths, ModelSettings
+from georeset_wiki_landcover.config import DataPaths, ModelSettings
 
 
 def test_parse_args_uses_config_defaults(monkeypatch):
-    monkeypatch.delenv("GEORESET_MODEL_PATH", raising=False)
+    monkeypatch.delenv("GEORESET_WIKI_LANDCOVER_MODEL_PATH", raising=False)
 
     args = parse_args([])
 
@@ -39,7 +39,7 @@ def test_parse_args_uses_config_defaults(monkeypatch):
 
 
 def test_parse_args_accepts_env_model_repo_id(monkeypatch):
-    monkeypatch.setenv("GEORESET_MODEL_REPO_ID", "google/gemma-4-gguf")
+    monkeypatch.setenv("GEORESET_WIKI_LANDCOVER_MODEL_REPO_ID", "google/gemma-4-gguf")
 
     args = parse_args([])
 

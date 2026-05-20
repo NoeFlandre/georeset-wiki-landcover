@@ -1,6 +1,6 @@
 import json
 
-from georeset.text.evidence_highlights import build_evidence_highlight_record
+from georeset_wiki_landcover.text.evidence_highlights import build_evidence_highlight_record
 
 
 def test_highlighted_content_prepends_evidence_block_without_targets_or_coordinates():

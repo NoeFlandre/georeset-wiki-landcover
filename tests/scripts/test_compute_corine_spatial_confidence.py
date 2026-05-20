@@ -5,7 +5,7 @@ import geopandas as gpd
 import pandas as pd
 import pytest
 
-from georeset.cli.data.compute_corine_spatial_confidence import main
+from georeset_wiki_landcover.cli.data.compute_corine_spatial_confidence import main
 
 
 def _write_prediction(path: Path, records: dict[str, dict]) -> None:

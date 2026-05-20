@@ -225,7 +225,7 @@
         <div class="kpi"><div class="label">Re-eval artifact</div><div class="value">article_text_classification_spatial_confidence_v1</div></div>
         <div class="kpi"><div class="label">Spatial CRS</div><div class="value">EPSG:2154</div></div>
       </div>
-      <p><span class="pill">Area</span><strong>Alsace</strong> (corine file: <code>data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp</code>). Mapping route confirms this through <a href="/Users/noeflandre/georeset/src/georeset/cli/data/compute_corine_spatial_confidence.py">compute_corine_spatial_confidence.py</a> and <a href="/Users/noeflandre/georeset/src/georeset/experiment_paths.py">experiment_paths.py</a>.</p>
+      <p><span class="pill">Area</span><strong>Alsace</strong> (corine file: <code>data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp</code>). Mapping route confirms this through <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/data/compute_corine_spatial_confidence.py">compute_corine_spatial_confidence.py</a> and <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/experiment_paths.py">experiment_paths.py</a>.</p>
       </div>
 
     <div class="panel">
@@ -239,7 +239,7 @@
       </div>
       <ol>
         <li>
-          <strong>Spatial confidence generation</strong> is orchestrated by <a href="/Users/noeflandre/georeset/src/georeset/cli/data/compute_corine_spatial_confidence.py">src/georeset/cli/data/compute_corine_spatial_confidence.py</a>.
+          <strong>Spatial confidence generation</strong> is orchestrated by <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/data/compute_corine_spatial_confidence.py">src/georeset_wiki_landcover/cli/data/compute_corine_spatial_confidence.py</a>.
           Defaults pull:
           <ul>
             <li>parent frozen predictions from <code>article_text_classification_e2e_with_shuffled_control_v1</code>,</li>
@@ -257,7 +257,7 @@
           </ul>
         </li>
         <li>
-          For each radius in <code>[100, 250, 500, 1000]</code>, <strong>compute_buffer_label_shares()</strong> computes polygon intersections and area fractions in <a href="/Users/noeflandre/georeset/src/georeset/spatial/corine_confidence.py">corine_confidence.py</a>. Candidate polygons are accelerated via spatial index on the CORINE GeoDataFrame.
+          For each radius in <code>[100, 250, 500, 1000]</code>, <strong>compute_buffer_label_shares()</strong> computes polygon intersections and area fractions in <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/spatial/corine_confidence.py">corine_confidence.py</a>. Candidate polygons are accelerated via spatial index on the CORINE GeoDataFrame.
         </li>
         <li>
           The computed dict is then converted to per-row metric outputs in <strong><code>_radius_metrics()</code></strong>:
@@ -286,7 +286,7 @@
         </div>
         <div class="kpi">
           <div class="label">Loading safety</div>
-          <div class="value" style="font-size:17px; line-height:1.3;">Spatial file loaded by <a href="/Users/noeflandre/georeset/src/georeset/analysis/spatial_confidence_loading.py">spatial_confidence_loading.py</a>; dominant-match columns are coerced from CSV strings to nullable booleans.</div>
+          <div class="value" style="font-size:17px; line-height:1.3;">Spatial file loaded by <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/analysis/spatial_confidence_loading.py">spatial_confidence_loading.py</a>; dominant-match columns are coerced from CSV strings to nullable booleans.</div>
         </div>
       </div>
 
@@ -345,7 +345,7 @@
     if name == 'point_label_share_250m_ge_0.8': return df['point_label_share_250m'] &gt;= 0.8
     if name == 'dominant_matches_point_label_500m': return df['dominant_matches_point_label_500m']
     ...</code></pre>
-      <p class="muted">Baseline behavior in evaluation comes from <a href="/Users/noeflandre/georeset/src/georeset/analysis/evaluation_metrics.py">analysis/evaluation_metrics.py</a>:
+      <p class="muted">Baseline behavior in evaluation comes from <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/analysis/evaluation_metrics.py">analysis/evaluation_metrics.py</a>:
         CORINE baseline is class-majority prediction; OSM baseline includes majority-label-set and empty-labelset exact-match.
       </p>
     </div>
@@ -363,15 +363,15 @@
           <tr><th>Artifact</th><th>Location</th><th>Purpose</th></tr>
         </thead>
         <tbody>
-          <tr><td>Manifest</td><td><a href="/Users/noeflandre/georeset/data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/manifest.json">spatial manifest</a></td><td>run IDs, CRS, input paths, counts, artifact status</td></tr>
-          <tr><td>Spatial confidence</td><td><a href="/Users/noeflandre/georeset/data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv">spatial_confidence.csv</a></td><td>page-level purity + entropy + coverage metrics</td></tr>
-          <tr><td>Experiment artifacts</td><td><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/">reevaluation directory</a></td><td>metrics for CORINE and OSM on spatial subsets</td></tr>
-          <tr><td>Overview</td><td><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/overview_spatial_subsets.csv">overview_spatial_subsets.csv</a></td><td>subset-level metric table (content/summary/text variants)</td></tr>
-          <tr><td>Deltas</td><td><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/shuffled_delta_spatial_subsets.csv">shuffled_delta_spatial_subsets.csv</a></td><td>aligned minus shuffled by text source + subset</td></tr>
-          <tr><td>Majority baselines</td><td><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/majority_baselines_spatial_subsets.csv">majority_baselines_spatial_subsets.csv</a></td><td>per-subset class baselines</td></tr>
-          <tr><td>Counts</td><td><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/subset_counts.csv">subset_counts.csv</a></td><td>n_parent_predictions, n_with_spatial_confidence, n_subset</td></tr>
-          <tr><td>Class distribution</td><td><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/class_distribution_by_spatial_subset.csv">class_distribution_by_spatial_subset.csv</a></td><td>label share shifts across subsets</td></tr>
-          <tr><td>Per-class</td><td><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/per_class_metrics_corine_spatial_subsets.csv">per_class_metrics_corine_spatial_subsets.csv</a></td><td>CORINE label-level precision/recall/F1</td></tr>
+          <tr><td>Manifest</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/manifest.json">spatial manifest</a></td><td>run IDs, CRS, input paths, counts, artifact status</td></tr>
+          <tr><td>Spatial confidence</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/spatial_confidence.csv">spatial_confidence.csv</a></td><td>page-level purity + entropy + coverage metrics</td></tr>
+          <tr><td>Experiment artifacts</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/">reevaluation directory</a></td><td>metrics for CORINE and OSM on spatial subsets</td></tr>
+          <tr><td>Overview</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/overview_spatial_subsets.csv">overview_spatial_subsets.csv</a></td><td>subset-level metric table (content/summary/text variants)</td></tr>
+          <tr><td>Deltas</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/shuffled_delta_spatial_subsets.csv">shuffled_delta_spatial_subsets.csv</a></td><td>aligned minus shuffled by text source + subset</td></tr>
+          <tr><td>Majority baselines</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/majority_baselines_spatial_subsets.csv">majority_baselines_spatial_subsets.csv</a></td><td>per-subset class baselines</td></tr>
+          <tr><td>Counts</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/subset_counts.csv">subset_counts.csv</a></td><td>n_parent_predictions, n_with_spatial_confidence, n_subset</td></tr>
+          <tr><td>Class distribution</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/class_distribution_by_spatial_subset.csv">class_distribution_by_spatial_subset.csv</a></td><td>label share shifts across subsets</td></tr>
+          <tr><td>Per-class</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/per_class_metrics_corine_spatial_subsets.csv">per_class_metrics_corine_spatial_subsets.csv</a></td><td>CORINE label-level precision/recall/F1</td></tr>
         </tbody>
       </table>
     </div>
@@ -501,13 +501,13 @@
     <div class="panel">
       <h2>10) Exact file map for quick review</h2>
       <ul>
-        <li><a href="/Users/noeflandre/georeset/src/georeset/cli/data/compute_corine_spatial_confidence.py">compute_corine_spatial_confidence.py</a> — confidence builder</li>
-        <li><a href="/Users/noeflandre/georeset/src/georeset/spatial/corine_confidence.py">corine_confidence.py</a> — geometric metrics: buffer shares, entropy, dominant match</li>
-        <li><a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_predictions_with_spatial_confidence.py">evaluate_predictions_with_spatial_confidence.py</a> — subset reranking + metrics + deltas</li>
-        <li><a href="/Users/noeflandre/georeset/src/georeset/analysis/spatial_confidence_loading.py">spatial_confidence_loading.py</a> — CSV/parquet load + robust boolean coercion</li>
-        <li><a href="/Users/noeflandre/georeset/src/georeset/analysis/evaluation_metrics.py">evaluation_metrics.py</a> — metric formulas + baselines</li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/summary.md">Experiment 002 summary</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/summary.md">Experiment 003 summary</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/data/compute_corine_spatial_confidence.py">compute_corine_spatial_confidence.py</a> — confidence builder</li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/spatial/corine_confidence.py">corine_confidence.py</a> — geometric metrics: buffer shares, entropy, dominant match</li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/analysis/evaluate_predictions_with_spatial_confidence.py">evaluate_predictions_with_spatial_confidence.py</a> — subset reranking + metrics + deltas</li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/analysis/spatial_confidence_loading.py">spatial_confidence_loading.py</a> — CSV/parquet load + robust boolean coercion</li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/analysis/evaluation_metrics.py">evaluation_metrics.py</a> — metric formulas + baselines</li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/002_corine_spatial_confidence/corine_spatial_confidence_v1/summary.md">Experiment 002 summary</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/003_qwen_spatial_confidence_reevaluation/article_text_classification_spatial_confidence_v1/summary.md">Experiment 003 summary</a></li>
       </ul>
     </div>
 

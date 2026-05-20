@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from georeset.cli.data.build_evidence_cards import main
+from georeset_wiki_landcover.cli.data.build_evidence_cards import main
 
 
 def _write_json(path: Path, payload: object) -> None:

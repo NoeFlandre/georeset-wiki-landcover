@@ -3,7 +3,7 @@ set -euo pipefail
 
 ACCESS_HOST="${G5K_ACCESS_HOST:-nflandre@access.grid5000.fr}"
 SITE="${G5K_SITE:-nancy}"
-REMOTE_DIR="${G5K_REMOTE_DIR:-georeset}"
+REMOTE_DIR="${G5K_REMOTE_DIR:-georeset_wiki_landcover}"
 REMOTE_USER="${G5K_REMOTE_USER:-${ACCESS_HOST%@*}}"
 REMOTE_HOME="${G5K_REMOTE_HOME:-/home/${REMOTE_USER}}"
 REMOTE_PROJECT_DIR="${G5K_REMOTE_PROJECT_DIR:-${REMOTE_HOME}/${REMOTE_DIR}}"

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from georeset.cli.data.build_clip_label_splits import main
+from georeset_wiki_landcover.cli.data.build_clip_label_splits import main
 
 
 def test_build_clip_label_splits_cli_writes_csv(tmp_path: Path) -> None:

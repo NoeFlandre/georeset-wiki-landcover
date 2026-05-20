@@ -1,7 +1,7 @@
 import numpy as np
 
-from georeset.vision.linear_probe import fit_linear_probe, predict_linear_probe
-from georeset.vision.weighted_linear_probe import fit_weighted_linear_probe
+from georeset_wiki_landcover.vision.linear_probe import fit_linear_probe, predict_linear_probe
+from georeset_wiki_landcover.vision.weighted_linear_probe import fit_weighted_linear_probe
 
 
 def test_weighted_linear_probe_matches_unweighted_with_uniform_weights() -> None:

@@ -3,7 +3,7 @@
 import geopandas as gpd
 from shapely.geometry import Polygon
 
-from georeset.visualization.map_visualizer import MapVisualizer
+from georeset_wiki_landcover.visualization.map_visualizer import MapVisualizer
 
 
 class TestMapVisualizer:

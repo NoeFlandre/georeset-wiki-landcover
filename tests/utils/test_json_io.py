@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 from shapely.geometry import Point
 
-from georeset.utils import json_io
-from georeset.utils.json_io import (
+from georeset_wiki_landcover.utils import json_io
+from georeset_wiki_landcover.utils.json_io import (
     markdown_table,
     read_json_file,
     resolve_table_columns,

@@ -1,6 +1,6 @@
-# GeoReset experiment summary
+# GeoReset Wiki Land-Cover experiment summary
 
-This document is a short report summarizing the GeoReset article-text classification work so far. The longer reports in this folder contain the detailed tables, this
+This document is a short report summarizing the GeoReset Wiki Land-Cover article-text classification work so far. The longer reports in this folder contain the detailed tables, this
 note explains what we did, why we did it, what we found, and what should come
 next. It is designed to stay concise, for further details please check the longer reports in this folder.
 

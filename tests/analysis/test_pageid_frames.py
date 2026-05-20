@@ -1,6 +1,9 @@
 import pandas as pd
 
-from georeset.analysis.pageid_frames import dataframe_by_pageid, load_optional_pageid_csv
+from georeset_wiki_landcover.analysis.pageid_frames import (
+    dataframe_by_pageid,
+    load_optional_pageid_csv,
+)
 
 
 def test_load_optional_pageid_csv_returns_empty_pageid_frame_for_missing_path(tmp_path):

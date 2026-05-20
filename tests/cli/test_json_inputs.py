@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from georeset.cli.data.json_inputs import (
+from georeset_wiki_landcover.cli.data.json_inputs import (
     index_json_records_by_pageid,
     read_optional_json_mapping,
     read_required_json_mapping,

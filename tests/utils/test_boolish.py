@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from georeset.utils.boolish import parse_boolish, parse_boolish_series
+from georeset_wiki_landcover.utils.boolish import parse_boolish, parse_boolish_series
 
 
 def test_parse_boolish_accepts_real_booleans_and_numeric_zero_one() -> None:

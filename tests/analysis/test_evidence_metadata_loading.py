@@ -6,7 +6,7 @@ import json
 import math
 from pathlib import Path
 
-from georeset.analysis.evidence_metadata_loading import load_evidence_metadata
+from georeset_wiki_landcover.analysis.evidence_metadata_loading import load_evidence_metadata
 
 
 def _write_json(path: Path, payload: object) -> None:

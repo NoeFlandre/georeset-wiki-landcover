@@ -41,7 +41,7 @@
 <body>
   <div class="container">
     <h1>Experiment 012: CLIP Linear Probe Weak Labels</h1>
-    <div class="subtitle">Detailed implementation and result audit for training a simple image classifier from GeoReset weak CORINE labels.</div>
+    <div class="subtitle">Detailed implementation and result audit for training a simple image classifier from GeoReset Wiki Land-Cover weak CORINE labels.</div>
 
     <div class="panel">
       <div class="section-title"><h2>1) Executive summary</h2><span class="badge">First image experiment</span></div>
@@ -61,12 +61,12 @@
       <div class="panel">
         <h2>2) Source artifacts</h2>
         <ul>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv">label_splits.csv</a></li>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/sentinel_patches_rgb.npz">sentinel_patches_rgb.npz</a></li>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/clip_embeddings.npz">clip_embeddings.npz</a></li>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv">linear_probe_metrics.csv</a></li>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_metrics.csv">zero_shot_clip_metrics.csv</a></li>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/summary.md">summary.md</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv">label_splits.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/sentinel_patches_rgb.npz">sentinel_patches_rgb.npz</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/clip_embeddings.npz">clip_embeddings.npz</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv">linear_probe_metrics.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_metrics.csv">zero_shot_clip_metrics.csv</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/summary.md">summary.md</a></li>
         </ul>
       </div>
       <div class="panel">
@@ -108,7 +108,7 @@ flowchart TD
   "gemma_prediction": "21",
   "models_agree_with_label": true
 }</pre>
-      <p class="foot">Example source: <a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv">label_splits.csv</a>.</p>
+      <p class="foot">Example source: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv">label_splits.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -140,7 +140,7 @@ flowchart TD
           <tr><td>train</td><td>text_spatial_agreement</td><td>142</td><td>Quality-spatial plus Qwen and Gemma both agree with the CORINE point label.</td></tr>
         </tbody>
       </table>
-      <p class="foot">Split builder: <a href="/Users/noeflandre/georeset/src/georeset/vision/clip_weak_labels.py">clip_weak_labels.py</a>.</p>
+      <p class="foot">Split builder: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/vision/clip_weak_labels.py">clip_weak_labels.py</a>.</p>
     </div>
 
     <div class="panel">
@@ -155,7 +155,7 @@ flowchart TD
           <tr><td>text_spatial_agreement</td><td>2</td><td>51</td><td>1</td><td>2</td><td>80</td><td>2</td><td>4</td><td class="negative">Too few non-forest examples.</td></tr>
         </tbody>
       </table>
-      <p class="foot">Source: class counts from <a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv">label_splits.csv</a>.</p>
+      <p class="foot">Source: class counts from <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv">label_splits.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -170,7 +170,7 @@ flowchart TD
           <tr><td>text_spatial_agreement</td><td>142</td><td>35</td><td>0.400</td><td>0.400</td><td>0.363</td></tr>
         </tbody>
       </table>
-      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv">linear_probe_metrics.csv</a>.</p>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv">linear_probe_metrics.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -200,7 +200,7 @@ flowchart TD
           <tr><td>11139252</td><td>51</td><td>51</td><td>51</td><td>Both methods can identify some inland-water examples.</td></tr>
         </tbody>
       </table>
-      <p class="foot">Sources: <a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_predictions.csv">zero_shot_clip_predictions.csv</a> and <a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_predictions.csv">linear_probe_predictions.csv</a>.</p>
+      <p class="foot">Sources: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_predictions.csv">zero_shot_clip_predictions.csv</a> and <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_predictions.csv">linear_probe_predictions.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -220,12 +220,12 @@ flowchart TD
     <div class="panel">
       <h2>12) Implementation notes</h2>
       <ul>
-        <li>Split builder: <a href="/Users/noeflandre/georeset/src/georeset/vision/clip_weak_labels.py">clip_weak_labels.py</a>.</li>
-        <li>Sentinel patch fetcher: <a href="/Users/noeflandre/georeset/src/georeset/vision/sentinel_patches.py">sentinel_patches.py</a>.</li>
-        <li>CLIP embedding code: <a href="/Users/noeflandre/georeset/src/georeset/vision/clip_embeddings.py">clip_embeddings.py</a>.</li>
-        <li>Linear probe: <a href="/Users/noeflandre/georeset/src/georeset/vision/linear_probe.py">linear_probe.py</a>.</li>
-        <li>Zero-shot evaluator: <a href="/Users/noeflandre/georeset/src/georeset/vision/clip_zero_shot.py">clip_zero_shot.py</a>.</li>
-        <li>Training runner: <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/run_clip_linear_probe_experiment.py">run_clip_linear_probe_experiment.py</a>.</li>
+        <li>Split builder: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/vision/clip_weak_labels.py">clip_weak_labels.py</a>.</li>
+        <li>Sentinel patch fetcher: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/vision/sentinel_patches.py">sentinel_patches.py</a>.</li>
+        <li>CLIP embedding code: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/vision/clip_embeddings.py">clip_embeddings.py</a>.</li>
+        <li>Linear probe: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/vision/linear_probe.py">linear_probe.py</a>.</li>
+        <li>Zero-shot evaluator: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/vision/clip_zero_shot.py">clip_zero_shot.py</a>.</li>
+        <li>Training runner: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/analysis/run_clip_linear_probe_experiment.py">run_clip_linear_probe_experiment.py</a>.</li>
       </ul>
     </div>
 
@@ -249,15 +249,15 @@ flowchart TD
     <div class="panel">
       <h2>15) Artifact index</h2>
       <ul>
-        <li><a href="/Users/noeflandre/georeset/docs/experiments/012_clip_linear_probe_weak_labels/analysis.md">Original experiment 012 analysis.md</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv">label_splits.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/sentinel_patches_rgb.npz">sentinel_patches_rgb.npz</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/clip_embeddings.npz">clip_embeddings.npz</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv">linear_probe_metrics.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_predictions.csv">linear_probe_predictions.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_metrics.csv">zero_shot_clip_metrics.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_predictions.csv">zero_shot_clip_predictions.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_summary.md">zero_shot_clip_summary.md</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/docs/experiments/012_clip_linear_probe_weak_labels/analysis.md">Original experiment 012 analysis.md</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/label_splits.csv">label_splits.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/sentinel_patches_rgb.npz">sentinel_patches_rgb.npz</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/clip_embeddings.npz">clip_embeddings.npz</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_metrics.csv">linear_probe_metrics.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/linear_probe_predictions.csv">linear_probe_predictions.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_metrics.csv">zero_shot_clip_metrics.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_predictions.csv">zero_shot_clip_predictions.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1/zero_shot_clip_summary.md">zero_shot_clip_summary.md</a></li>
       </ul>
       <p class="foot">This detailed HTML was written from the checked markdown analysis, generated split/metric artifacts, cached artifact metadata, and the CLIP weak-label code path.</p>
     </div>

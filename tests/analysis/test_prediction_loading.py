@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from georeset.analysis.prediction_loading import (
+from georeset_wiki_landcover.analysis.prediction_loading import (
     infer_model_from_metadata,
     load_annotated_prediction_records,
     load_prediction_records,

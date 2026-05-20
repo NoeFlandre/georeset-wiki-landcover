@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 
-from georeset.config import DataPaths
-from georeset.fetchers.landuse_evidence_summarizer import (
+from georeset_wiki_landcover.config import DataPaths
+from georeset_wiki_landcover.fetchers.landuse_evidence_summarizer import (
     EVIDENCE_TYPES,
     LANDUSE_EVIDENCE_PROMPT_VERSION,
     LandUseEvidenceSummarizer,

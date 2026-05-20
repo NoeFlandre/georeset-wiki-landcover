@@ -1,6 +1,10 @@
 from unittest.mock import MagicMock, patch
 
-from georeset.classification.llm_classifier import MULTI_SCHEMA, SINGLE_SCHEMA, LLMClassifier
+from georeset_wiki_landcover.classification.llm_classifier import (
+    MULTI_SCHEMA,
+    SINGLE_SCHEMA,
+    LLMClassifier,
+)
 
 
 def test_classify_single_label_returns_ok_with_valid_response():

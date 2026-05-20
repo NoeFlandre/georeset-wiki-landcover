@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from georeset.vision.image_probe_splits import (
+from georeset_wiki_landcover.vision.image_probe_splits import (
     add_geo_groups,
     build_image_probe_splits_v2,
     compute_quality_weights,

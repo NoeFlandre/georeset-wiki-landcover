@@ -3,13 +3,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from georeset.cli.analysis.evaluate_image_probe_training_policy_controls import (
+from georeset_wiki_landcover.cli.analysis.evaluate_image_probe_training_policy_controls import (
     evaluate_controls,
     image_probe_control_manifest_path,
     image_probe_random_controls_markdown_path,
     image_probe_random_controls_path,
 )
-from georeset.cli.analysis.run_quality_weighted_image_probe import (
+from georeset_wiki_landcover.cli.analysis.run_quality_weighted_image_probe import (
     bootstrap_confidence_intervals_path,
     confusion_matrices_path,
     per_class_metrics_path,
@@ -19,7 +19,7 @@ from georeset.cli.analysis.run_quality_weighted_image_probe import (
     weighted_probe_predictions_path,
     weighted_probe_summary_path,
 )
-from georeset.cli.analysis.run_quality_weighted_image_zero_shot import (
+from georeset_wiki_landcover.cli.analysis.run_quality_weighted_image_zero_shot import (
     run_zero_shot_image_probe,
     zero_shot_image_probe_metrics_path,
     zero_shot_image_probe_predictions_path,

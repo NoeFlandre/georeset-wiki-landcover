@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from georeset.vision.clip_weak_labels import build_clip_label_splits
+from georeset_wiki_landcover.vision.clip_weak_labels import build_clip_label_splits
 
 
 def _write_predictions(path: Path, rows: dict[str, str]) -> None:

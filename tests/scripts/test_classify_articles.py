@@ -5,20 +5,20 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from georeset.cli.data import classify_articles
-from georeset.cli.data.classify_articles import (
+from georeset_wiki_landcover.cli.data import classify_articles
+from georeset_wiki_landcover.cli.data.classify_articles import (
     apply_shuffled_text_control,
     load_text_source,
     parse_args,
     prediction_fingerprint,
     text_fingerprint,
 )
-from georeset.config import DataPaths, ModelSettings
+from georeset_wiki_landcover.config import DataPaths, ModelSettings
 
 
 class TestParseArgs:
     def test_defaults(self, monkeypatch):
-        monkeypatch.delenv("GEORESET_MODEL_PATH", raising=False)
+        monkeypatch.delenv("GEORESET_WIKI_LANDCOVER_MODEL_PATH", raising=False)
         args = parse_args([])
         assert args.task == "corine_level2"
         assert args.text_source == "summary"
@@ -35,22 +35,22 @@ class TestParseArgs:
         assert args.limit is None
 
     def test_env_model_override(self, monkeypatch):
-        monkeypatch.setenv("GEORESET_MODEL_PATH", "custom.gguf")
+        monkeypatch.setenv("GEORESET_WIKI_LANDCOVER_MODEL_PATH", "custom.gguf")
         args = parse_args(["--task", "osm"])
         assert args.model_path == "custom.gguf"
 
     def test_env_model_repo_id_override(self, monkeypatch):
-        monkeypatch.setenv("GEORESET_MODEL_REPO_ID", "google/gemma-4-gguf")
+        monkeypatch.setenv("GEORESET_WIKI_LANDCOVER_MODEL_REPO_ID", "google/gemma-4-gguf")
         args = parse_args([])
         assert args.model_repo_id == "google/gemma-4-gguf"
 
     def test_limit_option(self, monkeypatch):
-        monkeypatch.delenv("GEORESET_MODEL_PATH", raising=False)
+        monkeypatch.delenv("GEORESET_WIKI_LANDCOVER_MODEL_PATH", raising=False)
         args = parse_args(["--limit", "5"])
         assert args.limit == 5
 
     def test_accepts_shuffled_text_sources(self, monkeypatch):
-        monkeypatch.delenv("GEORESET_MODEL_PATH", raising=False)
+        monkeypatch.delenv("GEORESET_WIKI_LANDCOVER_MODEL_PATH", raising=False)
         args = parse_args(["--text-source", "summary_shuffled"])
         assert args.text_source == "summary_shuffled"
 
@@ -121,7 +121,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from georeset.cli.data.classify_articles import load_text_source
+            from georeset_wiki_landcover.cli.data.classify_articles import load_text_source
 
             result = load_text_source("summary", contents_path, summaries_path, no_place_path)
             assert result["100"] == "Strasbourg est une ville."
@@ -134,7 +134,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from georeset.cli.data.classify_articles import load_text_source
+            from georeset_wiki_landcover.cli.data.classify_articles import load_text_source
 
             result = load_text_source(
                 "summary_shuffled", contents_path, summaries_path, no_place_path
@@ -149,7 +149,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from georeset.cli.data.classify_articles import load_text_source
+            from georeset_wiki_landcover.cli.data.classify_articles import load_text_source
 
             result = load_text_source(
                 "summary_no_place", contents_path, summaries_path, no_place_path
@@ -164,7 +164,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from georeset.cli.data.classify_articles import load_text_source
+            from georeset_wiki_landcover.cli.data.classify_articles import load_text_source
 
             result = load_text_source(
                 "summary_no_place_shuffled", contents_path, summaries_path, no_place_path
@@ -229,7 +229,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from georeset.cli.data.classify_articles import load_text_source
+            from georeset_wiki_landcover.cli.data.classify_articles import load_text_source
 
             result = load_text_source("content", contents_path, summaries_path, no_place_path)
             assert result["100"] == "Full content"
@@ -242,7 +242,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from georeset.cli.data.classify_articles import load_text_source
+            from georeset_wiki_landcover.cli.data.classify_articles import load_text_source
 
             result = load_text_source(
                 "content_shuffled", contents_path, summaries_path, no_place_path
@@ -257,7 +257,7 @@ class TestSourceLoading:
                 no_place_path,
                 _,
             ) = self._make_temp_files(tmpdir)
-            from georeset.cli.data.classify_articles import load_text_source
+            from georeset_wiki_landcover.cli.data.classify_articles import load_text_source
 
             with pytest.raises(ValueError, match="Unknown text source"):
                 load_text_source("unknown", contents_path, summaries_path, no_place_path)
@@ -370,10 +370,11 @@ class TestPredictionRecordShape:
                     "resolved_from_retry": True,
                 },
             }
-            from georeset.cli.data.classify_articles import main
+            from georeset_wiki_landcover.cli.data.classify_articles import main
 
             with patch(
-                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+                "georeset_wiki_landcover.cli.data.classify_articles.LLMClassifier",
+                return_value=classifier,
             ):
                 main(
                     [
@@ -457,10 +458,11 @@ class TestPredictionRecordShape:
                     "allowed_labels": ["31"],
                 },
             }
-            from georeset.cli.data.classify_articles import main
+            from georeset_wiki_landcover.cli.data.classify_articles import main
 
             with patch(
-                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+                "georeset_wiki_landcover.cli.data.classify_articles.LLMClassifier",
+                return_value=classifier,
             ):
                 main(
                     [
@@ -550,10 +552,11 @@ class TestResumability:
                     },
                     f,
                 )
-            from georeset.cli.data.classify_articles import main
+            from georeset_wiki_landcover.cli.data.classify_articles import main
 
             with patch(
-                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+                "georeset_wiki_landcover.cli.data.classify_articles.LLMClassifier",
+                return_value=classifier,
             ):
                 main(
                     [
@@ -619,10 +622,11 @@ class TestResumability:
                     },
                     f,
                 )
-            from georeset.cli.data.classify_articles import main
+            from georeset_wiki_landcover.cli.data.classify_articles import main
 
             with patch(
-                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+                "georeset_wiki_landcover.cli.data.classify_articles.LLMClassifier",
+                return_value=classifier,
             ):
                 main(
                     [
@@ -707,10 +711,11 @@ class TestResumability:
                     },
                     f,
                 )
-            from georeset.cli.data.classify_articles import main
+            from georeset_wiki_landcover.cli.data.classify_articles import main
 
             with patch(
-                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+                "georeset_wiki_landcover.cli.data.classify_articles.LLMClassifier",
+                return_value=classifier,
             ):
                 main(
                     [
@@ -767,10 +772,11 @@ class TestOSMRunner:
                     "fingerprint": fp,
                 },
             }
-            from georeset.cli.data.classify_articles import main
+            from georeset_wiki_landcover.cli.data.classify_articles import main
 
             with patch(
-                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+                "georeset_wiki_landcover.cli.data.classify_articles.LLMClassifier",
+                return_value=classifier,
             ):
                 main(
                     [
@@ -833,10 +839,11 @@ class TestMetricsOutput:
                     "fingerprint": fp,
                 },
             }
-            from georeset.cli.data.classify_articles import main
+            from georeset_wiki_landcover.cli.data.classify_articles import main
 
             with patch(
-                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+                "georeset_wiki_landcover.cli.data.classify_articles.LLMClassifier",
+                return_value=classifier,
             ):
                 main(
                     [
@@ -950,10 +957,11 @@ class TestLimit:
                     "fingerprint": fp,
                 },
             }
-            from georeset.cli.data.classify_articles import main
+            from georeset_wiki_landcover.cli.data.classify_articles import main
 
             with patch(
-                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+                "georeset_wiki_landcover.cli.data.classify_articles.LLMClassifier",
+                return_value=classifier,
             ):
                 main(
                     [
@@ -1042,10 +1050,11 @@ class TestShuffledRunner:
                     "allowed_labels": ["31"],
                 },
             }
-            from georeset.cli.data.classify_articles import main
+            from georeset_wiki_landcover.cli.data.classify_articles import main
 
             with patch(
-                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+                "georeset_wiki_landcover.cli.data.classify_articles.LLMClassifier",
+                return_value=classifier,
             ):
                 main(
                     [

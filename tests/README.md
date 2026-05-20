@@ -24,5 +24,5 @@ PYTHONDONTWRITEBYTECODE=1 uv run mypy src scripts
 PYTHONDONTWRITEBYTECODE=1 uv run pytest -q
 ```
 
-The default pytest configuration measures `georeset.classification` coverage
+The default pytest configuration measures `georeset_wiki_landcover.classification` coverage
 with a 95% fail-under threshold.

@@ -1,7 +1,7 @@
 import pandas as pd
 
-from georeset.analysis.label_universe import label_universe
-from georeset.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
+from georeset_wiki_landcover.analysis.label_universe import label_universe
+from georeset_wiki_landcover.classification.labels import CORINE_LEVEL2_DESCRIPTIONS
 
 
 def test_label_universe_uses_full_allowed_corine_labels() -> None:

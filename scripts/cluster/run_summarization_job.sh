@@ -7,16 +7,16 @@
 
 set -euo pipefail
 
-REMOTE_DIR="${G5K_REMOTE_DIR:-georeset}"
+REMOTE_DIR="${G5K_REMOTE_DIR:-georeset_wiki_landcover}"
 REMOTE_PROJECT_DIR="${G5K_REMOTE_PROJECT_DIR:-${HOME}/${REMOTE_DIR}}"
 cd "${REMOTE_PROJECT_DIR}"
 
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 export PYTHONDONTWRITEBYTECODE=1
-export GEORESET_MODEL_PATH="${GEORESET_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf}"
+export GEORESET_WIKI_LANDCOVER_MODEL_PATH="${GEORESET_WIKI_LANDCOVER_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf}"
 
 echo "Starting summarization job on $(hostname)"
-echo "Model: ${GEORESET_MODEL_PATH}"
+echo "Model: ${GEORESET_WIKI_LANDCOVER_MODEL_PATH}"
 
 if ! command -v uv >/dev/null 2>&1; then
   curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -33,8 +33,8 @@ export VIRTUAL_ENV="${UV_PROJECT_ENVIRONMENT}"
 
 uv sync --group dev --group llm
 
-uv run georeset-summarize-articles \
+uv run georeset-wiki-landcover-summarize-articles \
   --input-path data/wiki/article_contents.json \
   --output-path data/wiki/article_summaries.json \
   --summary-mode place \
-  --model-path "${GEORESET_MODEL_PATH}"
+  --model-path "${GEORESET_WIKI_LANDCOVER_MODEL_PATH}"

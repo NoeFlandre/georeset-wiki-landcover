@@ -3,8 +3,8 @@ import re
 
 import pandas as pd
 
-from georeset.fetchers.landuse_evidence_summarizer import EVIDENCE_TYPES
-from georeset.text.evidence_cards import build_evidence_card_record
+from georeset_wiki_landcover.fetchers.landuse_evidence_summarizer import EVIDENCE_TYPES
+from georeset_wiki_landcover.text.evidence_cards import build_evidence_card_record
 
 
 def test_evidence_card_excludes_title_coordinates_and_target_labels():

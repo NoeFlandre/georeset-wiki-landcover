@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from georeset.analysis.evaluation_metrics import (
+from georeset_wiki_landcover.analysis.evaluation_metrics import (
     compute_multilabel_subset_metrics,
     compute_single_label_subset_metrics,
     compute_task_subset_metrics,

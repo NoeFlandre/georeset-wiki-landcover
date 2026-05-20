@@ -1,6 +1,6 @@
 import pandas as pd
 
-from georeset.analysis.quality_subsets import quality_subset_masks
+from georeset_wiki_landcover.analysis.quality_subsets import quality_subset_masks
 
 
 def test_quality_subset_masks_select_expected_rows() -> None:

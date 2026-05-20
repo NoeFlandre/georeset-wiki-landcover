@@ -1,4 +1,4 @@
-from georeset.classification.metrics import multilabel_metrics, single_label_metrics
+from georeset_wiki_landcover.classification.metrics import multilabel_metrics, single_label_metrics
 
 
 def test_single_label_metrics_computes_accuracy_and_macro_scores():

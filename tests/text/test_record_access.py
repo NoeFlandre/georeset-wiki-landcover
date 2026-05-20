@@ -1,6 +1,6 @@
 import pandas as pd
 
-from georeset.text.record_access import is_missing, json_scalar, mapping_get
+from georeset_wiki_landcover.text.record_access import is_missing, json_scalar, mapping_get
 
 
 def test_mapping_get_reads_dict_and_series_with_default() -> None:

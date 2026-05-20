@@ -2,7 +2,7 @@ import json
 
 import pandas as pd
 
-from georeset.cli.analysis.evaluate_subset_randomization_controls import (
+from georeset_wiki_landcover.cli.analysis.evaluate_subset_randomization_controls import (
     SHUFFLED_PAIRS,
     SUBSET_REGISTRY,
     build_random_control_summary,

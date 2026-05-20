@@ -7,32 +7,32 @@
 
 set -euo pipefail
 
-REMOTE_DIR="${G5K_REMOTE_DIR:-georeset}"
+REMOTE_DIR="${G5K_REMOTE_DIR:-georeset_wiki_landcover}"
 REMOTE_PROJECT_DIR="${G5K_REMOTE_PROJECT_DIR:-${HOME}/${REMOTE_DIR}}"
 cd "${REMOTE_PROJECT_DIR}"
 
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 export PYTHONDONTWRITEBYTECODE=1
-export GEORESET_MODEL_PATH="${GEORESET_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf}"
-export GEORESET_MODEL_REPO_ID="${GEORESET_MODEL_REPO_ID:-}"
+export GEORESET_WIKI_LANDCOVER_MODEL_PATH="${GEORESET_WIKI_LANDCOVER_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf}"
+export GEORESET_WIKI_LANDCOVER_MODEL_REPO_ID="${GEORESET_WIKI_LANDCOVER_MODEL_REPO_ID:-}"
 
-if [ -z "${GEORESET_LANDUSE_EVIDENCE_INPUT_PATH:-}" ]; then
-  export GEORESET_LANDUSE_EVIDENCE_INPUT_PATH="data/wiki/article_contents.json"
+if [ -z "${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_INPUT_PATH:-}" ]; then
+  export GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_INPUT_PATH="data/wiki/article_contents.json"
 fi
-if [ -z "${GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH:-}" ]; then
-  export GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH="data/wiki/article_landuse_evidence_summaries.json"
+if [ -z "${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_OUTPUT_PATH:-}" ]; then
+  export GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_OUTPUT_PATH="data/wiki/article_landuse_evidence_summaries.json"
 fi
-if [ -z "${GEORESET_LANDUSE_EVIDENCE_SEED:-}" ]; then
-  export GEORESET_LANDUSE_EVIDENCE_SEED="42"
+if [ -z "${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_SEED:-}" ]; then
+  export GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_SEED="42"
 fi
-if [ -z "${GEORESET_LANDUSE_EVIDENCE_TEMPERATURE:-}" ]; then
-  export GEORESET_LANDUSE_EVIDENCE_TEMPERATURE="0.0"
+if [ -z "${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_TEMPERATURE:-}" ]; then
+  export GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_TEMPERATURE="0.0"
 fi
 
 echo "Starting land-use evidence summarization job on $(hostname)"
-echo "Input: ${GEORESET_LANDUSE_EVIDENCE_INPUT_PATH}"
-echo "Output: ${GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH}"
-echo "Model: ${GEORESET_MODEL_PATH}"
+echo "Input: ${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_INPUT_PATH}"
+echo "Output: ${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_OUTPUT_PATH}"
+echo "Model: ${GEORESET_WIKI_LANDCOVER_MODEL_PATH}"
 
 if ! command -v uv >/dev/null 2>&1; then
   curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -50,14 +50,14 @@ export VIRTUAL_ENV="${UV_PROJECT_ENVIRONMENT}"
 uv sync --group dev --group llm
 
 MODEL_REPO_ARGS=()
-if [ -n "${GEORESET_MODEL_REPO_ID}" ]; then
-  MODEL_REPO_ARGS=(--model-repo-id "${GEORESET_MODEL_REPO_ID}")
+if [ -n "${GEORESET_WIKI_LANDCOVER_MODEL_REPO_ID}" ]; then
+  MODEL_REPO_ARGS=(--model-repo-id "${GEORESET_WIKI_LANDCOVER_MODEL_REPO_ID}")
 fi
 
-uv run georeset-summarize-landuse-evidence \
-  --input-path "${GEORESET_LANDUSE_EVIDENCE_INPUT_PATH}" \
-  --output-path "${GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH}" \
-  --model-path "${GEORESET_MODEL_PATH}" \
+uv run georeset-wiki-landcover-summarize-landuse-evidence \
+  --input-path "${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_INPUT_PATH}" \
+  --output-path "${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_OUTPUT_PATH}" \
+  --model-path "${GEORESET_WIKI_LANDCOVER_MODEL_PATH}" \
   "${MODEL_REPO_ARGS[@]}" \
-  --seed "${GEORESET_LANDUSE_EVIDENCE_SEED}" \
-  --temperature "${GEORESET_LANDUSE_EVIDENCE_TEMPERATURE}"
+  --seed "${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_SEED}" \
+  --temperature "${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_TEMPERATURE}"

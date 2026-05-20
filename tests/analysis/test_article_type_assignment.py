@@ -1,6 +1,6 @@
 """Tests for deterministic Wikipedia article-type assignment."""
 
-from georeset.analysis.article_type_classifier import (
+from georeset_wiki_landcover.analysis.article_type_classifier import (
     assign_article_types,
     normalize_text,
 )

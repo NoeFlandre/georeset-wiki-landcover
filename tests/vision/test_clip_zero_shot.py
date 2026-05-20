@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from georeset.vision.clip_zero_shot import (
+from georeset_wiki_landcover.vision.clip_zero_shot import (
     build_corine_zero_shot_prompts,
     embed_label_prompts,
     predict_zero_shot,

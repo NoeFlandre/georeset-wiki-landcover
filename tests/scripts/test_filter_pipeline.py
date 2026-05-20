@@ -7,7 +7,7 @@ import geopandas as gpd
 import pytest
 from shapely.geometry import box
 
-from georeset.cli.data.filter_pipeline import (
+from georeset_wiki_landcover.cli.data.filter_pipeline import (
     filter_articles_by_polygons,
     filter_osm_by_corine,
     filter_pipeline,
@@ -240,7 +240,7 @@ class TestFilterCorineStep:
 
     def test_exclude_artificial_surface_polygons(self):
         """Artificial surface polygons (code starting with 1) should be excluded."""
-        from georeset.fetchers.data_fetcher import DataFetcher
+        from georeset_wiki_landcover.fetchers.data_fetcher import DataFetcher
 
         fetcher = DataFetcher()
         gdf = fetcher.load_data(exclude_artificial=True)

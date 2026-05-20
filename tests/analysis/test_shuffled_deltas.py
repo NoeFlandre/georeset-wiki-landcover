@@ -1,4 +1,7 @@
-from georeset.analysis.shuffled_deltas import compute_shuffled_delta_rows, primary_metric_name
+from georeset_wiki_landcover.analysis.shuffled_deltas import (
+    compute_shuffled_delta_rows,
+    primary_metric_name,
+)
 
 
 def test_compute_shuffled_delta_rows_matches_with_model_columns_and_scores():

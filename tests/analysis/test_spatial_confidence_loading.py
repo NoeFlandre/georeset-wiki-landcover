@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from georeset.analysis.spatial_confidence_loading import load_spatial_confidence
+from georeset_wiki_landcover.analysis.spatial_confidence_loading import load_spatial_confidence
 
 
 def test_load_csv_normalizes_pageid_to_string(tmp_path: Path) -> None:

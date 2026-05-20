@@ -1,6 +1,6 @@
 # Article-Type + Relevance Stratified Evaluation v1
 
-This experiment asks whether French Wikipedia category metadata helps explain where GeoReset article-text classification works.
+This experiment asks whether French Wikipedia category metadata helps explain where GeoReset Wiki Land-Cover article-text classification works.
 
 It is an analysis-only experiment. No LLM was rerun. The analysis reused the frozen Qwen and Gemma prediction files, the existing land-use evidence metadata, and the existing CORINE spatial-confidence table. The new signal is a deterministic, category-derived article-type proxy built from French Wikipedia categories and page metadata.
 

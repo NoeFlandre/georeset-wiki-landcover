@@ -1,4 +1,4 @@
-from georeset.utils.math import safe_div
+from georeset_wiki_landcover.utils.math import safe_div
 
 
 def test_safe_div_returns_quotient_for_nonzero_denominator() -> None:

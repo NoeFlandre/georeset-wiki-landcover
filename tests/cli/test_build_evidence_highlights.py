@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from georeset.cli.data.build_evidence_highlights import main
+from georeset_wiki_landcover.cli.data.build_evidence_highlights import main
 
 
 def _write_json(path: Path, payload: object) -> None:

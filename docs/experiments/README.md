@@ -1,6 +1,6 @@
 # Experiment Reports
 
-This directory contains human-readable reports for GeoReset experiments. Reports
+This directory contains human-readable reports for GeoReset Wiki Land-Cover experiments. Reports
 are grouped chronologically so the research path is clear as new experiments are
 added.
 

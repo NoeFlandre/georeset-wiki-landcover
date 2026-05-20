@@ -3,16 +3,16 @@ set -euo pipefail
 
 ACCESS_HOST="${G5K_ACCESS_HOST:-nflandre@access.grid5000.fr}"
 SITE="${G5K_SITE:-nancy}"
-REMOTE_DIR="${G5K_REMOTE_DIR:-georeset}"
+REMOTE_DIR="${G5K_REMOTE_DIR:-georeset_wiki_landcover}"
 REMOTE_USER="${G5K_REMOTE_USER:-${ACCESS_HOST%@*}}"
 REMOTE_HOME="${G5K_REMOTE_HOME:-/home/${REMOTE_USER}}"
 REMOTE_PROJECT_DIR="${G5K_REMOTE_PROJECT_DIR:-${REMOTE_HOME}/${REMOTE_DIR}}"
 REMOTE_ACCESS_DIR="${SITE}/${REMOTE_DIR}"
-OUTPUT_PATH="${GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH:-data/wiki/article_landuse_evidence_summaries.json}"
+OUTPUT_PATH="${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_OUTPUT_PATH:-data/wiki/article_landuse_evidence_summaries.json}"
 JOB_SCRIPT="scripts/cluster/run_landuse_evidence_summarization_job.sh"
 OAR_PROPERTIES="${G5K_OAR_PROPERTIES:-${OAR_PROPERTIES:-gpu_mem>=32000}}"
 WALLTIME="${G5K_LANDUSE_EVIDENCE_WALLTIME:-20:00:00}"
-AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"
+AUTO_SYNC="${GEORESET_WIKI_LANDCOVER_AUTO_SYNC:-0}"
 
 mkdir -p data/wiki
 
@@ -46,12 +46,12 @@ SUBMIT_OUTPUT="$(
   ssh -o BatchMode=yes "${ACCESS_HOST}" "
     ssh ${SITE} 'cd \"${REMOTE_PROJECT_DIR}\" && chmod +x \"${JOB_SCRIPT}\" && \
       oarsub -q production -l host=1/gpu=1,walltime=${WALLTIME} -p \"${OAR_PROPERTIES}\" -O OAR_%jobid%.out -E OAR_%jobid%.err \"env \
-        GEORESET_MODEL_PATH=\\\"${GEORESET_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf}\\\" \
-        GEORESET_MODEL_REPO_ID=\\\"${GEORESET_MODEL_REPO_ID:-}\\\" \
-        GEORESET_LANDUSE_EVIDENCE_INPUT_PATH=\\\"${GEORESET_LANDUSE_EVIDENCE_INPUT_PATH:-data/wiki/article_contents.json}\\\" \
-        GEORESET_LANDUSE_EVIDENCE_OUTPUT_PATH=\\\"${OUTPUT_PATH}\\\" \
-        GEORESET_LANDUSE_EVIDENCE_SEED=\\\"${GEORESET_LANDUSE_EVIDENCE_SEED:-42}\\\" \
-        GEORESET_LANDUSE_EVIDENCE_TEMPERATURE=\\\"${GEORESET_LANDUSE_EVIDENCE_TEMPERATURE:-0.0}\\\" \
+        GEORESET_WIKI_LANDCOVER_MODEL_PATH=\\\"${GEORESET_WIKI_LANDCOVER_MODEL_PATH:-Qwen3.6-27B-Q4_0.gguf}\\\" \
+        GEORESET_WIKI_LANDCOVER_MODEL_REPO_ID=\\\"${GEORESET_WIKI_LANDCOVER_MODEL_REPO_ID:-}\\\" \
+        GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_INPUT_PATH=\\\"${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_INPUT_PATH:-data/wiki/article_contents.json}\\\" \
+        GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_OUTPUT_PATH=\\\"${OUTPUT_PATH}\\\" \
+        GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_SEED=\\\"${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_SEED:-42}\\\" \
+        GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_TEMPERATURE=\\\"${GEORESET_WIKI_LANDCOVER_LANDUSE_EVIDENCE_TEMPERATURE:-0.0}\\\" \
         G5K_REMOTE_DIR=\\\"${REMOTE_DIR}\\\" \
         G5K_REMOTE_PROJECT_DIR=\\\"${REMOTE_PROJECT_DIR}\\\" \
         bash ./\\\"${JOB_SCRIPT}\\\"\"'
@@ -70,11 +70,11 @@ echo "Watch status: ssh -o BatchMode=yes ${ACCESS_HOST} \"ssh ${SITE} 'oarstat -
 echo "Watch stderr: ssh -o BatchMode=yes ${ACCESS_HOST} \"ssh ${SITE} 'tail -f ${REMOTE_PROJECT_DIR}/OAR_${JOB_ID}.err'\""
 if [ "${AUTO_SYNC}" != "1" ]; then
   echo "Auto-sync disabled to avoid repeated SSH polling. Run sync_summaries.sh manually when needed."
-  echo "Manual sync: GEORESET_SUMMARY_OUTPUT=${OUTPUT_PATH} SYNC_ONCE=1 bash scripts/cluster/sync_summaries.sh"
+  echo "Manual sync: GEORESET_WIKI_LANDCOVER_SUMMARY_OUTPUT=${OUTPUT_PATH} SYNC_ONCE=1 bash scripts/cluster/sync_summaries.sh"
   exit 0
 fi
 
-GEORESET_SUMMARY_OUTPUT="${OUTPUT_PATH}" \
+GEORESET_WIKI_LANDCOVER_SUMMARY_OUTPUT="${OUTPUT_PATH}" \
 G5K_ACCESS_HOST="${ACCESS_HOST}" \
 G5K_SITE="${SITE}" \
 G5K_REMOTE_DIR="${REMOTE_DIR}" \

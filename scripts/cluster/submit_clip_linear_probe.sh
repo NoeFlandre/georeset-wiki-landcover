@@ -3,14 +3,14 @@ set -euo pipefail
 
 ACCESS_HOST="${G5K_ACCESS_HOST:-nflandre@access.grid5000.fr}"
 SITE="${G5K_SITE:-nancy}"
-REMOTE_DIR="${G5K_REMOTE_DIR:-georeset}"
+REMOTE_DIR="${G5K_REMOTE_DIR:-georeset_wiki_landcover}"
 REMOTE_USER="${G5K_REMOTE_USER:-${ACCESS_HOST%@*}}"
 REMOTE_HOME="${G5K_REMOTE_HOME:-/home/${REMOTE_USER}}"
 REMOTE_PROJECT_DIR="${G5K_REMOTE_PROJECT_DIR:-${REMOTE_HOME}/${REMOTE_DIR}}"
 REMOTE_ACCESS_DIR="${SITE}/${REMOTE_DIR}"
 JOB_SCRIPT="scripts/cluster/run_clip_linear_probe_job.sh"
 OUTPUT_DIR="${CLIP_OUTPUT_DIR:-data/experiments/012_clip_linear_probe_weak_labels/clip_linear_probe_weak_labels_v1}"
-AUTO_SYNC="${GEORESET_AUTO_SYNC:-0}"
+AUTO_SYNC="${GEORESET_WIKI_LANDCOVER_AUTO_SYNC:-0}"
 OAR_QUEUE="${G5K_OAR_QUEUE:-production}"
 OAR_PROPERTIES="${G5K_OAR_PROPERTIES:-gpu_mem>=16000}"
 

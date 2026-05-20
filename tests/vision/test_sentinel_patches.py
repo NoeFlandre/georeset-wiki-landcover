@@ -4,7 +4,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from georeset.vision.sentinel_patches import sentinel2_planetary_computer_fetcher, write_patch_cache
+from georeset_wiki_landcover.vision.sentinel_patches import (
+    sentinel2_planetary_computer_fetcher,
+    write_patch_cache,
+)
 
 
 def test_write_patch_cache_stores_only_successful_uint8_rgb_patches(tmp_path: Path) -> None:

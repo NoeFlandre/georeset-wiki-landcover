@@ -1,7 +1,7 @@
 import pytest
 
-from georeset.cli.csv_args import parse_csv_ints, parse_csv_strings
-from georeset.cli.image_probe_args import (
+from georeset_wiki_landcover.cli.csv_args import parse_csv_ints, parse_csv_strings
+from georeset_wiki_landcover.cli.image_probe_args import (
     embedding_cache_paths,
     image_probe_splits_path,
     sample_weights_path,

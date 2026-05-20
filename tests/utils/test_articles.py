@@ -1,4 +1,4 @@
-from georeset.utils.articles import index_articles_by_pageid
+from georeset_wiki_landcover.utils.articles import index_articles_by_pageid
 
 
 def test_index_articles_by_pageid_normalizes_pageids_and_preserves_first_duplicate():

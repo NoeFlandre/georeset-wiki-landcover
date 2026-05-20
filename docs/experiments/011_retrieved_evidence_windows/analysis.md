@@ -135,9 +135,9 @@ Generated data and analysis artifacts:
 
 Code paths:
 
-- `src/georeset/text/retrieved_evidence_windows.py`
-- `src/georeset/cli/data/build_retrieved_evidence_windows.py`
-- `src/georeset/cli/analysis/evaluate_retrieved_evidence_windows_experiment.py`
+- `src/georeset_wiki_landcover/text/retrieved_evidence_windows.py`
+- `src/georeset_wiki_landcover/cli/data/build_retrieved_evidence_windows.py`
+- `src/georeset_wiki_landcover/cli/analysis/evaluate_retrieved_evidence_windows_experiment.py`
 
 ## Next Step
 

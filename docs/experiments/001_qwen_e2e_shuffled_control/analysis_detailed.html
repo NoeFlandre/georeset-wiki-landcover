@@ -282,7 +282,7 @@
     <h1>Experiment 001 Deep Dive: Qwen e2e with Deterministic Shuffled Controls</h1>
     <div class="subtitle">
       Full implementation and result audit for <span class="mono">article_text_classification_e2e_with_shuffled_control_v1</span>.
-      All computations are inside <span class="mono">/Users/noeflandre/georeset</span>.
+      All computations are inside <span class="mono">/Users/noeflandre/georeset_wiki_landcover</span>.
     </div>
 
     <div class="panel">
@@ -350,7 +350,7 @@
               <div class="small">12 runs + cross-table deltas</div>
             </div>
           </div>
-          <p class="caption">Mapping is centralized in <a href="/Users/noeflandre/georeset/src/georeset/experiment_paths.py">src/georeset/experiment_paths.py</a>.</p>
+          <p class="caption">Mapping is centralized in <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/experiment_paths.py">src/georeset_wiki_landcover/experiment_paths.py</a>.</p>
         </div>
         <div>
           <h3>2.2 Area selection</h3>
@@ -358,7 +358,7 @@
             <li><span class="mono">data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp</span> is the CORINE geometry source.</li>
             <li><span class="mono">data/corine/bounds.json</span> stores Alsace bounds used during preprocessing.</li>
             <li>Ground-truth points are built by joining article coordinates with polygons.</li>
-            <li>Join policy is fixed to <span class="mono">intersects</span> in <span class="mono">src/georeset/spatial/policy.py</span>.</li>
+            <li>Join policy is fixed to <span class="mono">intersects</span> in <span class="mono">src/georeset_wiki_landcover/spatial/policy.py</span>.</li>
           </ul>
           <div class="metric-grid">
             <div class="metric-card"><div class="k">DataPaths default</div><div class="v mono">data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp</div></div>
@@ -372,10 +372,10 @@
 
     <div class="panel">
       <h2>3) Implementation walkthrough (exact code path)</h2>
-      <p>Entry point for reruns is <a href="/Users/noeflandre/georeset/pyproject.toml">pyproject.toml</a> entrypoint <span class="mono">georeset-classify-articles</span> -> <span class="mono">src/georeset/cli/data/classify_articles.py</span> -> <span class="mono">src/georeset/classification/runner.py</span>.</p>
+      <p>Entry point for reruns is <a href="/Users/noeflandre/georeset_wiki_landcover/pyproject.toml">pyproject.toml</a> entrypoint <span class="mono">georeset-wiki-landcover-classify-articles</span> -> <span class="mono">src/georeset_wiki_landcover/cli/data/classify_articles.py</span> -> <span class="mono">src/georeset_wiki_landcover/classification/runner.py</span>.</p>
       <div class="mermaid"> 
         flowchart LR
-          A["CLI entrypoint: georeset-classify-articles"] --> B["parse_args: task + text_source"]
+          A["CLI entrypoint: georeset-wiki-landcover-classify-articles"] --> B["parse_args: task + text_source"]
           B --> C["Load wiki/articles and model config<br/>(DataPaths + ModelSettings.from_env)"]
           C --> D["load_text_source(text_source)<br/>and optional file-specific fallback checks"]
           D --> E["load_task_setup(task)<br/>CORINE/Osm ground truth"]
@@ -389,8 +389,8 @@
           L --> M["overview.csv/overview.md + shuffled_delta.csv"]
       </div>
       <div class="flow">
-        <div class="item"><strong>3.1 Defaults and configuration:</strong> <span class="mono">src/georeset/config.py</span> sets model path to <span class="mono">Qwen3.6-27B-Q4_0.gguf</span>, seed 42, temperature 0.0. Environment is only used for model path and repo id in current code.</div>
-        <div class="item"><strong>3.2 Text sources:</strong> in <span class="mono">src/georeset/classification/text_sources.py</span>, <span class="mono">load_text_source</span> supports summaries, no-place summaries, content, landuse evidence, evidence cards, highlighted windows, etc. This experiment uses only <span class="mono">summary</span>, <span class="mono">summary_no_place</span>, and <span class="mono">content</span> plus shuffled variants.</div>
+        <div class="item"><strong>3.1 Defaults and configuration:</strong> <span class="mono">src/georeset_wiki_landcover/config.py</span> sets model path to <span class="mono">Qwen3.6-27B-Q4_0.gguf</span>, seed 42, temperature 0.0. Environment is only used for model path and repo id in current code.</div>
+        <div class="item"><strong>3.2 Text sources:</strong> in <span class="mono">src/georeset_wiki_landcover/classification/text_sources.py</span>, <span class="mono">load_text_source</span> supports summaries, no-place summaries, content, landuse evidence, evidence cards, highlighted windows, etc. This experiment uses only <span class="mono">summary</span>, <span class="mono">summary_no_place</span>, and <span class="mono">content</span> plus shuffled variants.</div>
         <div class="item"><strong>3.2a What these text sources look like:</strong> the first experiment introduces the generic text inputs used throughout later reports.
           <div class="source-example">
             <div>
@@ -416,11 +416,11 @@ L'édifice fait l'objet d'une inscription au titre des monuments historiques dep
         </div>
         <div class="item"><strong>3.3 Ground truth setup:</strong> <span class="mono">load_task_setup</span> dispatches two pipelines:
           <ul>
-            <li><strong>corine_level2:</strong> <a href="/Users/noeflandre/georeset/src/georeset/classification/ground_truth.py">build_corine_ground_truth</a></li>
-            <li><strong>osm:</strong> <a href="/Users/noeflandre/georeset/src/georeset/classification/ground_truth.py">build_osm_ground_truth</a></li>
+            <li><strong>corine_level2:</strong> <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/ground_truth.py">build_corine_ground_truth</a></li>
+            <li><strong>osm:</strong> <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/ground_truth.py">build_osm_ground_truth</a></li>
           </ul>
         </div>
-        <div class="item"><strong>3.4 LLM prompting and parsing:</strong> <a href="/Users/noeflandre/georeset/src/georeset/classification/llm_classifier.py">LLMClassifier</a> builds schema-constrained JSON prompts, calls <span class="mono">complete_json</span> with <span class="mono">SINGLE_SCHEMA</span> or <span class="mono">MULTI_SCHEMA</span>, then parses via <a href="/Users/noeflandre/georeset/src/georeset/classification/prediction_parser.py">prediction_parser</a>. Unknown labels in OSM JSON can be filtered without failing if all extracted labels are still valid.</div>
+        <div class="item"><strong>3.4 LLM prompting and parsing:</strong> <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/llm_classifier.py">LLMClassifier</a> builds schema-constrained JSON prompts, calls <span class="mono">complete_json</span> with <span class="mono">SINGLE_SCHEMA</span> or <span class="mono">MULTI_SCHEMA</span>, then parses via <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/prediction_parser.py">prediction_parser</a>. Unknown labels in OSM JSON can be filtered without failing if all extracted labels are still valid.</div>
         <div class="item"><strong>3.5 Reproducible shuffled control:</strong> <span class="mono">apply_shuffled_text_control</span> does a deterministic permutation on eligible IDs using <span class="mono">random.Random(seed)</span>, tries 100 swaps to avoid self-maps, and then applies a full rotation fallback.</div>
         <div class="item"><strong>3.6 Resume-safe writes:</strong> existing prediction files are read and fingerprint-skipped unless <span class="mono">--retry-failed</span> is set. Metrics use only <span class="mono">parse_status == ok</span> predictions as evaluated rows.</div>
       </div>
@@ -429,7 +429,7 @@ L'édifice fait l'objet d'une inscription au titre des monuments historiques dep
           <h3>3.7 CORINE ground-truth exact logic</h3>
           <ul>
             <li>Lat/Lon to WGS84 points via ArticleMeta.</li>
-            <li><a href="/Users/noeflandre/georeset/src/georeset/classification/ground_truth.py">Exclude artificial classes</a> with code prefix <span class="mono">1</span>.</li>
+            <li><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/ground_truth.py">Exclude artificial classes</a> with code prefix <span class="mono">1</span>.</li>
             <li>Convert <span class="mono">code_18</span> to first two digits as level-2 label.</li>
             <li>Intersect each point with polygons; keep only rows with exactly one unique label for that page.</li>
             <li>Examples with multi-label or no-label are excluded from target set.</li>
@@ -469,7 +469,7 @@ L'édifice fait l'objet d'une inscription au titre des monuments historiques dep
           </ul>
         </div>
       </div>
-      <p class="caption">Implementation in <span class="mono">src/georeset/classification/metrics.py</span>.</p>
+      <p class="caption">Implementation in <span class="mono">src/georeset_wiki_landcover/classification/metrics.py</span>.</p>
       <div class="split">
         <div>
           <h3>Important safety / robustness details</h3>
@@ -501,43 +501,43 @@ L'édifice fait l'objet d'une inscription au titre des monuments historiques dep
           <tbody>
             <tr>
               <td>Aligned experiment</td>
-              <td><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_v1">data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_v1</a></td>
+              <td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_v1">data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_v1</a></td>
               <td>6 aligned runs (summary/no_place/content for CORINE and OSM)</td>
             </tr>
             <tr>
               <td>Shuffled control</td>
-              <td><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_shuffled_control_v1">data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_shuffled_control_v1</a></td>
+              <td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_shuffled_control_v1">data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_shuffled_control_v1</a></td>
               <td>6 shuffled-only runs</td>
             </tr>
             <tr>
               <td>Combined report</td>
-              <td><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1">data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1</a></td>
+              <td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1">data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1</a></td>
               <td>12 runs + combined overview + shuffled deltas</td>
             </tr>
             <tr>
               <td>CLI entry point</td>
-              <td><a href="/Users/noeflandre/georeset/src/georeset/cli/data/classify_articles.py">src/georeset/cli/data/classify_articles.py</a></td>
-              <td>maps to <span class="mono">uv run georeset-classify-articles</span></td>
+              <td><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/data/classify_articles.py">src/georeset_wiki_landcover/cli/data/classify_articles.py</a></td>
+              <td>maps to <span class="mono">uv run georeset-wiki-landcover-classify-articles</span></td>
             </tr>
             <tr>
               <td>Runner</td>
-              <td><a href="/Users/noeflandre/georeset/src/georeset/classification/runner.py">src/georeset/classification/runner.py</a></td>
+              <td><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/runner.py">src/georeset_wiki_landcover/classification/runner.py</a></td>
               <td>core orchestration + metrics + serialization</td>
             </tr>
             <tr>
               <td>Summarization script</td>
-              <td><a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/summarize_classification_experiment.py">src/georeset/cli/analysis/summarize_classification_experiment.py</a></td>
+              <td><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/analysis/summarize_classification_experiment.py">src/georeset_wiki_landcover/cli/analysis/summarize_classification_experiment.py</a></td>
               <td>creates overview.csv / overview.md</td>
             </tr>
             <tr>
               <td>Cluster launcher</td>
-              <td><a href="/Users/noeflandre/georeset/scripts/cluster/submit_classification.sh">scripts/cluster/submit_classification.sh</a></td>
-              <td>submits OAR job with uv + <span class="mono">GEORESET_CLASSIFICATION_*</span> env</td>
+              <td><a href="/Users/noeflandre/georeset_wiki_landcover/scripts/cluster/submit_classification.sh">scripts/cluster/submit_classification.sh</a></td>
+              <td>submits OAR job with uv + <span class="mono">GEORESET_WIKI_LANDCOVER_CLASSIFICATION_*</span> env</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p>Typical command shape: <span class="mono">GEORESET_CLASSIFICATION_TASK=corine_level2 GEORESET_CLASSIFICATION_TEXT_SOURCE=content uv run georeset-classify-articles --task ... --text-source ...</span>.</p>
+      <p>Typical command shape: <span class="mono">GEORESET_WIKI_LANDCOVER_CLASSIFICATION_TASK=corine_level2 GEORESET_WIKI_LANDCOVER_CLASSIFICATION_TEXT_SOURCE=content uv run georeset-wiki-landcover-classify-articles --task ... --text-source ...</span>.</p>
     </div>
 
     <div class="panel">
@@ -616,7 +616,7 @@ L'édifice fait l'objet d'une inscription au titre des monuments historiques dep
         <div class="bar-row"><div class="bar-label">osm summary_no_place</div><div class="bar-shell"><div class="bar-fill bar-flat" style="width:8.36%">+0.0836</div></div><div class="small">0.0836</div></div>
         <div class="bar-row"><div class="bar-label">osm content</div><div class="bar-shell"><div class="bar-fill bar-flat" style="width:10.55%">+0.1055</div></div><div class="small">0.1055</div></div>
       </div>
-      <p class="caption">From <a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1/shuffled_delta.csv">shuffled_delta.csv</a>.</p>
+      <p class="caption">From <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1/shuffled_delta.csv">shuffled_delta.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -692,15 +692,15 @@ L'édifice fait l'objet d'une inscription au titre des monuments historiques dep
       <h3>If reproducing locally</h3>
       <pre>
 1. Ensure model files and inputs under data/wiki, data/corine, data/osm.
-2. Run command: uv run georeset-classify-articles \
+2. Run command: uv run georeset-wiki-landcover-classify-articles \
    --task corine_level2 --text-source content --temperature 0.0 \
    --output-dir data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1
 3. Repeat all needed combinations: six aligned + six shuffled.
 4. Run summary + deltas:
-   uv run georeset-summarize-classification-experiment \
+   uv run georeset-wiki-landcover-summarize-classification-experiment \
      data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1
       </pre>
-      <p class="caption">For exact command signatures and defaults, see runner/CLI modules linked above; for cluster runs, use <a href="/Users/noeflandre/georeset/scripts/cluster/submit_classification.sh">submit_classification.sh</a> and <a href="/Users/noeflandre/georeset/scripts/cluster/run_classification_job.sh">run_classification_job.sh</a>.</p>
+      <p class="caption">For exact command signatures and defaults, see runner/CLI modules linked above; for cluster runs, use <a href="/Users/noeflandre/georeset_wiki_landcover/scripts/cluster/submit_classification.sh">submit_classification.sh</a> and <a href="/Users/noeflandre/georeset_wiki_landcover/scripts/cluster/run_classification_job.sh">run_classification_job.sh</a>.</p>
     </div>
 
     <div class="panel">
@@ -711,22 +711,22 @@ L'édifice fait l'objet d'une inscription au titre des monuments historiques dep
             <tr><th>What</th><th>Absolute path</th></tr>
           </thead>
           <tbody>
-            <tr><td>Experiment directory</td><td><a href="/Users/noeflandre/georeset/docs/experiments/001_qwen_e2e_shuffled_control">docs/experiments/001_qwen_e2e_shuffled_control</a></td></tr>
-            <tr><td>Detailed HTML output (this file)</td><td><a href="/Users/noeflandre/georeset/docs/experiments/001_qwen_e2e_shuffled_control/analysis_detailed.html">docs/experiments/001_qwen_e2e_shuffled_control/analysis_detailed.html</a></td></tr>
-            <tr><td>Combined artifact</td><td><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1">data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1</a></td></tr>
-            <tr><td>Combined overview.csv</td><td><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1/overview.csv">overview.csv</a></td></tr>
-            <tr><td>Combined shuffled_delta.csv</td><td><a href="/Users/noeflandre/georeset/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1/shuffled_delta.csv">shuffled_delta.csv</a></td></tr>
-            <tr><td>Runner</td><td><a href="/Users/noeflandre/georeset/src/georeset/classification/runner.py">src/georeset/classification/runner.py</a></td></tr>
-            <tr><td>LLM classifier</td><td><a href="/Users/noeflandre/georeset/src/georeset/classification/llm_classifier.py">src/georeset/classification/llm_classifier.py</a></td></tr>
-            <tr><td>Text source control</td><td><a href="/Users/noeflandre/georeset/src/georeset/classification/text_sources.py">src/georeset/classification/text_sources.py</a></td></tr>
-            <tr><td>Ground truth logic</td><td><a href="/Users/noeflandre/georeset/src/georeset/classification/ground_truth.py">src/georeset/classification/ground_truth.py</a></td></tr>
-            <tr><td>Prediction parser</td><td><a href="/Users/noeflandre/georeset/src/georeset/classification/prediction_parser.py">src/georeset/classification/prediction_parser.py</a></td></tr>
-            <tr><td>Metrics</td><td><a href="/Users/noeflandre/georeset/src/georeset/classification/metrics.py">src/georeset/classification/metrics.py</a></td></tr>
-            <tr><td>Summarizer</td><td><a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/summarize_classification_experiment.py">src/georeset/cli/analysis/summarize_classification_experiment.py</a></td></tr>
+            <tr><td>Experiment directory</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/docs/experiments/001_qwen_e2e_shuffled_control">docs/experiments/001_qwen_e2e_shuffled_control</a></td></tr>
+            <tr><td>Detailed HTML output (this file)</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/docs/experiments/001_qwen_e2e_shuffled_control/analysis_detailed.html">docs/experiments/001_qwen_e2e_shuffled_control/analysis_detailed.html</a></td></tr>
+            <tr><td>Combined artifact</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1">data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1</a></td></tr>
+            <tr><td>Combined overview.csv</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1/overview.csv">overview.csv</a></td></tr>
+            <tr><td>Combined shuffled_delta.csv</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/001_qwen_e2e_shuffled_control/article_text_classification_e2e_with_shuffled_control_v1/shuffled_delta.csv">shuffled_delta.csv</a></td></tr>
+            <tr><td>Runner</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/runner.py">src/georeset_wiki_landcover/classification/runner.py</a></td></tr>
+            <tr><td>LLM classifier</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/llm_classifier.py">src/georeset_wiki_landcover/classification/llm_classifier.py</a></td></tr>
+            <tr><td>Text source control</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/text_sources.py">src/georeset_wiki_landcover/classification/text_sources.py</a></td></tr>
+            <tr><td>Ground truth logic</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/ground_truth.py">src/georeset_wiki_landcover/classification/ground_truth.py</a></td></tr>
+            <tr><td>Prediction parser</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/prediction_parser.py">src/georeset_wiki_landcover/classification/prediction_parser.py</a></td></tr>
+            <tr><td>Metrics</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/metrics.py">src/georeset_wiki_landcover/classification/metrics.py</a></td></tr>
+            <tr><td>Summarizer</td><td><a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/analysis/summarize_classification_experiment.py">src/georeset_wiki_landcover/cli/analysis/summarize_classification_experiment.py</a></td></tr>
           </tbody>
         </table>
       </div>
-      <div class="footnote">Created by combining implementation tracing with output artifacts. All values and file paths are directly from the repository snapshot at /Users/noeflandre/georeset.</div>
+      <div class="footnote">Created by combining implementation tracing with output artifacts. All values and file paths are directly from the repository snapshot at /Users/noeflandre/georeset_wiki_landcover.</div>
     </div>
   </div>
 </body>

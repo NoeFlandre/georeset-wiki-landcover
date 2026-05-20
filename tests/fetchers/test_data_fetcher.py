@@ -7,7 +7,7 @@ import geopandas as gpd
 import pytest
 from shapely.geometry import Point
 
-from georeset.fetchers.data_fetcher import DataFetcher
+from georeset_wiki_landcover.fetchers.data_fetcher import DataFetcher
 
 DATA_FILE = "data/corine/alsace_corine_land_use_2018/occupation_sol_2018.shp"
 requires_data = pytest.mark.skipif(not os.path.exists(DATA_FILE), reason="Data file not found")

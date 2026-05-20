@@ -241,13 +241,13 @@
       <div class="panel">
         <h2>2) Source artifacts</h2>
         <ul>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0">Qwen land-use classification</a></li>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__gemma4_31b_it_q4_0">Gemma land-use classification</a></li>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_spatial_confidence_v1__qwen3_6_27b_q4_0">Qwen spatial reevaluation</a></li>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_spatial_confidence_v1__gemma4_31b_it_q4_0">Gemma spatial reevaluation</a></li>
-          <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1">Consolidated comparison tables</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0">Qwen land-use classification</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__gemma4_31b_it_q4_0">Gemma land-use classification</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_spatial_confidence_v1__qwen3_6_27b_q4_0">Qwen spatial reevaluation</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_spatial_confidence_v1__gemma4_31b_it_q4_0">Gemma spatial reevaluation</a></li>
+          <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1">Consolidated comparison tables</a></li>
         </ul>
-        <p>Canonical paths are registered in <a href="/Users/noeflandre/georeset/src/georeset/experiment_paths.py">src/georeset/experiment_paths.py</a>.</p>
+        <p>Canonical paths are registered in <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/experiment_paths.py">src/georeset_wiki_landcover/experiment_paths.py</a>.</p>
       </div>
 
       <div class="panel">
@@ -274,7 +274,7 @@ flowchart TD
         <div>
           <h3>Evidence summarization</h3>
           <ul>
-            <li>Generator: <a href="/Users/noeflandre/georeset/src/georeset/fetchers/landuse_evidence_summarizer.py">LandUseEvidenceSummarizer</a>.</li>
+            <li>Generator: <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/fetchers/landuse_evidence_summarizer.py">LandUseEvidenceSummarizer</a>.</li>
             <li>Output schema includes summary, relevance, evidence types, no-place evidence sentences, and uncertainty.</li>
             <li>Prompt version is <span class="mono">LANDUSE_EVIDENCE_PROMPT_VERSION = 2</span>.</li>
             <li>Output is normalized for whitespace and rejected if it leaks private markers or place-title variants.</li>
@@ -284,10 +284,10 @@ flowchart TD
         <div>
           <h3>Classification and evaluation</h3>
           <ul>
-            <li>Text loading happens in <a href="/Users/noeflandre/georeset/src/georeset/classification/runner.py">classification/runner.py</a> by reading <span class="mono">landuse_evidence_summary</span> from the evidence JSON.</li>
+            <li>Text loading happens in <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/classification/runner.py">classification/runner.py</a> by reading <span class="mono">landuse_evidence_summary</span> from the evidence JSON.</li>
             <li>Shuffled control uses <span class="mono">landuse_evidence_summary_shuffled</span> mapped to the same base text source.</li>
-            <li>Non-spatial metrics are produced by <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/summarize_classification_experiment.py">summarize_classification_experiment.py</a>.</li>
-            <li>Spatial metrics are produced by <a href="/Users/noeflandre/georeset/src/georeset/cli/analysis/evaluate_predictions_with_spatial_confidence.py">evaluate_predictions_with_spatial_confidence.py</a>.</li>
+            <li>Non-spatial metrics are produced by <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/analysis/summarize_classification_experiment.py">summarize_classification_experiment.py</a>.</li>
+            <li>Spatial metrics are produced by <a href="/Users/noeflandre/georeset_wiki_landcover/src/georeset_wiki_landcover/cli/analysis/evaluate_predictions_with_spatial_confidence.py">evaluate_predictions_with_spatial_confidence.py</a>.</li>
             <li>Comparison outputs are collected in <span class="mono">landuse_evidence_comparison_v1</span>.</li>
           </ul>
         </div>
@@ -346,7 +346,7 @@ flowchart TD
           <tr><td>Gemma</td><td>OSM</td><td>exact match</td><td>0.1018</td><td>0.0873</td><td class="positive">+0.0145</td><td>+0.0496</td><td>+0.0511</td></tr>
         </tbody>
       </table>
-      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_aligned_vs_shuffled.csv">landuse_aligned_vs_shuffled.csv</a>.</p>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_aligned_vs_shuffled.csv">landuse_aligned_vs_shuffled.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -367,7 +367,7 @@ flowchart TD
           <tr><td>Gemma</td><td>OSM</td><td>summary_no_place</td><td>0.2473</td><td>0.1018</td><td class="negative">-0.1418</td><td>-0.0603</td><td>-0.0805</td></tr>
         </tbody>
       </table>
-      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_vs_generic_nonspatial.csv">landuse_vs_generic_nonspatial.csv</a>.</p>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_vs_generic_nonspatial.csv">landuse_vs_generic_nonspatial.csv</a>.</p>
       <div class="warn-box">The evidence extractor helps remove location leakage and compresses the input, but it appears to discard cues that the classifier needs. It is better as metadata or a quality signal than as a drop-in replacement for article text.</div>
     </div>
 
@@ -385,7 +385,7 @@ flowchart TD
           <tr><td>Gemma</td><td>OSM</td><td>275</td><td>160</td><td>0.1018</td><td>0.1125</td><td class="positive">+0.0107</td><td>+0.0081</td><td>+0.0160</td></tr>
         </tbody>
       </table>
-      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_spatial_all_vs_point250.csv">landuse_spatial_all_vs_point250.csv</a>.</p>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_spatial_all_vs_point250.csv">landuse_spatial_all_vs_point250.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -416,7 +416,7 @@ flowchart TD
           </table>
         </div>
       </div>
-      <p class="foot">Sources: <a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/qwen_vs_gemma_landuse_nonspatial.csv">qwen_vs_gemma_landuse_nonspatial.csv</a> and <a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/qwen_vs_gemma_landuse_spatial.csv">qwen_vs_gemma_landuse_spatial.csv</a>.</p>
+      <p class="foot">Sources: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/qwen_vs_gemma_landuse_nonspatial.csv">qwen_vs_gemma_landuse_nonspatial.csv</a> and <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/qwen_vs_gemma_landuse_spatial.csv">qwen_vs_gemma_landuse_spatial.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -436,7 +436,7 @@ flowchart TD
           <tr><td>51</td><td>12</td><td>0.2609</td><td>0.2597</td><td class="neutral">+0.0011</td><td>Essentially tied on low-support inland waters.</td></tr>
         </tbody>
       </table>
-      <p class="foot">Source: <a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/corine_per_class_landuse_point250m_delta.csv">corine_per_class_landuse_point250m_delta.csv</a>.</p>
+      <p class="foot">Source: <a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/corine_per_class_landuse_point250m_delta.csv">corine_per_class_landuse_point250m_delta.csv</a>.</p>
     </div>
 
     <div class="panel">
@@ -454,15 +454,15 @@ flowchart TD
     <div class="panel">
       <h2>13) Artifact index</h2>
       <ul>
-        <li><a href="/Users/noeflandre/georeset/docs/experiments/005_landuse_evidence_summary/analysis.md">Original experiment 005 analysis.md</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0/overview.csv">Qwen overview.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__gemma4_31b_it_q4_0/overview.csv">Gemma overview.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_aligned_vs_shuffled.csv">landuse_aligned_vs_shuffled.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_vs_generic_nonspatial.csv">landuse_vs_generic_nonspatial.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_spatial_all_vs_point250.csv">landuse_spatial_all_vs_point250.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/qwen_vs_gemma_landuse_nonspatial.csv">qwen_vs_gemma_landuse_nonspatial.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/qwen_vs_gemma_landuse_spatial.csv">qwen_vs_gemma_landuse_spatial.csv</a></li>
-        <li><a href="/Users/noeflandre/georeset/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/corine_per_class_landuse_point250m_delta.csv">corine_per_class_landuse_point250m_delta.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/docs/experiments/005_landuse_evidence_summary/analysis.md">Original experiment 005 analysis.md</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__qwen3_6_27b_q4_0/overview.csv">Qwen overview.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/article_text_classification_landuse_evidence_v1__gemma4_31b_it_q4_0/overview.csv">Gemma overview.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_aligned_vs_shuffled.csv">landuse_aligned_vs_shuffled.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_vs_generic_nonspatial.csv">landuse_vs_generic_nonspatial.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/landuse_spatial_all_vs_point250.csv">landuse_spatial_all_vs_point250.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/qwen_vs_gemma_landuse_nonspatial.csv">qwen_vs_gemma_landuse_nonspatial.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/qwen_vs_gemma_landuse_spatial.csv">qwen_vs_gemma_landuse_spatial.csv</a></li>
+        <li><a href="/Users/noeflandre/georeset_wiki_landcover/data/experiments/005_landuse_evidence_summary/landuse_evidence_comparison_v1/corine_per_class_landuse_point250m_delta.csv">corine_per_class_landuse_point250m_delta.csv</a></li>
       </ul>
       <p class="foot">This detailed HTML was written from the checked markdown analysis and revalidated against generated CSV artifacts in the local workspace.</p>
     </div>

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from georeset.vision.linear_probe import fit_linear_probe, predict_linear_probe
+from georeset_wiki_landcover.vision.linear_probe import fit_linear_probe, predict_linear_probe
 
 
 def test_linear_probe_learns_separable_embeddings() -> None:

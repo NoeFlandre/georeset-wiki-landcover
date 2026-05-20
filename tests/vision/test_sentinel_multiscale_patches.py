@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from georeset.vision.sentinel_multiscale_patches import (
+from georeset_wiki_landcover.vision.sentinel_multiscale_patches import (
     dataset_xy_from_lonlat,
     patch_contact_sheet_path,
     patch_stats_path,

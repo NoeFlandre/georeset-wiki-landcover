@@ -1,4 +1,4 @@
-from georeset.text.labels import EVIDENCE_TYPE_LABELS, enum_text, format_list
+from georeset_wiki_landcover.text.labels import EVIDENCE_TYPE_LABELS, enum_text, format_list
 
 
 def test_enum_text_uses_label_map_and_falls_back_to_readable_token() -> None:

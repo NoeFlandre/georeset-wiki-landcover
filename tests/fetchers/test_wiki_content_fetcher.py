@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from georeset.fetchers.wiki_content_fetcher import WikiContentFetcher
+from georeset_wiki_landcover.fetchers.wiki_content_fetcher import WikiContentFetcher
 
 
 class TestWikiContentFetcher:

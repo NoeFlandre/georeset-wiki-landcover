@@ -1,8 +1,8 @@
 import csv
 import json
 
-from georeset.cli.analysis import summarize_classification_experiment as summarize
-from georeset.cli.analysis.summarize_classification_experiment import (
+from georeset_wiki_landcover.cli.analysis import summarize_classification_experiment as summarize
+from georeset_wiki_landcover.cli.analysis.summarize_classification_experiment import (
     FIELDNAMES,
     SHUFFLED_DELTA_FIELDNAMES,
     collect_metric_rows,
