@@ -49,6 +49,36 @@ class TestArticleSummarizer:
         assert "sans jamais mentionner le nom du lieu décrit" in result["metadata"]["prompt"]
         assert result["metadata"]["summary_mode"] == "no_place"
 
+    def test_no_place_mode_removes_title_from_generated_summary(self):
+        summarizer = ArticleSummarizer(model_path=None, summary_mode="no_place")
+
+        with patch.object(
+            summarizer,
+            "_generate_summary",
+            return_value="Strasbourg est une ville française avec une cathédrale.",
+        ):
+            result = summarizer.summarize(self.sample_article)
+
+        assert "Strasbourg" not in result["summary"]
+        assert result["summary"] == "ce lieu est une ville française avec une cathédrale."
+
+    def test_no_place_mode_removes_separator_variants_from_generated_summary(self):
+        summarizer = ArticleSummarizer(model_path=None, summary_mode="no_place")
+        article = {
+            **self.sample_article,
+            "title": "Neewiller-près-Lauterbourg",
+        }
+
+        with patch.object(
+            summarizer,
+            "_generate_summary",
+            return_value="Neewiller près Lauterbourg est une commune rurale.",
+        ):
+            result = summarizer.summarize(article)
+
+        assert "Neewiller" not in result["summary"]
+        assert result["summary"] == "ce lieu est une commune rurale."
+
     def test_invalid_summary_mode_fails_fast(self):
         with pytest.raises(ValueError, match="summary_mode"):
             ArticleSummarizer(model_path=None, summary_mode="invalid")
@@ -219,6 +249,37 @@ class TestArticleSummarizer:
                 result = json.load(f)
             assert result["1"]["summary"] == "New place summary"
             assert result["1"]["metadata"]["summary_mode"] == "place"
+
+    def test_process_file_scrubs_existing_no_place_summary_title_leak(self):
+        """Existing no-place summaries with article-title leaks must be repaired."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input_path = os.path.join(tmpdir, "articles.json")
+            output_path = os.path.join(tmpdir, "summaries.json")
+
+            article = {"title": "Strasbourg", "content": "Content A", "url": "http://a"}
+            with open(input_path, "w") as f:
+                json.dump({"1": article}, f)
+
+            with open(output_path, "w") as f:
+                json.dump(
+                    {
+                        "1": {
+                            **article,
+                            "summary": "Strasbourg est une ville française.",
+                            "metadata": {"summary_mode": "no_place"},
+                        }
+                    },
+                    f,
+                )
+
+            summarizer = ArticleSummarizer(model_path=None, summary_mode="no_place")
+            with patch.object(summarizer, "_generate_summary") as generate_summary:
+                summarizer.process_file(input_path, output_path)
+
+            with open(output_path) as f:
+                result = json.load(f)
+            assert result["1"]["summary"] == "ce lieu est une ville française."
+            generate_summary.assert_not_called()
 
     def test_process_file_removes_existing_private_fields(self):
         """Should clean private fields from resumed output files."""

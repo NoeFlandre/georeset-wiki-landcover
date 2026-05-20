@@ -96,6 +96,11 @@ def prediction_fingerprint(
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
 
+def text_fingerprint(text: str) -> str:
+    """Hash the exact text sent to the classifier for checkpoint invalidation."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     data_paths = DataPaths()
     model_settings = ModelSettings.from_env()
@@ -306,11 +311,17 @@ def main(
 
     for pageid in eligible:
         previous_record = cast(dict[str, Any] | None, existing.get(pageid))
-        if should_skip_record(previous_record, fp_current, retry_failed=args.retry_failed):
+        text = text_records[pageid]
+        text_sha256 = text_fingerprint(text)
+        if should_skip_record(
+            previous_record,
+            fp_current,
+            text_sha256=text_sha256,
+            retry_failed=args.retry_failed,
+        ):
             continue
         article = articles_by_pageid.get(pageid)
         title = article.get("title", pageid) if article else pageid
-        text = text_records[pageid]
         if args.task == "corine_level2":
             result = classifier.classify_single_label(
                 text=text,
@@ -335,6 +346,7 @@ def main(
             target=target[pageid],
             result=result,
             fingerprint=fp_current,
+            text_sha256=text_sha256,
             extra_metadata=extra_metadata,
         )
         existing[pageid] = prediction_record

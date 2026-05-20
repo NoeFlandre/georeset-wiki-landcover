@@ -7,6 +7,7 @@ from typing import Any, cast
 
 from georeset.contracts import ArticleContent, SummaryRecord
 from georeset.llm.llama_client import DEFAULT_GGUF_FILENAME, JsonChatClient, LlamaChatClient
+from georeset.text.title_scrubbing import remove_title_variants
 from georeset.utils.json_io import read_json_file, write_json_atomic
 
 logger = logging.getLogger(__name__)
@@ -94,7 +95,12 @@ class ArticleSummarizer:
             "Réponds uniquement avec un objet JSON qui respecte le schéma fourni. "
             "N'inclus aucun raisonnement, balise <think>, Markdown ou champ supplémentaire."
         )
-        result["summary"] = self._generate_summary(prompt, system_prompt)
+        summary = self._generate_summary(prompt, system_prompt)
+        if self.summary_mode == "no_place":
+            summary = remove_title_variants(summary, article["title"])
+            if not summary:
+                raise ValueError("No-place summary is empty after title removal")
+        result["summary"] = summary
 
         result["metadata"] = {
             "model": self.model_path if self.model_path else DEFAULT_GGUF_FILENAME,
@@ -175,6 +181,21 @@ class ArticleSummarizer:
         is_no_place_prompt = "sans jamais mentionner le nom du lieu décrit" in prompt
         return (self.summary_mode == "no_place") == is_no_place_prompt
 
+    def _repair_existing_summary(self, article: SummaryRecord) -> SummaryRecord:
+        """Apply deterministic invariants that older resumable artifacts may predate."""
+        if self.summary_mode != "no_place":
+            return article
+        summary = article.get("summary")
+        title = article.get("title")
+        if not isinstance(summary, str) or not isinstance(title, str):
+            return article
+        scrubbed = remove_title_variants(summary, title)
+        if scrubbed == summary:
+            return article
+        repaired = cast(SummaryRecord, dict(article))
+        repaired["summary"] = scrubbed
+        return repaired
+
     def process_file(self, input_path: str, output_path: str) -> None:
         """
         Process all articles from input_path and save summaries to output_path.
@@ -193,6 +214,11 @@ class ArticleSummarizer:
 
         valid_keys = {str(k) for k in articles}
         existing = {k: v for k, v in existing.items() if str(k) in valid_keys}
+        existing = {
+            k: self._repair_existing_summary(v)
+            for k, v in existing.items()
+            if self._has_current_summary(cast(dict[str, Any], v))
+        }
 
         to_process = {
             k: v

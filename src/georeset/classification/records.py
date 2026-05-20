@@ -5,10 +5,19 @@ from typing import Any
 from georeset.classification.types import ClassificationTarget, PredictionRecord, PredictionResult
 
 
-def should_skip_record(record: dict[str, Any] | None, fingerprint: str, retry_failed: bool) -> bool:
+def should_skip_record(
+    record: dict[str, Any] | None,
+    fingerprint: str,
+    *,
+    text_sha256: str,
+    retry_failed: bool,
+) -> bool:
     if not record or record.get("parse_status") != "ok":
         return False
-    return retry_failed or record.get("metadata", {}).get("fingerprint") == fingerprint
+    metadata = record.get("metadata", {})
+    if metadata.get("text_sha256") != text_sha256:
+        return False
+    return retry_failed or metadata.get("fingerprint") == fingerprint
 
 
 def build_prediction_record(
@@ -18,9 +27,14 @@ def build_prediction_record(
     target: ClassificationTarget,
     result: PredictionResult,
     fingerprint: str,
+    text_sha256: str,
     extra_metadata: dict[str, Any] | None = None,
 ) -> PredictionRecord:
-    metadata = {**result.get("metadata", {}), "fingerprint": fingerprint}
+    metadata = {
+        **result.get("metadata", {}),
+        "fingerprint": fingerprint,
+        "text_sha256": text_sha256,
+    }
     if extra_metadata:
         metadata.update(extra_metadata)
     return {

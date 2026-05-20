@@ -11,6 +11,7 @@ from georeset.cli.data.classify_articles import (
     load_text_source,
     parse_args,
     prediction_fingerprint,
+    text_fingerprint,
 )
 from georeset.config import DataPaths, ModelSettings
 
@@ -503,6 +504,7 @@ class TestResumability:
             ) = _corine_temp_setup(tmpdir)
             classifier = MagicMock()
             fp = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["31"])
+            text_sha256 = text_fingerprint("Une forêt.")
             classifier.classify_single_label.return_value = {
                 "prediction": "31",
                 "parse_status": "ok",
@@ -542,6 +544,7 @@ class TestResumability:
                                 "system_prompt": "...",
                                 "allowed_labels": ["31"],
                                 "fingerprint": fp,
+                                "text_sha256": text_sha256,
                             },
                         }
                     },
@@ -575,6 +578,78 @@ class TestResumability:
                     ]
                 )
             classifier.classify_single_label.assert_not_called()
+
+    def test_reprocesses_existing_ok_when_text_fingerprint_changes(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            (
+                summaries_path,
+                contents_path,
+                no_place_path,
+                wiki_path,
+                corine_shp,
+                output_dir,
+            ) = _corine_temp_setup(tmpdir)
+            classifier = MagicMock()
+            fp = prediction_fingerprint("corine_level2", "summary", "m.gguf", 42, 0.0, ["31"])
+            classifier.classify_single_label.return_value = {
+                "prediction": "31",
+                "prediction_labels": ["31"],
+                "parse_status": "ok",
+                "error": None,
+                "raw_response": '{"label":"31"}',
+                "metadata": {},
+            }
+            pred_path = os.path.join(output_dir, "corine_level2_summary_predictions.json")
+            with open(pred_path, "w") as f:
+                json.dump(
+                    {
+                        "100": {
+                            "pageid": "100",
+                            "title": "Forêt",
+                            "target": "31",
+                            "prediction": "31",
+                            "parse_status": "ok",
+                            "raw_response": '{"label":"31"}',
+                            "error": None,
+                            "metadata": {
+                                "fingerprint": fp,
+                                "text_sha256": "stale-text-hash",
+                            },
+                        }
+                    },
+                    f,
+                )
+            from georeset.cli.data.classify_articles import main
+
+            with patch(
+                "georeset.cli.data.classify_articles.LLMClassifier", return_value=classifier
+            ):
+                main(
+                    [
+                        "--task",
+                        "corine_level2",
+                        "--text-source",
+                        "summary",
+                        "--wiki-articles-path",
+                        wiki_path,
+                        "--article-contents-path",
+                        contents_path,
+                        "--article-summaries-path",
+                        summaries_path,
+                        "--article-summaries-no-place-path",
+                        no_place_path,
+                        "--corine-polygons-path",
+                        corine_shp,
+                        "--output-dir",
+                        output_dir,
+                        "--model-path",
+                        "m.gguf",
+                    ]
+                )
+            classifier.classify_single_label.assert_called_once()
+            with open(pred_path) as f:
+                records = json.load(f)
+            assert records["100"]["metadata"]["text_sha256"] == text_fingerprint("Une forêt.")
 
     def test_overwrites_existing_error_record(self):
         with tempfile.TemporaryDirectory() as tmpdir:

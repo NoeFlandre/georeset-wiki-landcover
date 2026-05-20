@@ -8,6 +8,7 @@ CLASSIFICATION_POLICY_VERSION = _runner.CLASSIFICATION_POLICY_VERSION
 compute_metrics = _runner.compute_metrics
 load_text_source = _runner.load_text_source
 parse_args = _runner.parse_args
+text_fingerprint = _runner.text_fingerprint
 
 
 def prediction_fingerprint(
@@ -38,6 +39,7 @@ __all__ = [
     "main",
     "parse_args",
     "prediction_fingerprint",
+    "text_fingerprint",
 ]
 
 
