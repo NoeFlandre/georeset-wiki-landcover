@@ -300,20 +300,22 @@ step is the planned full grid rather than a scale claim.
 ## Repeated And Spatial-Block Results
 
 Repeated evaluation splits are alternative quality-spatial samples with their
-own pageids excluded from training before fitting. For
+own pageids excluded from training before fitting. The split CSV now writes
+explicit `train_for_<eval_split>` rows so that downstream scripts do not need to
+infer this exclusion rule from runner code. For
 `text_agreement_soft_weighted`, the corrected leakage-guarded means are:
 
 | Window | Repeated mean supported balanced accuracy | Repeated mean supported macro-F1 |
 | ---: | ---: | ---: |
-| 320 m | 0.649 | 0.636 |
-| 2240 m | 0.627 | 0.619 |
+| 320 m | 0.631 | 0.619 |
+| 2240 m | 0.631 | 0.625 |
 
 Spatial-block folds are lower:
 
 | Window | Spatial-block mean supported balanced accuracy | Spatial-block mean supported macro-F1 |
 | ---: | ---: | ---: |
-| 320 m | 0.493 | 0.487 |
-| 2240 m | 0.529 | 0.517 |
+| 320 m | 0.467 | 0.472 |
+| 2240 m | 0.537 | 0.524 |
 
 This is an important caution. Random repeated splits are no longer inflated by
 direct train/eval pageid overlap, but they can still be easier than geographic

@@ -34,13 +34,18 @@ FIELDNAMES = [
     "majority_macro_recall_baseline",
     "delta_macro_recall_vs_majority",
     "accuracy",
+    "accuracy_including_parse_errors_as_wrong",
     "exact_match_accuracy",
+    "exact_match_accuracy_including_parse_errors_as_empty",
     "macro_precision",
     "macro_recall",
     "macro_f1",
+    "macro_f1_including_parse_errors_as_wrong",
+    "macro_f1_including_parse_errors_as_empty",
     "micro_precision",
     "micro_recall",
     "micro_f1",
+    "micro_f1_including_parse_errors_as_empty",
     "n_labels_evaluated",
 ]
 
@@ -185,13 +190,28 @@ def collect_metric_rows(experiment_dir: Path) -> list[dict[str, Any]]:
                 else ""
             ),
             "accuracy": _metric_value(metrics, "accuracy"),
+            "accuracy_including_parse_errors_as_wrong": _metric_value(
+                metrics, "accuracy_including_parse_errors_as_wrong"
+            ),
             "exact_match_accuracy": _metric_value(metrics, "exact_match_accuracy"),
+            "exact_match_accuracy_including_parse_errors_as_empty": _metric_value(
+                metrics, "exact_match_accuracy_including_parse_errors_as_empty"
+            ),
             "macro_precision": _metric_value(metrics, "macro_precision"),
             "macro_recall": _metric_value(metrics, "macro_recall"),
             "macro_f1": _metric_value(metrics, "macro_f1"),
+            "macro_f1_including_parse_errors_as_wrong": _metric_value(
+                metrics, "macro_f1_including_parse_errors_as_wrong"
+            ),
+            "macro_f1_including_parse_errors_as_empty": _metric_value(
+                metrics, "macro_f1_including_parse_errors_as_empty"
+            ),
             "micro_precision": _metric_value(metrics, "micro_precision"),
             "micro_recall": _metric_value(metrics, "micro_recall"),
             "micro_f1": _metric_value(metrics, "micro_f1"),
+            "micro_f1_including_parse_errors_as_empty": _metric_value(
+                metrics, "micro_f1_including_parse_errors_as_empty"
+            ),
             "n_labels_evaluated": len(labels_evaluated),
         }
         rows.append(row)

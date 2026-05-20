@@ -102,13 +102,18 @@ OUTPUT_METRIC_COLUMNS = [
     "n_parse_error",
     "coverage",
     "accuracy",
+    "accuracy_including_parse_errors_as_wrong",
     "balanced_accuracy",
+    "balanced_accuracy_including_parse_errors_as_wrong",
     "macro_precision",
     "macro_recall",
     "macro_f1",
+    "macro_f1_including_parse_errors_as_wrong",
     "micro_precision",
     "micro_recall",
     "micro_f1",
+    "micro_f1_including_parse_errors_as_empty",
+    "macro_f1_including_parse_errors_as_empty",
     "weighted_f1",
     "jaccard",
     "hamming_loss",
@@ -118,6 +123,7 @@ OUTPUT_METRIC_COLUMNS = [
     "majority_labelset_exact_match_accuracy",
     "empty_set_exact_match_accuracy",
     "exact_match_accuracy",
+    "exact_match_accuracy_including_parse_errors_as_empty",
 ]
 
 QUALITY_SCORE_COLUMNS = [

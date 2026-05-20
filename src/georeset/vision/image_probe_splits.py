@@ -181,6 +181,23 @@ def _spatial_block_splits(frame: pd.DataFrame, *, n_folds: int = 5) -> pd.DataFr
     return pd.concat(rows, ignore_index=True) if rows else frame.iloc[0:0].copy()
 
 
+def _train_rows_for_eval_split(
+    base: pd.DataFrame,
+    *,
+    eval_rows: pd.DataFrame,
+    split_name: str,
+) -> list[pd.DataFrame]:
+    eval_pageids = set(eval_rows["pageid"].astype(str))
+    train_base = base[~base["pageid"].astype(str).isin(eval_pageids)].copy()
+    rows: list[pd.DataFrame] = []
+    for tier in TRAIN_TIERS:
+        tier_rows = train_base[_tier_mask(train_base, tier)].copy()
+        tier_rows["split"] = f"train_for_{split_name}"
+        tier_rows["tier"] = tier
+        rows.append(tier_rows)
+    return rows
+
+
 def build_image_probe_splits_v2(
     *,
     quality_scores_path: Path,
@@ -210,12 +227,25 @@ def build_image_probe_splits_v2(
         rows["split"] = "train"
         rows["tier"] = tier
         split_rows.append(rows)
+    split_rows.extend(
+        _train_rows_for_eval_split(base, eval_rows=eval_strict, split_name="eval_strict")
+    )
     for repeat in range(n_repeated_splits):
         rows = _sample_eval(eval_pool, seed=seed + repeat, eval_per_class=eval_per_class).copy()
         rows["split"] = f"repeated_eval_seed_{repeat}"
         rows["tier"] = "eval_repeated"
         split_rows.append(rows)
-    split_rows.append(_spatial_block_splits(base))
+        split_rows.extend(
+            _train_rows_for_eval_split(
+                base, eval_rows=rows, split_name=f"repeated_eval_seed_{repeat}"
+            )
+        )
+    spatial_rows = _spatial_block_splits(base)
+    split_rows.append(spatial_rows)
+    for split_name, rows in spatial_rows.groupby("split", sort=True):
+        split_rows.extend(
+            _train_rows_for_eval_split(base, eval_rows=rows, split_name=str(split_name))
+        )
     splits = pd.concat(split_rows, ignore_index=True)
     weights = base[
         [
@@ -237,6 +267,8 @@ def build_image_probe_splits_v2(
         "train_tiers": list(TRAIN_TIERS),
         "evaluation_pool": "quality_spatial",
         "evaluation_selection_excludes_model_agreement": True,
+        "split_specific_train_rows": True,
+        "split_specific_train_rule": "train_for_<eval_split> excludes that eval split's pageids",
         "n_rows": int(len(base)),
         "n_eval_strict": int(len(eval_strict)),
     }

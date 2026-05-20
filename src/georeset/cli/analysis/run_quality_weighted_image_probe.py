@@ -106,8 +106,15 @@ def _attach_weights(splits: pd.DataFrame, weights: pd.DataFrame) -> pd.DataFrame
 
 
 def _training_rows_for_eval_split(
-    base_train_rows: pd.DataFrame, eval_rows: pd.DataFrame
+    rows: pd.DataFrame,
+    base_train_rows: pd.DataFrame,
+    eval_rows: pd.DataFrame,
+    tier: str,
+    split: str,
 ) -> pd.DataFrame:
+    split_specific = rows[(rows["split"] == f"train_for_{split}") & (rows["tier"] == tier)].copy()
+    if not split_specific.empty:
+        return split_specific
     eval_pageids = set(eval_rows["pageid"].astype(str))
     if not eval_pageids:
         return base_train_rows
@@ -193,7 +200,9 @@ def run_probe(
                 eval_rows = rows[rows["split"] == split].copy()
                 if eval_rows.empty:
                     continue
-                train_for_split = _training_rows_for_eval_split(base_train_rows, eval_rows)
+                train_for_split = _training_rows_for_eval_split(
+                    rows, base_train_rows, eval_rows, tier, str(split)
+                )
                 if train_for_split.empty or train_for_split["label"].nunique() < 2:
                     continue
                 train_rows, train_x = stack_embeddings_for_rows(

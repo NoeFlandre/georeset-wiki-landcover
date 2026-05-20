@@ -37,10 +37,13 @@ def test_single_label_subset_metrics_compute_expected_fields() -> None:
     assert metrics["n_parse_error"] == 2
     assert metrics["coverage"] == pytest.approx(0.5)
     assert metrics["accuracy"] == pytest.approx(0.5)
+    assert metrics["accuracy_including_parse_errors_as_wrong"] == pytest.approx(0.25)
     assert metrics["balanced_accuracy"] == pytest.approx(0.5)
+    assert metrics["balanced_accuracy_including_parse_errors_as_wrong"] == pytest.approx(1 / 6)
     assert metrics["macro_precision"] == pytest.approx(0.25)
     assert metrics["macro_recall"] == pytest.approx(0.5)
     assert metrics["macro_f1"] == pytest.approx(0.3333333333333333)
+    assert metrics["macro_f1_including_parse_errors_as_wrong"] == pytest.approx(0.2)
     assert metrics["weighted_precision"] == pytest.approx(0.375)
     assert metrics["weighted_recall"] == pytest.approx(0.75)
     assert metrics["weighted_f1"] == pytest.approx(0.5)
@@ -87,6 +90,8 @@ def test_single_label_subset_metrics_treats_missing_or_parse_error_predictions_a
     assert metrics["coverage"] == pytest.approx(0.25)
     # pageid 2 has missing prediction; only row 1 is evaluated.
     assert metrics["accuracy"] == pytest.approx(1.0)
+    assert metrics["accuracy_including_parse_errors_as_wrong"] == pytest.approx(0.25)
+    assert metrics["balanced_accuracy_including_parse_errors_as_wrong"] == pytest.approx(0.25)
 
 
 def test_multilabel_subset_metrics_compute_expected_fields() -> None:
@@ -117,12 +122,15 @@ def test_multilabel_subset_metrics_compute_expected_fields() -> None:
     assert metrics["n_parse_error"] == 1
     assert metrics["coverage"] == pytest.approx(0.75)
     assert metrics["exact_match_accuracy"] == pytest.approx(2 / 3)
+    assert metrics["exact_match_accuracy_including_parse_errors_as_empty"] == pytest.approx(0.5)
     assert metrics["micro_precision"] == pytest.approx(2 / 3)
     assert metrics["micro_recall"] == pytest.approx(2 / 3)
     assert metrics["micro_f1"] == pytest.approx(0.6666666666666666)
+    assert metrics["micro_f1_including_parse_errors_as_empty"] == pytest.approx(0.5)
     assert metrics["macro_precision"] == pytest.approx(0.2222222222222222)
     assert metrics["macro_recall"] == pytest.approx(0.3333333333333333)
     assert metrics["macro_f1"] == pytest.approx(0.26666666666666666)
+    assert metrics["macro_f1_including_parse_errors_as_empty"] == pytest.approx(2 / 9)
     assert metrics["jaccard"] == pytest.approx(0.5)
     assert metrics["hamming_loss"] == pytest.approx(4 / 9)
     assert metrics["majority_labelset_exact_match_accuracy"] == pytest.approx(0.5)

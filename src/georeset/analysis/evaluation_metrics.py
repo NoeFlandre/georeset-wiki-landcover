@@ -67,11 +67,23 @@ def compute_single_label_subset_metrics(
         "n_parse_error": base_metrics["n_parse_error"],
         "coverage": base_metrics["coverage"],
         "accuracy": base_metrics["accuracy"],
+        "accuracy_including_parse_errors_as_wrong": base_metrics[
+            "accuracy_including_parse_errors_as_wrong"
+        ],
         "macro_precision": base_metrics["macro_precision"],
         "macro_recall": base_metrics["macro_recall"],
+        "macro_recall_including_parse_errors_as_wrong": base_metrics[
+            "macro_recall_including_parse_errors_as_wrong"
+        ],
         "macro_f1": base_metrics["macro_f1"],
+        "macro_f1_including_parse_errors_as_wrong": base_metrics[
+            "macro_f1_including_parse_errors_as_wrong"
+        ],
     }
     metrics["balanced_accuracy"] = metrics["macro_recall"]
+    metrics["balanced_accuracy_including_parse_errors_as_wrong"] = metrics[
+        "macro_recall_including_parse_errors_as_wrong"
+    ]
     metrics["weighted_precision"] = _weighted_from_per_label(base_metrics["per_label"], "precision")
     metrics["weighted_recall"] = _weighted_from_per_label(base_metrics["per_label"], "recall")
     metrics["weighted_f1"] = _weighted_from_per_label(base_metrics["per_label"], "f1")
@@ -151,12 +163,21 @@ def compute_multilabel_subset_metrics(
         "n_parse_error": base_metrics["n_parse_error"],
         "coverage": base_metrics["coverage"],
         "exact_match_accuracy": base_metrics["exact_match_accuracy"],
+        "exact_match_accuracy_including_parse_errors_as_empty": base_metrics[
+            "exact_match_accuracy_including_parse_errors_as_empty"
+        ],
         "micro_precision": base_metrics["micro_precision"],
         "micro_recall": base_metrics["micro_recall"],
         "micro_f1": base_metrics["micro_f1"],
+        "micro_f1_including_parse_errors_as_empty": base_metrics[
+            "micro_f1_including_parse_errors_as_empty"
+        ],
         "macro_precision": base_metrics["macro_precision"],
         "macro_recall": base_metrics["macro_recall"],
         "macro_f1": base_metrics["macro_f1"],
+        "macro_f1_including_parse_errors_as_empty": base_metrics[
+            "macro_f1_including_parse_errors_as_empty"
+        ],
     }
     jaccards: list[float] = []
     hamming_errors = 0

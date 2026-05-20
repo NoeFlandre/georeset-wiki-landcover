@@ -99,7 +99,25 @@ def test_build_image_probe_splits_excludes_eval_from_training_and_keeps_agreemen
 
     eval_rows = splits[splits["split"] == "eval_strict"]
     train_rows = splits[splits["split"] == "train"]
+    eval_splits = [
+        str(split)
+        for split in splits["split"].unique()
+        if str(split) == "eval_strict"
+        or str(split).startswith("repeated_eval_seed_")
+        or str(split).startswith("spatial_block_fold_")
+    ]
     assert not set(eval_rows["pageid"]).intersection(set(train_rows["pageid"]))
+    for split in eval_splits:
+        split_eval_pageids = set(splits.loc[splits["split"].eq(split), "pageid"])
+        split_train_rows = splits[splits["split"].eq(f"train_for_{split}")]
+        if split_eval_pageids == set(splits["pageid"]):
+            assert split_train_rows.empty
+            continue
+        assert not split_train_rows.empty
+        assert not split_eval_pageids.intersection(set(split_train_rows["pageid"]))
+        assert {"all", "spatial_only", "quality_spatial", "text_spatial_agreement"}.issubset(
+            set(split_train_rows["tier"])
+        )
     assert set(eval_rows["tier"]) == {"eval_strict"}
     assert "models_agree_with_label" in eval_rows.columns
     assert {"all", "spatial_only", "quality_spatial", "text_spatial_agreement"}.issubset(

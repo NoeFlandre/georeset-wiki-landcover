@@ -73,9 +73,12 @@ class SingleLabelMetricResult(TypedDict):
     n_parse_error: int
     coverage: float
     accuracy: float
+    accuracy_including_parse_errors_as_wrong: NotRequired[float]
     macro_precision: float
     macro_recall: float
+    macro_recall_including_parse_errors_as_wrong: NotRequired[float]
     macro_f1: float
+    macro_f1_including_parse_errors_as_wrong: NotRequired[float]
     per_label: dict[str, PerLabelMetric]
     task: NotRequired[str]
     text_source: NotRequired[str]
@@ -89,12 +92,15 @@ class MultiLabelMetricResult(TypedDict):
     n_parse_error: int
     coverage: float
     exact_match_accuracy: float
+    exact_match_accuracy_including_parse_errors_as_empty: NotRequired[float]
     micro_precision: float
     micro_recall: float
     micro_f1: float
+    micro_f1_including_parse_errors_as_empty: NotRequired[float]
     macro_precision: float
     macro_recall: float
     macro_f1: float
+    macro_f1_including_parse_errors_as_empty: NotRequired[float]
     per_label: dict[str, PerLabelMetric]
     task: NotRequired[str]
     text_source: NotRequired[str]
@@ -108,14 +114,21 @@ class SpatialSubsetMetricResult(TypedDict, total=False):
     n_parse_error: int
     coverage: float
     accuracy: float
+    accuracy_including_parse_errors_as_wrong: float
     balanced_accuracy: float
+    balanced_accuracy_including_parse_errors_as_wrong: float
     exact_match_accuracy: float
+    exact_match_accuracy_including_parse_errors_as_empty: float
     micro_precision: float
     micro_recall: float
     micro_f1: float
+    micro_f1_including_parse_errors_as_empty: float
     macro_precision: float
     macro_recall: float
+    macro_recall_including_parse_errors_as_wrong: float
     macro_f1: float
+    macro_f1_including_parse_errors_as_wrong: float
+    macro_f1_including_parse_errors_as_empty: float
     weighted_precision: float
     weighted_recall: float
     weighted_f1: float

@@ -29,6 +29,11 @@ classification under the same text-source and shuffled-control protocol.
   `parse_status="ambiguous"` and excluded from evaluated metrics.
 - OSM stays multi-label. Predictions and ground truth may contain several valid
   labels.
+- Default accuracy/F1 metrics are evaluated only on successfully parsed
+  predictions and must be read with `coverage`. Conservative companion fields
+  ending in `including_parse_errors_as_wrong` or
+  `including_parse_errors_as_empty` count missing/parse-failed predictions as
+  wrong.
 - Seed, temperature, prompts, allowed labels, text source, model path, model
   repo ID, and `CLASSIFICATION_POLICY_VERSION` are part of the reproducibility
   contract.
