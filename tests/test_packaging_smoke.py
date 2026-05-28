@@ -164,6 +164,10 @@ def test_mypy_has_strict_overrides_for_typed_core_modules():
     assert "strict = true" in pyproject
 
 
+def test_package_declares_inline_typing_support():
+    assert Path("src/georeset_wiki_landcover/py.typed").is_file()
+
+
 def test_production_outputs_use_atomic_file_helpers():
     forbidden_patterns = [
         re.compile(r"with open\([^\\n]+,\\s*[\"']w"),

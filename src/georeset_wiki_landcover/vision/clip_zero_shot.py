@@ -16,8 +16,8 @@ from georeset_wiki_landcover.vision.clip_embedding_cache import (
     stack_embeddings_for_rows,
 )
 from georeset_wiki_landcover.vision.linear_probe import evaluate_predictions
+from georeset_wiki_landcover.vision.types import FloatFeatures, normalize_features
 
-FloatFeatures = NDArray[np.float32]
 TextEncoder = Callable[[list[str]], FloatFeatures]
 
 
@@ -31,12 +31,6 @@ def zero_shot_predictions_path(output_dir: Path) -> Path:
 
 def zero_shot_summary_path(output_dir: Path) -> Path:
     return output_dir / "zero_shot_clip_summary.md"
-
-
-def _normalize(features: FloatFeatures) -> FloatFeatures:
-    norms = np.linalg.norm(features, axis=1, keepdims=True)
-    norms[norms == 0.0] = 1.0
-    return np.asarray(features / norms, dtype=np.float32)
 
 
 def build_corine_zero_shot_prompts(labels: Iterable[str]) -> dict[str, list[str]]:
@@ -60,8 +54,8 @@ def embed_label_prompts(
         if not prompts:
             raise ValueError(f"label {label} must have at least one prompt")
 
-        encoded = _normalize(text_encoder(prompts).astype(np.float32))
-        output[label] = _normalize(encoded.mean(axis=0, keepdims=True))[0]
+        encoded = normalize_features(text_encoder(prompts).astype(np.float32))
+        output[label] = normalize_features(encoded.mean(axis=0, keepdims=True))[0]
     return output
 
 
@@ -73,9 +67,9 @@ def predict_zero_shot(
         raise ValueError("text embeddings must not be empty")
 
     labels = np.array(sorted(text_embeddings), dtype=np.str_)
-    image_features = _normalize(image_embeddings.astype(np.float32))
+    image_features = normalize_features(image_embeddings.astype(np.float32))
     text_features = np.stack([text_embeddings[label] for label in labels]).astype(np.float32)
-    text_features = _normalize(text_features)
+    text_features = normalize_features(text_features)
     indices = np.argmax(image_features @ text_features.T, axis=1)
     return np.asarray(labels[indices], dtype=np.str_)
 

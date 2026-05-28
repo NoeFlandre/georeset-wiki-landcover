@@ -76,6 +76,8 @@ def test_write_multiscale_patch_caches_stores_scale_metadata(tmp_path: Path) -> 
 def test_write_patch_validation_artifacts_creates_stats_manifest_and_contact_sheet(
     tmp_path: Path,
 ) -> None:
+    pytest.importorskip("PIL")
+
     splits_path = tmp_path / "splits.csv"
     output_dir = tmp_path / "patches"
     pd.DataFrame(

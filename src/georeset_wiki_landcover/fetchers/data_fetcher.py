@@ -7,6 +7,7 @@ from georeset_wiki_landcover.config import DataPaths
 from georeset_wiki_landcover.utils.json_io import write_json_atomic
 
 WGS84 = "EPSG:4326"
+DEFAULT_CORINE_POLYGONS_PATH = DataPaths().corine_polygons
 logger = logging.getLogger(__name__)
 
 
@@ -18,9 +19,9 @@ class DataFetcher:
 
     def __init__(
         self,
-        data_path: str = DataPaths().corine_polygons,
+        data_path: str | os.PathLike[str] = DEFAULT_CORINE_POLYGONS_PATH,
     ):
-        self.data_path = data_path
+        self.data_path = os.fspath(data_path)
         self.gdf = None
         self._exclude_artificial = False
 

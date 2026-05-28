@@ -54,6 +54,16 @@ class TestDataFetcher:
 
         assert loaded.crs == "EPSG:4326"
 
+    def test_load_data_accepts_pathlike_data_path(self, tmp_path):
+        data_path = tmp_path / "corine.geojson"
+        gdf = gpd.GeoDataFrame({"code_18": ["311"]}, geometry=[Point(7.0, 48.0)], crs="EPSG:4326")
+        gdf.to_file(data_path, driver="GeoJSON")
+        fetcher = DataFetcher(data_path=data_path)
+
+        loaded = fetcher.load_data()
+
+        assert loaded["code_18"].tolist() == ["311"]
+
     def test_load_data_uses_logging_not_print(self, tmp_path):
         data_path = tmp_path / "corine.geojson"
         gdf = gpd.GeoDataFrame({"code_18": ["311"]}, geometry=[Point(7.0, 48.0)], crs="EPSG:4326")

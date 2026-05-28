@@ -24,7 +24,7 @@ def build_transformers_clip_text_encoder(*, model_name: str, device: str) -> Tex
         ) from exc
 
     processor = CLIPProcessor.from_pretrained(model_name)
-    model = CLIPModel.from_pretrained(model_name).to(device)  # type: ignore[arg-type]
+    model = CLIPModel.from_pretrained(model_name).to(device)
     model.eval()
 
     def encode(prompts: list[str]) -> NDArray[np.float32]:

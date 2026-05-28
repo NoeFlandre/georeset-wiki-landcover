@@ -6,9 +6,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from numpy.typing import NDArray
 
-FloatFeatures = NDArray[np.float32]
+from georeset_wiki_landcover.vision.types import FloatFeatures
 
 
 def load_embedding_cache(path: Path) -> dict[str, FloatFeatures]:

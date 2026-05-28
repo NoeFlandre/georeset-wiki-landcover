@@ -3,20 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Protocol
 
 import numpy as np
-from numpy.typing import NDArray
 
 from georeset_wiki_landcover.utils.json_io import write_npz_atomic
 from georeset_wiki_landcover.vision.clip_transformers import select_clip_features
-
-UInt8ImageBatch = NDArray[np.uint8]
-FloatFeatures = NDArray[np.float32]
-
-
-class PatchEncoder(Protocol):
-    def __call__(self, batch: UInt8ImageBatch) -> FloatFeatures: ...
+from georeset_wiki_landcover.vision.types import FloatFeatures, PatchEncoder, UInt8ImageBatch
 
 
 def embed_patch_cache(
@@ -60,7 +52,7 @@ def build_transformers_clip_encoder(
         ) from exc
 
     processor = CLIPProcessor.from_pretrained(model_name)
-    model = CLIPModel.from_pretrained(model_name).to(device)  # type: ignore[arg-type]
+    model = CLIPModel.from_pretrained(model_name).to(device)
     model.eval()
 
     def encode(batch: UInt8ImageBatch) -> FloatFeatures:

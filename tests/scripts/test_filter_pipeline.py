@@ -14,6 +14,22 @@ from georeset_wiki_landcover.cli.data.filter_pipeline import (
 )
 
 
+def _write_corine_fixture(path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    corine = gpd.GeoDataFrame(
+        {
+            "code_18": ["311", "112"],
+            "geometry": [
+                box(7.0, 48.0, 8.0, 49.0),
+                box(6.0, 47.0, 6.5, 47.5),
+            ],
+        },
+        crs="EPSG:4326",
+    )
+    corine.to_file(path)
+    return path
+
+
 class TestFilterPipeline:
     @pytest.fixture
     def temp_data_dir(self, tmp_path):
@@ -25,6 +41,9 @@ class TestFilterPipeline:
         corine_dir.mkdir()
         (corine_dir / "bounds.json").write_text(
             json.dumps({"min_lon": 7.0, "min_lat": 48.0, "max_lon": 8.0, "max_lat": 49.0})
+        )
+        _write_corine_fixture(
+            corine_dir / "alsace_corine_land_use_2018" / "occupation_sol_2018.shp"
         )
 
         wiki_dir = data_dir / "wiki"
@@ -41,8 +60,18 @@ class TestFilterPipeline:
 
         return data_dir
 
-    def test_filter_removes_articles_outside_corine(self, temp_data_dir):
+    def test_filter_removes_articles_outside_corine(self, temp_data_dir, monkeypatch):
         """Should remove wiki articles whose coordinates are not in any filtered CORINE polygon."""
+        from georeset_wiki_landcover.fetchers.data_fetcher import DataFetcher
+
+        corine_path = (
+            temp_data_dir / "corine" / "alsace_corine_land_use_2018" / "occupation_sol_2018.shp"
+        )
+        monkeypatch.setattr(
+            "georeset_wiki_landcover.cli.data.filter_pipeline.DataFetcher",
+            lambda: DataFetcher(data_path=str(corine_path)),
+        )
+
         wiki_articles = [
             {"pageid": 1, "lat": 48.5, "lon": 7.5},  # inside CORINE
             {"pageid": 2, "lat": 48.5, "lon": 9.5},  # outside CORINE
@@ -175,7 +204,17 @@ class TestFilterPipeline:
 
         assert json.loads(article_contents_path.read_text()) == {"1": {"content": "keep me"}}
 
-    def test_dry_run_reports_without_mutating_artifacts(self, temp_data_dir):
+    def test_dry_run_reports_without_mutating_artifacts(self, temp_data_dir, monkeypatch):
+        from georeset_wiki_landcover.fetchers.data_fetcher import DataFetcher
+
+        corine_path = (
+            temp_data_dir / "corine" / "alsace_corine_land_use_2018" / "occupation_sol_2018.shp"
+        )
+        monkeypatch.setattr(
+            "georeset_wiki_landcover.cli.data.filter_pipeline.DataFetcher",
+            lambda: DataFetcher(data_path=str(corine_path)),
+        )
+
         wiki_path = temp_data_dir / "wiki" / "wiki_articles.json"
         wiki_path.write_text(json.dumps([{"pageid": 1, "lat": 48.5, "lon": 7.5}]))
         contents_path = temp_data_dir / "wiki" / "article_contents.json"
@@ -238,11 +277,12 @@ class TestFilterPipeline:
 class TestFilterCorineStep:
     """Tests for CORINE filtering step."""
 
-    def test_exclude_artificial_surface_polygons(self):
+    def test_exclude_artificial_surface_polygons(self, tmp_path):
         """Artificial surface polygons (code starting with 1) should be excluded."""
         from georeset_wiki_landcover.fetchers.data_fetcher import DataFetcher
 
-        fetcher = DataFetcher()
+        data_path = _write_corine_fixture(tmp_path / "corine" / "occupation_sol_2018.shp")
+        fetcher = DataFetcher(data_path=str(data_path))
         gdf = fetcher.load_data(exclude_artificial=True)
         artificial = gdf[gdf["code_18"].str.startswith("1")]
         assert len(artificial) == 0

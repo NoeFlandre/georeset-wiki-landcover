@@ -4,17 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any
 
 import numpy as np
-from numpy.typing import NDArray
 
-UInt8ImageBatch = NDArray[np.uint8]
-FloatFeatures = NDArray[np.float32]
-
-
-class PatchEncoder(Protocol):
-    def __call__(self, batch: UInt8ImageBatch) -> FloatFeatures: ...
+from georeset_wiki_landcover.vision.types import (
+    FloatFeatures,
+    PatchEncoder,
+    UInt8ImageBatch,
+    normalize_features,
+)
 
 
 @dataclass(frozen=True)
@@ -22,13 +21,6 @@ class EncoderConfig:
     name: str
     model_name: str
     builder: Callable[[str, str], PatchEncoder]
-
-
-def _normalize(features: object) -> FloatFeatures:
-    array = np.asarray(features, dtype=np.float32)
-    norms = np.linalg.norm(array, axis=1, keepdims=True)
-    norms[norms == 0] = 1.0
-    return np.asarray(array / norms, dtype=np.float32)
 
 
 def _encoder_output_to_numpy(output: object) -> FloatFeatures:
@@ -55,7 +47,7 @@ def build_clip_encoder(model_name: str, device: str) -> PatchEncoder:
         raise RuntimeError("Image encoding requires `uv run --group vision ...`.") from exc
 
     processor = CLIPProcessor.from_pretrained(model_name)
-    model = CLIPModel.from_pretrained(model_name).to(device)  # type: ignore[arg-type]
+    model = CLIPModel.from_pretrained(model_name).to(device)
     model.eval()
 
     def encode(batch: UInt8ImageBatch) -> FloatFeatures:
@@ -63,7 +55,7 @@ def build_clip_encoder(model_name: str, device: str) -> PatchEncoder:
         inputs = processor(images=images, return_tensors="pt").to(device)
         with torch.no_grad():
             features = model.get_image_features(**inputs)
-        return _normalize(_encoder_output_to_numpy(features))
+        return normalize_features(_encoder_output_to_numpy(features))
 
     return encode
 
@@ -76,7 +68,7 @@ def build_dinov2_encoder(model_name: str, device: str) -> PatchEncoder:
     except ImportError as exc:
         raise RuntimeError("Image encoding requires `uv run --group vision ...`.") from exc
 
-    processor = AutoImageProcessor.from_pretrained(model_name)  # type: ignore[no-untyped-call]
+    processor = AutoImageProcessor.from_pretrained(model_name)
     model = AutoModel.from_pretrained(model_name).to(device)
     model.eval()
 
@@ -88,7 +80,7 @@ def build_dinov2_encoder(model_name: str, device: str) -> PatchEncoder:
             features = getattr(outputs, "pooler_output", None)
             if features is None:
                 features = outputs.last_hidden_state[:, 0]
-        return _normalize(_encoder_output_to_numpy(features))
+        return normalize_features(_encoder_output_to_numpy(features))
 
     return encode
 

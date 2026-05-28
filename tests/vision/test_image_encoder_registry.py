@@ -1,5 +1,11 @@
 import numpy as np
 
+from georeset_wiki_landcover.vision import (
+    clip_embedding_cache,
+    clip_embeddings,
+    clip_zero_shot,
+    image_encoder_registry,
+)
 from georeset_wiki_landcover.vision.image_encoder_registry import (
     ENCODER_REGISTRY,
     _encoder_output_to_numpy,
@@ -10,6 +16,14 @@ def test_image_encoder_registry_exposes_expected_model_configs_without_downloads
     assert ENCODER_REGISTRY["clip_base"].model_name == "openai/clip-vit-base-patch32"
     assert ENCODER_REGISTRY["clip_large"].model_name == "openai/clip-vit-large-patch14"
     assert ENCODER_REGISTRY["dinov2_base"].model_name == "facebook/dinov2-base"
+
+
+def test_image_patch_encoder_type_is_shared_across_embedding_modules() -> None:
+    assert clip_embeddings.PatchEncoder is image_encoder_registry.PatchEncoder
+    assert clip_embeddings.UInt8ImageBatch is image_encoder_registry.UInt8ImageBatch
+    assert clip_embeddings.FloatFeatures is image_encoder_registry.FloatFeatures
+    assert clip_embedding_cache.FloatFeatures is image_encoder_registry.FloatFeatures
+    assert clip_zero_shot.FloatFeatures is image_encoder_registry.FloatFeatures
 
 
 class _FakeTensor:
