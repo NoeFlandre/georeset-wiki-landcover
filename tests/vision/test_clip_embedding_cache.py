@@ -39,6 +39,14 @@ def test_load_embedding_cache_rejects_mismatched_rows(tmp_path: Path) -> None:
         load_embedding_cache(path)
 
 
+def test_load_embedding_cache_rejects_cache_missing_required_array(tmp_path: Path) -> None:
+    path = tmp_path / "embeddings.npz"
+    np.savez(path, pageids=np.array(["1"]))
+
+    with pytest.raises(KeyError, match="embeddings"):
+        load_embedding_cache(path)
+
+
 def test_stack_embeddings_for_rows_rejects_missing_pageids_by_default() -> None:
     rows = pd.DataFrame(
         [

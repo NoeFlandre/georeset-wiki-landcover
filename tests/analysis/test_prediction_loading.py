@@ -132,6 +132,29 @@ def test_load_prediction_records_filters_by_text_sources(tmp_path: Path) -> None
     assert set(loaded["pageid"]) == {"1", "3"}
 
 
+def test_load_prediction_records_ignores_malformed_files_and_payloads(tmp_path: Path) -> None:
+    experiment_dir = tmp_path / "malformed"
+    experiment_dir.mkdir()
+    _write_json(experiment_dir / "corine_level2_summary_predictions.json", [{"pageid": "1"}])
+    _write_json(
+        experiment_dir / "osm_summary_predictions.json",
+        {
+            "bad": "not a record",
+            "2": {
+                "pageid": "2",
+                "target": ["wood"],
+                "prediction": ["wood"],
+                "parse_status": "ok",
+            },
+        },
+    )
+
+    loaded = load_prediction_records(experiment_dir)
+
+    assert loaded["pageid"].tolist() == ["2"]
+    assert loaded["task"].tolist() == ["osm"]
+
+
 def test_load_prediction_records_includes_source_parent_dir_when_requested(tmp_path: Path) -> None:
     experiment_dir = tmp_path / "source_parent"
     experiment_dir.mkdir()

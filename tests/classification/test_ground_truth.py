@@ -86,3 +86,22 @@ def test_build_corine_ground_truth_boundary_different_level2_is_excluded():
         crs="EPSG:4326",
     )
     assert build_corine_ground_truth(articles, corine) == {}
+
+
+def test_ground_truth_builders_normalize_polygon_crs_before_spatial_join():
+    articles = [{"pageid": 100, "lat": 48.5, "lon": 7.5}]
+    corine = gpd.GeoDataFrame(
+        {"code_18": ["311"], "geometry": [box(7.0, 48.0, 8.0, 49.0)]},
+        crs="EPSG:4326",
+    ).to_crs("EPSG:3857")
+    osm = gpd.GeoDataFrame(
+        {
+            "osm_id": ["way/1"],
+            "landuse": ["meadow"],
+            "geometry": [box(7.0, 48.0, 8.0, 49.0)],
+        },
+        crs="EPSG:4326",
+    ).to_crs("EPSG:3857")
+
+    assert build_corine_ground_truth(articles, corine) == {"100": "31"}
+    assert build_osm_ground_truth(articles, osm) == {"100": ["meadow"]}

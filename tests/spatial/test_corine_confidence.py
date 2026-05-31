@@ -2,7 +2,7 @@ import math
 
 import geopandas as gpd
 import pytest
-from shapely.geometry import Point, box
+from shapely.geometry import Point, Polygon, box
 
 from georeset_wiki_landcover.spatial.corine_confidence import (
     compute_article_spatial_confidence,
@@ -111,3 +111,15 @@ def test_no_intersection_buffer_returns_safe_values():
     assert row["normalized_entropy_250m"] == 0.0
     assert row["coverage_share_250m"] == 0.0
     assert row["label_shares_250m"] == {}
+
+
+def test_compute_buffer_label_shares_repairs_invalid_corine_geometry():
+    invalid_bowtie = Polygon(
+        [(-1000, -1000), (1000, 1000), (-1000, 1000), (1000, -1000), (-1000, -1000)]
+    )
+    corine = _corine(["311"], [invalid_bowtie])
+
+    shares = compute_buffer_label_shares(box(-500, -500, 500, 500), corine, "label")
+
+    assert shares["31"] > 0.0
+    assert shares["31"] <= 1.0

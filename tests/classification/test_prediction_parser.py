@@ -44,6 +44,15 @@ def test_normalize_prediction_response_json_with_unknown_label_returns_error():
     assert "99" in error
 
 
+def test_normalize_prediction_response_unknown_only_json_has_no_silent_label():
+    raw = '{"labels": ["99"]}'
+
+    labels, error = normalize_prediction_response(raw, ["31"])
+
+    assert labels == []
+    assert error == "Unknown labels in JSON: 99"
+
+
 def test_normalize_prediction_response_rejects_non_string_json_labels():
     raw = '{"labels": ["31", 32]}'
 
