@@ -116,6 +116,22 @@ Run tests:
 PYTHONDONTWRITEBYTECODE=1 uv run pytest
 ```
 
+Run the synthetic reproducibility smoke path without bucket data or an LLM:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 uv run python scripts/reproduce_small.py \
+  --output-dir build/reproducibility/small \
+  --clean
+PYTHONDONTWRITEBYTECODE=1 uv run python scripts/validate_artifacts.py \
+  --root build/reproducibility/small \
+  --profile small
+```
+
+See [`docs/reproducibility.md`](docs/reproducibility.md),
+[`docs/artifacts.md`](docs/artifacts.md), and
+[`docs/configuration.md`](docs/configuration.md) for clean-clone reproduction,
+artifact validation, and environment variables.
+
 Run the full local quality gate:
 
 ```bash

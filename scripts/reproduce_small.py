@@ -3,24 +3,27 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import platform
 import shutil
+from collections.abc import Callable
 from datetime import datetime, timezone
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import geopandas as gpd
 from shapely.geometry import box
 
 from georeset_wiki_landcover.classification import runner as classification_runner
 from georeset_wiki_landcover.classification.types import PredictionResult
-from georeset_wiki_landcover.utils.json_io import write_json_atomic
+from georeset_wiki_landcover.utils.json_io import write_geojson_atomic, write_json_atomic
 
-try:
-    from scripts.validate_artifacts import sha256_file, validate_artifacts
-except ModuleNotFoundError:
-    from validate_artifacts import sha256_file, validate_artifacts
+_VALIDATOR_MODULE = importlib.import_module(
+    "scripts.validate_artifacts" if __package__ else "validate_artifacts"
+)
+_sha256_file = cast(Callable[[Path], str], _VALIDATOR_MODULE.sha256_file)
+_validate_artifacts = cast(Callable[..., list[str]], _VALIDATOR_MODULE.validate_artifacts)
 
 SYNTHETIC_MODEL_NAME = "synthetic-deterministic-classifier"
 SMALL_RUN_DIR = Path("data/classification/runs/small")
@@ -165,7 +168,7 @@ def _write_synthetic_inputs(output_dir: Path) -> dict[str, Path]:
         geometry=[box(0, 0, 1, 1), box(2, 0, 3, 1)],
         crs="EPSG:4326",
     )
-    corine.to_file(corine_path, driver="GeoJSON")
+    write_geojson_atomic(corine_path, corine)
 
     osm_path = osm_dir / "osm_project_polygons.geojson"
     osm = gpd.GeoDataFrame(
@@ -177,7 +180,7 @@ def _write_synthetic_inputs(output_dir: Path) -> dict[str, Path]:
         geometry=[box(0, 0, 1, 1), box(2, 0, 3, 1)],
         crs="EPSG:4326",
     )
-    osm.to_file(osm_path, driver="GeoJSON")
+    write_geojson_atomic(osm_path, osm)
 
     return {
         "wiki_articles": wiki_articles_path,
@@ -274,7 +277,7 @@ def _manifest(output_dir: Path) -> dict[str, Any]:
         "inputs": artifact_paths[:6],
         "outputs": artifact_paths[6:],
         "artifact_sha256": {
-            relative_path: sha256_file(output_dir / relative_path)
+            relative_path: _sha256_file(output_dir / relative_path)
             for relative_path in artifact_paths
         },
         "known_non_reproducible_components": [],
@@ -293,7 +296,7 @@ def run_small_reproduction(output_dir: Path | str, *, clean: bool = False) -> di
     manifest = _manifest(output_path)
     write_json_atomic(output_path / "manifest.json", manifest, indent=2)
 
-    violations = validate_artifacts(output_path, profile="small")
+    violations = _validate_artifacts(output_path, profile="small")
     if violations:
         raise RuntimeError("small reproduction validation failed: " + "; ".join(violations))
     return manifest

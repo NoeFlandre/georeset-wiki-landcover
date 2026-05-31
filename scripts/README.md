@@ -8,6 +8,11 @@ The Python files under `scripts/data`, `scripts/analysis`, and `scripts/dev` are
 thin wrappers around installable `georeset_wiki_landcover.cli.*` modules. New automation and
 documentation should prefer the packaged `georeset-wiki-landcover-*` entry points.
 
+`scripts/reproduce_small.py` and `scripts/validate_artifacts.py` are
+repository-level reproducibility helpers. They intentionally stay in `scripts/`
+because they orchestrate local artifact directories rather than exposing package
+APIs.
+
 ## Cluster Scripts
 
 The shell scripts under `scripts/cluster` sync the repository/data to Grid5000,

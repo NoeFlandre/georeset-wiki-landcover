@@ -10,6 +10,13 @@ the Hugging Face bucket instead of Git.
   Docker, Grid5000 launchers, and publishing workflow.
 - [`../src/README.md`](../src/README.md): package/module overview and local
   quality gates.
+- [`reproducibility.md`](reproducibility.md): clean-clone setup, synthetic smoke
+  reproduction, full-pipeline commands, validation, stale-cache checks, runtime
+  expectations, and troubleshooting.
+- [`artifacts.md`](artifacts.md): expected `data/` and synthetic artifact
+  structure, manifests, prediction metadata, and validation profiles.
+- [`configuration.md`](configuration.md): dependency groups, environment
+  variables, CLI flags to record, and default configuration locations.
 
 ## Experiments
 
