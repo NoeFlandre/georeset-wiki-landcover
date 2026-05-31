@@ -208,3 +208,10 @@ def test_fetcher_does_not_retry_non_429_4xx() -> None:
         fetcher._fetch_metadata_batch([1], max_attempts=3, base_backoff_seconds=0.0)
 
     assert get_mock.call_count == 1
+
+
+def test_fetcher_rejects_non_positive_max_attempts() -> None:
+    fetcher = WikiArticleTypeFetcher()
+
+    with pytest.raises(ValueError, match="max_attempts must be at least 1"):
+        fetcher._fetch_metadata_batch([1], max_attempts=0)

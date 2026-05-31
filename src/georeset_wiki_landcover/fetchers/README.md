@@ -33,3 +33,22 @@ This package contains IO boundaries for external or local source data.
 
 Fetchers read from and write to paths under `data/`, but `data/` is synced via
 the Hugging Face bucket and is not committed to Git.
+
+## Guardrails
+
+- CORINE polygon loading fails before downstream sampling when the input file is
+  missing or does not expose the required `code_18` column. This prevents later
+  stages from sampling from an unknown or incompatible land-cover schema.
+- Loaded CORINE data is treated as an explicit cache: callers that reach bounds
+  or sampling code without a populated dataset get `RuntimeError: Dataset could
+  not be loaded` instead of relying on assertions that can be disabled.
+- CORINE sampling fails when filters remove all rows or when the requested
+  sample size exceeds the available filtered polygons. This prevents silent
+  pilot/full-output confusion caused by undersized samples.
+- Bounds writes accept normal filesystem path objects and go through the shared
+  atomic JSON writer, keeping output-file behavior consistent with the rest of
+  the pipeline.
+- Wikipedia article-type metadata fetching rejects non-positive retry budgets
+  with `ValueError: max_attempts must be at least 1`. Retry exhaustion uses a
+  concrete exception path instead of an assertion fallback, so optimized Python
+  runs still fail clearly.

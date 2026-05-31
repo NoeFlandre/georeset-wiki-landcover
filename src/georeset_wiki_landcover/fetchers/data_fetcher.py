@@ -7,7 +7,9 @@ from georeset_wiki_landcover.config import DataPaths
 from georeset_wiki_landcover.utils.json_io import write_json_atomic
 
 WGS84 = "EPSG:4326"
-DEFAULT_CORINE_POLYGONS_PATH = DataPaths().corine_polygons
+_DATA_PATHS = DataPaths()
+DEFAULT_CORINE_POLYGONS_PATH = _DATA_PATHS.corine_polygons
+DEFAULT_CORINE_BOUNDS_PATH = _DATA_PATHS.corine_bounds
 logger = logging.getLogger(__name__)
 
 
@@ -22,8 +24,13 @@ class DataFetcher:
         data_path: str | os.PathLike[str] = DEFAULT_CORINE_POLYGONS_PATH,
     ):
         self.data_path = os.fspath(data_path)
-        self.gdf = None
+        self.gdf: gpd.GeoDataFrame | None = None
         self._exclude_artificial = False
+
+    def _loaded_data(self) -> gpd.GeoDataFrame:
+        if self.gdf is None:
+            raise RuntimeError("Dataset could not be loaded")
+        return self.gdf
 
     def load_data(self, exclude_artificial: bool = False) -> gpd.GeoDataFrame:
         """Loads the dataset into memory"""
@@ -60,9 +67,9 @@ class DataFetcher:
         if self.gdf is None or self._exclude_artificial != exclude_artificial:
             self._exclude_artificial = exclude_artificial
             self.load_data(exclude_artificial=exclude_artificial)
-        assert self.gdf is not None
+        gdf = self._loaded_data()
 
-        available_count = len(self.gdf)
+        available_count = len(gdf)
         if n > available_count:
             filter_context = " after filtering artificial surfaces" if exclude_artificial else ""
             raise ValueError(
@@ -70,7 +77,7 @@ class DataFetcher:
                 f"{filter_context}."
             )
 
-        sample = self.gdf.sample(n).copy()
+        sample = gdf.sample(n).copy()
 
         sample["class_label"] = sample["code_18"].str[:level]
 
@@ -86,13 +93,10 @@ class DataFetcher:
         if self.gdf is None:
             self.load_data()
 
-        if self.gdf is None:
-            raise RuntimeError("Dataset could not be loaded")
+        min_lon, min_lat, max_lon, max_lat = self._loaded_data().total_bounds
+        return float(min_lon), float(min_lat), float(max_lon), float(max_lat)
 
-        bounds = self.gdf.total_bounds
-        return tuple(float(value) for value in bounds)
-
-    def save_bounds(self, output_path: str = DataPaths().corine_bounds) -> None:
+    def save_bounds(self, output_path: str | os.PathLike[str] = DEFAULT_CORINE_BOUNDS_PATH) -> None:
         """
         Save the dataset bounding box to a json file
         """
@@ -113,8 +117,8 @@ if __name__ == "__main__":
     fetcher = DataFetcher()
     try:
         sample = fetcher.get_sample_polygons(n=3, exclude_artificial=True)
-        logger.info("Succesfully sampled polygons:")
+        logger.info("Successfully sampled polygons:")
         logger.info("%s", sample[["class_label", "centroid", "code_18"]])
         fetcher.save_bounds()
-    except Exception as e:
+    except (FileNotFoundError, ValueError, RuntimeError) as e:
         logger.error("Error: %s", e)

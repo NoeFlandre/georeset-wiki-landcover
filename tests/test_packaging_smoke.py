@@ -1,4 +1,5 @@
 import importlib
+import os
 import re
 from pathlib import Path
 from typing import get_type_hints
@@ -166,6 +167,69 @@ def test_mypy_has_strict_overrides_for_typed_core_modules():
 
 def test_package_declares_inline_typing_support():
     assert Path("src/georeset_wiki_landcover/py.typed").is_file()
+
+
+def test_data_fetcher_tests_do_not_depend_on_local_data_directory():
+    text = Path("tests/fetchers/test_data_fetcher.py").read_text(encoding="utf-8")
+
+    assert "pytest.mark.skipif" not in text
+    assert "requires_data" not in text
+    assert "DATA_FILE" not in text
+    assert "data/corine/" not in text
+
+
+def test_data_fetcher_uses_explicit_cache_invariant_errors():
+    text = Path("src/georeset_wiki_landcover/fetchers/data_fetcher.py").read_text(encoding="utf-8")
+
+    assert "assert self.gdf is not None" not in text
+    assert 'raise RuntimeError("Dataset could not be loaded")' in text
+
+
+def test_data_fetcher_path_annotations_accept_pathlike_values():
+    from georeset_wiki_landcover.fetchers.data_fetcher import DataFetcher
+
+    init_hints = get_type_hints(DataFetcher.__init__)
+    save_hints = get_type_hints(DataFetcher.save_bounds)
+
+    expected_path_type = str | os.PathLike[str]
+    assert init_hints["data_path"] == expected_path_type
+    assert save_hints["output_path"] == expected_path_type
+
+
+def test_data_fetcher_tests_exercise_pathlike_save_bounds_contract():
+    text = Path("tests/fetchers/test_data_fetcher.py").read_text(encoding="utf-8")
+
+    assert "save_bounds(str(" not in text
+
+
+def test_data_fetcher_reuses_single_datapaths_default_instance():
+    text = Path("src/georeset_wiki_landcover/fetchers/data_fetcher.py").read_text(encoding="utf-8")
+
+    assert text.count("DataPaths()") == 1
+    assert "_DATA_PATHS = DataPaths()" in text
+
+
+def test_data_fetcher_main_log_message_spells_successfully_correctly():
+    text = Path("src/georeset_wiki_landcover/fetchers/data_fetcher.py").read_text(encoding="utf-8")
+
+    assert "Succesfully" not in text
+    assert "Successfully sampled polygons:" in text
+
+
+def test_data_fetcher_main_handles_only_known_failures():
+    text = Path("src/georeset_wiki_landcover/fetchers/data_fetcher.py").read_text(encoding="utf-8")
+
+    assert "except Exception" not in text
+    assert "except (FileNotFoundError, ValueError, RuntimeError)" in text
+
+
+def test_wiki_article_type_fetcher_uses_explicit_retry_exhaustion_error():
+    text = Path("src/georeset_wiki_landcover/fetchers/wiki_article_type_fetcher.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "assert last_error is not None" not in text
+    assert 'raise RuntimeError("Metadata fetch failed without an underlying exception")' in text
 
 
 def test_production_outputs_use_atomic_file_helpers():

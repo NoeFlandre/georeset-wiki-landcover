@@ -71,6 +71,8 @@ class WikiArticleTypeFetcher:
     ) -> dict[str, dict[str, Any]]:
         if not pageids:
             return {}
+        if max_attempts < 1:
+            raise ValueError("max_attempts must be at least 1")
         params = {
             "action": "query",
             "prop": "categories|pageprops",
@@ -115,7 +117,8 @@ class WikiArticleTypeFetcher:
                 break
             time.sleep(base_backoff_seconds * (2**attempt))
 
-        assert last_error is not None
+        if last_error is None:
+            raise RuntimeError("Metadata fetch failed without an underlying exception")
         raise last_error
 
     def _pageids_to_rows(self, records: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
