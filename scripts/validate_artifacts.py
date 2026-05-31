@@ -78,6 +78,45 @@ def _required_files(root: Path, relative_paths: tuple[str, ...]) -> list[str]:
     return violations
 
 
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _validate_bounds(root: Path, violations: list[str]) -> None:
+    bounds = _load_json(root / "corine/bounds.json", violations)
+    required_keys = ("min_lon", "min_lat", "max_lon", "max_lat")
+    if not isinstance(bounds, dict) or not all(
+        _is_number(bounds.get(key)) for key in required_keys
+    ):
+        violations.append(
+            "corine/bounds.json must contain numeric min_lon, min_lat, max_lon, max_lat"
+        )
+        return
+    if bounds["min_lon"] > bounds["max_lon"] or bounds["min_lat"] > bounds["max_lat"]:
+        violations.append("corine/bounds.json min values must not exceed max values")
+
+
+def _validate_wiki_article_rows(wiki_articles: Any, violations: list[str]) -> list[str]:
+    if not isinstance(wiki_articles, list):
+        violations.append("wiki/wiki_articles.json must be a JSON list")
+        return []
+
+    pageids: list[str] = []
+    for index, article in enumerate(wiki_articles):
+        if not isinstance(article, dict):
+            violations.append(f"wiki article at index {index} must be a JSON object")
+            continue
+        pageid = article.get("pageid")
+        if pageid in (None, ""):
+            violations.append(f"wiki article at index {index} missing pageid")
+            continue
+        normalized_pageid = str(pageid)
+        pageids.append(normalized_pageid)
+        if not _is_number(article.get("lat")) or not _is_number(article.get("lon")):
+            violations.append(f"wiki article {normalized_pageid} has non-numeric lat/lon")
+    return pageids
+
+
 def _validate_wiki_inputs(root: Path, violations: list[str]) -> set[str]:
     wiki_path = root / "data/wiki/wiki_articles.json"
     contents_path = root / "data/wiki/article_contents.json"
@@ -89,9 +128,7 @@ def _validate_wiki_inputs(root: Path, violations: list[str]) -> set[str]:
         violations.append("data/wiki/wiki_articles.json must be a non-empty JSON list")
         return set()
 
-    pageids = [str(article.get("pageid")) for article in wiki_articles if "pageid" in article]
-    if len(pageids) != len(wiki_articles):
-        violations.append("each wiki article must include pageid")
+    pageids = _validate_wiki_article_rows(wiki_articles, violations)
     duplicates = sorted(pageid for pageid, count in Counter(pageids).items() if count > 1)
     if duplicates:
         violations.append(f"duplicate wiki pageids: {', '.join(duplicates)}")
@@ -258,16 +295,17 @@ def _validate_full_artifacts(root: Path) -> list[str]:
     if violations:
         return violations
 
+    _validate_bounds(root, violations)
     wiki_articles = _load_json(root / "wiki/wiki_articles.json", violations)
-    if isinstance(wiki_articles, list):
-        pageids = [str(article.get("pageid")) for article in wiki_articles if "pageid" in article]
+    pageids = _validate_wiki_article_rows(wiki_articles, violations)
+    if pageids:
         duplicates = sorted(pageid for pageid, count in Counter(pageids).items() if count > 1)
         if duplicates:
             violations.append(f"duplicate wiki pageids: {', '.join(duplicates)}")
 
     contents = _load_json(root / "wiki/article_contents.json", violations)
     if isinstance(wiki_articles, list) and isinstance(contents, dict):
-        wiki_pageids = {str(article.get("pageid")) for article in wiki_articles}
+        wiki_pageids = set(pageids)
         stray_content_keys = sorted(set(contents) - wiki_pageids)
         if stray_content_keys:
             violations.append(

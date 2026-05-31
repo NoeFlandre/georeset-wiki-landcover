@@ -39,6 +39,7 @@ logging.basicConfig(
 )
 
 CLASSIFICATION_POLICY_VERSION = 4
+VALID_PARSE_STATUSES = {"ok", "error", "ambiguous"}
 
 
 class Classifier(Protocol):
@@ -221,10 +222,20 @@ def compute_metrics(
     allowed_labels: list[str],
 ) -> tuple[SingleLabelMetricResult | MultiLabelMetricResult, list[str]]:
     """Returns (metrics_dict, labels_evaluated)."""
+    if not y_true:
+        raise ValueError(
+            f"No eligible records for task={task} text_source={text_source}; "
+            "check input paths, article coordinates, selected text source, and label joins."
+        )
     eval_labels = sorted(
         {v for vals in y_true.values() for v in (vals if isinstance(vals, list) else [vals])}
         | {v for vals in y_pred.values() for v in (vals if isinstance(vals, list) else [vals])}
     )
+    if not eval_labels:
+        raise ValueError(
+            f"No labels available for task={task} text_source={text_source}; "
+            "metrics would be scientifically invalid."
+        )
     metrics: SingleLabelMetricResult | MultiLabelMetricResult
     if task == "corine_level2":
         metrics = single_label_metrics(
@@ -249,6 +260,64 @@ def compute_metrics(
     metrics["allowed_labels"] = sorted(allowed_labels)
     metrics["labels_evaluated"] = eval_labels
     return metrics, eval_labels
+
+
+def _prediction_labels_from_prediction(prediction: ClassificationTarget | None) -> list[str]:
+    if prediction is None:
+        return []
+    if isinstance(prediction, list):
+        return [str(label) for label in prediction]
+    return [str(prediction)]
+
+
+def validate_prediction_result(
+    result: PredictionResult,
+    *,
+    pageid: str,
+    task: str,
+    allowed_labels: list[str],
+) -> None:
+    """Fail before checkpointing malformed classifier results."""
+    parse_status = result.get("parse_status")
+    if parse_status not in VALID_PARSE_STATUSES:
+        raise ValueError(
+            f"pageid {pageid} produced invalid parse_status {parse_status!r}; "
+            f"expected one of {sorted(VALID_PARSE_STATUSES)}"
+        )
+
+    raw_prediction_labels = result.get("prediction_labels", [])
+    if raw_prediction_labels is None:
+        prediction_labels: list[str] = []
+    elif isinstance(raw_prediction_labels, list) and all(
+        isinstance(label, str) for label in raw_prediction_labels
+    ):
+        prediction_labels = raw_prediction_labels
+    else:
+        raise ValueError(f"pageid {pageid} produced non-string prediction_labels")
+
+    prediction = result.get("prediction")
+    labels_to_check = sorted(
+        set(prediction_labels) | set(_prediction_labels_from_prediction(prediction))
+    )
+    unknown_labels = sorted(set(labels_to_check) - set(allowed_labels))
+    if unknown_labels:
+        raise ValueError(
+            f"pageid {pageid} produced unknown prediction labels: {', '.join(unknown_labels)}"
+        )
+
+    if parse_status == "ok" and not labels_to_check:
+        raise ValueError(f"pageid {pageid} produced ok parse_status without a prediction")
+
+    if (
+        parse_status == "ok"
+        and task == "corine_level2"
+        and (len(labels_to_check) != 1 or prediction != labels_to_check[0])
+    ):
+        raise ValueError(f"pageid {pageid} produced invalid single-label prediction for {task}")
+
+    metadata = result.get("metadata", {})
+    if metadata is not None and not isinstance(metadata, dict):
+        raise ValueError(f"pageid {pageid} produced non-object metadata")
 
 
 def main(
@@ -288,6 +357,12 @@ def main(
     eligible = [pid for pid in text_records if pid in target]
     if args.limit:
         eligible = eligible[: args.limit]
+    if not eligible:
+        raise ValueError(
+            f"No eligible records for task={args.task} text_source={args.text_source}; "
+            f"text_records={len(text_records)} target_records={len(target)}. "
+            "Check input paths, article coordinates, selected text source, and label joins."
+        )
     shuffled_source_pageids: dict[str, str] = {}
     if args.text_source in SHUFFLED_TEXT_SOURCES:
         text_records, shuffled_source_pageids = apply_shuffled_text_control(
@@ -340,6 +415,12 @@ def main(
                 task=args.task,
                 text_source=args.text_source,
             )
+        validate_prediction_result(
+            result,
+            pageid=pageid,
+            task=args.task,
+            allowed_labels=allowed_labels,
+        )
         extra_metadata = None
         if shuffled_source_pageids:
             extra_metadata = shuffled_metadata(args.text_source, shuffled_source_pageids[pageid])

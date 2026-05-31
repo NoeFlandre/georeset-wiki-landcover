@@ -153,7 +153,10 @@ Checks:
 
 - core synced input files exist and are non-empty;
 - JSON files parse;
+- CORINE bounds contain numeric `min_lon`, `min_lat`, `max_lon`, and `max_lat`
+  values with minimums not exceeding maximums;
 - wiki page IDs are unique;
+- wiki rows include a page ID and numeric `lat`/`lon` coordinates;
 - article content keys do not contain page IDs absent from wiki metadata;
 - OSM GeoJSON is readable and has `osm_id`.
 

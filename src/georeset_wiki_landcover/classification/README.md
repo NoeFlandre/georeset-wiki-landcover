@@ -38,6 +38,12 @@ classification under the same text-source and shuffled-control protocol.
   repo ID, and `CLASSIFICATION_POLICY_VERSION` are part of the reproducibility
   contract.
 - Shuffled controls change only text assignment, not targets or labels.
+- Runs with zero eligible records fail before model construction or metrics
+  writing. A zero-row metric artifact is treated as an invalid scientific state,
+  not a successful empty run.
+- Classifier results are validated before checkpointing: `parse_status` must be
+  one of the known statuses, successful predictions must contain an in-allowlist
+  label, and custom classifier adapters must not emit unknown labels.
 
 ## Where To Add Changes
 

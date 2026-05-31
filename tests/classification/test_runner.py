@@ -5,8 +5,10 @@ import pytest
 from georeset_wiki_landcover.classification.runner import (
     compute_metrics,
     load_text_source,
+    main,
     parse_args,
     prediction_fingerprint,
+    validate_prediction_result,
 )
 from georeset_wiki_landcover.config import DataPaths, ModelSettings
 
@@ -258,3 +260,176 @@ def test_compute_multilabel_metrics_records_labels_evaluated():
     assert labels == ["meadow", "wood"]
     assert metrics["labels_evaluated"] == ["meadow", "wood"]
     assert metrics["task"] == "osm"
+
+
+def test_compute_metrics_rejects_empty_label_universe():
+    with pytest.raises(
+        ValueError,
+        match="No labels available for task=osm text_source=summary",
+    ):
+        compute_metrics("osm", "summary", {"1": []}, {"1": []}, [])
+
+
+def test_main_rejects_runs_with_no_eligible_records(tmp_path):
+    wiki_path = tmp_path / "wiki.json"
+    contents_path = tmp_path / "contents.json"
+    summaries_path = tmp_path / "summaries.json"
+    no_place_path = tmp_path / "no_place.json"
+    corine_path = tmp_path / "corine.geojson"
+    output_dir = tmp_path / "out"
+
+    wiki_path.write_text(
+        json.dumps([{"pageid": 100, "lat": 10.0, "lon": 10.0, "title": "Outside"}]),
+        encoding="utf-8",
+    )
+    contents_path.write_text(json.dumps({"100": {"content": "Outside"}}), encoding="utf-8")
+    summaries_path.write_text(json.dumps({"100": {"summary": "Outside"}}), encoding="utf-8")
+    no_place_path.write_text(json.dumps({"100": {"summary": "Outside"}}), encoding="utf-8")
+
+    import geopandas as gpd
+    from shapely.geometry import box
+
+    corine = gpd.GeoDataFrame(
+        {"code_18": ["311"]},
+        geometry=[box(0, 0, 1, 1)],
+        crs="EPSG:4326",
+    )
+    corine.to_file(corine_path, driver="GeoJSON")
+
+    def classifier_factory(*args, **kwargs):
+        raise AssertionError("classifier should not be constructed when no records are eligible")
+
+    with pytest.raises(
+        ValueError,
+        match="No eligible records for task=corine_level2 text_source=summary",
+    ):
+        main(
+            [
+                "--task",
+                "corine_level2",
+                "--text-source",
+                "summary",
+                "--wiki-articles-path",
+                str(wiki_path),
+                "--article-contents-path",
+                str(contents_path),
+                "--article-summaries-path",
+                str(summaries_path),
+                "--article-summaries-no-place-path",
+                str(no_place_path),
+                "--corine-polygons-path",
+                str(corine_path),
+                "--output-dir",
+                str(output_dir),
+                "--model-path",
+                "m.gguf",
+            ],
+            classifier_factory=classifier_factory,
+        )
+
+
+def test_validate_prediction_result_rejects_malformed_classifier_result():
+    with pytest.raises(ValueError, match="pageid 100 produced invalid parse_status"):
+        validate_prediction_result(
+            {
+                "prediction": "31",
+                "prediction_labels": ["31"],
+                "parse_status": "complete",
+                "raw_response": "{}",
+                "error": None,
+                "metadata": {},
+            },
+            pageid="100",
+            task="corine_level2",
+            allowed_labels=["31"],
+        )
+
+
+def test_validate_prediction_result_rejects_unknown_prediction_labels():
+    with pytest.raises(ValueError, match="pageid 100 produced unknown prediction labels: 99"):
+        validate_prediction_result(
+            {
+                "prediction": "99",
+                "prediction_labels": ["99"],
+                "parse_status": "ok",
+                "raw_response": '{"label": "99"}',
+                "error": None,
+                "metadata": {},
+            },
+            pageid="100",
+            task="corine_level2",
+            allowed_labels=["31"],
+        )
+
+
+def test_validate_prediction_result_rejects_non_string_prediction_labels():
+    with pytest.raises(ValueError, match="pageid 100 produced non-string prediction_labels"):
+        validate_prediction_result(
+            {
+                "prediction": "31",
+                "prediction_labels": ["31", 31],
+                "parse_status": "ok",
+                "raw_response": '{"label": "31"}',
+                "error": None,
+                "metadata": {},
+            },
+            pageid="100",
+            task="corine_level2",
+            allowed_labels=["31"],
+        )
+
+
+def test_validate_prediction_result_rejects_ok_without_prediction():
+    with pytest.raises(
+        ValueError, match="pageid 100 produced ok parse_status without a prediction"
+    ):
+        validate_prediction_result(
+            {
+                "prediction": None,
+                "prediction_labels": None,
+                "parse_status": "ok",
+                "raw_response": "{}",
+                "error": None,
+                "metadata": {},
+            },
+            pageid="100",
+            task="osm",
+            allowed_labels=["wood"],
+        )
+
+
+def test_validate_prediction_result_rejects_single_label_prediction_mismatch():
+    with pytest.raises(
+        ValueError,
+        match="pageid 100 produced invalid single-label prediction for corine_level2",
+    ):
+        validate_prediction_result(
+            {
+                "prediction": "31",
+                "prediction_labels": ["31", "32"],
+                "parse_status": "ok",
+                "raw_response": '{"labels": ["31", "32"]}',
+                "error": None,
+                "metadata": {},
+            },
+            pageid="100",
+            task="corine_level2",
+            allowed_labels=["31", "32"],
+        )
+
+
+def test_validate_prediction_result_rejects_non_object_metadata():
+    with pytest.raises(ValueError, match="pageid 100 produced non-object metadata"):
+        validate_prediction_result(
+            {
+                "prediction": "wood",
+                "prediction_labels": ["wood"],
+                "parse_status": "ok",
+                "raw_response": '{"labels": ["wood"]}',
+                "error": None,
+                "metadata": "bad",
+            },
+            pageid="100",
+            task="osm",
+            allowed_labels=["wood"],
+        )
