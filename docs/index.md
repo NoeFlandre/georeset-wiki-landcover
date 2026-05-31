@@ -10,6 +10,12 @@ the Hugging Face bucket instead of Git.
   Docker, Grid5000 launchers, and publishing workflow.
 - [`../src/README.md`](../src/README.md): package/module overview and local
   quality gates.
+- [`architecture.md`](architecture.md): package boundaries, important modules,
+  workflow layers, guardrails, tests, and safe extension rules.
+- [`data_flow.md`](data_flow.md): concrete input-to-output flow for acquisition,
+  filtering, classification, analysis, vision, and cache behavior.
+- [`cli.md`](cli.md): packaged entry points, repository scripts, and which
+  commands were verified as smoke paths.
 - [`reproducibility.md`](reproducibility.md): clean-clone setup, synthetic smoke
   reproduction, full-pipeline commands, validation, stale-cache checks, runtime
   expectations, and troubleshooting.
@@ -17,6 +23,8 @@ the Hugging Face bucket instead of Git.
   structure, manifests, prediction metadata, and validation profiles.
 - [`configuration.md`](configuration.md): dependency groups, environment
   variables, CLI flags to record, and default configuration locations.
+- [`troubleshooting.md`](troubleshooting.md): common failure modes and recovery
+  checks derived from current validators, tests, and workflow code.
 
 ## Experiments
 

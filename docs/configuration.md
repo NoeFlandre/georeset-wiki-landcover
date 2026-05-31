@@ -40,6 +40,8 @@ under `build/reproducibility/`, which is also ignored.
 | `GEORESET_WIKI_LANDCOVER_CLASSIFICATION_TEMPERATURE` | Classification cluster scripts | `0.0` | Also available as CLI `--temperature`. |
 | `GEORESET_WIKI_LANDCOVER_EXTRA_ARGS` | Classification cluster job | unset | Extra CLI args split by the shell script. |
 | `GEORESET_WIKI_LANDCOVER_AUTO_SYNC` | Cluster submit scripts | `0` | Keep disabled unless repeated SSH polling is intentional. |
+| `GEORESET_WIKI_LANDCOVER_SUMMARY_OUTPUT` | Summary sync scripts | `data/wiki/article_summaries.json` | Path synced back from summary jobs. |
+| `GEORESET_WIKI_LANDCOVER_JOB_CACHE_DIR` | Cluster job scripts | `${TMPDIR:-/tmp}/georeset_${OAR_JOB_ID:-manual}` | Per-job cache path for selected remote jobs. |
 | `SYNC_ONCE` | Cluster sync scripts | `0` | Set to `1` for one manual sync pass. |
 
 ## Land-Use Evidence Summary Variables
@@ -64,6 +66,7 @@ under `build/reproducibility/`, which is also ignored.
 | `G5K_OAR_QUEUE` | `production` | Submit queue; scripts validate allowed characters. |
 | `G5K_OAR_TYPES` | unset | Optional OAR `-t` types. |
 | `G5K_OAR_PROPERTIES` | script-specific | GPU memory properties for some jobs. |
+| `G5K_LANDUSE_EVIDENCE_WALLTIME` | `20:00:00` | Walltime for land-use evidence summary submission. |
 
 ## CLI Flags To Record
 
@@ -101,3 +104,10 @@ policy version from `src/georeset_wiki_landcover/classification/runner.py`.
 
 When changing defaults, update this document and prefer a test that proves old
 caches fail or skip intentionally.
+
+## More References
+
+- `docs/cli.md` lists packaged entry points and repository scripts.
+- `docs/data_flow.md` explains which artifacts each workflow reads and writes.
+- `docs/troubleshooting.md` lists common invalid states and the checks that
+  catch them.

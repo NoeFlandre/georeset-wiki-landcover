@@ -128,9 +128,14 @@ PYTHONDONTWRITEBYTECODE=1 uv run python scripts/validate_artifacts.py \
 ```
 
 See [`docs/reproducibility.md`](docs/reproducibility.md),
-[`docs/artifacts.md`](docs/artifacts.md), and
-[`docs/configuration.md`](docs/configuration.md) for clean-clone reproduction,
-artifact validation, and environment variables.
+[`docs/architecture.md`](docs/architecture.md),
+[`docs/data_flow.md`](docs/data_flow.md),
+[`docs/cli.md`](docs/cli.md),
+[`docs/artifacts.md`](docs/artifacts.md),
+[`docs/configuration.md`](docs/configuration.md), and
+[`docs/troubleshooting.md`](docs/troubleshooting.md) for clean-clone
+reproduction, module boundaries, data flow, command surfaces, artifact
+validation, environment variables, and common failure modes.
 
 Run the full local quality gate:
 

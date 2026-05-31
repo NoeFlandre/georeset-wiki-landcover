@@ -104,6 +104,22 @@ Important metadata keys include `fingerprint`, `text_sha256`, `model`,
 `model_repo_id`, `seed`, `temperature`, `task`, `text_source`, and
 `allowed_labels`. These fields support cache invalidation and auditability.
 
+## Cache Behavior
+
+- `data/wiki/article_contents.json` is a resumable content cache. The content
+  fetcher sanitizes existing entries and skips entries that are already sane.
+- Classification prediction files are resumable checkpoints. A page ID is
+  skipped only when the existing record has `parse_status == "ok"`, the
+  classification fingerprint still matches the current task/text/model/seed/
+  temperature/label policy, and `metadata.text_sha256` still matches the exact
+  input text.
+- Non-OK classification records are retried on later runs. `--retry-failed`
+  keeps matching OK records while retrying failures.
+- `build/reproducibility/small/manifest.json` records SHA-256 hashes for the
+  generated synthetic package. Small-profile validation recomputes those hashes.
+- Vision embedding caches are NPZ files expected to contain `pageids` and
+  `embeddings` arrays with the same row count.
+
 ## Synthetic Manifest
 
 `scripts/reproduce_small.py` writes `manifest.json` with:
