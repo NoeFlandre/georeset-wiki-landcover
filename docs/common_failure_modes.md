@@ -15,9 +15,13 @@ Checks:
 ```bash
 git status --short
 git ls-files data build
+PYTHONDONTWRITEBYTECODE=1 uv run python scripts/dev/check_repository_hygiene.py
 ```
 
-Expected: `git ls-files data build` prints nothing.
+Expected: `git ls-files data build` prints nothing and the hygiene check passes.
+The hygiene check fails if tracked files live under `data/` or `build/`, if
+tracked `.env*` files are present, if tracked cache files are present, or if a
+tracked file exceeds the configured size limit.
 
 ### Uploading or deleting bucket data unintentionally
 
@@ -151,6 +155,9 @@ Risk: lockfile and CI drift.
 
 Policy: use `uv`; do not introduce pip/conda instructions unless explicitly
 needed and documented as alternative.
+
+Run `uv lock --check` before finalizing dependency or CI changes so lockfile
+drift fails locally before it reaches CI.
 
 ### Adding heavy dependencies casually
 

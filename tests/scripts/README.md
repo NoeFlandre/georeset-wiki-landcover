@@ -7,6 +7,8 @@ They verify:
 
 - CLI defaults and environment overrides;
 - experiment output shapes and manifests;
+- repository hygiene checks for tracked data, caches, environment files, and
+  large blobs;
 - cluster script safety constraints;
 - wrapper importability without `sys.path` hacks;
 - no accidental mutation of parent experiment folders.

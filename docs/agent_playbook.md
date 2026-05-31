@@ -30,7 +30,16 @@ This playbook is for future coding-agent runs. It expands the root
 Use `uv`. CI installs Python 3.10 and runs:
 
 ```bash
-uv sync --group dev
+uv sync --frozen --group dev
+uv lock --check
+uv run python scripts/dev/check_repository_hygiene.py
+uv run georeset-wiki-landcover-classify-articles --help
+uv run python scripts/reproduce_small.py \
+  --output-dir build/reproducibility/small \
+  --clean
+uv run python scripts/validate_artifacts.py \
+  --root build/reproducibility/small \
+  --profile small
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy src scripts
@@ -107,9 +116,10 @@ Do not stage generated artifacts accidentally. Before commit:
 ```bash
 git status --short
 git ls-files data build
+PYTHONDONTWRITEBYTECODE=1 uv run python scripts/dev/check_repository_hygiene.py
 ```
 
-The second command should print nothing.
+The second command should print nothing, and the hygiene check should pass.
 
 ## Research Contracts To Preserve
 

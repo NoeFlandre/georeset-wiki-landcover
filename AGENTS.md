@@ -25,7 +25,9 @@ There is no Makefile or justfile. Use `uv`.
 ## Setup And Verification
 
 ```bash
-uv sync --group dev
+uv sync --frozen --group dev
+uv lock --check
+PYTHONDONTWRITEBYTECODE=1 uv run python scripts/dev/check_repository_hygiene.py
 PYTHONDONTWRITEBYTECODE=1 uv run ruff check .
 PYTHONDONTWRITEBYTECODE=1 uv run ruff format --check .
 PYTHONDONTWRITEBYTECODE=1 uv run mypy src scripts
@@ -101,6 +103,8 @@ Optional dependency groups:
 ## What Not To Do
 
 - Do not commit `data/`, `build/`, model files, caches, or secrets.
+- Run `scripts/dev/check_repository_hygiene.py` before staging workflow or
+  artifact changes.
 - Do not silently skip malformed scientific inputs unless existing code already
   documents that policy.
 - Do not broaden network, Grid5000, bucket, or model side effects without user

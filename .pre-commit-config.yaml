@@ -24,3 +24,8 @@ repos:
         entry: uv run mypy src scripts
         language: system
         pass_filenames: false
+      - id: repository-hygiene
+        name: repository hygiene
+        entry: uv run python scripts/dev/check_repository_hygiene.py
+        language: system
+        pass_filenames: false

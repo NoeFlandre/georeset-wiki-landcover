@@ -99,7 +99,7 @@ https://www.datagrandest.fr/geonetwork/srv/api/records/c0ccbf45-2620-4bde-93f8-8
 Install dependencies with `uv`:
 
 ```bash
-uv sync --group dev
+uv sync --frozen --group dev
 hf sync hf://buckets/NoeFlandre/georeset-wiki-landcover ./data
 ```
 
@@ -140,6 +140,15 @@ validation, environment variables, and common failure modes.
 Run the full local quality gate:
 
 ```bash
+uv lock --check
+PYTHONDONTWRITEBYTECODE=1 uv run python scripts/dev/check_repository_hygiene.py
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles --help
+PYTHONDONTWRITEBYTECODE=1 uv run python scripts/reproduce_small.py \
+  --output-dir build/reproducibility/small \
+  --clean
+PYTHONDONTWRITEBYTECODE=1 uv run python scripts/validate_artifacts.py \
+  --root build/reproducibility/small \
+  --profile small
 PYTHONDONTWRITEBYTECODE=1 uv run ruff check .
 PYTHONDONTWRITEBYTECODE=1 uv run ruff format --check .
 PYTHONDONTWRITEBYTECODE=1 uv run mypy src scripts

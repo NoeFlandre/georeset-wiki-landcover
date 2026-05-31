@@ -24,6 +24,9 @@ They create and validate a synthetic no-network, no-LLM package.
 The following static CI checks were also run while updating these docs:
 
 ```bash
+uv lock --check
+PYTHONDONTWRITEBYTECODE=1 uv run python scripts/dev/check_repository_hygiene.py
+PYTHONDONTWRITEBYTECODE=1 uv run georeset-wiki-landcover-classify-articles --help
 PYTHONDONTWRITEBYTECODE=1 uv run ruff check .
 PYTHONDONTWRITEBYTECODE=1 uv run ruff format --check .
 PYTHONDONTWRITEBYTECODE=1 uv run mypy src scripts

@@ -19,7 +19,8 @@ def test_dockerfile_includes_runtime_cli_directories():
 def test_ci_uses_dev_dependency_group_without_llm_group():
     workflow = Path(".github/workflows/ci.yml").read_text()
 
-    assert "uv sync --group dev" in workflow
+    assert "uv sync --frozen --group dev" in workflow
+    assert "uv lock --check" in workflow
     assert "uv sync --all-groups" not in workflow
 
 
@@ -28,6 +29,15 @@ def test_ci_coverage_scope_matches_pytest_addopts():
 
     assert "--cov=src" not in workflow
     assert "uv run pytest -q" in workflow
+
+
+def test_ci_runs_lightweight_repository_and_workflow_smoke_checks():
+    workflow = Path(".github/workflows/ci.yml").read_text()
+
+    assert "scripts/dev/check_repository_hygiene.py" in workflow
+    assert "georeset-wiki-landcover-classify-articles --help" in workflow
+    assert "scripts/reproduce_small.py" in workflow
+    assert "scripts/validate_artifacts.py" in workflow
 
 
 def test_llm_dependency_group_declares_manual_cluster_runtime_deps():
@@ -147,6 +157,7 @@ def test_pre_commit_scopes_match_ci_quality_commands():
     assert "entry: uv run ruff check ." in config
     assert "entry: uv run ruff format --check ." in config
     assert "entry: uv run mypy src scripts" in config
+    assert "entry: uv run python scripts/dev/check_repository_hygiene.py" in config
     assert "pass_filenames: false" in config
 
 
