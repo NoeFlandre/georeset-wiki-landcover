@@ -8,8 +8,15 @@ the Hugging Face bucket instead of Git.
 
 - [`../README.md`](../README.md): setup, data sync, packaged CLI commands,
   Docker, Grid5000 launchers, and publishing workflow.
+- [`../AGENTS.md`](../AGENTS.md): concise coding-agent operating rules for this
+  repository.
 - [`../src/README.md`](../src/README.md): package/module overview and local
   quality gates.
+- [`agent_playbook.md`](agent_playbook.md): longer workflow guidance for future
+  coding-agent runs.
+- [`repo_map.md`](repo_map.md): quick path-by-path navigation map.
+- [`common_failure_modes.md`](common_failure_modes.md): agent-facing checklist
+  of mistakes that can break scientific or workflow assumptions.
 - [`architecture.md`](architecture.md): package boundaries, important modules,
   workflow layers, guardrails, tests, and safe extension rules.
 - [`data_flow.md`](data_flow.md): concrete input-to-output flow for acquisition,
