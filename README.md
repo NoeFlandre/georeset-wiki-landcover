@@ -9,6 +9,7 @@ project-scoped OSM land-cover tags.
 - Project site: https://geo-reset.sylvainlobry.com/
 - Code repository: https://github.com/NoeFlandre/georeset-wiki-landcover
 - Data bucket: https://huggingface.co/buckets/NoeFlandre/georeset-wiki-landcover
+- Slide deck: https://docs.google.com/presentation/d/19K7qVy4NUPheNVJTwGpItdQIpGlxbYzWq5XjyDynW5U/edit?usp=sharing
 
 ## Code And Data Split
 
