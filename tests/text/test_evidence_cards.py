@@ -1,7 +1,9 @@
 import json
 import re
 
+import numpy as np
 import pandas as pd
+import pytest
 
 from georeset_wiki_landcover.fetchers.landuse_evidence_summarizer import EVIDENCE_TYPES
 from georeset_wiki_landcover.text.evidence_cards import build_evidence_card_record
@@ -260,3 +262,97 @@ def test_evidence_card_handles_missing_scalar_and_list_values_as_json_safe():
     assert record["recommended_use"] is None
 
     assert json.dumps(record, allow_nan=False)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (True, "oui"),
+        (False, "non"),
+        (1, "oui"),
+        (0, "non"),
+        (1.0, "oui"),
+        (0.0, "non"),
+        (np.bool_(True), "oui"),
+        (np.bool_(False), "non"),
+        (np.int64(1), "oui"),
+        (np.float64(0), "non"),
+        ("true", "oui"),
+        ("false", "non"),
+        ("YES", "oui"),
+        ("NO", "non"),
+        ("y", "oui"),
+        ("n", "non"),
+        ("oui", "oui"),
+        ("non", "non"),
+        ("1", "oui"),
+        ("0", "non"),
+        (" ON ", "oui"),
+        (" off\t", "non"),
+        ("T", "oui"),
+        ("f", "non"),
+        (None, "inconnue"),
+        (pd.NA, "inconnue"),
+        (float("nan"), "inconnue"),
+        ("", "inconnue"),
+        ("null", "inconnue"),
+        ("maybe", "inconnue"),
+        (2, "inconnue"),
+        (-1, "inconnue"),
+        ("1.0", "inconnue"),
+        ("0.0", "inconnue"),
+    ],
+)
+def test_evidence_card_boolish_values_keep_french_labels(value, expected):
+    record = build_evidence_card_record(
+        pageid="100",
+        article={"title": "Lieu"},
+        evidence={},
+        article_type={},
+        spatial={"dominant_matches_point_label_250m": value},
+        quality={},
+    )
+
+    assert (
+        f"- le label dominant à 250 m correspond au label ponctuel: {expected}"
+        in record["evidence_card"].splitlines()
+    )
+
+
+@pytest.mark.parametrize(
+    ("title", "text", "expected"),
+    [
+        ("", "  Des   boisements\n\tet de l'eau.  ", "Des boisements et de l'eau."),
+        (" \t", "  Des   boisements.  ", "Des boisements."),
+        ("...", "  ...   abrite\n des boisements.  ", "ce lieu abrite des boisements."),
+        ("___", "  Des   boisements.  ", "Des boisements."),
+        (
+            " Forêt-de-Test ",
+            "FORÊT_de_Test\t abrite des boisements.",
+            "ce lieu abrite des boisements.",
+        ),
+        (
+            "Forêt-de-Test",
+            "Forêt / de / Test abrite des boisements.",
+            "ce lieu abrite des boisements.",
+        ),
+    ],
+)
+def test_evidence_card_scrubs_and_normalizes_sentences_and_summary(title, text, expected):
+    record = build_evidence_card_record(
+        pageid="100",
+        article={"title": title, "content": "Texte  brut\nconservé."},
+        evidence={"evidence_sentences_no_place": [text], "landuse_evidence_summary": text},
+        article_type={},
+        spatial={},
+        quality={},
+    )
+
+    card = record["evidence_card"]
+    assert f"\nIndices factuels:\n- {expected}\n\nRésumé d'indices:\n{expected}" in card
+    assert record["metadata"]["version"] == 2
+    assert record["evidence_sentence_count"] == 1
+    assert record["evidence_card_char_count"] == len(card)
+    assert record["content_with_evidence_card"] == (
+        f"{card}\n\nTexte complet de l'article:\nTexte  brut\nconservé."
+    )

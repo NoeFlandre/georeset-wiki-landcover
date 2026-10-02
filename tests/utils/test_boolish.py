@@ -22,14 +22,28 @@ def test_parse_boolish_accepts_real_booleans_and_numeric_zero_one() -> None:
 
 
 def test_parse_boolish_accepts_known_string_values_case_insensitively() -> None:
-    for value in ["true", "T", "YES", "y", "oui", "on", "1"]:
+    for value in ["true", "T", "YES", "y", "oui", " ON ", "1"]:
         assert parse_boolish(value) is True
-    for value in ["false", "F", "NO", "n", "non", "off", "0"]:
+    for value in ["false", "F", "NO", "n", "non", " off\t", "0"]:
         assert parse_boolish(value) is False
 
 
 def test_parse_boolish_returns_none_for_missing_or_unknown_values() -> None:
-    for value in ["", "nan", "None", "NULL", None, math.nan, "maybe", "2"]:
+    for value in [
+        "",
+        "nan",
+        "None",
+        "NULL",
+        None,
+        pd.NA,
+        math.nan,
+        "maybe",
+        "2",
+        2,
+        -1,
+        "1.0",
+        "0.0",
+    ]:
         assert parse_boolish(value) is None
 
 

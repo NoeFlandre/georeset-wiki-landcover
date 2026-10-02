@@ -13,7 +13,11 @@ def _title_pattern(title: str) -> re.Pattern[str] | None:
 
 
 def remove_title_variants(text: str, title: str) -> str:
-    """Replace exact and separator-varied title mentions with a neutral phrase."""
+    """Replace case-insensitive exact and separator-varied mentions with ``ce lieu``.
+
+    Empty/whitespace-only titles skip replacement; punctuation-only titles use
+    literal replacement only. Always collapse whitespace and strip the result.
+    """
     title = title.strip()
     if title:
         text = re.sub(re.escape(title), "ce lieu", text, flags=re.IGNORECASE)

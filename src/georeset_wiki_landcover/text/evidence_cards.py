@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import Mapping
 from typing import Any
 
@@ -19,8 +18,10 @@ from georeset_wiki_landcover.text.labels import (
     format_list,
 )
 from georeset_wiki_landcover.text.record_access import is_missing, json_scalar, mapping_get
+from georeset_wiki_landcover.text.title_scrubbing import remove_title_variants
+from georeset_wiki_landcover.utils.boolish import parse_boolish
 
-EVIDENCE_CARD_VERSION = 1
+EVIDENCE_CARD_VERSION = 2
 
 
 def _text(value: object, default: str = "inconnue") -> str:
@@ -39,16 +40,7 @@ def _number_text(value: object) -> str:
 
 
 def _bool_text(value: object) -> str:
-    if isinstance(value, bool):
-        return "oui" if value else "non"
-    if is_missing(value):
-        return "inconnue"
-    normalized = str(value).strip().lower()
-    if normalized in {"true", "1", "yes", "y", "oui"}:
-        return "oui"
-    if normalized in {"false", "0", "no", "n", "non"}:
-        return "non"
-    return "inconnue"
+    return {True: "oui", False: "non", None: "inconnue"}[parse_boolish(value)]
 
 
 def _list(value: object) -> list[str]:
@@ -78,35 +70,9 @@ def _json_list(value: object) -> list[Any]:
     return values
 
 
-def _title_pattern(title: str) -> re.Pattern[str] | None:
-    tokens = [token for token in re.split(r"[\W_]+", title, flags=re.UNICODE) if token]
-    if not tokens:
-        return None
-    separator = r"[\W_]+"
-    return re.compile(separator.join(re.escape(token) for token in tokens), flags=re.IGNORECASE)
-
-
-def _exact_title_pattern(title: str) -> re.Pattern[str] | None:
-    title = title.strip()
-    if not title:
-        return None
-    return re.compile(re.escape(title), flags=re.IGNORECASE)
-
-
-def _remove_title_variants(text: str, title: str) -> str:
-    exact_pattern = _exact_title_pattern(title)
-    if exact_pattern is not None:
-        text = exact_pattern.sub("ce lieu", text)
-    pattern = _title_pattern(title)
-    if pattern is None:
-        return text
-    cleaned = pattern.sub("ce lieu", text)
-    return re.sub(r"\s+", " ", cleaned).strip()
-
-
 def _evidence_sentences(evidence: Mapping[str, Any] | pd.Series | None, title: str) -> list[str]:
     raw = mapping_get(evidence, "evidence_sentences_no_place", [])
-    sentences = [_remove_title_variants(sentence, title) for sentence in _list(raw)]
+    sentences = [remove_title_variants(sentence, title) for sentence in _list(raw)]
     return [sentence for sentence in sentences if sentence]
 
 
@@ -115,7 +81,7 @@ def _summary(evidence: Mapping[str, Any] | pd.Series | None, title: str) -> str:
         mapping_get(evidence, "landuse_evidence_summary"),
         default="Aucun résumé d'indices n'est disponible.",
     )
-    return _remove_title_variants(summary, title)
+    return remove_title_variants(summary, title)
 
 
 def _build_card_text(
