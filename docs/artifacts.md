@@ -86,6 +86,37 @@ build/reproducibility/small/
 - Experiment manifests: many analysis commands write `manifest.json`,
   `run_manifest.json`, or control manifests in their output directories.
 
+## Evidence Card Version 2
+
+New evidence cards use `metadata.version = 2`. Existing version 1 artifacts and
+frozen experiment reports remain historical outputs; do not regenerate them as
+part of this change. When intentionally building new cards, use a separate
+`--output-path` to retain the earlier artifacts. Newly generated evidence-card
+analysis manifests also report the current generator version as
+`deterministic_card_version`; this field does not infer the version of frozen
+prediction inputs or migrate them.
+
+- Spatial boolean display uses the shared `parse_boolish` contract. Numeric
+  `1.0`/`0.0` and strings `on`/`off`/`t`/`f` now render as `oui`/`non` instead of
+  `inconnue`. Known strings are case-insensitive and trimmed. Missing and unknown
+  values still render as `inconnue`; decimal strings `"1.0"`/`"0.0"` remain unknown.
+  Raw spatial metadata is preserved; only its French display is interpreted.
+- Evidence sentences and summaries use the same title-removal helper as
+  highlights and retrieved windows. Exact and separator-varied matches remain
+  case-insensitive and become `ce lieu`. Empty/whitespace-only titles skip
+  replacement; punctuation-only titles replace literal matches only. All paths
+  now collapse whitespace and strip the result, including empty and
+  punctuation-only titles (which previously preserved internal whitespace in
+  cards). Card headings, line breaks, bullets, and the appended article content
+  retain their existing formatting rules.
+
+These intentional changes can alter newly generated card text, character counts,
+and text hashes. Classification already checks `metadata.text_sha256` when
+reusing predictions, so changed text invalidates its corresponding cached
+prediction without changing the classification policy version. The shared
+helpers' behavior, highlight/window versions, CLI flags, filenames, schemas,
+and experiment IDs are unchanged.
+
 ## Prediction Metadata
 
 Classification prediction records are expected to include:

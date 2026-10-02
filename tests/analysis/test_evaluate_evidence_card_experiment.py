@@ -118,7 +118,7 @@ def test_evaluate_evidence_card_experiment_writes_comparison_outputs(tmp_path: P
     assert "content_with_evidence_card" in set(deltas["text_source"])
     manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["no_summarization_rerun"] is True
-    assert manifest["deterministic_card_version"] == 1
+    assert manifest["deterministic_card_version"] == 2
     assert frozen_sentinel.read_text(encoding="utf-8") == "unchanged"
 
 

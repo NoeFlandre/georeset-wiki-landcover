@@ -90,7 +90,7 @@ def test_build_evidence_cards_cli_writes_deterministic_records(tmp_path):
     assert output["100"]["evidence_sentence_count"] == 1
     assert output["100"]["evidence_card_char_count"] == len(output["100"]["evidence_card"])
     assert output["100"]["metadata"]["source"] == "deterministic_evidence_card"
-    assert output["100"]["metadata"]["version"] == 1
+    assert output["100"]["metadata"]["version"] == 2
     assert output["100"]["metadata"]["text_variants"]["evidence_card"]["uses_raw_content"] is False
     assert (
         output["100"]["metadata"]["text_variants"]["content_with_evidence_card"]["uses_raw_content"]
@@ -193,3 +193,44 @@ def test_build_evidence_cards_cli_fails_loudly_for_non_mapping_article_contents(
         )
 
     assert not output_path.exists()
+
+
+def test_build_evidence_cards_cli_renders_nullable_numeric_spatial_values(tmp_path):
+    contents_path = tmp_path / "contents.json"
+    spatial_path = tmp_path / "spatial.csv"
+    output_path = tmp_path / "cards-v2.json"
+    absent_path = tmp_path / "absent.json"
+    _write_json(contents_path, {pageid: {"title": ""} for pageid in ["100", "200", "300"]})
+    spatial_path.write_text(
+        "pageid,dominant_matches_point_label_250m\n100,1.0\n200,0.0\n300,\n",
+        encoding="utf-8",
+    )
+    args = [
+        "--article-contents-path",
+        str(contents_path),
+        "--spatial-confidence-path",
+        str(spatial_path),
+        "--evidence-metadata-path",
+        str(absent_path),
+        "--article-type-metadata-path",
+        str(absent_path),
+        "--quality-scores-path",
+        str(absent_path),
+        "--output-path",
+        str(output_path),
+    ]
+
+    main(args)
+    first_output = output_path.read_bytes()
+    main(args)
+    assert output_path.read_bytes() == first_output
+    records = json.loads(first_output)
+    for pageid, expected in [("100", "oui"), ("200", "non"), ("300", "inconnue")]:
+        assert (
+            f"- le label dominant à 250 m correspond au label ponctuel: {expected}"
+            in records[pageid]["evidence_card"].splitlines()
+        )
+        assert records[pageid]["metadata"]["version"] == 2
+    assert records["100"]["dominant_matches_point_label_250m"] == 1.0
+    assert records["200"]["dominant_matches_point_label_250m"] == 0.0
+    assert records["300"]["dominant_matches_point_label_250m"] is None
