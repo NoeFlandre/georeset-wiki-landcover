@@ -117,6 +117,58 @@ def test_small_validator_rejects_an_unexpected_null_metric_field(tmp_path: Path)
     assert any("synthetic" in violation and "metrics" in violation for violation in violations)
 
 
+def test_small_validator_rejects_changed_synthetic_summary_with_refreshed_hash(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    relative_path = "data/wiki/article_summaries.json"
+    summaries_path = output_dir / relative_path
+    summaries = json.loads(summaries_path.read_text(encoding="utf-8"))
+    summaries["100"]["summary"] = "Synthetic meadow land cover with grass."
+    summaries_path.write_text(json.dumps(summaries), encoding="utf-8")
+    _refresh_manifest_hash(output_dir, relative_path)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("synthetic" in violation and "summary" in violation for violation in violations)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("model", "different-model"),
+        ("model_repo_id", "different/repository"),
+        ("seed", 43),
+        ("temperature", 0.5),
+        ("allowed_labels", []),
+        ("prompt", "different prompt"),
+        ("system_prompt", "different system prompt"),
+        ("attempt_count", 2),
+        ("fingerprint", "0" * 64),
+        ("text_sha256", "0" * 64),
+    ],
+)
+def test_small_validator_rejects_changed_synthetic_prediction_metadata(
+    tmp_path: Path, field: str, value: object
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    relative_path = "data/classification/runs/small/corine_level2_summary_predictions.json"
+    predictions_path = output_dir / relative_path
+    predictions = json.loads(predictions_path.read_text(encoding="utf-8"))
+    predictions["100"]["metadata"][field] = value
+    predictions_path.write_text(json.dumps(predictions), encoding="utf-8")
+    _refresh_manifest_hash(output_dir, relative_path)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any(
+        "synthetic" in violation and "prediction 100" in violation and "metadata" in violation
+        for violation in violations
+    )
+
+
 def test_small_validator_rejects_a_synthetic_wiki_point_moved_to_another_polygon(
     tmp_path: Path,
 ) -> None:

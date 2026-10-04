@@ -13,6 +13,8 @@ from typing import Any
 import geopandas as gpd
 from shapely.geometry import box
 
+from georeset_wiki_landcover.classification import runner as classification_runner
+
 SMALL_REQUIRED_FILES = (
     "manifest.json",
     "data/wiki/wiki_articles.json",
@@ -39,6 +41,15 @@ CLASSIFICATION_RUNS = (
     ("osm", "summary"),
 )
 SMALL_SYNTHETIC_PAGEIDS = frozenset({"100", "200"})
+SMALL_SYNTHETIC_MODEL = "synthetic-deterministic-classifier"
+SMALL_SYNTHETIC_SEED = 42
+SMALL_SYNTHETIC_TEMPERATURE = 0.0
+SMALL_SYNTHETIC_SUMMARIES = {
+    "100": "Synthetic forest land cover with trees.",
+    "200": "Synthetic meadow land cover with grass.",
+}
+SMALL_SYNTHETIC_PROMPT = "Synthetic deterministic classifier; no prompt sent to an LLM."
+SMALL_SYNTHETIC_SYSTEM_PROMPT = "Synthetic deterministic classifier."
 SMALL_SYNTHETIC_COORDINATES = {
     "100": (0.5, 0.5),
     "200": (0.5, 2.5),
@@ -492,6 +503,52 @@ def _validate_small_synthetic_inputs(root: Path, violations: list[str]) -> None:
                     )
 
 
+def _expected_small_synthetic_metadata(task: str, pageid: str) -> dict[str, Any]:
+    allowed_labels = SMALL_SYNTHETIC_KNOWN_METRICS[f"{task}_summary_metrics"]["allowed_labels"]
+    return {
+        "task": task,
+        "text_source": "summary",
+        "model": SMALL_SYNTHETIC_MODEL,
+        "model_repo_id": None,
+        "seed": SMALL_SYNTHETIC_SEED,
+        "temperature": SMALL_SYNTHETIC_TEMPERATURE,
+        "allowed_labels": allowed_labels,
+        "prompt": SMALL_SYNTHETIC_PROMPT,
+        "system_prompt": SMALL_SYNTHETIC_SYSTEM_PROMPT,
+        "attempt_count": 1,
+        "fingerprint": classification_runner.prediction_fingerprint(
+            task,
+            "summary",
+            SMALL_SYNTHETIC_MODEL,
+            None,
+            SMALL_SYNTHETIC_SEED,
+            SMALL_SYNTHETIC_TEMPERATURE,
+            allowed_labels,
+        ),
+        "text_sha256": classification_runner.text_fingerprint(SMALL_SYNTHETIC_SUMMARIES[pageid]),
+    }
+
+
+def _validate_small_synthetic_summaries(root: Path, violations: list[str]) -> None:
+    summaries = _load_json(root / "data/wiki/article_summaries.json", violations)
+    if not isinstance(summaries, dict):
+        return
+    if set(summaries) != SMALL_SYNTHETIC_PAGEIDS:
+        missing = sorted(SMALL_SYNTHETIC_PAGEIDS - set(summaries))
+        extra = sorted(set(summaries) - SMALL_SYNTHETIC_PAGEIDS)
+        violations.append(
+            f"synthetic article summaries must have exactly the expected pageids: "
+            f"missing={missing} extra={extra}"
+        )
+    for pageid, expected_summary in SMALL_SYNTHETIC_SUMMARIES.items():
+        record = summaries.get(pageid)
+        if not isinstance(record, dict) or record.get("summary") != expected_summary:
+            actual = record.get("summary") if isinstance(record, dict) else record
+            violations.append(
+                f"synthetic article summary {pageid}={actual!r}; expected {expected_summary!r}"
+            )
+
+
 def _validate_small_synthetic_contract(
     root: Path, wiki_pageids: set[str], violations: list[str]
 ) -> None:
@@ -511,6 +568,7 @@ def _validate_small_synthetic_contract(
         )
 
     _validate_small_synthetic_inputs(root, violations)
+    _validate_small_synthetic_summaries(root, violations)
 
     expected_counts = manifest.get("expected_counts")
     for name, expected in SMALL_SYNTHETIC_COUNTS.items():
@@ -538,9 +596,13 @@ def _validate_small_synthetic_contract(
                 record = predictions.get(pageid)
                 if not isinstance(record, dict):
                     continue
+                expected_fields = {
+                    **expected_record,
+                    "metadata": _expected_small_synthetic_metadata(task, pageid),
+                }
                 differing_fields = sorted(
                     field
-                    for field, expected_value in expected_record.items()
+                    for field, expected_value in expected_fields.items()
                     if not _matches_expected_json(record.get(field), expected_value)
                 )
                 if differing_fields:
