@@ -421,6 +421,12 @@ def _validate_manifest_hashes(root: Path, violations: list[str]) -> None:
     if not isinstance(artifact_hashes, dict) or not artifact_hashes:
         violations.append("manifest.json must include non-empty artifact_sha256 mapping")
         return
+    required_hashes = set(SMALL_REQUIRED_FILES) - {"manifest.json"}
+    missing_hashes = sorted(required_hashes - set(artifact_hashes))
+    if missing_hashes:
+        violations.append(
+            f"manifest artifact_sha256 missing required artifact hashes: {missing_hashes}"
+        )
     for relative_path, expected_hash in sorted(artifact_hashes.items()):
         path = root / relative_path
         if not path.exists():

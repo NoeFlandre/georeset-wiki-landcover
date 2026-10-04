@@ -39,6 +39,27 @@ def test_small_artifact_validator_reports_stale_manifest_hash(tmp_path: Path) ->
     )
 
 
+def test_small_artifact_validator_rejects_a_missing_required_manifest_hash(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    manifest_path = output_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    missing_artifact = "data/wiki/article_contents.json"
+    manifest["artifact_sha256"].pop(missing_artifact)
+    assert manifest["artifact_sha256"]
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any(
+        "artifact_sha256 missing required artifact hashes" in violation
+        and missing_artifact in violation
+        for violation in violations
+    )
+
+
 def test_small_artifact_validator_reports_duplicate_wiki_pageids(tmp_path: Path) -> None:
     output_dir = tmp_path / "small"
     run_small_reproduction(output_dir=output_dir, clean=True)
