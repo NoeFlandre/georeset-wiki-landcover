@@ -438,6 +438,29 @@ def test_small_validator_rejects_changed_synthetic_corine_labels(tmp_path: Path)
     assert any("synthetic" in violation and "corine" in violation for violation in violations)
 
 
+def test_small_validator_rejects_changed_synthetic_identity_value_type(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    relative_path = "data/corine/synthetic_corine.geojson"
+    vector_path = output_dir / relative_path
+    frame = gpd.read_file(vector_path)
+    frame["ID"] = frame["ID"].astype(str)
+    frame.to_file(vector_path, driver="GeoJSON", index=False)
+    _refresh_manifest_hash(output_dir, relative_path)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any(
+        "synthetic" in violation
+        and relative_path in violation
+        and "identity" in violation
+        and "ID" in violation
+        for violation in violations
+    )
+
+
 def test_small_validator_rejects_changed_synthetic_polygon_geometry(tmp_path: Path) -> None:
     output_dir = tmp_path / "small"
     run_small_reproduction(output_dir=output_dir, clean=True)

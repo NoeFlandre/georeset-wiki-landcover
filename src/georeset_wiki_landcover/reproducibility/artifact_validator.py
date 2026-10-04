@@ -100,6 +100,7 @@ SMALL_SYNTHETIC_WIKI_ARTICLES = {
 SMALL_SYNTHETIC_VECTOR_FEATURES: dict[str, dict[str, Any]] = {
     "data/corine/synthetic_corine.geojson": {
         "id_field": "ID",
+        "identity_values": {"1": 1, "2": 2},
         "features": {
             "1": {"code_18": "311", "bounds": (0, 0, 1, 1)},
             "2": {"code_18": "211", "bounds": (2, 0, 3, 1)},
@@ -107,6 +108,10 @@ SMALL_SYNTHETIC_VECTOR_FEATURES: dict[str, dict[str, Any]] = {
     },
     "data/osm/osm_project_polygons.geojson": {
         "id_field": "osm_id",
+        "identity_values": {
+            "synthetic/wood": "synthetic/wood",
+            "synthetic/meadow": "synthetic/meadow",
+        },
         "features": {
             "synthetic/wood": {
                 "landuse": None,
@@ -587,6 +592,15 @@ def _validate_small_synthetic_inputs(root: Path, violations: list[str]) -> None:
                 )
                 continue
             feature = selected.iloc[0]
+            expected_identity = contract["identity_values"][identity]
+            actual_identity = feature[id_field]
+            if hasattr(actual_identity, "item"):
+                actual_identity = actual_identity.item()
+            if not _matches_expected_json(actual_identity, expected_identity):
+                violations.append(
+                    f"synthetic {relative_path} feature {identity} identity field {id_field}="
+                    f"{actual_identity!r}; expected {expected_identity!r}"
+                )
             for field, expected_value in expected.items():
                 if field == "bounds":
                     expected_geometry = box(*expected_value)

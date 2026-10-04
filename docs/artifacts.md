@@ -187,7 +187,7 @@ Checks:
 - prediction records have required fields;
 - the synthetic profile matches complete deterministic wiki article records,
   article contents, both summary variants, polygon geometries, expected CORINE/OSM
-  labels, and exact non-geometry property schemas;
+  identity values and labels, and exact non-geometry property schemas;
 - the small synthetic manifest matches the expected workflow, input and output
   inventories, model settings, and empty non-reproducible-components list;
 - synthetic prediction records match the complete deterministic page ID, title,
