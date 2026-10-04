@@ -101,6 +101,38 @@ def test_small_validator_checks_the_known_synthetic_metrics(tmp_path: Path) -> N
     assert any("synthetic" in violation and "accuracy" in violation for violation in violations)
 
 
+@pytest.mark.parametrize(
+    ("filename", "field_path"),
+    [
+        ("corine_level2_summary_metrics", "coverage"),
+        ("corine_level2_summary_metrics", "macro_f1"),
+        ("corine_level2_summary_metrics", "per_label.21.f1"),
+        ("osm_summary_metrics", "coverage"),
+        ("osm_summary_metrics", "macro_f1"),
+        ("osm_summary_metrics", "per_label.meadow.f1"),
+    ],
+)
+def test_small_validator_rejects_self_consistent_incomplete_metric_checks(
+    tmp_path: Path, filename: str, field_path: str
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    metrics_relative = f"data/classification/runs/small/{filename}.json"
+    metrics_path = output_dir / metrics_relative
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    target = metrics
+    *parents, leaf = field_path.split(".")
+    for part in parents:
+        target = target[part]
+    target[leaf] = 0.5
+    metrics_path.write_text(json.dumps(metrics), encoding="utf-8")
+    _refresh_manifest_hash(output_dir, metrics_relative)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("synthetic" in violation and "metrics" in violation for violation in violations)
+
+
 @pytest.mark.parametrize("data_source", [None, "syntheti"])
 def test_small_validator_requires_the_synthetic_manifest_marker(
     tmp_path: Path, data_source: str | None

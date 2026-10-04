@@ -43,18 +43,74 @@ SMALL_SYNTHETIC_COUNTS = {
     "corine_level2_summary_predictions": 2,
     "osm_summary_predictions": 2,
 }
-SMALL_SYNTHETIC_KNOWN_METRICS: dict[str, dict[str, int | float]] = {
+SMALL_SYNTHETIC_KNOWN_METRICS: dict[str, dict[str, Any]] = {
     "corine_level2_summary_metrics": {
         "n_eligible": 2,
         "n_predicted_ok": 2,
         "n_parse_error": 0,
+        "coverage": 1.0,
         "accuracy": 1.0,
+        "accuracy_including_parse_errors_as_wrong": 1.0,
+        "macro_precision": 1.0,
+        "macro_recall": 1.0,
+        "macro_recall_including_parse_errors_as_wrong": 1.0,
+        "macro_f1": 1.0,
+        "macro_f1_including_parse_errors_as_wrong": 1.0,
+        "per_label": {
+            "21": {"support": 1, "precision": 1.0, "recall": 1.0, "f1": 1.0},
+            "31": {"support": 1, "precision": 1.0, "recall": 1.0, "f1": 1.0},
+        },
+        "task": "corine_level2",
+        "text_source": "summary",
+        "allowed_labels": ["21", "31"],
+        "labels_evaluated": ["21", "31"],
     },
     "osm_summary_metrics": {
         "n_eligible": 2,
         "n_predicted_ok": 2,
         "n_parse_error": 0,
+        "coverage": 1.0,
         "exact_match_accuracy": 1.0,
+        "exact_match_accuracy_including_parse_errors_as_empty": 1.0,
+        "micro_precision": 1.0,
+        "micro_recall": 1.0,
+        "micro_f1": 1.0,
+        "micro_f1_including_parse_errors_as_empty": 1.0,
+        "macro_precision": 1.0,
+        "macro_recall": 1.0,
+        "macro_f1": 1.0,
+        "macro_f1_including_parse_errors_as_empty": 1.0,
+        "per_label": {
+            "meadow": {"support": 1, "precision": 1.0, "recall": 1.0, "f1": 1.0},
+            "wood": {"support": 1, "precision": 1.0, "recall": 1.0, "f1": 1.0},
+        },
+        "task": "osm",
+        "text_source": "summary",
+        "allowed_labels": [
+            "allotments",
+            "bare_rock",
+            "beach",
+            "farmland",
+            "farmyard",
+            "forest",
+            "grass",
+            "grassland",
+            "greenhouse_horticulture",
+            "heath",
+            "meadow",
+            "mud",
+            "orchard",
+            "plant_nursery",
+            "sand",
+            "scree",
+            "scrub",
+            "shingle",
+            "vineyard",
+            "water",
+            "wetland",
+            "wood",
+        ],
+        "labels_evaluated": ["meadow", "wood"],
     },
 }
 
@@ -100,6 +156,27 @@ def _required_files(root: Path, relative_paths: tuple[str, ...]) -> list[str]:
 
 def _is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _matches_expected_json(actual: Any, expected: Any) -> bool:
+    if isinstance(expected, dict):
+        return (
+            isinstance(actual, dict)
+            and actual.keys() == expected.keys()
+            and all(_matches_expected_json(actual[key], value) for key, value in expected.items())
+        )
+    if isinstance(expected, list):
+        return (
+            isinstance(actual, list)
+            and len(actual) == len(expected)
+            and all(
+                _matches_expected_json(actual_value, expected_value)
+                for actual_value, expected_value in zip(actual, expected, strict=True)
+            )
+        )
+    if _is_number(expected):
+        return _is_number(actual) and actual == expected
+    return type(actual) is type(expected) and actual == expected
 
 
 def _validate_bounds(root: Path, violations: list[str]) -> None:
@@ -332,12 +409,16 @@ def _validate_small_synthetic_contract(
         metrics = _load_json(run_dir / f"{filename}.json", violations)
         if not isinstance(metrics, dict):
             continue
-        for metric_name, expected_metric in expected_metrics.items():
-            actual = metrics.get(metric_name)
-            if not _is_number(actual) or actual != expected_metric:
-                violations.append(
-                    f"synthetic {filename} {metric_name}={actual!r}; expected {expected_metric}"
-                )
+        differing_fields = sorted(
+            field
+            for field in metrics.keys() | expected_metrics.keys()
+            if not _matches_expected_json(metrics.get(field), expected_metrics.get(field))
+        )
+        if differing_fields:
+            violations.append(
+                f"synthetic {filename} metrics differ from deterministic expected values "
+                f"for fields {differing_fields}"
+            )
 
 
 def _validate_small_artifacts(root: Path) -> list[str]:
