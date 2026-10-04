@@ -186,6 +186,8 @@ Checks:
 - CORINE and OSM vector files are readable and have required columns;
 - prediction records have required fields;
 - metrics row counts match prediction records;
+- the synthetic profile matches its fixed target/prediction pairs and complete
+  deterministic metric objects;
 - manifest hashes match current artifact contents.
 
 Full profile:

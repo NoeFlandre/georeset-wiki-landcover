@@ -43,6 +43,36 @@ SMALL_SYNTHETIC_COUNTS = {
     "corine_level2_summary_predictions": 2,
     "osm_summary_predictions": 2,
 }
+SMALL_SYNTHETIC_EXPECTED_PREDICTIONS: dict[str, dict[str, dict[str, Any]]] = {
+    "corine_level2_summary": {
+        "100": {
+            "target": "31",
+            "prediction": "31",
+            "prediction_labels": ["31"],
+            "parse_status": "ok",
+        },
+        "200": {
+            "target": "21",
+            "prediction": "21",
+            "prediction_labels": ["21"],
+            "parse_status": "ok",
+        },
+    },
+    "osm_summary": {
+        "100": {
+            "target": ["wood"],
+            "prediction": ["wood"],
+            "prediction_labels": ["wood"],
+            "parse_status": "ok",
+        },
+        "200": {
+            "target": ["meadow"],
+            "prediction": ["meadow"],
+            "prediction_labels": ["meadow"],
+            "parse_status": "ok",
+        },
+    },
+}
 SMALL_SYNTHETIC_KNOWN_METRICS: dict[str, dict[str, Any]] = {
     "corine_level2_summary_metrics": {
         "n_eligible": 2,
@@ -404,6 +434,20 @@ def _validate_small_synthetic_contract(
                     f"synthetic {stem} prediction pageids must be exactly "
                     f"{sorted(SMALL_SYNTHETIC_PAGEIDS)}: missing={missing} extra={extra}"
                 )
+            for pageid, expected_record in SMALL_SYNTHETIC_EXPECTED_PREDICTIONS[stem].items():
+                record = predictions.get(pageid)
+                if not isinstance(record, dict):
+                    continue
+                differing_fields = sorted(
+                    field
+                    for field, expected_value in expected_record.items()
+                    if not _matches_expected_json(record.get(field), expected_value)
+                )
+                if differing_fields:
+                    violations.append(
+                        f"synthetic {stem} prediction {pageid} differs from deterministic "
+                        f"expected values for fields {differing_fields}"
+                    )
 
     for filename, expected_metrics in SMALL_SYNTHETIC_KNOWN_METRICS.items():
         metrics = _load_json(run_dir / f"{filename}.json", violations)

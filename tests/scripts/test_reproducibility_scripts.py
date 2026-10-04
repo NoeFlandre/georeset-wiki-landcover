@@ -102,6 +102,30 @@ def test_small_validator_checks_the_known_synthetic_metrics(tmp_path: Path) -> N
 
 
 @pytest.mark.parametrize(
+    ("field", "value"),
+    [("target", "21"), ("prediction", "21"), ("prediction_labels", ["21"])],
+)
+def test_small_validator_rejects_prediction_payloads_that_disagree_with_known_metrics(
+    tmp_path: Path, field: str, value: object
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    predictions_relative = "data/classification/runs/small/corine_level2_summary_predictions.json"
+    predictions_path = output_dir / predictions_relative
+    predictions = json.loads(predictions_path.read_text(encoding="utf-8"))
+    predictions["100"][field] = value
+    predictions_path.write_text(json.dumps(predictions), encoding="utf-8")
+    _refresh_manifest_hash(output_dir, predictions_relative)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any(
+        "synthetic" in violation and "prediction" in violation and "100" in violation
+        for violation in violations
+    )
+
+
+@pytest.mark.parametrize(
     ("filename", "field_path"),
     [
         ("corine_level2_summary_metrics", "coverage"),

@@ -92,11 +92,12 @@ Expected behavior:
 - The second command prints `Artifact validation passed: ...`.
 - Outputs are under `build/reproducibility/small/`, which is ignored by Git.
 - The small synthetic artifact contract contains wiki page IDs `100` and `200`,
-  two rows per task, and the complete deterministic metric objects emitted by
-  the reproducer, including aggregate and per-label values. Validation checks
-  these independently of the artifact hashes, so a self-consistent but
-  incomplete or internally inconsistent package still fails. The full profile
-  does not impose these synthetic IDs or metrics.
+  two rows per task, deterministic CORINE and OSM targets/predictions for each
+  page, and the complete deterministic metric objects emitted by the reproducer,
+  including aggregate and per-label values. Validation checks these independently
+  of the artifact hashes, so a self-consistent but incomplete or internally
+  inconsistent package still fails. The full profile does not impose these
+  synthetic IDs, predictions, or metrics.
 
 The small workflow intentionally does not call an LLM. It uses a deterministic
 local classifier so that the smoke test can run on a clean machine.
