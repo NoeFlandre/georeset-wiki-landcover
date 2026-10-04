@@ -565,6 +565,19 @@ def _validate_small_synthetic_contract(
         violations.append("small profile manifest data_source must be 'synthetic'")
         return
 
+    expected_run_provenance = {
+        "model": SMALL_SYNTHETIC_MODEL,
+        "seed": SMALL_SYNTHETIC_SEED,
+        "temperature": SMALL_SYNTHETIC_TEMPERATURE,
+        "classification_policy_version": classification_runner.CLASSIFICATION_POLICY_VERSION,
+    }
+    for field, expected in expected_run_provenance.items():
+        actual = manifest.get(field)
+        if not _matches_expected_json(actual, expected):
+            violations.append(
+                f"manifest.json synthetic run field {field}={actual!r}; expected {expected!r}"
+            )
+
     if wiki_pageids != SMALL_SYNTHETIC_PAGEIDS:
         missing = sorted(SMALL_SYNTHETIC_PAGEIDS - wiki_pageids)
         extra = sorted(wiki_pageids - SMALL_SYNTHETIC_PAGEIDS)

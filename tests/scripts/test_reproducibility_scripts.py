@@ -60,6 +60,30 @@ def test_small_artifact_validator_rejects_a_missing_required_manifest_hash(
     )
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("model", "unrecorded-model"),
+        ("seed", 43),
+        ("temperature", 0.5),
+        ("classification_policy_version", "obsolete-policy"),
+    ],
+)
+def test_small_validator_rejects_manifest_run_provenance_drift(
+    tmp_path: Path, field: str, value: object
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    manifest_path = output_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest[field] = value
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("manifest.json" in violation and field in violation for violation in violations)
+
+
 def test_small_artifact_validator_reports_duplicate_wiki_pageids(tmp_path: Path) -> None:
     output_dir = tmp_path / "small"
     run_small_reproduction(output_dir=output_dir, clean=True)
