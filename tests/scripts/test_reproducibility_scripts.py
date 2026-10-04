@@ -60,6 +60,25 @@ def test_small_artifact_validator_rejects_a_missing_required_manifest_hash(
     )
 
 
+def test_small_artifact_validator_rejects_hashes_outside_the_artifact_inventory(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    extra_path = output_dir / "extra.txt"
+    extra_path.write_text("not a declared synthetic artifact", encoding="utf-8")
+    manifest_path = output_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["artifact_sha256"]["extra.txt"] = hashlib.sha256(extra_path.read_bytes()).hexdigest()
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any(
+        "artifact_sha256" in violation and "extra.txt" in violation for violation in violations
+    )
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
