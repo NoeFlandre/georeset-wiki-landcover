@@ -103,6 +103,24 @@ def test_small_validator_rejects_manifest_run_provenance_drift(
     assert any("manifest.json" in violation and field in violation for violation in violations)
 
 
+def test_small_validator_rejects_unexpected_manifest_expected_counts(tmp_path: Path) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    manifest_path = output_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["expected_counts"]["corine_level2_content_predictions"] = 999
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any(
+        "manifest.json" in violation
+        and "expected_counts" in violation
+        and "corine_level2_content_predictions" in violation
+        for violation in violations
+    )
+
+
 @pytest.mark.parametrize(
     "field",
     ["workflow", "inputs", "outputs", "known_non_reproducible_components"],

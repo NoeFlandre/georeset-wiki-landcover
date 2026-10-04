@@ -631,6 +631,12 @@ def _validate_small_synthetic_contract(
     _validate_small_synthetic_summaries(root, violations)
 
     expected_counts = manifest.get("expected_counts")
+    if isinstance(expected_counts, dict):
+        unexpected_counts = sorted(set(expected_counts) - set(SMALL_SYNTHETIC_COUNTS))
+        if unexpected_counts:
+            violations.append(
+                f"manifest.json expected_counts has unexpected keys: {unexpected_counts}"
+            )
     for name, expected in SMALL_SYNTHETIC_COUNTS.items():
         actual = expected_counts.get(name) if isinstance(expected_counts, dict) else None
         if not isinstance(actual, int) or isinstance(actual, bool) or actual != expected:
