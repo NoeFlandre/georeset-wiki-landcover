@@ -455,6 +455,34 @@ def test_small_validator_rejects_changed_synthetic_polygon_geometry(tmp_path: Pa
 
 
 @pytest.mark.parametrize(
+    "relative_path",
+    [
+        "data/corine/synthetic_corine.geojson",
+        "data/osm/osm_project_polygons.geojson",
+    ],
+)
+def test_small_validator_rejects_unexpected_synthetic_vector_attributes(
+    tmp_path: Path, relative_path: str
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    vector_path = output_dir / relative_path
+    frame = gpd.read_file(vector_path)
+    frame["unexpected_property"] = "not emitted by the fixture"
+    frame.to_file(vector_path, driver="GeoJSON", index=False)
+    _refresh_manifest_hash(output_dir, relative_path)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any(
+        "synthetic" in violation
+        and relative_path in violation
+        and "unexpected_property" in violation
+        for violation in violations
+    )
+
+
+@pytest.mark.parametrize(
     ("field", "value"),
     [("target", "21"), ("prediction", "21"), ("prediction_labels", ["21"])],
 )

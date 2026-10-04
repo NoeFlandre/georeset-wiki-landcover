@@ -186,8 +186,8 @@ Checks:
 - CORINE and OSM vector files are readable and have required columns;
 - prediction records have required fields;
 - the synthetic profile matches complete deterministic wiki article records,
-  article contents, both summary variants, polygon geometries, and CORINE/OSM
-  labels;
+  article contents, both summary variants, polygon geometries, expected CORINE/OSM
+  labels, and exact non-geometry property schemas;
 - the small synthetic manifest matches the expected workflow, input and output
   inventories, model settings, and empty non-reproducible-components list;
 - synthetic prediction records match the complete deterministic page ID, title,

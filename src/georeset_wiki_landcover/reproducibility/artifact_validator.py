@@ -561,6 +561,21 @@ def _validate_small_synthetic_inputs(root: Path, violations: list[str]) -> None:
         if id_field not in frame.columns:
             violations.append(f"synthetic {relative_path} missing identity field {id_field}")
             continue
+
+        expected_attribute_fields = {id_field}
+        for expected_feature in expected_features.values():
+            expected_attribute_fields.update(
+                field for field in expected_feature if field != "bounds"
+            )
+        actual_attribute_fields = set(frame.columns) - {frame.geometry.name}
+        if actual_attribute_fields != expected_attribute_fields:
+            missing_fields = sorted(expected_attribute_fields - actual_attribute_fields)
+            unexpected_fields = sorted(actual_attribute_fields - expected_attribute_fields)
+            violations.append(
+                f"synthetic {relative_path} attribute fields differ from the deterministic "
+                f"fixture: missing={missing_fields} unexpected={unexpected_fields}"
+            )
+
         if frame.crs is None or frame.crs.to_epsg() != 4326:
             violations.append(f"synthetic {relative_path} CRS must be EPSG:4326")
 
@@ -581,7 +596,7 @@ def _validate_small_synthetic_inputs(root: Path, violations: list[str]) -> None:
                             "from the deterministic fixture"
                         )
                 elif field not in frame.columns:
-                    violations.append(f"synthetic {relative_path} missing expected field {field}")
+                    continue
                 elif expected_value is None:
                     if not bool(selected[field].isna().iloc[0]):
                         violations.append(
