@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import Counter
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -693,6 +694,26 @@ def _validate_small_synthetic_contract(
             violations.append(
                 f"manifest.json synthetic run field {field}={actual!r}; expected {expected!r}"
             )
+
+    for field in ("python_version", "project_version"):
+        value = manifest.get(field)
+        if not isinstance(value, str) or not value.strip():
+            violations.append(f"manifest.json {field} must be a non-empty string")
+
+    created_at_utc = manifest.get("created_at_utc")
+    if not isinstance(created_at_utc, str) or not created_at_utc.strip():
+        violations.append("manifest.json created_at_utc must be an ISO-8601 UTC timestamp")
+    else:
+        timestamp = (
+            f"{created_at_utc[:-1]}+00:00" if created_at_utc.endswith("Z") else created_at_utc
+        )
+        try:
+            parsed_timestamp = datetime.fromisoformat(timestamp)
+        except ValueError:
+            violations.append("manifest.json created_at_utc must be an ISO-8601 UTC timestamp")
+        else:
+            if parsed_timestamp.tzinfo is None or parsed_timestamp.utcoffset() != timedelta(0):
+                violations.append("manifest.json created_at_utc must be an ISO-8601 UTC timestamp")
 
     if wiki_pageids != SMALL_SYNTHETIC_PAGEIDS:
         missing = sorted(SMALL_SYNTHETIC_PAGEIDS - wiki_pageids)

@@ -121,6 +121,47 @@ def test_small_validator_rejects_unexpected_manifest_expected_counts(tmp_path: P
     )
 
 
+@pytest.mark.parametrize("field", ["created_at_utc", "python_version", "project_version"])
+def test_small_validator_requires_manifest_runtime_provenance_fields(
+    tmp_path: Path, field: str
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    manifest_path = output_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest.pop(field)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("manifest.json" in violation and field in violation for violation in violations)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("created_at_utc", "not-a-timestamp"),
+        ("created_at_utc", "2026-10-04T20:00:00"),
+        ("created_at_utc", "2026-10-04T20:00:00+02:00"),
+        ("python_version", 3.10),
+        ("project_version", None),
+    ],
+)
+def test_small_validator_rejects_malformed_manifest_runtime_provenance(
+    tmp_path: Path, field: str, value: object
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    manifest_path = output_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest[field] = value
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("manifest.json" in violation and field in violation for violation in violations)
+
+
 @pytest.mark.parametrize(
     "field",
     ["workflow", "inputs", "outputs", "known_non_reproducible_components"],
