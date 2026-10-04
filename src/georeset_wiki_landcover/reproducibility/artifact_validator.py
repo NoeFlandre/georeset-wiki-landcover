@@ -58,6 +58,22 @@ SMALL_SYNTHETIC_SUMMARIES = {
     "100": "Synthetic forest land cover with trees.",
     "200": "Synthetic meadow land cover with grass.",
 }
+SMALL_SYNTHETIC_ARTICLE_CONTENTS = {
+    "100": {
+        "title": "Synthetic Forest",
+        "content": "A synthetic forest article for reproducibility smoke tests.",
+        "url": "https://example.invalid/wiki/Synthetic_Forest",
+    },
+    "200": {
+        "title": "Synthetic Meadow",
+        "content": "A synthetic meadow article for reproducibility smoke tests.",
+        "url": "https://example.invalid/wiki/Synthetic_Meadow",
+    },
+}
+SMALL_SYNTHETIC_SUMMARIES_NO_PLACE = {
+    "100": "A forest-like area with trees.",
+    "200": "A meadow-like area with grass.",
+}
 SMALL_SYNTHETIC_PROMPT = "Synthetic deterministic classifier; no prompt sent to an LLM."
 SMALL_SYNTHETIC_SYSTEM_PROMPT = "Synthetic deterministic classifier."
 SMALL_SYNTHETIC_COORDINATES = {
@@ -585,10 +601,37 @@ def _validate_small_synthetic_summaries(root: Path, violations: list[str]) -> No
         )
     for pageid, expected_summary in SMALL_SYNTHETIC_SUMMARIES.items():
         record = summaries.get(pageid)
-        if not isinstance(record, dict) or record.get("summary") != expected_summary:
+        if not _matches_expected_json(record, {"summary": expected_summary}):
             actual = record.get("summary") if isinstance(record, dict) else record
             violations.append(
                 f"synthetic article summary {pageid}={actual!r}; expected {expected_summary!r}"
+            )
+
+
+def _validate_small_synthetic_contents(root: Path, violations: list[str]) -> None:
+    relative_path = "data/wiki/article_contents.json"
+    contents = _load_json(root / relative_path, violations)
+    if not isinstance(contents, dict):
+        return
+    for pageid, expected_content in SMALL_SYNTHETIC_ARTICLE_CONTENTS.items():
+        if not _matches_expected_json(contents.get(pageid), expected_content):
+            violations.append(
+                f"synthetic {relative_path} record {pageid} differs from the deterministic fixture"
+            )
+
+
+def _validate_small_synthetic_no_place_summaries(root: Path, violations: list[str]) -> None:
+    relative_path = "data/wiki/article_summaries_no_place.json"
+    summaries = _load_json(root / relative_path, violations)
+    if not isinstance(summaries, dict):
+        return
+    for pageid, expected_summary in SMALL_SYNTHETIC_SUMMARIES_NO_PLACE.items():
+        record = summaries.get(pageid)
+        if not _matches_expected_json(record, {"summary": expected_summary}):
+            actual = record.get("summary") if isinstance(record, dict) else record
+            violations.append(
+                f"synthetic {relative_path} record {pageid} summary={actual!r}; "
+                f"expected {expected_summary!r}"
             )
 
 
@@ -628,7 +671,9 @@ def _validate_small_synthetic_contract(
         )
 
     _validate_small_synthetic_inputs(root, violations)
+    _validate_small_synthetic_contents(root, violations)
     _validate_small_synthetic_summaries(root, violations)
+    _validate_small_synthetic_no_place_summaries(root, violations)
 
     expected_counts = manifest.get("expected_counts")
     if isinstance(expected_counts, dict):

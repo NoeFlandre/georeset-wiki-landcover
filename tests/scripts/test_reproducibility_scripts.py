@@ -194,6 +194,32 @@ def test_small_validator_rejects_drift_in_synthetic_source_titles(tmp_path: Path
     assert any("synthetic wiki article 100 title" in violation for violation in violations)
 
 
+@pytest.mark.parametrize(
+    "relative_path",
+    [
+        "data/wiki/article_contents.json",
+        "data/wiki/article_summaries_no_place.json",
+    ],
+)
+def test_small_validator_rejects_drift_in_all_synthetic_text_inputs(
+    tmp_path: Path, relative_path: str
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    artifact_path = output_dir / relative_path
+    artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+    if relative_path.endswith("article_contents.json"):
+        artifact["100"] = None
+    else:
+        artifact["100"]["summary"] = "Changed synthetic no-place summary."
+    artifact_path.write_text(json.dumps(artifact), encoding="utf-8")
+    _refresh_manifest_hash(output_dir, relative_path)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("synthetic" in violation and relative_path in violation for violation in violations)
+
+
 def test_small_artifact_validator_reports_duplicate_wiki_pageids(tmp_path: Path) -> None:
     output_dir = tmp_path / "small"
     run_small_reproduction(output_dir=output_dir, clean=True)
