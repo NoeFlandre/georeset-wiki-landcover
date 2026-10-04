@@ -48,6 +48,25 @@ CLASSIFICATION_RUNS = (
     ("osm", "summary"),
 )
 SMALL_SYNTHETIC_PAGEIDS = frozenset({"100", "200"})
+SMALL_SYNTHETIC_MANIFEST_FIELDS = frozenset(
+    {
+        "workflow",
+        "mode",
+        "created_at_utc",
+        "python_version",
+        "project_version",
+        "classification_policy_version",
+        "data_source",
+        "model",
+        "seed",
+        "temperature",
+        "expected_counts",
+        "inputs",
+        "outputs",
+        "artifact_sha256",
+        "known_non_reproducible_components",
+    }
+)
 SMALL_SYNTHETIC_MODEL = "synthetic-deterministic-classifier"
 SMALL_SYNTHETIC_SEED = 42
 SMALL_SYNTHETIC_TEMPERATURE = 0.0
@@ -706,6 +725,15 @@ def _validate_small_synthetic_contract(
     if manifest.get("data_source") != "synthetic":
         violations.append("small profile manifest data_source must be 'synthetic'")
         return
+
+    actual_manifest_fields = set(manifest)
+    if actual_manifest_fields != SMALL_SYNTHETIC_MANIFEST_FIELDS:
+        missing_fields = sorted(SMALL_SYNTHETIC_MANIFEST_FIELDS - actual_manifest_fields)
+        unexpected_fields = sorted(actual_manifest_fields - SMALL_SYNTHETIC_MANIFEST_FIELDS)
+        violations.append(
+            "manifest.json synthetic schema fields differ from the deterministic fixture: "
+            f"missing={missing_fields} unexpected={unexpected_fields}"
+        )
 
     expected_run_provenance = {
         "workflow": "reproduce_small",

@@ -121,6 +121,24 @@ def test_small_validator_rejects_unexpected_manifest_expected_counts(tmp_path: P
     )
 
 
+def test_small_validator_rejects_unexpected_top_level_manifest_fields(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    manifest_path = output_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["model_repo_id"] = "different/repo"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any(
+        "manifest.json" in violation and "model_repo_id" in violation and "unexpected" in violation
+        for violation in violations
+    )
+
+
 @pytest.mark.parametrize("field", ["created_at_utc", "python_version", "project_version"])
 def test_small_validator_requires_manifest_runtime_provenance_fields(
     tmp_path: Path, field: str
