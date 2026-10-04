@@ -52,6 +52,10 @@ SMALL_SYNTHETIC_PAGEIDS = frozenset({"100", "200"})
 SMALL_SYNTHETIC_MODEL = "synthetic-deterministic-classifier"
 SMALL_SYNTHETIC_SEED = 42
 SMALL_SYNTHETIC_TEMPERATURE = 0.0
+SMALL_SYNTHETIC_TITLES = {
+    "100": "Synthetic Forest",
+    "200": "Synthetic Meadow",
+}
 SMALL_SYNTHETIC_SUMMARIES = {
     "100": "Synthetic forest land cover with trees.",
     "200": "Synthetic meadow land cover with grass.",
@@ -95,7 +99,7 @@ SMALL_SYNTHETIC_EXPECTED_PREDICTIONS: dict[str, dict[str, dict[str, Any]]] = {
     "corine_level2_summary": {
         "100": {
             "pageid": "100",
-            "title": "Synthetic Forest",
+            "title": SMALL_SYNTHETIC_TITLES["100"],
             "target": "31",
             "prediction": "31",
             "prediction_labels": ["31"],
@@ -105,7 +109,7 @@ SMALL_SYNTHETIC_EXPECTED_PREDICTIONS: dict[str, dict[str, dict[str, Any]]] = {
         },
         "200": {
             "pageid": "200",
-            "title": "Synthetic Meadow",
+            "title": SMALL_SYNTHETIC_TITLES["200"],
             "target": "21",
             "prediction": "21",
             "prediction_labels": ["21"],
@@ -117,7 +121,7 @@ SMALL_SYNTHETIC_EXPECTED_PREDICTIONS: dict[str, dict[str, dict[str, Any]]] = {
     "osm_summary": {
         "100": {
             "pageid": "100",
-            "title": "Synthetic Forest",
+            "title": SMALL_SYNTHETIC_TITLES["100"],
             "target": ["wood"],
             "prediction": ["wood"],
             "prediction_labels": ["wood"],
@@ -127,7 +131,7 @@ SMALL_SYNTHETIC_EXPECTED_PREDICTIONS: dict[str, dict[str, dict[str, Any]]] = {
         },
         "200": {
             "pageid": "200",
-            "title": "Synthetic Meadow",
+            "title": SMALL_SYNTHETIC_TITLES["200"],
             "target": ["meadow"],
             "prediction": ["meadow"],
             "prediction_labels": ["meadow"],
@@ -474,6 +478,12 @@ def _validate_small_synthetic_inputs(root: Path, violations: list[str]) -> None:
             expected_coordinates = SMALL_SYNTHETIC_COORDINATES.get(pageid)
             if expected_coordinates is None:
                 continue
+            expected_title = SMALL_SYNTHETIC_TITLES[pageid]
+            if article.get("title") != expected_title:
+                violations.append(
+                    f"synthetic wiki article {pageid} title={article.get('title')!r}; "
+                    f"expected {expected_title!r}"
+                )
             actual_coordinates = (article.get("lat"), article.get("lon"))
             if actual_coordinates != expected_coordinates:
                 violations.append(
@@ -649,8 +659,12 @@ def _validate_small_synthetic_contract(
                 }
                 differing_fields = sorted(
                     field
-                    for field, expected_value in expected_fields.items()
-                    if not _matches_expected_json(record.get(field), expected_value)
+                    for field in record.keys() | expected_fields.keys()
+                    if (
+                        field not in record
+                        or field not in expected_fields
+                        or not _matches_expected_json(record[field], expected_fields[field])
+                    )
                 )
                 if differing_fields:
                     violations.append(

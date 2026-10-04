@@ -116,6 +116,7 @@ def test_small_validator_rejects_manifest_artifact_provenance_drift(
         ("title", "Unrelated title"),
         ("raw_response", '{"label": "21"}'),
         ("error", "unexpected error for a successful result"),
+        ("unexpected", None),
     ],
 )
 def test_small_validator_rejects_drift_in_complete_prediction_records(
@@ -139,6 +140,21 @@ def test_small_validator_rejects_drift_in_complete_prediction_records(
         and field in violation
         for violation in violations
     )
+
+
+def test_small_validator_rejects_drift_in_synthetic_source_titles(tmp_path: Path) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    articles_relative = "data/wiki/wiki_articles.json"
+    articles_path = output_dir / articles_relative
+    articles = json.loads(articles_path.read_text(encoding="utf-8"))
+    articles[0]["title"] = "Unrelated source title"
+    articles_path.write_text(json.dumps(articles), encoding="utf-8")
+    _refresh_manifest_hash(output_dir, articles_relative)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("synthetic wiki article 100 title" in violation for violation in violations)
 
 
 def test_small_artifact_validator_reports_duplicate_wiki_pageids(tmp_path: Path) -> None:
