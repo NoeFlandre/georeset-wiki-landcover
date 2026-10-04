@@ -185,7 +185,21 @@ Checks:
 - content and summary keys match wiki page IDs;
 - CORINE and OSM vector files are readable and have required columns;
 - prediction records have required fields;
+- the synthetic profile matches complete deterministic wiki article records,
+  article contents, both summary variants, polygon geometries, expected CORINE/OSM
+  identity values and labels, and exact non-geometry property schemas;
+- the small synthetic manifest has exactly the generated top-level fields,
+  including required runtime version strings and a parseable UTC creation
+  timestamp, without requiring those runtime values to match the validator;
+- the small synthetic manifest matches the expected workflow, input and output
+  inventories, model settings, and empty non-reproducible-components list;
+- synthetic prediction records match the complete deterministic page ID, title,
+  target, prediction, response, error, parse status, and metadata fields;
+- synthetic prediction metadata matches the deterministic model settings,
+  allowed labels, run fingerprint, and source-text hash;
 - metrics row counts match prediction records;
+- the synthetic profile matches its fixed target/prediction pairs and complete
+  deterministic metric objects;
 - manifest hashes match current artifact contents.
 
 Full profile:

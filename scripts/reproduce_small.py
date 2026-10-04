@@ -3,27 +3,25 @@
 from __future__ import annotations
 
 import argparse
-import importlib
 import platform
 import shutil
-from collections.abc import Callable
 from datetime import datetime, timezone
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import geopandas as gpd
 from shapely.geometry import box
 
 from georeset_wiki_landcover.classification import runner as classification_runner
 from georeset_wiki_landcover.classification.types import PredictionResult
-from georeset_wiki_landcover.utils.json_io import write_geojson_atomic, write_json_atomic
-
-_VALIDATOR_MODULE = importlib.import_module(
-    "scripts.validate_artifacts" if __package__ else "validate_artifacts"
+from georeset_wiki_landcover.reproducibility.artifact_validator import (
+    sha256_file as _sha256_file,
 )
-_sha256_file = cast(Callable[[Path], str], _VALIDATOR_MODULE.sha256_file)
-_validate_artifacts = cast(Callable[..., list[str]], _VALIDATOR_MODULE.validate_artifacts)
+from georeset_wiki_landcover.reproducibility.artifact_validator import (
+    validate_artifacts as _validate_artifacts,
+)
+from georeset_wiki_landcover.utils.json_io import write_geojson_atomic, write_json_atomic
 
 SYNTHETIC_MODEL_NAME = "synthetic-deterministic-classifier"
 SMALL_RUN_DIR = Path("data/classification/runs/small")
