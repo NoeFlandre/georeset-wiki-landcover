@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 import geopandas as gpd
+import pytest
 from shapely.geometry import box
 
 from scripts.reproduce_small import run_small_reproduction
@@ -98,6 +99,25 @@ def test_small_validator_checks_the_known_synthetic_metrics(tmp_path: Path) -> N
     violations = validate_artifacts(output_dir, profile="small")
 
     assert any("synthetic" in violation and "accuracy" in violation for violation in violations)
+
+
+@pytest.mark.parametrize("data_source", [None, "syntheti"])
+def test_small_validator_requires_the_synthetic_manifest_marker(
+    tmp_path: Path, data_source: str | None
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    manifest_path = output_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if data_source is None:
+        manifest.pop("data_source")
+    else:
+        manifest["data_source"] = data_source
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("data_source" in violation and "synthetic" in violation for violation in violations)
 
 
 def _write_full_artifacts(root: Path, pageid: int = 100) -> None:

@@ -291,7 +291,10 @@ def _validate_small_synthetic_contract(
     root: Path, wiki_pageids: set[str], violations: list[str]
 ) -> None:
     manifest = _load_json(root / "manifest.json", violations)
-    if not isinstance(manifest, dict) or manifest.get("data_source") != "synthetic":
+    if not isinstance(manifest, dict):
+        return
+    if manifest.get("data_source") != "synthetic":
+        violations.append("small profile manifest data_source must be 'synthetic'")
         return
 
     if wiki_pageids != SMALL_SYNTHETIC_PAGEIDS:
