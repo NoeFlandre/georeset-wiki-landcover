@@ -15,18 +15,26 @@ from shapely.geometry import box
 
 from georeset_wiki_landcover.classification import runner as classification_runner
 
-SMALL_REQUIRED_FILES = (
-    "manifest.json",
+SMALL_SYNTHETIC_INPUTS = (
     "data/wiki/wiki_articles.json",
     "data/wiki/article_contents.json",
     "data/wiki/article_summaries.json",
     "data/wiki/article_summaries_no_place.json",
     "data/corine/synthetic_corine.geojson",
     "data/osm/osm_project_polygons.geojson",
+)
+
+SMALL_SYNTHETIC_OUTPUTS = (
     "data/classification/runs/small/corine_level2_summary_predictions.json",
     "data/classification/runs/small/corine_level2_summary_metrics.json",
     "data/classification/runs/small/osm_summary_predictions.json",
     "data/classification/runs/small/osm_summary_metrics.json",
+)
+
+SMALL_REQUIRED_FILES = (
+    "manifest.json",
+    *SMALL_SYNTHETIC_INPUTS,
+    *SMALL_SYNTHETIC_OUTPUTS,
 )
 
 FULL_REQUIRED_FILES = (
@@ -86,30 +94,46 @@ SMALL_SYNTHETIC_COUNTS = {
 SMALL_SYNTHETIC_EXPECTED_PREDICTIONS: dict[str, dict[str, dict[str, Any]]] = {
     "corine_level2_summary": {
         "100": {
+            "pageid": "100",
+            "title": "Synthetic Forest",
             "target": "31",
             "prediction": "31",
             "prediction_labels": ["31"],
             "parse_status": "ok",
+            "raw_response": '{"label": "31"}',
+            "error": None,
         },
         "200": {
+            "pageid": "200",
+            "title": "Synthetic Meadow",
             "target": "21",
             "prediction": "21",
             "prediction_labels": ["21"],
             "parse_status": "ok",
+            "raw_response": '{"label": "21"}',
+            "error": None,
         },
     },
     "osm_summary": {
         "100": {
+            "pageid": "100",
+            "title": "Synthetic Forest",
             "target": ["wood"],
             "prediction": ["wood"],
             "prediction_labels": ["wood"],
             "parse_status": "ok",
+            "raw_response": "{\"labels\": ['wood']}",
+            "error": None,
         },
         "200": {
+            "pageid": "200",
+            "title": "Synthetic Meadow",
             "target": ["meadow"],
             "prediction": ["meadow"],
             "prediction_labels": ["meadow"],
             "parse_status": "ok",
+            "raw_response": "{\"labels\": ['meadow']}",
+            "error": None,
         },
     },
 }
@@ -566,10 +590,14 @@ def _validate_small_synthetic_contract(
         return
 
     expected_run_provenance = {
+        "workflow": "reproduce_small",
         "model": SMALL_SYNTHETIC_MODEL,
         "seed": SMALL_SYNTHETIC_SEED,
         "temperature": SMALL_SYNTHETIC_TEMPERATURE,
         "classification_policy_version": classification_runner.CLASSIFICATION_POLICY_VERSION,
+        "inputs": list(SMALL_SYNTHETIC_INPUTS),
+        "outputs": list(SMALL_SYNTHETIC_OUTPUTS),
+        "known_non_reproducible_components": [],
     }
     for field, expected in expected_run_provenance.items():
         actual = manifest.get(field)

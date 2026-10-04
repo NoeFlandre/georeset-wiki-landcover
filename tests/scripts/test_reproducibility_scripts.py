@@ -84,6 +84,63 @@ def test_small_validator_rejects_manifest_run_provenance_drift(
     assert any("manifest.json" in violation and field in violation for violation in violations)
 
 
+@pytest.mark.parametrize(
+    "field",
+    ["workflow", "inputs", "outputs", "known_non_reproducible_components"],
+)
+def test_small_validator_rejects_manifest_artifact_provenance_drift(
+    tmp_path: Path, field: str
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    manifest_path = output_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    changed_values: dict[str, object] = {
+        "workflow": "other-workflow",
+        "inputs": manifest["inputs"][1:],
+        "outputs": manifest["outputs"][:-1],
+        "known_non_reproducible_components": ["unrecorded component"],
+    }
+    manifest[field] = changed_values[field]
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("manifest.json" in violation and field in violation for violation in violations)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("pageid", 100),
+        ("title", "Unrelated title"),
+        ("raw_response", '{"label": "21"}'),
+        ("error", "unexpected error for a successful result"),
+    ],
+)
+def test_small_validator_rejects_drift_in_complete_prediction_records(
+    tmp_path: Path, field: str, value: object
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    predictions_relative = "data/classification/runs/small/corine_level2_summary_predictions.json"
+    predictions_path = output_dir / predictions_relative
+    predictions = json.loads(predictions_path.read_text(encoding="utf-8"))
+    predictions["100"][field] = value
+    predictions_path.write_text(json.dumps(predictions), encoding="utf-8")
+    _refresh_manifest_hash(output_dir, predictions_relative)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any(
+        "synthetic" in violation
+        and "corine_level2_summary" in violation
+        and "100" in violation
+        and field in violation
+        for violation in violations
+    )
+
+
 def test_small_artifact_validator_reports_duplicate_wiki_pageids(tmp_path: Path) -> None:
     output_dir = tmp_path / "small"
     run_small_reproduction(output_dir=output_dir, clean=True)
