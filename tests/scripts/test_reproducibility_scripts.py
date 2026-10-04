@@ -194,6 +194,21 @@ def test_small_validator_rejects_drift_in_synthetic_source_titles(tmp_path: Path
     assert any("synthetic wiki article 100 title" in violation for violation in violations)
 
 
+def test_small_validator_rejects_drift_in_synthetic_wiki_article_url(tmp_path: Path) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    relative_path = "data/wiki/wiki_articles.json"
+    articles_path = output_dir / relative_path
+    articles = json.loads(articles_path.read_text(encoding="utf-8"))
+    articles[0].pop("url")
+    articles_path.write_text(json.dumps(articles), encoding="utf-8")
+    _refresh_manifest_hash(output_dir, relative_path)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any(relative_path in violation and "url" in violation for violation in violations)
+
+
 @pytest.mark.parametrize(
     "relative_path",
     [

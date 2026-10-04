@@ -80,6 +80,22 @@ SMALL_SYNTHETIC_COORDINATES = {
     "100": (0.5, 0.5),
     "200": (0.5, 2.5),
 }
+SMALL_SYNTHETIC_WIKI_ARTICLES = {
+    "100": {
+        "pageid": 100,
+        "title": SMALL_SYNTHETIC_TITLES["100"],
+        "lat": SMALL_SYNTHETIC_COORDINATES["100"][0],
+        "lon": SMALL_SYNTHETIC_COORDINATES["100"][1],
+        "url": "https://example.invalid/wiki/Synthetic_Forest",
+    },
+    "200": {
+        "pageid": 200,
+        "title": SMALL_SYNTHETIC_TITLES["200"],
+        "lat": SMALL_SYNTHETIC_COORDINATES["200"][0],
+        "lon": SMALL_SYNTHETIC_COORDINATES["200"][1],
+        "url": "https://example.invalid/wiki/Synthetic_Meadow",
+    },
+}
 SMALL_SYNTHETIC_VECTOR_FEATURES: dict[str, dict[str, Any]] = {
     "data/corine/synthetic_corine.geojson": {
         "id_field": "ID",
@@ -490,24 +506,40 @@ def _validate_manifest_hashes(root: Path, violations: list[str]) -> None:
 def _validate_small_synthetic_inputs(root: Path, violations: list[str]) -> None:
     wiki_articles = _load_json(root / "data/wiki/wiki_articles.json", violations)
     if isinstance(wiki_articles, list):
+        relative_path = "data/wiki/wiki_articles.json"
         for article in wiki_articles:
             if not isinstance(article, dict):
                 continue
             pageid = str(article.get("pageid"))
-            expected_coordinates = SMALL_SYNTHETIC_COORDINATES.get(pageid)
-            if expected_coordinates is None:
+            expected_article = SMALL_SYNTHETIC_WIKI_ARTICLES.get(pageid)
+            if expected_article is None:
                 continue
-            expected_title = SMALL_SYNTHETIC_TITLES[pageid]
-            if article.get("title") != expected_title:
+            differing_fields = sorted(
+                field
+                for field in article.keys() | expected_article.keys()
+                if (
+                    field not in article
+                    or field not in expected_article
+                    or not _matches_expected_json(article[field], expected_article[field])
+                )
+            )
+            if "title" in differing_fields:
                 violations.append(
                     f"synthetic wiki article {pageid} title={article.get('title')!r}; "
-                    f"expected {expected_title!r}"
+                    f"expected {expected_article['title']!r}"
                 )
-            actual_coordinates = (article.get("lat"), article.get("lon"))
-            if actual_coordinates != expected_coordinates:
+            if "lat" in differing_fields or "lon" in differing_fields:
+                actual_coordinates = (article.get("lat"), article.get("lon"))
+                expected_coordinates = (expected_article["lat"], expected_article["lon"])
                 violations.append(
                     f"synthetic wiki article {pageid} coordinates={actual_coordinates!r}; "
                     f"expected {expected_coordinates!r}"
+                )
+            other_differences = sorted(set(differing_fields) - {"title", "lat", "lon"})
+            if other_differences:
+                violations.append(
+                    f"synthetic {relative_path} record {pageid} differs from the deterministic "
+                    f"fixture for fields {other_differences}"
                 )
 
     for relative_path, contract in SMALL_SYNTHETIC_VECTOR_FEATURES.items():
