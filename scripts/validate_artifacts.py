@@ -37,6 +37,26 @@ CLASSIFICATION_RUNS = (
     ("corine_level2", "summary"),
     ("osm", "summary"),
 )
+SMALL_SYNTHETIC_PAGEIDS = frozenset({"100", "200"})
+SMALL_SYNTHETIC_COUNTS = {
+    "wiki_articles": 2,
+    "corine_level2_summary_predictions": 2,
+    "osm_summary_predictions": 2,
+}
+SMALL_SYNTHETIC_KNOWN_METRICS: dict[str, dict[str, int | float]] = {
+    "corine_level2_summary_metrics": {
+        "n_eligible": 2,
+        "n_predicted_ok": 2,
+        "n_parse_error": 0,
+        "accuracy": 1.0,
+    },
+    "osm_summary_metrics": {
+        "n_eligible": 2,
+        "n_predicted_ok": 2,
+        "n_parse_error": 0,
+        "exact_match_accuracy": 1.0,
+    },
+}
 
 PREDICTION_REQUIRED_FIELDS = {
     "pageid",
@@ -267,12 +287,62 @@ def _validate_manifest_hashes(root: Path, violations: list[str]) -> None:
             )
 
 
+def _validate_small_synthetic_contract(
+    root: Path, wiki_pageids: set[str], violations: list[str]
+) -> None:
+    manifest = _load_json(root / "manifest.json", violations)
+    if not isinstance(manifest, dict) or manifest.get("data_source") != "synthetic":
+        return
+
+    if wiki_pageids != SMALL_SYNTHETIC_PAGEIDS:
+        missing = sorted(SMALL_SYNTHETIC_PAGEIDS - wiki_pageids)
+        extra = sorted(wiki_pageids - SMALL_SYNTHETIC_PAGEIDS)
+        violations.append(
+            f"synthetic wiki pageids must be exactly {sorted(SMALL_SYNTHETIC_PAGEIDS)}: "
+            f"missing={missing} extra={extra}"
+        )
+
+    expected_counts = manifest.get("expected_counts")
+    for name, expected in SMALL_SYNTHETIC_COUNTS.items():
+        actual = expected_counts.get(name) if isinstance(expected_counts, dict) else None
+        if not isinstance(actual, int) or isinstance(actual, bool) or actual != expected:
+            violations.append(
+                f"synthetic manifest expected_counts.{name}={actual!r}; expected {expected}"
+            )
+
+    run_dir = root / "data/classification/runs/small"
+    for task, text_source in CLASSIFICATION_RUNS:
+        stem = f"{task}_{text_source}"
+        predictions_path = run_dir / f"{stem}_predictions.json"
+        predictions = _load_json(predictions_path, violations)
+        if isinstance(predictions, dict):
+            prediction_pageids = {str(pageid) for pageid in predictions}
+            if prediction_pageids != SMALL_SYNTHETIC_PAGEIDS:
+                missing = sorted(SMALL_SYNTHETIC_PAGEIDS - prediction_pageids)
+                extra = sorted(prediction_pageids - SMALL_SYNTHETIC_PAGEIDS)
+                violations.append(
+                    f"synthetic {stem} prediction pageids must be exactly "
+                    f"{sorted(SMALL_SYNTHETIC_PAGEIDS)}: missing={missing} extra={extra}"
+                )
+
+    for filename, expected_metrics in SMALL_SYNTHETIC_KNOWN_METRICS.items():
+        metrics = _load_json(run_dir / f"{filename}.json", violations)
+        if not isinstance(metrics, dict):
+            continue
+        for metric_name, expected_metric in expected_metrics.items():
+            actual = metrics.get(metric_name)
+            if not _is_number(actual) or actual != expected_metric:
+                violations.append(
+                    f"synthetic {filename} {metric_name}={actual!r}; expected {expected_metric}"
+                )
+
+
 def _validate_small_artifacts(root: Path) -> list[str]:
     violations = _required_files(root, SMALL_REQUIRED_FILES)
     if violations:
         return violations
     _validate_manifest_hashes(root, violations)
-    _validate_wiki_inputs(root, violations)
+    wiki_pageids = _validate_wiki_inputs(root, violations)
     _validate_vector_file(
         root,
         "data/corine/synthetic_corine.geojson",
@@ -287,6 +357,7 @@ def _validate_small_artifacts(root: Path) -> list[str]:
     )
     for task, text_source in CLASSIFICATION_RUNS:
         _validate_prediction_run(root, task, text_source, violations)
+    _validate_small_synthetic_contract(root, wiki_pageids, violations)
     return violations
 
 

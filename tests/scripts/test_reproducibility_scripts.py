@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 
@@ -49,7 +50,57 @@ def test_small_artifact_validator_reports_duplicate_wiki_pageids(tmp_path: Path)
     assert "duplicate wiki pageids: 100" in violations
 
 
-def _write_full_artifacts(root: Path) -> None:
+def _refresh_manifest_hash(root: Path, relative_path: str) -> None:
+    manifest_path = root / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["artifact_sha256"][relative_path] = hashlib.sha256(
+        (root / relative_path).read_bytes()
+    ).hexdigest()
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+
+def test_small_validator_rejects_a_self_consistent_missing_synthetic_prediction(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    predictions_relative = "data/classification/runs/small/corine_level2_summary_predictions.json"
+    predictions_path = output_dir / predictions_relative
+    predictions = json.loads(predictions_path.read_text(encoding="utf-8"))
+    predictions.pop("200")
+    predictions_path.write_text(json.dumps(predictions), encoding="utf-8")
+
+    metrics_relative = "data/classification/runs/small/corine_level2_summary_metrics.json"
+    metrics_path = output_dir / metrics_relative
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    metrics.update(n_eligible=1, n_predicted_ok=1, n_parse_error=0)
+    metrics_path.write_text(json.dumps(metrics), encoding="utf-8")
+    _refresh_manifest_hash(output_dir, predictions_relative)
+    _refresh_manifest_hash(output_dir, metrics_relative)
+
+    assert metrics["n_eligible"] == len(predictions)
+    assert metrics["n_predicted_ok"] == len(predictions)
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("synthetic" in violation and "200" in violation for violation in violations)
+
+
+def test_small_validator_checks_the_known_synthetic_metrics(tmp_path: Path) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    metrics_relative = "data/classification/runs/small/corine_level2_summary_metrics.json"
+    metrics_path = output_dir / metrics_relative
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    metrics["accuracy"] = 0.5
+    metrics_path.write_text(json.dumps(metrics), encoding="utf-8")
+    _refresh_manifest_hash(output_dir, metrics_relative)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("synthetic" in violation and "accuracy" in violation for violation in violations)
+
+
+def _write_full_artifacts(root: Path, pageid: int = 100) -> None:
     (root / "corine").mkdir(parents=True)
     (root / "wiki").mkdir(parents=True)
     (root / "osm").mkdir(parents=True)
@@ -58,11 +109,11 @@ def _write_full_artifacts(root: Path) -> None:
         encoding="utf-8",
     )
     (root / "wiki/wiki_articles.json").write_text(
-        json.dumps([{"pageid": 100, "lat": 0.5, "lon": 0.5, "title": "Inside"}]),
+        json.dumps([{"pageid": pageid, "lat": 0.5, "lon": 0.5, "title": "Inside"}]),
         encoding="utf-8",
     )
     (root / "wiki/article_contents.json").write_text(
-        json.dumps({"100": {"content": "Inside"}}),
+        json.dumps({str(pageid): {"content": "Inside"}}),
         encoding="utf-8",
     )
     osm = gpd.GeoDataFrame(
@@ -71,6 +122,13 @@ def _write_full_artifacts(root: Path) -> None:
         crs="EPSG:4326",
     )
     osm.to_file(root / "osm/osm_project_polygons.geojson", driver="GeoJSON")
+
+
+def test_full_profile_accepts_non_synthetic_pageids(tmp_path: Path) -> None:
+    root = tmp_path / "data"
+    _write_full_artifacts(root, pageid=300)
+
+    assert validate_artifacts(root, profile="full") == []
 
 
 def test_full_artifact_validator_reports_bad_bounds_schema(tmp_path: Path) -> None:
