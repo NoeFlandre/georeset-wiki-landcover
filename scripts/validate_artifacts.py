@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import geopandas as gpd
+from shapely.geometry import box
 
 SMALL_REQUIRED_FILES = (
     "manifest.json",
@@ -38,6 +39,34 @@ CLASSIFICATION_RUNS = (
     ("osm", "summary"),
 )
 SMALL_SYNTHETIC_PAGEIDS = frozenset({"100", "200"})
+SMALL_SYNTHETIC_COORDINATES = {
+    "100": (0.5, 0.5),
+    "200": (0.5, 2.5),
+}
+SMALL_SYNTHETIC_VECTOR_FEATURES: dict[str, dict[str, Any]] = {
+    "data/corine/synthetic_corine.geojson": {
+        "id_field": "ID",
+        "features": {
+            "1": {"code_18": "311", "bounds": (0, 0, 1, 1)},
+            "2": {"code_18": "211", "bounds": (2, 0, 3, 1)},
+        },
+    },
+    "data/osm/osm_project_polygons.geojson": {
+        "id_field": "osm_id",
+        "features": {
+            "synthetic/wood": {
+                "landuse": None,
+                "natural": "wood",
+                "bounds": (0, 0, 1, 1),
+            },
+            "synthetic/meadow": {
+                "landuse": "meadow",
+                "natural": None,
+                "bounds": (2, 0, 3, 1),
+            },
+        },
+    },
+}
 SMALL_SYNTHETIC_COUNTS = {
     "wiki_articles": 2,
     "corine_level2_summary_predictions": 2,
@@ -394,6 +423,75 @@ def _validate_manifest_hashes(root: Path, violations: list[str]) -> None:
             )
 
 
+def _validate_small_synthetic_inputs(root: Path, violations: list[str]) -> None:
+    wiki_articles = _load_json(root / "data/wiki/wiki_articles.json", violations)
+    if isinstance(wiki_articles, list):
+        for article in wiki_articles:
+            if not isinstance(article, dict):
+                continue
+            pageid = str(article.get("pageid"))
+            expected_coordinates = SMALL_SYNTHETIC_COORDINATES.get(pageid)
+            if expected_coordinates is None:
+                continue
+            actual_coordinates = (article.get("lat"), article.get("lon"))
+            if actual_coordinates != expected_coordinates:
+                violations.append(
+                    f"synthetic wiki article {pageid} coordinates={actual_coordinates!r}; "
+                    f"expected {expected_coordinates!r}"
+                )
+
+    for relative_path, contract in SMALL_SYNTHETIC_VECTOR_FEATURES.items():
+        path = root / relative_path
+        try:
+            frame = gpd.read_file(path)
+        except (OSError, ValueError) as exc:
+            violations.append(f"invalid synthetic vector artifact {relative_path}: {exc}")
+            continue
+
+        expected_features = contract["features"]
+        id_field = contract["id_field"]
+        if len(frame) != len(expected_features):
+            violations.append(
+                f"synthetic {relative_path} feature count={len(frame)}; "
+                f"expected {len(expected_features)}"
+            )
+        if id_field not in frame.columns:
+            violations.append(f"synthetic {relative_path} missing identity field {id_field}")
+            continue
+        if frame.crs is None or frame.crs.to_epsg() != 4326:
+            violations.append(f"synthetic {relative_path} CRS must be EPSG:4326")
+
+        for identity, expected in expected_features.items():
+            selected = frame.loc[frame[id_field].astype(str) == identity]
+            if len(selected) != 1:
+                violations.append(
+                    f"synthetic {relative_path} must contain exactly one feature {identity}"
+                )
+                continue
+            feature = selected.iloc[0]
+            for field, expected_value in expected.items():
+                if field == "bounds":
+                    expected_geometry = box(*expected_value)
+                    if feature.geometry is None or not feature.geometry.equals(expected_geometry):
+                        violations.append(
+                            f"synthetic {relative_path} feature {identity} geometry differs "
+                            "from the deterministic fixture"
+                        )
+                elif field not in frame.columns:
+                    violations.append(f"synthetic {relative_path} missing expected field {field}")
+                elif expected_value is None:
+                    if not bool(selected[field].isna().iloc[0]):
+                        violations.append(
+                            f"synthetic {relative_path} feature {identity} {field}="
+                            f"{feature[field]!r}; expected null"
+                        )
+                elif feature[field] != expected_value:
+                    violations.append(
+                        f"synthetic {relative_path} feature {identity} {field}="
+                        f"{feature[field]!r}; expected {expected_value!r}"
+                    )
+
+
 def _validate_small_synthetic_contract(
     root: Path, wiki_pageids: set[str], violations: list[str]
 ) -> None:
@@ -411,6 +509,8 @@ def _validate_small_synthetic_contract(
             f"synthetic wiki pageids must be exactly {sorted(SMALL_SYNTHETIC_PAGEIDS)}: "
             f"missing={missing} extra={extra}"
         )
+
+    _validate_small_synthetic_inputs(root, violations)
 
     expected_counts = manifest.get("expected_counts")
     for name, expected in SMALL_SYNTHETIC_COUNTS.items():

@@ -185,6 +185,8 @@ Checks:
 - content and summary keys match wiki page IDs;
 - CORINE and OSM vector files are readable and have required columns;
 - prediction records have required fields;
+- the synthetic profile matches the deterministic source coordinates, polygon
+  geometries, and CORINE/OSM labels;
 - metrics row counts match prediction records;
 - the synthetic profile matches its fixed target/prediction pairs and complete
   deterministic metric objects;

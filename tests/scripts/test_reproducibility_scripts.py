@@ -4,6 +4,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import pytest
+from shapely.affinity import translate
 from shapely.geometry import box
 
 from scripts.reproduce_small import run_small_reproduction
@@ -114,6 +115,54 @@ def test_small_validator_rejects_an_unexpected_null_metric_field(tmp_path: Path)
     violations = validate_artifacts(output_dir, profile="small")
 
     assert any("synthetic" in violation and "metrics" in violation for violation in violations)
+
+
+def test_small_validator_rejects_a_synthetic_wiki_point_moved_to_another_polygon(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    relative_path = "data/wiki/wiki_articles.json"
+    wiki_path = output_dir / relative_path
+    articles = json.loads(wiki_path.read_text(encoding="utf-8"))
+    articles[0]["lon"] = 2.5
+    wiki_path.write_text(json.dumps(articles), encoding="utf-8")
+    _refresh_manifest_hash(output_dir, relative_path)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("synthetic" in violation and "coordinate" in violation for violation in violations)
+
+
+def test_small_validator_rejects_changed_synthetic_corine_labels(tmp_path: Path) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    relative_path = "data/corine/synthetic_corine.geojson"
+    vector_path = output_dir / relative_path
+    frame = gpd.read_file(vector_path)
+    frame.loc[frame["code_18"] == "311", "code_18"] = "211"
+    frame.to_file(vector_path, driver="GeoJSON", index=False)
+    _refresh_manifest_hash(output_dir, relative_path)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("synthetic" in violation and "corine" in violation for violation in violations)
+
+
+def test_small_validator_rejects_changed_synthetic_polygon_geometry(tmp_path: Path) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    relative_path = "data/osm/osm_project_polygons.geojson"
+    vector_path = output_dir / relative_path
+    frame = gpd.read_file(vector_path)
+    row = frame.index[frame["osm_id"] == "synthetic/wood"][0]
+    frame.at[row, "geometry"] = translate(frame.at[row, "geometry"], xoff=0.25)
+    frame.to_file(vector_path, driver="GeoJSON", index=False)
+    _refresh_manifest_hash(output_dir, relative_path)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("synthetic" in violation and "geometry" in violation for violation in violations)
 
 
 @pytest.mark.parametrize(
