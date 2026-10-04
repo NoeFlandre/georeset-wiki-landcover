@@ -9,11 +9,12 @@ from georeset_wiki_landcover.visualization.map_visualizer import MapVisualizer
 class TestMapVisualizer:
     def setup_method(self):
         self.basic_polygon = Polygon([(7.0, 48.0), (7.1, 48.0), (7.1, 48.1), (7.0, 48.1)])
+        second_polygon = Polygon([(7.2, 48.2), (7.3, 48.2), (7.3, 48.3), (7.2, 48.3)])
         self.gdf = gpd.GeoDataFrame(
             {
                 "class_label": ["311", "312"],
                 "code_18": ["311", "312"],
-                "geometry": [self.basic_polygon, self.basic_polygon],
+                "geometry": [self.basic_polygon, second_polygon],
             },
             crs="EPSG:4326",
         )
@@ -66,10 +67,16 @@ class TestMapVisualizer:
 
     def test_plot_polygons_adds_polygon_layers(self):
         """Should add GeoJson polygon layers to the map."""
+        import folium
+
         visualizer = MapVisualizer(self.gdf)
         m = visualizer.plot_polygons()
-        # Check that there are child objects (polygon layers)
-        assert len(m._children) > 0
+        layers = [child for child in m._children.values() if isinstance(child, folium.GeoJson)]
+
+        assert [layer.data["coordinates"][0] for layer in layers] == [
+            [[7.0, 48.0], [7.1, 48.0], [7.1, 48.1], [7.0, 48.1], [7.0, 48.0]],
+            [[7.2, 48.2], [7.3, 48.2], [7.3, 48.3], [7.2, 48.3], [7.2, 48.2]],
+        ]
 
     def test_plot_polygons_with_articles_returns_map(self):
         """Should return a folium Map with article markers."""
@@ -81,10 +88,15 @@ class TestMapVisualizer:
 
     def test_plot_polygons_with_articles_adds_markers(self):
         """Should add CircleMarker layers for articles."""
+        import folium
+
         visualizer = MapVisualizer(self.gdf)
         m = visualizer.plot_polygons_with_articles(self.articles)
-        # Check that there are more children than polygons alone
-        assert len(m._children) > len(self.gdf)
+        markers = [
+            child for child in m._children.values() if isinstance(child, folium.CircleMarker)
+        ]
+
+        assert [marker.location for marker in markers] == [[48.5, 7.5], [48.1, 7.3]]
 
     def test_plot_polygons_with_articles_has_legend(self):
         """Should include legend showing polygon and article counts."""
