@@ -101,6 +101,21 @@ def test_small_validator_checks_the_known_synthetic_metrics(tmp_path: Path) -> N
     assert any("synthetic" in violation and "accuracy" in violation for violation in violations)
 
 
+def test_small_validator_rejects_an_unexpected_null_metric_field(tmp_path: Path) -> None:
+    output_dir = tmp_path / "small"
+    run_small_reproduction(output_dir=output_dir, clean=True)
+    metrics_relative = "data/classification/runs/small/corine_level2_summary_metrics.json"
+    metrics_path = output_dir / metrics_relative
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    metrics["unexpected"] = None
+    metrics_path.write_text(json.dumps(metrics), encoding="utf-8")
+    _refresh_manifest_hash(output_dir, metrics_relative)
+
+    violations = validate_artifacts(output_dir, profile="small")
+
+    assert any("synthetic" in violation and "metrics" in violation for violation in violations)
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [("target", "21"), ("prediction", "21"), ("prediction_labels", ["21"])],

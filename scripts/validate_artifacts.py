@@ -453,12 +453,16 @@ def _validate_small_synthetic_contract(
         metrics = _load_json(run_dir / f"{filename}.json", violations)
         if not isinstance(metrics, dict):
             continue
-        differing_fields = sorted(
-            field
-            for field in metrics.keys() | expected_metrics.keys()
-            if not _matches_expected_json(metrics.get(field), expected_metrics.get(field))
-        )
-        if differing_fields:
+        if not _matches_expected_json(metrics, expected_metrics):
+            differing_fields = sorted(
+                field
+                for field in metrics.keys() | expected_metrics.keys()
+                if (
+                    field not in metrics
+                    or field not in expected_metrics
+                    or not _matches_expected_json(metrics[field], expected_metrics[field])
+                )
+            )
             violations.append(
                 f"synthetic {filename} metrics differ from deterministic expected values "
                 f"for fields {differing_fields}"
